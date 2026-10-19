@@ -1,0 +1,38 @@
+# Gadgetmetodo, Lda.
+
+> Consultora portuguesa com sede no Porto, especializada em organização e métodos (O&M), inteligência artificial (IA) aplicada à gestão, proteção de dados e conformidade (RGPD, NIS2, funções de Encarregado de Proteção de Dados) e apoio estratégico a administrações. Desenvolve o programa de formação AI Essentials. Trabalha do diagnóstico à implementação, por projeto ou em acompanhamento continuado.
+
+Factos essenciais:
+
+- Designação: Gadgetmetodo, Lda. (sociedade por quotas)
+- Sede: Rua das Cruzes, 625, 4100-195 Porto, Portugal
+- Telefone: +351 915 416 112
+- Email: gadgetmetodo@gmail.com
+- Website: https://www.gadgetmetodo.pt
+- Assinatura: Simplificar. Organizar. Fazer acontecer.
+- Clientes: sobretudo pequenas e médias empresas (PME) e respetivas administrações, em setores como têxtil e vestuário, tecnologia e gestão documental, turismo e retalho
+- Metodologia: diagnóstico, desenho, implementação e acompanhamento
+- Modelos de colaboração: projeto de âmbito fechado, acompanhamento continuado (por exemplo board advisor ou DPO externo) e formação
+- Gestor de projeto: Jorge Sá Couto (licenciatura em Engenharia Informática, Universidade NOVA de Lisboa; MBA em Gestão, ISCTE; certificado The Business of AI: Strategies for Leaders, London Business School; Certificado de Competências Pedagógicas)
+- Idioma: português de Portugal
+
+## Serviços
+
+- [Visão geral dos serviços](https://www.gadgetmetodo.pt/servicos/): as cinco áreas e como se combinam
+- [Organização e Métodos](https://www.gadgetmetodo.pt/servicos/organizacao-e-metodos/): diagnóstico organizacional, redesenho de processos, normas e procedimentos, auditorias internas e planos de melhoria
+- [Inteligência artificial e transformação digital](https://www.gadgetmetodo.pt/servicos/inteligencia-artificial/): estratégia de IA, casos de uso, arquitetura de sistemas e integrações, automação de marketing, painéis de indicadores
+- [Proteção de dados e conformidade](https://www.gadgetmetodo.pt/servicos/protecao-de-dados-e-conformidade/): DPO externo, RGPD, Diretiva NIS2, contratos com subcontratantes e governação da IA
+- [Estratégia e gestão](https://www.gadgetmetodo.pt/servicos/estrategia-e-gestao/): alinhamento estratégico, objetivos e indicadores (KPI), modelos de incentivos e conselho à administração
+- [Formação AI Essentials](https://www.gadgetmetodo.pt/servicos/formacao-ai-essentials/): cinco módulos sobre IA para administrações e equipas
+
+## Empresa
+
+- [Abordagem](https://www.gadgetmetodo.pt/abordagem/): metodologia em quatro fases, princípios e modelos de colaboração
+- [Experiência](https://www.gadgetmetodo.pt/experiencia/): exemplos de intervenção por setor, sem identificação de clientes
+- [Sobre](https://www.gadgetmetodo.pt/sobre/): quem somos, identidade e perfil do gestor de projeto
+- [Perguntas frequentes](https://www.gadgetmetodo.pt/perguntas-frequentes/): respostas sobre a empresa, os serviços e o funcionamento dos projetos
+- [Contactos](https://www.gadgetmetodo.pt/contactos/): morada, telefone, email e como pedir uma proposta
+
+## Optional
+
+- [Política de privacidade](https://www.gadgetmetodo.pt/privacidade/): tratamento de dados pessoais; o site não usa cookies nem ferramentas de análise

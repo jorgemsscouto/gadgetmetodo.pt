@@ -1,0 +1,28 @@
+# robots.txt de www.gadgetmetodo.pt
+# Site institucional público: aberto a motores de pesquisa e a assistentes de inteligência artificial.
+
+User-agent: *
+Allow: /
+
+# Motores de pesquisa e pesquisa com IA (indexação e pedidos feitos por utilizadores)
+User-agent: Googlebot
+User-agent: Bingbot
+User-agent: Applebot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+Allow: /
+
+# Treino de modelos de IA: permitido, para que a marca seja conhecida pelos modelos.
+# Para recusar o treino sem perder a presença nas respostas, trocar "Allow" por "Disallow" neste grupo.
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://www.gadgetmetodo.pt/sitemap.xml
