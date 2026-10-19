@@ -37,6 +37,20 @@ O domínio canónico definido nas páginas é `https://www.gadgetmetodo.pt`. O a
 
 As ligações internas usam caminhos absolutos (`/servicos/`), por isso o site tem de ser servido na raiz do domínio.
 
+### Publicar por FTP
+
+Com o script incluído (requer `lftp`; no macOS: `brew install lftp`):
+
+```
+./publicar.sh
+```
+
+O script pede o servidor, o utilizador, a pasta do site (por omissão `public_html`) e a palavra-passe, que não fica guardada. Usa ligação cifrada quando o servidor a suporta, envia apenas ficheiros novos ou alterados, não apaga nada no servidor e exclui `.git`, `README.md`, `.nojekyll` e o próprio script.
+
+Com um programa de FTP (FileZilla, Cyberduck ou o gestor de ficheiros do alojamento), enviar o conteúdo desta pasta para a pasta pública do domínio, exceto `.git`, `README.md`, `.nojekyll` e `publicar.sh`. O ficheiro `.htaccess` está oculto no Finder e tem de ser enviado.
+
+Se a pasta pública tiver uma página por omissão do alojamento (por exemplo `index.php` ou `default.html`), apagá-la.
+
 Depois de publicar:
 
 1. Registar o site no Google Search Console e no Bing Webmaster Tools e submeter `https://www.gadgetmetodo.pt/sitemap.xml`. O índice do Bing é usado por vários assistentes de IA.
