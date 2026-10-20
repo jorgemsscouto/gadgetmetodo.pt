@@ -2,7 +2,7 @@
 # Publica o site por FTP (com TLS quando o servidor o suporta) a partir desta pasta.
 # Requisito: lftp (no macOS: brew install lftp).
 # Utilização: ./publicar.sh
-# Envia apenas ficheiros novos ou alterados e nunca apaga nada no servidor.
+# Envia os ficheiros novos ou diferentes dos que estão no servidor e nunca apaga nada.
 
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -17,6 +17,12 @@ SERVIDOR=${SERVIDOR:-gadgf9.ftp.tb-hosting.com}
 read -rp "Utilizador FTP: " UTILIZADOR
 read -rp "Pasta do site no servidor [www]: " PASTA
 PASTA=${PASTA:-www}
+case "$PASTA" in
+  /|.|./)
+    echo "A raiz do FTP não é pública: o site tem de ir para a pasta www."
+    exit 1
+    ;;
+esac
 read -rsp "Palavra-passe FTP: " LFTP_PASSWORD
 echo
 export LFTP_PASSWORD
@@ -24,7 +30,7 @@ export LFTP_PASSWORD
 lftp --env-password -u "$UTILIZADOR" "$SERVIDOR" <<EOF
 set ftp:ssl-allow yes
 set net:max-retries 2
-mirror --reverse --only-newer --verbose \
+mirror --reverse --verbose \
   --exclude-glob .git/ \
   --exclude-glob .gitignore \
   --exclude-glob .nojekyll \
