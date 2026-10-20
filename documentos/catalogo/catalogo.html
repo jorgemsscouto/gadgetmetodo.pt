@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<title>Catálogo de Serviços 2026 | Gadgetmetodo, Lda.</title>
+<meta name="author" content="Gadgetmetodo, Lda.">
+<style>
+@font-face { font-family: "Montserrat"; src: url("../../assets/fonts/montserrat-var-latin.woff2") format("woff2"); font-weight: 100 900; }
+@font-face { font-family: "Inter"; src: url("../../assets/fonts/inter-var-latin.woff2") format("woff2"); font-weight: 100 900; }
+
+@page { size: 297mm 210mm; margin: 0; }
+
+:root {
+  --petroleo: #00636a;
+  --profundo: #003f46;
+  --marinho: #0a0f26;
+  --antracite: #333333;
+  --cinzento: #687280;
+  --linha: #e5e7eb;
+  --nevoa: #f5f7f8;
+  --tinta: #e8f1f1;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 10.4pt;
+  line-height: 1.5;
+  color: var(--antracite);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+h1, h2, h3, h4 { font-family: "Montserrat", Arial, sans-serif; color: var(--marinho); margin: 0; }
+p { margin: 0 0 2.6mm; }
+strong { color: var(--marinho); font-weight: 600; }
+svg { display: block; }
+
+.pagina {
+  position: relative;
+  width: 297mm;
+  height: 210mm;
+  padding: 13mm 18mm 20mm;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+  background: #fff;
+}
+
+.pagina:last-child { page-break-after: auto; break-after: auto; }
+
+/* Elementos comuns */
+
+.tracker {
+  display: flex;
+  align-items: center;
+  gap: 2.5mm;
+  margin-bottom: 7mm;
+  color: var(--petroleo);
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 7.2pt;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.tracker::before {
+  content: "";
+  width: 2.6mm;
+  height: 2.6mm;
+  background: var(--petroleo);
+  border-radius: 0.6mm;
+}
+
+.titulo-acao {
+  max-width: 236mm;
+  margin-bottom: 10mm;
+  font-size: 21.5pt;
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.005em;
+}
+
+.rotulo {
+  margin: 0 0 3mm;
+  color: var(--petroleo);
+  font-size: 7.8pt;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.mt { margin-top: 6mm; }
+.mt-g { margin-top: 10mm; }
+.pequeno { font-size: 9pt; }
+
+.rodape-pag {
+  position: absolute;
+  left: 18mm;
+  right: 18mm;
+  bottom: 9mm;
+  display: flex;
+  justify-content: space-between;
+  padding-top: 2.5mm;
+  border-top: 0.3mm solid var(--linha);
+  color: var(--cinzento);
+  font-size: 7pt;
+}
+
+.rodape-pag span:last-child { font-family: "Montserrat", Arial, sans-serif; font-weight: 600; color: var(--marinho); }
+
+.nota-pag {
+  position: absolute;
+  left: 18mm;
+  bottom: 15mm;
+  margin: 0;
+  color: var(--cinzento);
+  font-size: 7.6pt;
+}
+
+.icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 9mm;
+  height: 9mm;
+  background: var(--tinta);
+  color: var(--petroleo);
+  border-radius: 2.2mm;
+}
+
+.icone svg { width: 5mm; height: 5mm; stroke-width: 1.8; }
+
+.check { margin: 0; padding: 0; list-style: none; }
+.check li { position: relative; padding-left: 5mm; margin: 0 0 1.6mm; }
+.check li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.55mm;
+  width: 2mm;
+  height: 2mm;
+  background: var(--petroleo);
+  border-radius: 0.5mm;
+}
+
+.figura { margin: 0; }
+.figura figcaption { margin-bottom: 3mm; color: var(--marinho); font-size: 8.4pt; }
+.figura figcaption strong { color: var(--petroleo); }
+.fonte { margin: 2.5mm 0 0; color: var(--cinzento); font-size: 7.2pt; }
+
+/* Capa e contracapa */
+
+.capa, .contracapa { background: var(--marinho); color: #c9ced8; }
+
+.capa-simbolo {
+  position: absolute;
+  right: -22mm;
+  top: 50%;
+  width: 165mm;
+  opacity: 0.08;
+  transform: translateY(-50%);
+}
+
+.capa-logo { position: relative; width: 88mm; }
+
+.capa-texto { position: absolute; left: 18mm; bottom: 42mm; max-width: 190mm; }
+
+.assinatura {
+  margin: 0 0 6mm;
+  color: #8fc3c6;
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 8.4pt;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.capa h1 { color: #fff; font-size: 40pt; font-weight: 700; line-height: 1.08; letter-spacing: -0.01em; }
+.capa-sub { margin-top: 5mm; color: #c9ced8; font-size: 14pt; line-height: 1.4; }
+.capa-data {
+  position: absolute;
+  left: 18mm;
+  bottom: 16mm;
+  margin: 0;
+  color: #8e95a6;
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 8.4pt;
+  letter-spacing: 0.08em;
+}
+
+.contracapa-texto { position: absolute; left: 18mm; bottom: 44mm; }
+.contracapa dl { display: flex; gap: 16mm; margin: 0; }
+.contracapa dt { margin-bottom: 1.5mm; color: #8fc3c6; font-family: "Montserrat", Arial, sans-serif; font-size: 7.2pt; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.contracapa dd { margin: 0; color: #fff; font-size: 10pt; line-height: 1.55; }
+.legal { position: absolute; left: 18mm; right: 18mm; bottom: 14mm; margin: 0; color: #8e95a6; font-size: 7.2pt; }
+
+/* Índice */
+
+.indice-grelha { display: grid; grid-template-columns: 1.55fr 1fr; gap: 20mm; }
+.indice { margin: 0; padding: 0; list-style: none; border-top: 0.4mm solid var(--marinho); }
+.indice li {
+  display: grid;
+  grid-template-columns: 11mm 1fr 10mm;
+  align-items: baseline;
+  padding: 2.1mm 0;
+  border-bottom: 0.3mm solid var(--linha);
+}
+.i-num { color: var(--petroleo); font-family: "Montserrat", Arial, sans-serif; font-size: 8pt; font-weight: 700; }
+.i-tit { color: var(--marinho); font-size: 10pt; }
+.i-pag { color: var(--cinzento); font-family: "Montserrat", Arial, sans-serif; font-size: 8.5pt; text-align: right; }
+.nota-abertura { align-self: start; margin-top: 21mm; padding: 7mm; background: var(--nevoa); border-radius: 3mm; }
+.nota-abertura p { font-size: 9.4pt; }
+.nota-abertura p:last-child { margin: 0; }
+
+/* Síntese e blocos */
+
+.tres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8mm; }
+.bloco { padding: 7mm; border: 0.3mm solid var(--linha); border-radius: 3mm; }
+.bloco .icone { margin-bottom: 4mm; }
+.bloco h3 { margin-bottom: 2.6mm; font-size: 12.5pt; font-weight: 600; }
+.bloco p { margin: 0; }
+
+.factos {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 10mm 0 0;
+  border-top: 0.4mm solid var(--marinho);
+}
+.factos div { padding: 5mm 6mm 0 0; }
+.factos dt { margin-bottom: 1.2mm; color: var(--cinzento); font-size: 7.2pt; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.factos dd { margin: 0; color: var(--marinho); font-size: 10.6pt; font-weight: 500; }
+
+/* Ponto de vista */
+
+.grelha-pv { display: grid; grid-template-columns: 1.1fr 1fr; gap: 14mm; }
+.insight { display: grid; grid-template-columns: 8mm 1fr; gap: 4mm; padding: 3.2mm 0; border-top: 0.3mm solid var(--linha); }
+.insight:first-child { border-top: 0.4mm solid var(--marinho); }
+.i-n {
+  display: flex; align-items: center; justify-content: center;
+  width: 7mm; height: 7mm; background: var(--marinho); color: #fff;
+  font-family: "Montserrat", Arial, sans-serif; font-size: 8pt; font-weight: 700; border-radius: 1.6mm;
+}
+.insight h3 { margin-bottom: 1mm; font-size: 11pt; font-weight: 600; }
+.insight p { margin: 0; font-size: 9.8pt; }
+
+.modelo { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm; }
+.m {
+  display: flex; flex-direction: column; justify-content: flex-end;
+  height: 38mm; padding: 4mm; color: #fff;
+  font-family: "Montserrat", Arial, sans-serif; font-size: 9.4pt; font-weight: 600; line-height: 1.25;
+  border-radius: 3mm;
+}
+.m span { margin-bottom: auto; font-size: 7.5pt; opacity: 0.7; }
+.m1, .m2 { justify-content: flex-start; }
+.m1 span, .m2 span { margin-bottom: 1.5mm; }
+.m1, .m3 { padding-right: 16mm; }
+.m2, .m4 { padding-left: 16mm; }
+.m2 span, .m4 span { align-self: flex-start; }
+.m1 { background: var(--marinho); }
+.m2 { background: var(--petroleo); }
+.m3 { background: var(--profundo); }
+.m4 { background: #2a3350; }
+.m-centro {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 29mm; padding: 2.6mm; background: #fff; color: var(--marinho);
+  font-family: "Montserrat", Arial, sans-serif; font-size: 8pt; font-weight: 600; line-height: 1.3; text-align: center;
+  border: 0.6mm solid var(--marinho); border-radius: 3mm;
+}
+.modelo-base {
+  margin-top: 2.5mm; padding: 3.2mm 4mm; background: var(--tinta); color: var(--profundo);
+  font-family: "Montserrat", Arial, sans-serif; font-size: 8.6pt; font-weight: 600; border-radius: 3mm;
+}
+.modelo-base span { margin-right: 2mm; opacity: 0.6; }
+
+/* Tabelas */
+
+.tabela { width: 100%; border-collapse: collapse; }
+.tabela th, .tabela td { padding: 2.6mm 3mm 2.6mm 0; text-align: left; vertical-align: top; border-bottom: 0.3mm solid var(--linha); }
+.tabela thead th {
+  padding-top: 0; color: var(--cinzento); font-family: "Inter", Arial, sans-serif;
+  font-size: 7.2pt; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  border-bottom: 0.4mm solid var(--marinho);
+}
+.tabela tbody th { color: var(--marinho); font-family: "Montserrat", Arial, sans-serif; font-size: 9.8pt; font-weight: 600; }
+.mapa tbody th { display: flex; gap: 3mm; align-items: center; }
+.mapa tbody th small { display: block; color: var(--petroleo); font-size: 7pt; font-weight: 700; }
+.mapa td { font-size: 9.8pt; }
+.pequeno-ic { width: 8mm; height: 8mm; }
+.tabela .num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 5.5mm; height: 5.5mm; margin-right: 2.5mm; background: var(--marinho); color: #fff;
+  font-size: 7pt; border-radius: 1.2mm; vertical-align: 0.2mm;
+}
+
+/* Páginas de serviço */
+
+.grelha-servico { display: grid; grid-template-columns: 1fr 1.25fr; gap: 13mm; }
+.servico-cab { display: flex; align-items: center; gap: 3mm; margin-bottom: 4mm; }
+.servico-nome { color: var(--petroleo); font-family: "Montserrat", Arial, sans-serif; font-size: 8pt; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.resumo { margin-bottom: 5mm; font-size: 10.4pt; }
+.questoes { margin: 0 0 5mm; padding: 0; list-style: none; counter-reset: q; }
+.questoes li {
+  position: relative; counter-increment: q; margin: 0; padding: 2mm 0 2mm 8mm;
+  color: var(--marinho); font-weight: 500; border-top: 0.3mm solid var(--linha);
+}
+.questoes li:last-child { border-bottom: 0.3mm solid var(--linha); }
+.questoes li::before {
+  content: counter(q); position: absolute; left: 0; top: 2.2mm;
+  width: 5mm; height: 5mm; background: var(--tinta); color: var(--petroleo);
+  font-family: "Montserrat", Arial, sans-serif; font-size: 7pt; font-weight: 700; line-height: 5mm; text-align: center; border-radius: 1.2mm;
+}
+.modulos { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; margin-bottom: 6mm; }
+.modulos div { padding: 3mm 3.6mm; background: var(--nevoa); color: var(--marinho); font-size: 9.6pt; line-height: 1.35; border-radius: 2mm; }
+.duas { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; }
+
+/* Matriz de priorização */
+
+.matriz { display: grid; grid-template-columns: 6mm 1fr; grid-template-rows: auto 6mm; gap: 1.5mm; }
+.eixo-y {
+  grid-row: 1; grid-column: 1; writing-mode: vertical-rl; transform: rotate(180deg);
+  color: var(--cinzento); font-size: 7.2pt; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; text-align: center;
+}
+.eixo-x { grid-row: 2; grid-column: 2; color: var(--cinzento); font-size: 7.2pt; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
+.quadrantes { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5mm; }
+.q { min-height: 17mm; padding: 2.6mm 3.2mm; background: var(--nevoa); border-radius: 2mm; }
+.q strong { display: block; font-family: "Montserrat", Arial, sans-serif; font-size: 8.6pt; }
+.q span { font-size: 8pt; }
+.q-destaque { background: var(--petroleo); }
+.q-destaque strong, .q-destaque span { color: #fff; }
+.q-fraco { background: #fff; border: 0.3mm dashed #c9ced6; }
+
+/* Referências de conformidade */
+
+.referencias { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2mm; }
+.referencias div { padding: 3.5mm; background: var(--marinho); border-radius: 2mm; }
+.referencias div:nth-child(2) { background: var(--petroleo); }
+.referencias div:nth-child(3) { background: var(--profundo); }
+.referencias strong { display: block; color: #fff; font-family: "Montserrat", Arial, sans-serif; font-size: 10pt; }
+.referencias span { display: block; color: #c9ced8; font-size: 7.6pt; }
+.referencias em { display: block; margin-top: 3mm; color: #8fc3c6; font-size: 7.6pt; font-style: normal; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.referencias-base { margin-top: 2mm; padding: 3mm; background: var(--tinta); color: var(--profundo); font-size: 8.4pt; font-weight: 600; text-align: center; border-radius: 2mm; }
+
+/* Abordagem */
+
+.fases { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5mm; }
+.fase {
+  display: flex; align-items: center; gap: 3mm; height: 15mm; padding: 0 9mm 0 6mm;
+  background: var(--marinho); color: #fff;
+  font-family: "Montserrat", Arial, sans-serif; font-size: 10.5pt; font-weight: 600;
+  clip-path: polygon(0 0, calc(100% - 5mm) 0, 100% 50%, calc(100% - 5mm) 100%, 0 100%, 5mm 50%);
+}
+.fase:first-child { clip-path: polygon(0 0, calc(100% - 5mm) 0, 100% 50%, calc(100% - 5mm) 100%, 0 100%); }
+.fase:nth-child(even) { background: var(--petroleo); }
+.fase span { font-size: 8pt; opacity: 0.7; }
+.fases-det { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6mm; margin-top: 6mm; }
+.fases-det p { min-height: 20mm; font-size: 10.2pt; }
+.fases-det h4 { margin: 0 0 2mm; color: var(--cinzento); font-family: "Inter", Arial, sans-serif; font-size: 7.2pt; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Princípios */
+
+.principios { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8mm; margin: 0; border-top: 0.4mm solid var(--marinho); }
+.principios div { padding-top: 3.5mm; }
+.principios dt { margin-bottom: 1.5mm; color: var(--marinho); font-family: "Montserrat", Arial, sans-serif; font-size: 8.4pt; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.principios dd { margin: 0; font-size: 10pt; }
+
+/* Experiência */
+
+.casos { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+.caso { padding: 6mm 7mm; border: 0.3mm solid var(--linha); border-radius: 3mm; }
+.caso-cab { display: flex; align-items: center; gap: 3mm; margin-bottom: 3mm; }
+.caso-cab .icone { width: 7.5mm; height: 7.5mm; }
+.caso-cab .icone svg { width: 4.2mm; height: 4.2mm; }
+.setor { color: var(--petroleo); font-family: "Montserrat", Arial, sans-serif; font-size: 7.2pt; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.caso h3 { margin-bottom: 2.6mm; font-size: 11.2pt; font-weight: 600; line-height: 1.3; }
+.caso p { font-size: 9.7pt; }
+.caso p:last-child { margin: 0; }
+
+/* Equipa */
+
+.equipa { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14mm; }
+.perfil { display: grid; grid-template-columns: 26mm 1fr; gap: 7mm; }
+.monograma {
+  display: flex; align-items: center; justify-content: center; width: 26mm; height: 26mm;
+  background: var(--marinho); color: #fff; font-family: "Montserrat", Arial, sans-serif; font-size: 15pt; font-weight: 600; border-radius: 5mm;
+}
+.perfil h2 { font-size: 17pt; font-weight: 600; }
+.funcao { margin-bottom: 4mm; color: var(--cinzento); }
+.formacao { padding: 7mm; background: var(--nevoa); border-radius: 3mm; }
+
+/* Como iniciar */
+
+.passos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6mm; }
+.passo { padding-top: 3.5mm; border-top: 0.4mm solid var(--marinho); }
+.passo span {
+  display: inline-flex; align-items: center; justify-content: center; width: 10mm; height: 10mm; margin-bottom: 4mm;
+  background: var(--petroleo); color: #fff; font-family: "Montserrat", Arial, sans-serif; font-size: 8pt; font-weight: 700; border-radius: 2mm;
+}
+.passo h3 { margin-bottom: 2mm; font-size: 12.5pt; font-weight: 600; }
+.passo p { margin: 0; font-size: 10.4pt; }
+.cta {
+  display: grid; grid-template-columns: 1.3fr 1fr; gap: 12mm; align-items: center;
+  margin-top: 16mm; padding: 12mm 12mm; background: var(--marinho); color: #c9ced8; border-radius: 3mm;
+}
+.cta h2 { margin-bottom: 3mm; color: #fff; font-size: 18pt; font-weight: 600; line-height: 1.25; }
+.cta p { margin: 0; }
+.cta dl { display: grid; gap: 2.5mm; margin: 0; }
+.cta dt { color: #8fc3c6; font-size: 7pt; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.cta dd { margin: 0; color: #fff; font-size: 11.5pt; font-weight: 500; }
+
+.areas { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3mm; margin-top: 12mm; }
+.areas div { padding: 4.5mm; border: 0.3mm solid var(--linha); border-radius: 3mm; color: var(--marinho); font-family: "Montserrat", Arial, sans-serif; font-size: 9.4pt; font-weight: 600; line-height: 1.3; }
+.areas .icone { margin-bottom: 3mm; }
+.formacao li { font-size: 10pt; }
+
+/* Páginas de serviço com figura ou tabela */
+.denso .titulo-acao { margin-bottom: 7mm; }
+.denso .tracker { margin-bottom: 5.5mm; }
+.denso .resumo { margin-bottom: 4mm; font-size: 9.8pt; }
+.denso .questoes { margin-bottom: 4mm; }
+.denso .questoes li { padding-top: 1.5mm; padding-bottom: 1.5mm; font-size: 9.8pt; }
+.denso .questoes li::before { top: 1.6mm; }
+.denso .modulos { gap: 1.6mm; margin-bottom: 4.5mm; }
+.denso .modulos div { padding: 2.1mm 3mm; font-size: 8.9pt; }
+.denso .check li { margin-bottom: 1.1mm; font-size: 9.8pt; }
+.denso .check li::before { top: 1.45mm; }
+.denso .q { min-height: 14mm; padding: 2.2mm 3mm; }
+.denso .tabela th, .denso .tabela td { padding-top: 2mm; padding-bottom: 2mm; }
+.denso .tabela td { font-size: 9.6pt; }
+.denso .duas.mt { margin-top: 4.5mm; }
+.denso .servico-cab { margin-bottom: 3mm; }
+
+</style>
+</head>
+<body>
+<section class="pagina capa">
+  
+  
+  <img class="capa-simbolo" src="../../assets/marca/simbolo-negativo.svg" alt="">
+  <img class="capa-logo" src="../../assets/marca/logotipo-negativo.svg" alt="Gadgetmetodo, Lda.">
+  <div class="capa-texto">
+    <p class="assinatura">Simplificar&nbsp;&nbsp;·&nbsp;&nbsp;Organizar&nbsp;&nbsp;·&nbsp;&nbsp;Fazer acontecer</p>
+    <h1>Catálogo de Serviços</h1>
+    <p class="capa-sub">Organização, métodos e inteligência artificial para empresas</p>
+  </div>
+  <p class="capa-data">Edição 2026&nbsp;&nbsp;|&nbsp;&nbsp;Porto, Portugal</p>
+  
+</section>
+<section class="pagina ">
+  <div class="tracker"><span>Índice</span></div>
+  
+  <div class="indice-grelha">
+    <div>
+      <h1 class="titulo-acao">Índice</h1>
+      <ol class="indice"><li><span class="i-num">01</span><span class="i-tit">Síntese</span><span class="i-pag">03</span></li><li><span class="i-num">02</span><span class="i-tit">O nosso ponto de vista</span><span class="i-pag">04</span></li><li><span class="i-num">03</span><span class="i-tit">Mapa de serviços</span><span class="i-pag">05</span></li><li><span class="i-num">04</span><span class="i-tit">Organização e Métodos</span><span class="i-pag">06</span></li><li><span class="i-num">05</span><span class="i-tit">Inteligência artificial e transformação digital</span><span class="i-pag">07</span></li><li><span class="i-num">06</span><span class="i-tit">Proteção de dados e conformidade</span><span class="i-pag">08</span></li><li><span class="i-num">07</span><span class="i-tit">Estratégia e gestão</span><span class="i-pag">09</span></li><li><span class="i-num">08</span><span class="i-tit">Formação AI Essentials</span><span class="i-pag">10</span></li><li><span class="i-num">09</span><span class="i-tit">Abordagem</span><span class="i-pag">11</span></li><li><span class="i-num">10</span><span class="i-tit">Modelos de colaboração e princípios</span><span class="i-pag">12</span></li><li><span class="i-num">11</span><span class="i-tit">Experiência</span><span class="i-pag">13</span></li><li><span class="i-num">12</span><span class="i-tit">Equipa</span><span class="i-pag">14</span></li><li><span class="i-num">13</span><span class="i-tit">Como iniciar</span><span class="i-pag">15</span></li></ol>
+    </div>
+    <aside class="nota-abertura">
+      <h3 class="rotulo">Sobre este catálogo</h3>
+      <p>Este documento apresenta os serviços da Gadgetmetodo, Lda., a forma como trabalhamos e exemplos do tipo de intervenção que desenvolvemos.</p>
+      <p>Cada página de serviço responde a três perguntas: que problema resolvemos, que questões ajudamos a responder e o que recebe no fim.</p>
+      <p>As condições de cada projeto (âmbito, entregáveis, calendário e investimento) são sempre definidas numa proposta à medida.</p>
+    </aside>
+  </div>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>02</span></footer>
+</section>
+<section class="pagina ">
+  <div class="tracker"><span>Síntese</span></div>
+  
+  <h1 class="titulo-acao">Ajudamos empresas a simplificar processos, adotar a inteligência artificial com critério e proteger os dados, do diagnóstico à implementação</h1>
+  <div class="tres">
+    <div class="bloco"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M10 12h4" /> <path d="M10 8h4" /> <path d="M14 21v-3a2 2 0 0 0-4 0v3" /> <path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2" /> <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16" /> </svg></span><h3>Quem somos</h3><p>Consultora com sede no Porto, especializada em Organização e Métodos (O&amp;M), inteligência artificial (IA) aplicada à gestão, proteção de dados e apoio estratégico a administrações.</p></div>
+    <div class="bloco"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /> <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /> <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" /> </svg></span><h3>O que fazemos</h3><p>Cinco áreas complementares: Organização e Métodos; IA e transformação digital; proteção de dados e conformidade; estratégia e gestão; formação AI Essentials.</p></div>
+    <div class="bloco"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <circle cx="6" cy="19" r="3" /> <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" /> <circle cx="18" cy="5" r="3" /> </svg></span><h3>Como trabalhamos</h3><p>Quatro fases (diagnóstico, desenho, implementação e acompanhamento), por projeto de âmbito fechado ou em acompanhamento continuado, com propostas à medida.</p></div>
+  </div>
+  <dl class="factos">
+    <div><dt>Para quem</dt><dd>Pequenas e médias empresas (PME) e respetivas administrações</dd></div>
+    <div><dt>Setores com experiência</dt><dd>Têxtil e vestuário, tecnologia, turismo, retalho</dd></div>
+    <div><dt>Sede</dt><dd>Rua das Cruzes, 625, 4100-195 Porto</dd></div>
+    <div><dt>Contacto</dt><dd>info@gadgetmetodo.pt · +351&nbsp;915&nbsp;416&nbsp;112</dd></div>
+  </dl>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>03</span></footer>
+</section>
+<section class="pagina ">
+  <div class="tracker"><span>O nosso ponto de vista</span></div>
+  
+  <h1 class="titulo-acao">A tecnologia rende mais numa organização arrumada: por isso tratamos organização, tecnologia, conformidade e estratégia como um só sistema</h1>
+  <div class="grelha-pv">
+    <div class="insights">
+      <div class="insight"><span class="i-n">1</span><div><h3>Organização primeiro</h3><p>Um sistema novo aplicado a processos confusos tende a automatizar a confusão. Os projetos começam pela estrutura, pelos processos e pelas responsabilidades.</p></div></div>
+      <div class="insight"><span class="i-n">2</span><div><h3>A IA começa nos casos de uso</h3><p>O ponto de partida não é a ferramenta, é o problema. Priorizamos os casos de uso pelo retorno esperado e pelo esforço de implementação.</p></div></div>
+      <div class="insight"><span class="i-n">3</span><div><h3>Conformidade desde o desenho</h3><p>Proteção de dados, segurança da informação e governação da IA entram no início do projeto e não como correção no fim.</p></div></div>
+      <div class="insight"><span class="i-n">4</span><div><h3>Pessoas preparadas, resultados medidos</h3><p>Formação, gestão da mudança e indicadores acompanhados pela administração consolidam o que foi implementado.</p></div></div>
+    </div>
+    <figure class="figura">
+      <figcaption><strong>Figura 1.</strong> Modelo integrado de intervenção</figcaption>
+      <div class="modelo">
+        <div class="m m1"><span>01</span>Organização e Métodos</div>
+        <div class="m m2"><span>02</span>IA e transformação digital</div>
+        <div class="m m3"><span>03</span>Proteção de dados e conformidade</div>
+        <div class="m m4"><span>04</span>Estratégia e gestão</div>
+        <div class="m-centro">Resultados medidos pela administração</div>
+      </div>
+      <div class="modelo-base"><span>05</span>Formação AI Essentials: pessoas preparadas para a mudança</div>
+      <p class="fonte">Os módulos que se ligam para formar uma solução são também a ideia do símbolo da marca.</p>
+    </figure>
+  </div>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>04</span></footer>
+</section>
+<section class="pagina ">
+  <div class="tracker"><span>Mapa de serviços</span></div>
+  
+  <h1 class="titulo-acao">Cinco áreas complementares, que podem ser contratadas isoladamente ou combinadas num único projeto</h1>
+  <table class="tabela mapa">
+    <thead><tr><th style="width:24%">Área</th><th style="width:31%">Para que serve</th><th style="width:27%">Principais entregáveis</th><th>Formato típico</th></tr></thead>
+    <tbody><tr><th><span class="icone pequeno-ic"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <rect width="8" height="8" x="3" y="3" rx="2" /> <path d="M7 11v4a2 2 0 0 0 2 2h4" /> <rect width="8" height="8" x="13" y="13" rx="2" /> </svg></span><span><small>01</small>Organização e Métodos</span></th><td>Simplificar a estrutura e os processos, clarificar responsabilidades e preparar certificações</td><td>Relatório de diagnóstico com prioridades; Organograma e matriz de responsabilidades; Mapas de processos atuais e propostos</td><td>Projeto de âmbito fechado</td></tr><tr><th><span class="icone pequeno-ic"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /> <path d="M20 2v4" /> <path d="M22 4h-4" /> <circle cx="4" cy="20" r="2" /> </svg></span><span><small>02</small>Inteligência artificial e transformação digital</span></th><td>Escolher e implementar casos de uso de IA com retorno, integrados nos sistemas existentes</td><td>Mapa de casos de uso priorizados; Roteiro de adoção e arquitetura de sistemas; Soluções implementadas e parametrizadas</td><td>Projeto por fases ou acompanhamento continuado</td></tr><tr><th><span class="icone pequeno-ic"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /> <path d="m9 12 2 2 4-4" /> </svg></span><span><small>03</small>Proteção de dados e conformidade</span></th><td>Cumprir o Regulamento Geral sobre a Proteção de Dados (RGPD) e a Diretiva NIS2 e governar o uso de IA com proporcionalidade</td><td>Registo das atividades de tratamento; Cláusulas e contratos revistos; Análise de transferências internacionais</td><td>Encarregado de Proteção de Dados (DPO) externo ou projeto de conformidade</td></tr><tr><th><span class="icone pequeno-ic"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <circle cx="12" cy="12" r="10" /> <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" /> </svg></span><span><small>04</small>Estratégia e gestão</span></th><td>Transformar a estratégia em objetivos, indicadores e incentivos por equipa</td><td>Plano estratégico com iniciativas e responsáveis; Análise de vendas e margens por canal; Sistema de objetivos e indicadores</td><td>Projeto ou conselho continuado à administração</td></tr><tr><th><span class="icone pequeno-ic"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" /> <path d="M22 10v6" /> <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" /> </svg></span><span><small>05</small>Formação AI Essentials</span></th><td>Preparar administração e equipas para decidir e usar IA com responsabilidade</td><td>Sessões adaptadas ao setor e ao público; Materiais de apoio com exemplos práticos; Orientações de utilização responsável</td><td>Sessões presenciais, remotas ou mistas</td></tr></tbody>
+  </table>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>05</span></footer>
+</section>
+<section class="pagina ">
+  <div class="tracker"><span>Serviços&nbsp;&nbsp;·&nbsp;&nbsp;01</span></div>
+  
+  <h1 class="titulo-acao">Uma organização mais simples de gerir, com processos documentados e responsabilidades claras</h1>
+  <div class="grelha-servico">
+    <div class="col-esq">
+      <div class="servico-cab"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <rect width="8" height="8" x="3" y="3" rx="2" /> <path d="M7 11v4a2 2 0 0 0 2 2h4" /> <rect width="8" height="8" x="13" y="13" rx="2" /> </svg></span><span class="servico-nome">Organização e Métodos</span></div>
+      <p class="resumo">A consultoria em Organização e Métodos (O&amp;M) analisa como a empresa está organizada e como o trabalho é feito, para eliminar redundâncias, clarificar responsabilidades e reduzir custos de operação. Cada intervenção começa com um diagnóstico e termina com processos, procedimentos e indicadores que a equipa aplica no dia a dia.</p>
+      <h3 class="rotulo">Questões a que ajudamos a responder</h3>
+      <ol class="questoes"><li>A estrutura acompanha o crescimento da empresa?</li><li>Onde se perde tempo, qualidade ou dinheiro nos processos atuais?</li><li>Quem decide, quem executa e quem controla cada atividade?</li><li>Que procedimentos são necessários para uma certificação ou auditoria?</li></ol>
+      
+    </div>
+    <div class="col-dir"><h3 class="rotulo">O que inclui</h3>
+       <div class="modulos"><div>Diagnóstico organizacional</div><div>Arquitetura organizacional: mapeamento, desenho e redesenho</div><div>Mapeamento e otimização de processos, com base digital</div><div>Normas e procedimentos internos</div><div>Funções, responsabilidades e gestão de áreas</div><div>Planos de melhoria e respetivo acompanhamento</div><div>Auditorias internas de processos e sistemas de gestão</div><div>Apoio em licenciamentos, acreditações e certificações</div></div>
+       <h3 class="rotulo mt">Entregáveis habituais</h3><ul class="check"><li>Relatório de diagnóstico com prioridades</li><li>Organograma e matriz de responsabilidades</li><li>Mapas de processos atuais e propostos</li><li>Manual de normas e procedimentos</li><li>Plano de melhoria com indicadores</li></ul></div>
+  </div>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>06</span></footer>
+</section>
+<section class="pagina denso">
+  <div class="tracker"><span>Serviços&nbsp;&nbsp;·&nbsp;&nbsp;02</span></div>
+  
+  <h1 class="titulo-acao">A inteligência artificial gera valor quando começa pelos casos de uso certos e se integra nos processos</h1>
+  <div class="grelha-servico">
+    <div class="col-esq">
+      <div class="servico-cab"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /> <path d="M20 2v4" /> <path d="M22 4h-4" /> <circle cx="4" cy="20" r="2" /> </svg></span><span class="servico-nome">Inteligência artificial e transformação digital</span></div>
+      <p class="resumo">Ajudamos a definir e executar a estratégia de inteligência artificial (IA): identificamos os casos de uso com maior retorno, desenhamos a arquitetura de sistemas e integrações, implementamos soluções digitais e preparamos as equipas para as utilizar, para que a IA melhore processos reais e não fique isolada em projetos-piloto.</p>
+      <h3 class="rotulo">Questões a que ajudamos a responder</h3>
+      <ol class="questoes"><li>Onde pode a IA gerar retorno mensurável no nosso negócio?</li><li>Por onde começar, com que investimento e em que sequência?</li><li>Os nossos sistemas e dados estão preparados?</li><li>Como integrar a IA nos produtos e serviços que já vendemos?</li></ol>
+      <h3 class="rotulo">Entregáveis habituais</h3><ul class="check"><li>Mapa de casos de uso priorizados</li><li>Roteiro de adoção e arquitetura de sistemas</li><li>Soluções implementadas e parametrizadas</li><li>Painéis de indicadores</li><li>Equipas formadas</li></ul>
+    </div>
+    <div class="col-dir"><h3 class="rotulo">O que inclui</h3>
+       <div class="modulos"><div>Estratégia de IA alinhada com o negócio</div><div>Identificação e priorização de casos de uso</div><div>Roteiro de adoção, com fases e investimento</div><div>Diagnóstico de tecnologia, sistemas e integrações</div><div>Integração entre gestão empresarial (ERP), clientes (CRM) e outras aplicações</div><div>Fornecimento e implementação de soluções digitais com IA</div><div>Automação de marketing e personalização com IA</div><div>Painéis de indicadores e análise de dados</div></div>
+       <figure class="figura">
+  <figcaption><strong>Figura 2.</strong> Priorização de casos de uso de IA</figcaption>
+  <div class="matriz">
+    <div class="eixo-y">Impacto no negócio</div>
+    <div class="quadrantes">
+      <div class="q q-destaque"><strong>Ganhos rápidos</strong><span>Alto impacto, baixo esforço. Avançar primeiro.</span></div>
+      <div class="q"><strong>Apostas estratégicas</strong><span>Alto impacto, maior esforço. Planear por fases.</span></div>
+      <div class="q"><strong>Melhorias pontuais</strong><span>Baixo impacto, baixo esforço. Fazer quando oportuno.</span></div>
+      <div class="q q-fraco"><strong>Adiar</strong><span>Baixo impacto, maior esforço. Reavaliar mais tarde.</span></div>
+    </div>
+    <div class="eixo-x">Esforço de implementação</div>
+  </div>
+  <p class="fonte">Esquema ilustrativo do método de priorização usado no diagnóstico.</p>
+</figure></div>
+  </div>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>07</span></footer>
+</section>
+<section class="pagina denso">
+  <div class="tracker"><span>Serviços&nbsp;&nbsp;·&nbsp;&nbsp;03</span></div>
+  
+  <h1 class="titulo-acao">Conformidade proporcional ao risco protege clientes e titulares sem travar a operação</h1>
+  <div class="grelha-servico">
+    <div class="col-esq">
+      <div class="servico-cab"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /> <path d="m9 12 2 2 4-4" /> </svg></span><span class="servico-nome">Proteção de dados e conformidade</span></div>
+      <p class="resumo">Asseguramos funções de Encarregado de Proteção de Dados (DPO, Data Protection Officer) e apoiamos a aplicação do RGPD, da Diretiva NIS2 sobre cibersegurança e da governação da IA, com clareza estratégica, realismo operacional e governação com bom senso.</p>
+      <h3 class="rotulo">Questões a que ajudamos a responder</h3>
+      <ol class="questoes"><li>Cumprimos o RGPD de forma demonstrável?</li><li>A NIS2 aplica-se à empresa, direta ou indiretamente?</li><li>Que regras devem orientar o uso de IA com dados pessoais?</li><li>Os contratos com clientes e subcontratantes protegem-nos?</li></ol>
+      <h3 class="rotulo">Entregáveis habituais</h3><ul class="check"><li>Registo das atividades de tratamento</li><li>Cláusulas e contratos revistos</li><li>Análise de transferências internacionais</li><li>Política de utilização de IA</li><li>Plano de ação de segurança da informação</li></ul>
+    </div>
+    <div class="col-dir"><h3 class="rotulo">O que inclui</h3>
+       <div class="modulos"><div>Funções de DPO em regime externo</div><div>Registo das atividades de tratamento</div><div>Contratos com clientes e subcontratantes</div><div>Transferências internacionais de dados</div><div>Impacto da IA no RGPD</div><div>Requisitos da NIS2 e segurança da informação</div><div>Governação e ética da IA</div><div>Formação em privacidade e segurança</div></div>
+       <figure class="figura">
+  <figcaption><strong>Figura 3.</strong> Três referências que pedem a mesma disciplina</figcaption>
+  <div class="referencias">
+    <div><strong>RGPD</strong><span>Regulamento (UE) 2016/679</span><em>Dados pessoais</em></div>
+    <div><strong>NIS2</strong><span>Diretiva (UE) 2022/2555</span><em>Cibersegurança</em></div>
+    <div><strong>Governação da IA</strong><span>Regras internas</span><em>Uso de IA</em></div>
+  </div>
+  <div class="referencias-base">Inventário de dados e sistemas · Responsáveis definidos · Controlos e evidências</div>
+  <p class="fonte">Esquema ilustrativo.</p>
+</figure></div>
+  </div>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>08</span></footer>
+</section>
+<section class="pagina ">
+  <div class="tracker"><span>Serviços&nbsp;&nbsp;·&nbsp;&nbsp;04</span></div>
+  
+  <h1 class="titulo-acao">A estratégia só produz resultados quando chega aos objetivos e aos incentivos de cada equipa</h1>
+  <div class="grelha-servico">
+    <div class="col-esq">
+      <div class="servico-cab"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <circle cx="12" cy="12" r="10" /> <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" /> </svg></span><span class="servico-nome">Estratégia e gestão</span></div>
+      <p class="resumo">Apoiamos administrações na definição e execução da estratégia: alinhamento do negócio, missão, visão e valores, planos estratégicos, objetivos e indicadores-chave de desempenho (KPI, Key Performance Indicators) e modelos de incentivos ligados a resultados. Atuamos também como conselheiros da administração para inovação e tecnologia.</p>
+      <h3 class="rotulo">Questões a que ajudamos a responder</h3>
+      <ol class="questoes"><li>O que nos diferencia e onde devemos competir?</li><li>Porque está a margem a cair e onde agir primeiro?</li><li>Os objetivos de cada equipa estão ligados à estratégia?</li><li>Os incentivos premeiam os resultados certos?</li></ol>
+      
+    </div>
+    <div class="col-dir"><h3 class="rotulo">O que inclui</h3>
+       <div class="modulos"><div>Alinhamento estratégico: negócio, missão, visão e valores</div><div>Planos estratégicos e de recuperação de margem</div><div>Análise de concorrência e de desempenho</div><div>Objetivos e KPI por área, canal ou equipa</div><div>Modelos de incentivos indexados a resultados</div><div>Desenho de equipas e operação omnicanal</div><div>Criação de novas unidades de negócio</div><div>Conselho à administração (board advisory)</div></div>
+       <h3 class="rotulo mt">Entregáveis habituais</h3><ul class="check"><li>Plano estratégico com iniciativas e responsáveis</li><li>Análise de vendas e margens por canal</li><li>Sistema de objetivos e indicadores</li><li>Regulamento de incentivos</li><li>Relatórios para a administração</li></ul></div>
+  </div>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>09</span></footer>
+</section>
+<section class="pagina denso">
+  <div class="tracker"><span>Serviços&nbsp;&nbsp;·&nbsp;&nbsp;05</span></div>
+  
+  <h1 class="titulo-acao">Decidir e utilizar a inteligência artificial com conhecimento de causa começa pela formação</h1>
+  <div class="grelha-servico">
+    <div class="col-esq">
+      <div class="servico-cab"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" /> <path d="M22 10v6" /> <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" /> </svg></span><span class="servico-nome">Formação AI Essentials</span></div>
+      <p class="resumo">AI Essentials é o nosso programa de formação em IA aplicada à gestão, em cinco módulos, adaptado ao setor e ao nível de cada grupo, da administração às equipas operacionais. É ministrado por formador com Certificado de Competências Pedagógicas (CCP) e pode ser integrado num projeto de IA.</p>
+      <h3 class="rotulo">Questões a que ajudamos a responder</h3>
+      <ol class="questoes"><li>O que deve a administração saber para decidir sobre IA?</li><li>Que regras de utilização devem seguir as equipas?</li><li>Como usar IA sem expor dados pessoais ou informação confidencial?</li></ol>
+      
+    </div>
+    <div class="col-dir"><h3 class="rotulo">Os cinco módulos</h3>
+       <table class="tabela">
+         <tbody><tr><th><span class="num">1</span>Fundamentos de IA para a administração</th><td>O que a IA faz e não faz, tipos de ferramentas, impacto no negócio e critérios de decisão.</td></tr><tr><th><span class="num">2</span>Casos de uso e integração em sistemas</th><td>Identificar oportunidades, priorizar pelo retorno e integrar a IA em processos e aplicações.</td></tr><tr><th><span class="num">3</span>Governação e ética da IA</th><td>Regras de utilização, responsabilidades, riscos e controlo.</td></tr><tr><th><span class="num">4</span>RGPD, privacidade e IA</th><td>Dados pessoais em ferramentas de IA, transferências internacionais e contratos.</td></tr><tr><th><span class="num">5</span>NIS2 e segurança da informação</th><td>Requisitos de cibersegurança, boas práticas e o papel de cada pessoa.</td></tr></tbody>
+       </table>
+       <div class="duas mt">
+         <div><h3 class="rotulo">Entregáveis</h3><ul class="check"><li>Sessões adaptadas ao setor e ao público</li><li>Materiais de apoio com exemplos práticos</li><li>Orientações de utilização responsável</li><li>Primeiros casos de uso identificados</li></ul></div>
+         <div><h3 class="rotulo">Formato</h3><p class="pequeno">Duração, modalidade (presencial, remota ou mista) e exemplos práticos ajustados a cada grupo e definidos na proposta.</p></div>
+       </div></div>
+  </div>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>10</span></footer>
+</section>
+<section class="pagina ">
+  <div class="tracker"><span>Abordagem</span></div>
+  
+  <h1 class="titulo-acao">Um método em quatro fases, com entregáveis definidos em cada uma e decisões apoiadas em dados</h1>
+  <figure class="figura">
+    <figcaption><strong>Figura 4.</strong> Fases de um projeto Gadgetmetodo</figcaption>
+    <div class="fases"><div class="fase"><span>01</span>Diagnóstico</div><div class="fase"><span>02</span>Desenho</div><div class="fase"><span>03</span>Implementação</div><div class="fase"><span>04</span>Acompanhamento</div></div>
+    <div class="fases-det"><div><p>Levantamento de processos, sistemas, equipas, dados e riscos. Prioridades com maior retorno.</p><h4>Entregáveis</h4><ul class="check"><li>Relatório de diagnóstico</li><li>Prioridades e oportunidades</li></ul></div><div><p>Modelo organizacional, processos, arquitetura de sistemas e regras de governação.</p><h4>Entregáveis</h4><ul class="check"><li>Solução desenhada</li><li>Plano de ação com calendário</li></ul></div><div><p>Execução com as equipas: ferramentas, procedimentos, formação e gestão da mudança.</p><h4>Entregáveis</h4><ul class="check"><li>Soluções em funcionamento</li><li>Procedimentos e equipas formadas</li></ul></div><div><p>Medição de resultados, ajustes e apoio regular à administração.</p><h4>Entregáveis</h4><ul class="check"><li>Indicadores acompanhados</li><li>Relatórios para a administração</li></ul></div></div>
+  </figure>
+  <p class="nota-pag">O âmbito, os entregáveis e o calendário de cada fase são fixados na proposta. A proteção de dados e a gestão da mudança atravessam todas as fases.</p>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>11</span></footer>
+</section>
+<section class="pagina ">
+  <div class="tracker"><span>Modelos de colaboração e princípios</span></div>
+  
+  <h1 class="titulo-acao">Três formas de trabalhar connosco, sempre com condições escritas na proposta</h1>
+  <div class="tres">
+    <div class="bloco"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <circle cx="12" cy="12" r="10" /> <circle cx="12" cy="12" r="6" /> <circle cx="12" cy="12" r="2" /> </svg></span><h3>Projeto de âmbito fechado</h3><p>Diagnóstico, implementação de uma solução ou reorganização de uma área, com entregáveis definidos e pagamento associado à conclusão ou a marcos do projeto.</p></div>
+    <div class="bloco"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="m11 17 2 2a1 1 0 1 0 3-3" /> <path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4" /> <path d="m21 3 1 11h-2" /> <path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3" /> <path d="M3 4h8" /> </svg></span><h3>Acompanhamento continuado</h3><p>Apoio regular à administração, por exemplo como board advisor ou DPO externo, com prestações periódicas, como trimestrais, ao longo de um ou mais anos.</p></div>
+    <div class="bloco"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" /> <path d="M22 10v6" /> <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" /> </svg></span><h3>Formação</h3><p>Programa AI Essentials, isolado ou integrado num projeto, adaptado ao setor e ao público.</p></div>
+  </div>
+  <h3 class="rotulo mt-g">Princípios que orientam as nossas decisões</h3>
+  <dl class="principios">
+    <div><dt>Clareza</dt><dd>Comunicação direta, entregáveis compreensíveis e decisões fundamentadas.</dd></div>
+    <div><dt>Método</dt><dd>Diagnóstico rigoroso, processos documentados e indicadores para medir o progresso.</dd></div>
+    <div><dt>Integração</dt><dd>Pessoas, processos e tecnologia tratados como um só sistema.</dd></div>
+    <div><dt>Confiança</dt><dd>Confidencialidade, proteção de dados e governação com bom senso.</dd></div>
+  </dl>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>12</span></footer>
+</section>
+<section class="pagina ">
+  <div class="tracker"><span>Experiência</span></div>
+  
+  <h1 class="titulo-acao">Experiência na indústria, na tecnologia, no turismo e no retalho, com o mesmo método em contextos diferentes</h1>
+  <div class="casos"><div class="caso">
+    <div class="caso-cab"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" /> </svg></span><span class="setor">Têxtil e vestuário</span></div>
+    <h3>Digitalização do desenvolvimento de produto numa confeção de malhas circulares</h3>
+    <p><strong>Âmbito.</strong> Implementação de prototipagem 3D de vestuário, com bibliotecas de tecidos e avatares, integração com moldes digitais, formação e acompanhamento.</p>
+    <p><strong>Objetivos.</strong> Menos tempo, custo e desperdício nas amostras; melhor comunicação entre comercial, desenvolvimento e produção.</p>
+  </div><div class="caso">
+    <div class="caso-cab"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 9H8" /> <path d="M16 13H8" /> <path d="M16 17H8" /> </svg></span><span class="setor">Tecnologia e gestão documental</span></div>
+    <h3>Estratégia de IA e proteção de dados numa empresa de serviços tecnológicos</h3>
+    <p><strong>Âmbito.</strong> Conselho à administração em inovação e tecnologia, funções de DPO, roteiro de IA, governação com RGPD e NIS2 e formação AI Essentials, ao longo de dois anos.</p>
+    <p><strong>Objetivos.</strong> Casos de uso com maior retorno, IA integrada na oferta e conformidade demonstrável.</p>
+  </div><div class="caso">
+    <div class="caso-cab"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M8 22h8" /> <path d="M7 10h10" /> <path d="M12 15v7" /> <path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z" /> </svg></span><span class="setor">Turismo premium</span></div>
+    <h3>IA e automação de marketing numa agência de enoturismo</h3>
+    <p><strong>Âmbito.</strong> Diagnóstico de campanhas, gestão de clientes e website; jornada do cliente; fluxos automáticos com IA; indicadores e painéis; formação da equipa.</p>
+    <p><strong>Objetivos.</strong> Personalização em escala sem perder o toque humano e medição rigorosa do marketing.</p>
+  </div><div class="caso">
+    <div class="caso-cab"><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M16 10a4 4 0 0 1-8 0" /> <path d="M3.103 6.034h17.794" /> <path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z" /> </svg></span><span class="setor">Retalho especializado</span></div>
+    <h3>Plano de recuperação de margem num retalhista omnicanal de tecnologia</h3>
+    <p><strong>Âmbito.</strong> Análise de concorrência e de margens por canal, organização das equipas por canal, objetivos e modelo de incentivos indexado à margem, nova unidade de assistência técnica.</p>
+    <p><strong>Objetivos.</strong> Inverter a perda de margem e ligar os incentivos aos resultados.</p>
+  </div></div>
+  <p class="nota-pag">Por confidencialidade, os clientes não são identificados.</p>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>13</span></footer>
+</section>
+<section class="pagina ">
+  <div class="tracker"><span>Equipa</span></div>
+  
+  <h1 class="titulo-acao">Cada projeto é acompanhado da fase de diagnóstico à implementação pela mesma pessoa</h1>
+  <div class="equipa">
+    <div class="perfil">
+      <div class="monograma">JSC</div>
+      <div>
+        <h2>Jorge Sá Couto</h2>
+        <p class="funcao">Gestor de projeto e consultor</p>
+        <p>Licenciado em Engenharia Informática, com formação complementar em economia, gestão e estratégia de inteligência artificial. Acompanha os projetos da Gadgetmetodo da fase de diagnóstico à implementação, com especial foco na ligação entre organização, tecnologia e proteção de dados.</p>
+      </div>
+    </div>
+    <div class="formacao">
+      <h3 class="rotulo">Formação académica e certificações</h3>
+      <ul class="check"><li>Licenciatura em Engenharia Informática, Universidade NOVA de Lisboa</li><li>Frequência do curso de Economia, Universidade de Coimbra</li><li>MBA em Gestão, ISCTE - Instituto Universitário de Lisboa</li><li>Certificado The Business of AI: Strategies for Leaders, London Business School</li><li>Certificado de Competências Pedagógicas (CCP)</li></ul>
+    </div>
+  </div>
+  <h3 class="rotulo mt-g">Áreas em que acompanha projetos</h3>
+  <div class="areas" style="margin-top:0"><div><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <rect width="8" height="8" x="3" y="3" rx="2" /> <path d="M7 11v4a2 2 0 0 0 2 2h4" /> <rect width="8" height="8" x="13" y="13" rx="2" /> </svg></span><br>Organização e Métodos</div><div><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /> <path d="M20 2v4" /> <path d="M22 4h-4" /> <circle cx="4" cy="20" r="2" /> </svg></span><br>Inteligência artificial e transformação digital</div><div><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /> <path d="m9 12 2 2 4-4" /> </svg></span><br>Proteção de dados e conformidade</div><div><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <circle cx="12" cy="12" r="10" /> <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" /> </svg></span><br>Estratégia e gestão</div><div><span class="icone"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" /> <path d="M22 10v6" /> <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" /> </svg></span><br>Formação AI Essentials</div></div>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>14</span></footer>
+</section>
+<section class="pagina ">
+  <div class="tracker"><span>Como iniciar</span></div>
+  
+  <h1 class="titulo-acao">Da primeira conversa à proposta: quatro passos simples para começar</h1>
+  <div class="passos"><div class="passo"><span>01</span><h3>Pedido</h3><p>Pelo formulário em gadgetmetodo.pt, por email ou por telefone.</p></div><div class="passo"><span>02</span><h3>Primeira conversa</h3><p>Objetivos, contexto, prioridades e prazos.</p></div><div class="passo"><span>03</span><h3>Proposta à medida</h3><p>Âmbito, entregáveis, calendário e investimento.</p></div><div class="passo"><span>04</span><h3>Arranque</h3><p>Equipa, plano de trabalho e primeiros entregáveis.</p></div></div>
+  <div class="cta">
+    <div>
+      <h2>Vamos simplificar o próximo passo da sua organização?</h2>
+      <p>Conte-nos o seu desafio. Preparamos uma proposta à medida, com âmbito, entregáveis, calendário e investimento claros.</p>
+    </div>
+    <dl>
+      <div><dt>Formulário</dt><dd>www.gadgetmetodo.pt/contactos</dd></div>
+      <div><dt>Email</dt><dd>info@gadgetmetodo.pt</dd></div>
+      <div><dt>Telefone</dt><dd>+351&nbsp;915&nbsp;416&nbsp;112</dd></div>
+    </dl>
+  </div>
+  <footer class="rodape-pag"><span>Gadgetmetodo, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;Catálogo de Serviços 2026</span><span>15</span></footer>
+</section>
+<section class="pagina contracapa">
+  
+  
+  <img class="capa-simbolo" src="../../assets/marca/simbolo-negativo.svg" alt="">
+  <img class="capa-logo" src="../../assets/marca/logotipo-negativo.svg" alt="Gadgetmetodo, Lda.">
+  <div class="contracapa-texto">
+    <p class="assinatura">Simplificar&nbsp;&nbsp;·&nbsp;&nbsp;Organizar&nbsp;&nbsp;·&nbsp;&nbsp;Fazer acontecer</p>
+    <dl>
+      <div><dt>Morada</dt><dd>Rua das Cruzes, 625<br>4100-195 Porto, Portugal</dd></div>
+      <div><dt>Contactos</dt><dd>+351&nbsp;915&nbsp;416&nbsp;112<br>info@gadgetmetodo.pt</dd></div>
+      <div><dt>Website</dt><dd>www.gadgetmetodo.pt</dd></div>
+    </dl>
+  </div>
+  <p class="legal">© 2026 Gadgetmetodo, Lda. Documento informativo, que não constitui proposta contratual. As condições de cada projeto são definidas em proposta específica.</p>
+  
+</section>
+</body>
+</html>

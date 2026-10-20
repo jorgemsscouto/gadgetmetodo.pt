@@ -63,6 +63,10 @@ Proteções incluídas: campo isca para robôs, tempo mínimo de preenchimento, 
 
 A pasta `documentos/` (catálogo e outros documentos) não é enviada para o site.
 
+## Catálogo de serviços
+
+`documentos/Gadgetmetodo-Catalogo-de-Servicos-2026.pdf` (16 páginas, A4 horizontal) é gerado a partir de `documentos/catalogo/catalogo.html`, que usa as fontes e o logótipo de `assets/`. Para alterar o texto, editar o HTML e voltar a gerar o PDF no Chrome: Imprimir, Guardar como PDF, margens "Nenhuma" e "Gráficos de fundo" ativado.
+
 Depois de publicar:
 
 1. Registar o site no Google Search Console e no Bing Webmaster Tools e submeter `https://www.gadgetmetodo.pt/sitemap.xml`. O índice do Bing é usado por vários assistentes de IA.
