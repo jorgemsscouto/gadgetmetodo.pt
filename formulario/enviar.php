@@ -11,6 +11,7 @@ require __DIR__ . '/lib/PHPMailer/Exception.php';
 require __DIR__ . '/lib/PHPMailer/PHPMailer.php';
 require __DIR__ . '/lib/PHPMailer/SMTP.php';
 require __DIR__ . '/modelos.php';
+require __DIR__ . '/dados.php';
 
 date_default_timezone_set('Europe/Lisbon');
 
@@ -221,6 +222,8 @@ $dados = [
     'data'       => date('d/m/Y, H:i'),
     'site'       => rtrim((string) ($cfg['site'] ?? 'https://www.gadgetmetodo.pt'), '/'),
 ];
+$dados['link_catalogo'] = link_catalogo($cfg, $referencia);
+$dados['registos'] = $dados['site'] . '/formulario/registos.php';
 
 // 1. Pedido para a caixa da empresa, com cópia oculta e resposta direta ao remetente
 try {
@@ -238,6 +241,13 @@ try {
 } catch (PHPMailerException $e) {
     error_log('Formulário: falha no envio do pedido ' . $referencia . ': ' . $e->getMessage());
     responder(false, 502, ['mensagem' => ERRO_GERAL], $quer_json);
+}
+
+// Registo do pedido, para associar as aberturas do catálogo; uma falha aqui não impede o envio
+try {
+    guardar_pedido($cfg, $dados);
+} catch (Throwable $e) {
+    error_log('Formulário: falha ao registar o pedido ' . $referencia . ': ' . $e->getMessage());
 }
 
 // 2. Confirmação ao remetente; uma falha aqui não invalida o pedido já entregue

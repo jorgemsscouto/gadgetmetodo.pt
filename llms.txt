@@ -37,4 +37,5 @@ Factos essenciais:
 
 ## Optional
 
+- [Catálogo de Serviços 2026 (PDF)](https://www.gadgetmetodo.pt/catalogo-servicos-2026.pdf): as cinco áreas de serviço, abordagem, exemplos de intervenção e contactos, em 16 páginas
 - [Política de privacidade](https://www.gadgetmetodo.pt/privacidade/): tratamento de dados pessoais; o site não usa cookies nem ferramentas de análise

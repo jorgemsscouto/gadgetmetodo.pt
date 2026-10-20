@@ -3,6 +3,7 @@
 
 User-agent: *
 Allow: /
+Disallow: /formulario/
 
 # Motores de pesquisa e pesquisa com IA (indexação e pedidos feitos por utilizadores)
 User-agent: Googlebot
@@ -15,6 +16,7 @@ User-agent: Claude-User
 User-agent: PerplexityBot
 User-agent: Perplexity-User
 Allow: /
+Disallow: /formulario/
 
 # Treino de modelos de IA: permitido, para que a marca seja conhecida pelos modelos.
 # Para recusar o treino sem perder a presença nas respostas, trocar "Allow" por "Disallow" neste grupo.
@@ -24,5 +26,6 @@ User-agent: Google-Extended
 User-agent: Applebot-Extended
 User-agent: CCBot
 Allow: /
+Disallow: /formulario/
 
 Sitemap: https://www.gadgetmetodo.pt/sitemap.xml

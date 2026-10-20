@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Cria formulario/config.php com os dados de envio de email do formulário de contacto.
+# Cria formulario/config.php com os dados de envio de email do formulário e do registo do catálogo.
 # Utilização: ./configurar-formulario.sh              configura e envia um email de teste
 #             ./configurar-formulario.sh --automatico  só gera o config.php (usado pelo publicar.sh)
-#             ./configurar-formulario.sh --esquecer    apaga a palavra-passe guardada e o config.php
-# A palavra-passe é pedida uma única vez e fica nas Chaves do macOS (noutros sistemas, em
-# .formulario.senha com acesso só do dono). Nem ela nem o config.php entram no Git.
+#             ./configurar-formulario.sh --acesso      mostra o endereço e a palavra-passe da área reservada
+#             ./configurar-formulario.sh --esquecer    apaga os segredos guardados e o config.php
+# A palavra-passe do email é pedida uma única vez. Os segredos ficam nas Chaves do macOS (noutros
+# sistemas, em ficheiros .formulario.* com acesso só do dono) e nunca entram no Git nem no site.
 
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -17,28 +18,85 @@ SMTP_HOST="smtp-pt.securemail.pro"
 SMTP_PORTA=465
 SMTP_SEGURANCA="ssl"
 SMTP_UTILIZADOR="info@gadgetmetodo.pt"
+AREA_RESERVADA="https://www.gadgetmetodo.pt/formulario/registos.php"
 
 DESTINO="formulario/config.php"
-FICHEIRO_SENHA=".formulario.senha"
-SERVICO_CHAVES="gadgetmetodo-smtp"
 TEM_CHAVES=false
 command -v security >/dev/null 2>&1 && TEM_CHAVES=true
 MODO="${1:-}"
 
+# Segredos: nas Chaves do macOS ou em ficheiros locais protegidos
+ler_segredo() {   # nome
+  if $TEM_CHAVES; then
+    security find-generic-password -s "gadgetmetodo-$1" -a gadgetmetodo -w 2>/dev/null || true
+  elif [ -f ".formulario.$1" ]; then
+    cat ".formulario.$1"
+  fi
+}
+guardar_segredo() {   # nome valor
+  if $TEM_CHAVES; then
+    security add-generic-password -U -s "gadgetmetodo-$1" -a gadgetmetodo -w "$2" >/dev/null
+  else
+    (umask 077; printf '%s' "$2" > ".formulario.$1")
+  fi
+}
+apagar_segredo() {   # nome
+  if $TEM_CHAVES; then
+    security delete-generic-password -s "gadgetmetodo-$1" -a gadgetmetodo >/dev/null 2>&1 || true
+  fi
+  rm -f ".formulario.$1"
+}
+aleatorio() {   # n.º de bytes, em hexadecimal
+  od -An -tx1 -N"$1" /dev/urandom | tr -d ' \n'
+}
+sha256() {
+  if command -v shasum >/dev/null 2>&1; then shasum -a 256; else sha256sum; fi | cut -d' ' -f1
+}
+
 if [ "$MODO" = "--esquecer" ]; then
-  $TEM_CHAVES && security delete-generic-password -s "$SERVICO_CHAVES" -a "$SMTP_UTILIZADOR" >/dev/null 2>&1 || true
-  rm -f "$FICHEIRO_SENHA" "$DESTINO"
-  echo "Palavra-passe do email e config.php apagados."
+  for nome in smtp chave registos; do apagar_segredo "$nome"; done
+  $TEM_CHAVES && security delete-generic-password -s gadgetmetodo-smtp -a "$SMTP_UTILIZADOR" >/dev/null 2>&1 || true
+  rm -f .formulario.senha
+  rm -f "$DESTINO"
+  echo "Segredos do formulário e config.php apagados."
   exit 0
 fi
 
-SMTP_SENHA=""
-if $TEM_CHAVES; then
-  SMTP_SENHA=$(security find-generic-password -s "$SERVICO_CHAVES" -a "$SMTP_UTILIZADOR" -w 2>/dev/null || true)
-elif [ -f "$FICHEIRO_SENHA" ]; then
-  SMTP_SENHA=$(cat "$FICHEIRO_SENHA")
+# Chave de assinatura dos links e palavra-passe da área reservada: criadas uma vez e mantidas
+CHAVE=$(ler_segredo chave)
+if [ -z "$CHAVE" ]; then
+  CHAVE=$(aleatorio 32)
+  guardar_segredo chave "$CHAVE"
+fi
+SENHA_REGISTOS=$(ler_segredo registos)
+NOVA_AREA=false
+if [ -z "$SENHA_REGISTOS" ]; then
+  SENHA_REGISTOS=$(aleatorio 12)
+  guardar_segredo registos "$SENHA_REGISTOS"
+  NOVA_AREA=true
 fi
 
+mostrar_acesso() {
+  echo "Área reservada (pedidos e aberturas do catálogo): $AREA_RESERVADA"
+  echo "Palavra-passe: $SENHA_REGISTOS"
+}
+
+if [ "$MODO" = "--acesso" ]; then
+  mostrar_acesso
+  exit 0
+fi
+
+SMTP_SENHA=$(ler_segredo smtp)
+# Palavra-passe guardada pela versão anterior deste script
+if [ -z "$SMTP_SENHA" ]; then
+  if $TEM_CHAVES; then
+    SMTP_SENHA=$(security find-generic-password -s gadgetmetodo-smtp -a "$SMTP_UTILIZADOR" -w 2>/dev/null || true)
+  elif [ -f .formulario.senha ]; then
+    SMTP_SENHA=$(cat .formulario.senha)
+  fi
+  [ -n "$SMTP_SENHA" ] && guardar_segredo smtp "$SMTP_SENHA"
+fi
+NOVA_SENHA=false
 if [ -z "$SMTP_SENHA" ]; then
   if [ "$MODO" = "--automatico" ]; then
     echo "Formulário por configurar: corra ./configurar-formulario.sh uma vez."
@@ -47,8 +105,6 @@ if [ -z "$SMTP_SENHA" ]; then
   read -rsp "Palavra-passe da caixa $SMTP_UTILIZADOR (pedida só desta vez): " SMTP_SENHA
   echo
   NOVA_SENHA=true
-else
-  NOVA_SENHA=false
 fi
 
 # Escapa um valor para uma string PHP entre plicas
@@ -60,6 +116,8 @@ php_str() {
 }
 
 escrever_config() {
+  local hash_registos
+  hash_registos=$(printf '%s' "$SENHA_REGISTOS" | sha256)
   (umask 077; cat > "$DESTINO" <<EOF
 <?php
 // Gerado por configurar-formulario.sh. Não colocar no Git.
@@ -75,6 +133,8 @@ return [
         'utilizador' => $(php_str "$SMTP_UTILIZADOR"),
         'senha'      => $(php_str "$SMTP_SENHA"),
     ],
+    'chave'        => '$CHAVE',
+    'admin_sha256' => '$hash_registos',
     'origens' => ['https://www.gadgetmetodo.pt', 'https://gadgetmetodo.pt'],
     'site'    => 'https://www.gadgetmetodo.pt',
 ];
@@ -84,6 +144,9 @@ EOF
 
 if [ "$MODO" = "--automatico" ]; then
   escrever_config
+  if $NOVA_AREA; then
+    echo "Criado o acesso à área reservada. Para ver a palavra-passe: ./configurar-formulario.sh --acesso"
+  fi
   exit 0
 fi
 
@@ -103,16 +166,16 @@ else
   exit 1
 fi
 
-# Guarda a palavra-passe só depois de um envio bem-sucedido
+# Guarda a palavra-passe do email só depois de um envio bem-sucedido
 if $NOVA_SENHA; then
-  if $TEM_CHAVES; then
-    security add-generic-password -U -s "$SERVICO_CHAVES" -a "$SMTP_UTILIZADOR" -w "$SMTP_SENHA" >/dev/null
-    echo "Palavra-passe guardada nas Chaves do macOS."
-  else
-    (umask 077; printf '%s' "$SMTP_SENHA" > "$FICHEIRO_SENHA")
-    echo "Palavra-passe guardada em $FICHEIRO_SENHA."
-  fi
+  guardar_segredo smtp "$SMTP_SENHA"
+  echo "Palavra-passe do email guardada."
 fi
 
 escrever_config
-echo "Criado $DESTINO. Publique com ./publicar.sh para o enviar para o alojamento."
+echo "Criado $DESTINO."
+echo
+mostrar_acesso
+echo "(Para voltar a ver estes dados: ./configurar-formulario.sh --acesso)"
+echo
+echo "Publique com ./publicar.sh para enviar a configuração para o alojamento."

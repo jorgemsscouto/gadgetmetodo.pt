@@ -66,13 +66,22 @@ O formulário em `/contactos/` envia os pedidos para `formulario/enviar.php`, qu
 
 Se a palavra-passe do email mudar: `./configurar-formulario.sh --esquecer` e voltar ao passo 2.
 
+### Catálogo enviado com os pedidos e registo de aberturas
+
+O email de confirmação de cada pedido inclui um botão para o catálogo. A ligação (`/formulario/catalogo.php?r=REFERÊNCIA&s=ASSINATURA`) regista a data e hora de cada abertura e encaminha para `/catalogo-servicos-2026.pdf`. A assinatura impede que alguém registe aberturas de pedidos que não recebeu; ligações inválidas encaminham para o PDF sem registar nada.
+
+- **Onde ficam os dados:** numa base de dados SQLite (ou em ficheiros CSV, se o alojamento não tiver SQLite), fora da pasta pública sempre que o alojamento o permite; caso contrário, numa pasta com nome não adivinhável dentro de `formulario/`. Os pedidos com mais de 12 meses e as respetivas aberturas são apagados automaticamente.
+- **Consulta:** área reservada em `https://www.gadgetmetodo.pt/formulario/registos.php`, com a lista de pedidos, as aberturas e exportação para Excel. A palavra-passe é criada automaticamente pelo `configurar-formulario.sh`; para a ver: `./configurar-formulario.sh --acesso`.
+- **Aberturas automáticas:** sistemas de segurança de email de algumas empresas abrem os links para os verificar. Estas aberturas são assinaladas (abertura nos dois minutos seguintes ao pedido ou por um agente conhecido), mas a deteção não é infalível.
+- **Proteção de dados:** a política de privacidade e o rodapé do email de confirmação informam sobre este registo (interesse legítimo de acompanhamento comercial).
+
 Proteções incluídas: campo isca para robôs, tempo mínimo de preenchimento, limite de 5 pedidos por hora por origem, validação no servidor, verificação da origem do pedido e bloqueio de injeção de cabeçalhos. Os testes foram feitos com um servidor de email local.
 
 A pasta `documentos/` (catálogo e outros documentos) não é enviada para o site.
 
 ## Catálogo de serviços
 
-`documentos/Gadgetmetodo-Catalogo-de-Servicos-2026.pdf` (16 páginas, A4 horizontal) é gerado a partir de `documentos/catalogo/catalogo.html`, que usa as fontes e o logótipo de `assets/`. Para alterar o texto, editar o HTML e voltar a gerar o PDF no Chrome: Imprimir, Guardar como PDF, margens "Nenhuma" e "Gráficos de fundo" ativado.
+O catálogo está publicado em `https://www.gadgetmetodo.pt/catalogo-servicos-2026.pdf` (ficheiro `catalogo-servicos-2026.pdf` na raiz) e ligado na página de Serviços. É uma cópia de `documentos/Gadgetmetodo-Catalogo-de-Servicos-2026.pdf` (16 páginas, A4 horizontal), gerado a partir de `documentos/catalogo/catalogo.html`, que usa as fontes e o logótipo de `assets/`. Para alterar o texto, editar o HTML e voltar a gerar o PDF no Chrome: Imprimir, Guardar como PDF, margens "Nenhuma" e "Gráficos de fundo" ativado. Depois, copiar o PDF para `catalogo-servicos-2026.pdf` na raiz e publicar.
 
 Depois de publicar:
 
@@ -85,7 +94,7 @@ Depois de publicar:
 - [ ] **Identificação legal da sociedade.** O artigo 171.º do Código das Sociedades Comerciais exige que os sítios na Internet indiquem a conservatória do registo comercial, o número de matrícula e de identificação de pessoa coletiva (NIPC) e, nas sociedades por quotas, o capital social. O NIPC (513 978 011) já está no rodapé, na página "Sobre", nos dados estruturados e no catálogo; faltam a conservatória e o capital social.
 - [ ] **Redes sociais**: quando existirem, acrescentar os endereços ao campo `sameAs` da organização em `ferramentas/gerar-site.mjs`.
 - [x] **Email com domínio próprio**: o site usa `info@gadgetmetodo.pt`.
-- [ ] **Exemplos de intervenção** (`experiencia/`): confirmar que os quatro casos podem ser publicados, mesmo sem nomes, e que descrevem trabalho realizado.
+- [x] **Exemplos de intervenção** (`experiencia/` e catálogo): divulgação confirmada.
 - [ ] **Perfil de Jorge Sá Couto**: confirmar a função a indicar (por exemplo, sócio-gerente) e, se desejado, acrescentar fotografia.
 - [ ] **Política de privacidade**: confirmar o prazo de conservação de 12 meses para pedidos de contacto sem seguimento.
 

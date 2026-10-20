@@ -72,7 +72,13 @@ function email_confirmacao_html(array $d): string
         . '<h1 style="margin:0 0 24px;font-family:' . $f . ';font-size:24px;line-height:1.3;color:' . COR_MARINHO . ';font-weight:700;">Obrigado pelo seu contacto.</h1>'
         . '<p style="margin:0 0 16px;font-family:' . $f . ';font-size:15px;line-height:1.6;color:' . COR_TEXTO . ';">' . $saudacao . '</p>'
         . '<p style="margin:0 0 16px;font-family:' . $f . ';font-size:15px;line-height:1.6;color:' . COR_TEXTO . ';">Agradecemos o interesse nos serviços da Gadgetmetodo. Confirmamos a receção do seu ' . $tipo . ', que ficou registado com a referência <strong style="color:' . COR_MARINHO . ';">' . $ref . '</strong>.</p>'
-        . '<p style="margin:0 0 28px;font-family:' . $f . ';font-size:15px;line-height:1.6;color:' . COR_TEXTO . ';">Um membro da nossa equipa irá analisar o pedido e entrará em contacto consigo brevemente.</p>'
+        . '<p style="margin:0 0 24px;font-family:' . $f . ';font-size:15px;line-height:1.6;color:' . COR_TEXTO . ';">Um membro da nossa equipa irá analisar o pedido e entrará em contacto consigo brevemente.</p>'
+        // Catálogo
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px;background:' . COR_FUNDO . ';"><tr><td style="padding:22px 24px;">'
+        . '<p style="margin:0 0 6px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:' . COR_PETROLEO . ';font-weight:700;">Catálogo de Serviços 2026</p>'
+        . '<p style="margin:0 0 16px;font-family:' . $f . ';font-size:14px;line-height:1.55;color:' . COR_TEXTO . ';">Enquanto analisamos o seu pedido, conheça em detalhe as nossas áreas de serviço, a forma como trabalhamos e exemplos de intervenção.</p>'
+        . '<a href="' . h($d['link_catalogo']) . '" style="display:inline-block;padding:12px 20px;background:' . COR_MARINHO . ';color:#FFFFFF;text-decoration:none;font-family:' . $f . ';font-size:14px;font-weight:700;border-radius:8px;">Abrir o catálogo (PDF)</a>'
+        . '</td></tr></table>'
         // Resumo
         . '<p style="margin:0 0 4px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:' . COR_SUAVE . ';font-weight:700;">Resumo do pedido</p>'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px;border-top:2px solid ' . COR_MARINHO . ';border-bottom:1px solid ' . COR_LINHA . ';">' . $linhas_resumo . '</table>'
@@ -93,6 +99,7 @@ function email_confirmacao_html(array $d): string
         // Nota legal
         . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;"><tr><td style="padding:20px 8px 0;font-family:' . $f . ';font-size:11px;line-height:1.6;color:' . COR_SUAVE . ';">'
         . 'Esta mensagem foi enviada automaticamente em resposta a um pedido submetido em www.gadgetmetodo.pt. Se não fez este pedido, pode ignorá-la. '
+        . 'Se abrir o catálogo através desta mensagem, a data e hora do acesso ficam registadas e associadas ao seu pedido, para acompanhamento. '
         . 'Os seus dados são tratados de acordo com a nossa <a href="' . $site . '/privacidade/" style="color:' . COR_SUAVE . ';">política de privacidade</a>. '
         . 'A informação contida nesta mensagem é confidencial e destina-se exclusivamente ao seu destinatário.'
         . '</td></tr></table>'
@@ -109,6 +116,9 @@ function email_confirmacao_texto(array $d): string
         . $saudacao . "\n\n"
         . "Agradecemos o interesse nos serviços da Gadgetmetodo. Confirmamos a receção do seu " . $tipo . ", que ficou registado com a referência " . $d['referencia'] . ".\n\n"
         . "Um membro da nossa equipa irá analisar o pedido e entrará em contacto consigo brevemente.\n\n"
+        . "CATÁLOGO DE SERVIÇOS 2026\n"
+        . "Enquanto analisamos o seu pedido, conheça em detalhe as nossas áreas de serviço, a forma como trabalhamos e exemplos de intervenção:\n"
+        . $d['link_catalogo'] . "\n\n"
         . "RESUMO DO PEDIDO\n"
         . "Referência: " . $d['referencia'] . "\n"
         . "Tipo de pedido: " . $d['tipo'] . "\n"
@@ -122,6 +132,7 @@ function email_confirmacao_texto(array $d): string
         . "Com os melhores cumprimentos,\nA equipa da Gadgetmetodo\n\n"
         . "--\n" . bloco_assinatura_texto($d) . "\n"
         . "Esta mensagem foi enviada automaticamente em resposta a um pedido submetido em www.gadgetmetodo.pt. Se não fez este pedido, pode ignorá-la. "
+        . "Se abrir o catálogo através desta mensagem, a data e hora do acesso ficam registadas e associadas ao seu pedido, para acompanhamento. "
         . "Os seus dados são tratados de acordo com a nossa política de privacidade: " . $d['site'] . "/privacidade/\n";
 }
 
@@ -158,7 +169,7 @@ function email_interno_html(array $d): string
         . '<tr><td style="padding:16px 32px 8px;"><p style="margin:0 0 8px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:' . COR_SUAVE . ';font-weight:700;">Mensagem</p>'
         . '<div style="padding:16px 18px;background:' . COR_FUNDO . ';font-family:' . $f . ';font-size:14px;line-height:1.6;color:' . COR_TEXTO . ';">' . nl2br(h($d['mensagem'])) . '</div></td></tr>'
         . '<tr><td style="padding:20px 32px 32px;"><a href="mailto:' . h($d['email']) . '?subject=' . $assunto_resposta . '" style="display:inline-block;padding:12px 20px;background:' . COR_PETROLEO . ';color:#FFFFFF;text-decoration:none;font-family:' . $f . ';font-size:14px;font-weight:700;border-radius:8px;">Responder ao pedido</a>'
-        . '<p style="margin:16px 0 0;font-family:' . $f . ';font-size:12px;color:' . COR_SUAVE . ';">O remetente recebeu uma confirmação automática com a referência ' . h($d['referencia']) . '. Responder a este email envia a resposta diretamente para o remetente.</p></td></tr>'
+        . '<p style="margin:16px 0 0;font-family:' . $f . ';font-size:12px;color:' . COR_SUAVE . ';">O remetente recebeu uma confirmação automática com a referência ' . h($d['referencia']) . ' e o catálogo de serviços. As aberturas do catálogo ficam registadas na <a href="' . h($d['registos']) . '" style="color:' . COR_PETROLEO . ';">área reservada</a>. Responder a este email envia a resposta diretamente para o remetente.</p></td></tr>'
         . '</table></td></tr></table></body></html>';
 }
 
@@ -173,7 +184,8 @@ function email_interno_texto(array $d): string
         . "Serviços: " . implode('; ', $d['servicos']) . "\n"
         . "Recebido em: " . $d['data'] . "\n\n"
         . "MENSAGEM\n" . $d['mensagem'] . "\n\n"
-        . "O remetente recebeu uma confirmação automática. Responder a este email envia a resposta diretamente para o remetente.\n";
+        . "O remetente recebeu uma confirmação automática com o catálogo de serviços. Aberturas do catálogo: " . $d['registos'] . "\n"
+        . "Responder a este email envia a resposta diretamente para o remetente.\n";
 }
 
 /* Página de erro para envios sem JavaScript */
