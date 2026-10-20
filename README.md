@@ -48,7 +48,9 @@ Com o script incluído (requer `lftp`; no macOS: `brew install lftp`):
 ./publicar.sh
 ```
 
-O script pede o servidor, o utilizador, a pasta do site e a palavra-passe, que não fica guardada. Os valores por omissão correspondem ao alojamento atual na Amen: servidor `gadgf9.ftp.tb-hosting.com` e pasta `www`, que é a pasta pública do domínio principal (a pasta `subsites` destina-se a subdomínios). É necessária uma conta FTP com permissão de escrita. Usa ligação cifrada quando o servidor a suporta, envia apenas ficheiros novos ou alterados, não apaga nada no servidor e exclui `.git`, `README.md`, `.nojekyll` e o próprio script.
+Na primeira execução, o script pede o servidor, o utilizador, a pasta do site e a palavra-passe, e guarda-os depois de uma publicação bem-sucedida: a palavra-passe nas Chaves (Keychain) do macOS e o resto em `.publicar.conf`. Nas execuções seguintes não pede nada. Estes ficheiros ficam fora do Git e nunca são enviados para o site. Se a palavra-passe mudar, correr `./publicar.sh --esquecer` e publicar de novo.
+
+Os valores propostos correspondem ao alojamento atual na Amen: servidor `gadgf9.ftp.tb-hosting.com` e pasta `www`, que é a pasta pública do domínio principal (a pasta `subsites` destina-se a subdomínios). O script usa ligação cifrada quando o servidor a suporta (a Amen não suporta na porta 21), envia apenas ficheiros novos ou diferentes, não apaga nada no servidor, exclui os ficheiros que não pertencem ao site e, no fim, avisa o Bing das páginas publicadas (IndexNow).
 
 Com um programa de FTP (FileZilla, Cyberduck ou o gestor de ficheiros do alojamento), enviar o conteúdo desta pasta para a pasta pública do domínio (na Amen, `www`), exceto `.git`, `README.md`, `.nojekyll` e `publicar.sh`. O ficheiro `.htaccess` está oculto no Finder e tem de ser enviado.
 

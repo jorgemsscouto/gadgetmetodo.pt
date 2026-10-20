@@ -1,6 +1,10 @@
 # Configuração com a palavra-passe do email do formulário
 formulario/config.php
 
+# Credenciais de publicação por FTP guardadas pelo publicar.sh
+.publicar.conf
+.publicar.senha
+
 .DS_Store
 
 # Dependências dos geradores
