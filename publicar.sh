@@ -30,13 +30,16 @@ export LFTP_PASSWORD
 lftp --env-password -u "$UTILIZADOR" "$SERVIDOR" <<EOF
 set ftp:ssl-allow yes
 set net:max-retries 2
-mirror --reverse --verbose \
+mirror --reverse --verbose --no-perms \
   --exclude-glob .git/ \
   --exclude-glob .gitignore \
   --exclude-glob .nojekyll \
   --exclude-glob .DS_Store \
   --exclude-glob README.md \
   --exclude-glob publicar.sh \
+  --exclude-glob configurar-formulario.sh \
+  --exclude-glob formulario/config.exemplo.php \
+  --exclude-glob documentos/ \
   . "$PASTA"
 bye
 EOF

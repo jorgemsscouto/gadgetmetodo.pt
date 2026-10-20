@@ -1309,3 +1309,250 @@ a.cartao:hover .mais svg {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* Formulário de pedido */
+
+.formulario {
+  display: grid;
+  gap: 24px;
+  margin-top: 28px;
+}
+
+.campos-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 640px) {
+  .campos-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.campo label,
+.campo-grupo legend {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--marinho);
+  font-family: var(--fonte-titulos);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.campo-grupo {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.campo-grupo legend {
+  padding: 0;
+}
+
+.campo input[type="text"],
+.campo input[type="email"],
+.campo input[type="tel"],
+.campo textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--branco);
+  color: var(--preto);
+  font: inherit;
+  font-size: 1rem;
+  border: 1px solid #c9ced6;
+  border-radius: var(--raio-pequeno);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.campo textarea {
+  min-height: 170px;
+  resize: vertical;
+}
+
+.campo input:focus,
+.campo textarea:focus {
+  border-color: var(--petroleo);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 99, 106, 0.18);
+}
+
+.campo [aria-invalid="true"] {
+  border-color: #b42318;
+}
+
+.erro-campo {
+  margin: 6px 0 0;
+  color: #b42318;
+  font-size: 0.88rem;
+}
+
+.ajuda {
+  margin: 8px 0 0;
+  color: var(--cinzento);
+  font-size: 0.88rem;
+}
+
+.campo-grupo .ajuda {
+  margin: -2px 0 12px;
+}
+
+.opcoes {
+  display: grid;
+  gap: 10px;
+}
+
+.opcoes-linha {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+.opcoes-grelha {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+}
+
+.opcao {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  color: var(--antracite);
+  font-family: var(--fonte-texto);
+  font-size: 0.97rem;
+  font-weight: 400;
+  line-height: 1.45;
+  border: 1px solid var(--cinzento-claro);
+  border-radius: var(--raio-pequeno);
+  cursor: pointer;
+}
+
+.campo .opcao {
+  margin: 0;
+  color: var(--antracite);
+  font-family: var(--fonte-texto);
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.opcao:hover {
+  border-color: var(--cinzento);
+}
+
+.opcao:has(input:checked) {
+  background: var(--petroleo-tinta);
+  border-color: var(--petroleo);
+}
+
+.opcao input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--petroleo);
+}
+
+.consentimento {
+  border: 0;
+  padding: 0;
+}
+
+.consentimento:has(input:checked) {
+  background: transparent;
+}
+
+.campo-cabeca {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.campo-cabeca label {
+  margin-bottom: 0;
+}
+
+.botao-ditado {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 14px;
+  background: var(--branco);
+  color: var(--petroleo);
+  font-family: var(--fonte-titulos);
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: 1px solid var(--petroleo);
+  border-radius: var(--raio-pequeno);
+  cursor: pointer;
+}
+
+.botao-ditado svg {
+  width: 18px;
+  height: 18px;
+}
+
+.botao-ditado:hover {
+  background: var(--petroleo-tinta);
+}
+
+.botao-ditado[aria-pressed="true"] {
+  background: var(--petroleo);
+  color: var(--branco);
+}
+
+.botao-ditado[aria-pressed="true"] svg {
+  animation: pulsar 1.2s ease-in-out infinite;
+}
+
+@keyframes pulsar {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.estado-ditado:empty {
+  display: none;
+}
+
+.campo-oculto {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.formulario-acoes .botao[disabled] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.formulario-estado:empty {
+  display: none;
+}
+
+.formulario-estado {
+  padding: 16px 18px;
+  border-radius: var(--raio-pequeno);
+}
+
+.formulario-estado.erro {
+  background: #fef3f2;
+  color: #912018;
+}
+
+.sucesso-envio {
+  padding: clamp(24px, 4vw, 40px);
+  background: var(--petroleo-tinta);
+  border-radius: var(--raio);
+}
+
+.sucesso-envio h3 {
+  color: var(--profundo);
+  font-size: 1.4rem;
+}
+
+.sucesso-envio p:last-child {
+  margin-bottom: 0;
+}

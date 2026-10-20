@@ -51,6 +51,18 @@ Com um programa de FTP (FileZilla, Cyberduck ou o gestor de ficheiros do alojame
 
 Se a pasta pública tiver uma página por omissão do alojamento (por exemplo `index.php` ou `default.html`), apagá-la.
 
+### Formulário de contacto
+
+O formulário em `/contactos/` envia os pedidos para `formulario/enviar.php`, que precisa de PHP no alojamento. Cada pedido gera dois emails: o pedido para `info@gadgetmetodo.pt` (com cópia oculta opcional e resposta direta ao remetente) e uma confirmação de receção para quem o enviou. O campo de mensagem aceita ditado por voz nos navegadores que o suportam.
+
+1. Confirmar que o alojamento executa PHP: `curl -s https://www.gadgetmetodo.pt/formulario/enviar.php` deve devolver uma resposta em JSON e não o código do ficheiro. Fazer esta verificação antes de enviar a configuração.
+2. Criar a configuração com `./configurar-formulario.sh`, que pede os dados da caixa de email (servidor SMTP, porta, utilizador e palavra-passe) e o endereço em cópia oculta. Gera `formulario/config.php`, que fica fora do Git.
+3. Publicar com `./publicar.sh`.
+
+Proteções incluídas: campo isca para robôs, tempo mínimo de preenchimento, limite de 5 pedidos por hora por origem, validação no servidor, verificação da origem do pedido e bloqueio de injeção de cabeçalhos. Os testes foram feitos com um servidor de email local.
+
+A pasta `documentos/` (catálogo e outros documentos) não é enviada para o site.
+
 Depois de publicar:
 
 1. Registar o site no Google Search Console e no Bing Webmaster Tools e submeter `https://www.gadgetmetodo.pt/sitemap.xml`. O índice do Bing é usado por vários assistentes de IA.
@@ -60,7 +72,7 @@ Depois de publicar:
 
 - [ ] **Logótipo oficial.** Os ficheiros em `assets/marca/` são uma reconstrução vetorial provisória feita a partir do Manual Gráfico, que exige a validação do desenho final em vetor. Quando existirem os ficheiros aprovados, substituir os SVG mantendo os nomes e voltar a gerar `favicon.svg`, `favicon.ico`, `apple-touch-icon.png`, os ícones em `assets/img/` e a imagem de partilha `assets/img/partilha.png`.
 - [ ] **Identificação legal da sociedade.** O artigo 171.º do Código das Sociedades Comerciais exige que os sítios na Internet indiquem a conservatória do registo comercial, o número de matrícula e de identificação de pessoa coletiva (NIPC) e, nas sociedades por quotas, o capital social. Acrescentar estes dados ao rodapé e à página "Sobre".
-- [ ] **Email com domínio próprio** (por exemplo `geral@gadgetmetodo.pt`) em vez de Gmail, por credibilidade e controlo dos dados.
+- [x] **Email com domínio próprio**: o site usa `info@gadgetmetodo.pt`.
 - [ ] **Exemplos de intervenção** (`experiencia/`): confirmar que os quatro casos podem ser publicados, mesmo sem nomes, e que descrevem trabalho realizado.
 - [ ] **Perfil de Jorge Sá Couto**: confirmar a função a indicar (por exemplo, sócio-gerente) e, se desejado, acrescentar fotografia.
 - [ ] **Política de privacidade**: confirmar o prazo de conservação de 12 meses para pedidos de contacto sem seguimento.

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Contactos | Gadgetmetodo, Lda.</title>
-  <meta name="description" content="Contactos da Gadgetmetodo, Lda.: Rua das Cruzes, 625, 4100-195 Porto. Telefone +351 915 416 112. Email gadgetmetodo@gmail.com. Peça uma proposta à medida.">
+  <title>Contactos e pedidos de orçamento | Gadgetmetodo, Lda.</title>
+  <meta name="description" content="Peça um orçamento ou informações à Gadgetmetodo, Lda. Formulário online, telefone +351 915 416 112 e email info@gadgetmetodo.pt. Rua das Cruzes, 625, 4100-195 Porto.">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
   <link rel="canonical" href="https://www.gadgetmetodo.pt/contactos/">
   <meta name="theme-color" content="#0A0F26">
@@ -12,8 +12,8 @@
   <meta property="og:type" content="website">
   <meta property="og:locale" content="pt_PT">
   <meta property="og:site_name" content="Gadgetmetodo, Lda.">
-  <meta property="og:title" content="Contactos | Gadgetmetodo, Lda.">
-  <meta property="og:description" content="Contactos da Gadgetmetodo, Lda.: Rua das Cruzes, 625, 4100-195 Porto. Telefone +351 915 416 112. Email gadgetmetodo@gmail.com. Peça uma proposta à medida.">
+  <meta property="og:title" content="Contactos e pedidos de orçamento | Gadgetmetodo, Lda.">
+  <meta property="og:description" content="Peça um orçamento ou informações à Gadgetmetodo, Lda. Formulário online, telefone +351 915 416 112 e email info@gadgetmetodo.pt. Rua das Cruzes, 625, 4100-195 Porto.">
   <meta property="og:url" content="https://www.gadgetmetodo.pt/contactos/">
   <meta property="og:image" content="https://www.gadgetmetodo.pt/assets/img/partilha.png">
   <meta property="og:image:width" content="1200">
@@ -61,12 +61,12 @@
         "addressCountry": "PT"
       },
       "telephone": "+351915416112",
-      "email": "gadgetmetodo@gmail.com",
+      "email": "info@gadgetmetodo.pt",
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "sales",
         "telephone": "+351915416112",
-        "email": "gadgetmetodo@gmail.com",
+        "email": "info@gadgetmetodo.pt",
         "availableLanguage": [
           "pt-PT"
         ]
@@ -154,8 +154,8 @@
       "@type": "ContactPage",
       "@id": "https://www.gadgetmetodo.pt/contactos/#pagina",
       "url": "https://www.gadgetmetodo.pt/contactos/",
-      "name": "Contactos",
-      "description": "Contactos da Gadgetmetodo, Lda.: Rua das Cruzes, 625, 4100-195 Porto. Telefone +351 915 416 112. Email gadgetmetodo@gmail.com. Peça uma proposta à medida.",
+      "name": "Contactos e pedidos de orçamento",
+      "description": "Peça um orçamento ou informações à Gadgetmetodo, Lda. Formulário online, telefone +351 915 416 112 e email info@gadgetmetodo.pt. Rua das Cruzes, 625, 4100-195 Porto.",
       "inLanguage": "pt-PT",
       "isPartOf": {
         "@id": "https://www.gadgetmetodo.pt/#website"
@@ -163,7 +163,7 @@
       "about": {
         "@id": "https://www.gadgetmetodo.pt/#organizacao"
       },
-      "dateModified": "2026-10-19",
+      "dateModified": "2026-10-20",
       "primaryImageOfPage": {
         "@type": "ImageObject",
         "url": "https://www.gadgetmetodo.pt/assets/img/partilha.png"
@@ -213,7 +213,7 @@
           <li><a href="/experiencia/">Experiência</a></li>
           <li><a href="/sobre/">Sobre</a></li>
           <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
-          <li><a class="botao" href="/contactos/" aria-current="page">Pedir proposta</a></li>
+          <li><a class="botao" href="/contactos/#formulario" aria-current="page">Pedir proposta</a></li>
         </ul>
       </nav>
     </div>
@@ -222,38 +222,102 @@
     <section class="topo-pagina">
       <div class="contentor">
         <nav class="migalhas" aria-label="Localização"><ol><li><a href="/">Início</a></li><li aria-current="page">Contactos</li></ol></nav>
-        <h1>Contactos</h1>
-        <p class="lead">Fale connosco sobre o seu projeto. Respondemos com uma proposta à medida.</p>
+        <h1>Contactos e pedidos de orçamento</h1>
+        <p class="lead">Peça um orçamento ou informações sobre os nossos serviços. Respondemos com uma proposta à medida.</p>
         
       </div>
     </section>
 
     <section class="secao">
       <div class="contentor">
-        <div class="duas-colunas">
+        <div class="duas-colunas texto-largo">
           <div>
-            <h2>Gadgetmetodo, Lda.</h2>
+            <h2 id="formulario">Pedido de orçamento ou informações</h2>
+            <p class="texto-suave">Os campos assinalados com * são obrigatórios. Recebe uma confirmação por email logo após o envio.</p>
+            <form class="formulario" id="pedido" action="/formulario/enviar.php" method="post" accept-charset="utf-8">
+              <fieldset class="campo-grupo">
+                <legend>Tipo de pedido *</legend>
+                <div class="opcoes opcoes-linha">
+                  <label class="opcao"><input type="radio" name="tipo" value="orcamento" checked required> Pedido de orçamento</label>
+                  <label class="opcao"><input type="radio" name="tipo" value="informacoes"> Pedido de informações</label>
+                </div>
+              </fieldset>
+
+              <div class="campos-2">
+                <div class="campo">
+                  <label for="f-nome">Nome *</label>
+                  <input id="f-nome" name="nome" type="text" autocomplete="name" required maxlength="100">
+                  <p class="erro-campo" id="e-nome" hidden></p>
+                </div>
+                <div class="campo">
+                  <label for="f-empresa">Empresa *</label>
+                  <input id="f-empresa" name="empresa" type="text" autocomplete="organization" required maxlength="120">
+                  <p class="erro-campo" id="e-empresa" hidden></p>
+                </div>
+                <div class="campo">
+                  <label for="f-email">Email *</label>
+                  <input id="f-email" name="email" type="email" autocomplete="email" required maxlength="160">
+                  <p class="erro-campo" id="e-email" hidden></p>
+                </div>
+                <div class="campo">
+                  <label for="f-telemovel">Telemóvel *</label>
+                  <input id="f-telemovel" name="telemovel" type="tel" autocomplete="tel" inputmode="tel" required maxlength="20" pattern="[0-9 +\(\)\-]{9,20}" placeholder="+351 912 345 678">
+                  <p class="erro-campo" id="e-telemovel" hidden></p>
+                </div>
+              </div>
+
+              <fieldset class="campo-grupo" id="g-servicos">
+                <legend>Serviços de interesse *</legend>
+                <p class="ajuda">Selecione um ou mais.</p>
+                <div class="opcoes opcoes-grelha">
+                  <label class="opcao"><input type="checkbox" name="servicos[]" value="organizacao-e-metodos"> Organização e Métodos</label>
+                  <label class="opcao"><input type="checkbox" name="servicos[]" value="inteligencia-artificial"> Inteligência artificial e transformação digital</label>
+                  <label class="opcao"><input type="checkbox" name="servicos[]" value="protecao-de-dados-e-conformidade"> Proteção de dados e conformidade</label>
+                  <label class="opcao"><input type="checkbox" name="servicos[]" value="estrategia-e-gestao"> Estratégia e gestão</label>
+                  <label class="opcao"><input type="checkbox" name="servicos[]" value="formacao-ai-essentials"> Formação AI Essentials</label>
+                  <label class="opcao"><input type="checkbox" name="servicos[]" value="outro"> Outro assunto ou ainda não sei</label>
+                </div>
+                <p class="erro-campo" id="e-servicos" hidden></p>
+              </fieldset>
+
+              <div class="campo">
+                <div class="campo-cabeca">
+                  <label for="f-mensagem">Mensagem *</label>
+                  <button class="botao-ditado" type="button" aria-pressed="false" hidden><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 19v3"/> <path d="M19 10v2a7 7 0 0 1-14 0v-2"/> <rect x="9" y="2" width="6" height="13" rx="3"/> </svg><span>Ditar</span></button>
+                </div>
+                <textarea id="f-mensagem" name="mensagem" rows="7" required maxlength="5000" aria-describedby="ajuda-mensagem" placeholder="Descreva o desafio, o objetivo ou a informação de que precisa."></textarea>
+                <p class="ajuda" id="ajuda-mensagem">Pode escrever ou ditar a mensagem: o texto falado é transcrito para o campo e pode ser corrigido antes do envio. Em alternativa, use o ditado do teclado do seu dispositivo.</p>
+                <p class="ajuda estado-ditado" id="estado-ditado" aria-live="polite"></p>
+                <p class="erro-campo" id="e-mensagem" hidden></p>
+              </div>
+
+              <div class="campo-oculto" aria-hidden="true">
+                <label for="f-website">Não preencher</label>
+                <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off">
+              </div>
+              <input type="hidden" name="t" value="">
+
+              <div class="campo">
+                <label class="opcao consentimento"><input type="checkbox" name="consentimento" value="sim" required> <span>Li a <a href="/privacidade/">política de privacidade</a> e autorizo o tratamento dos meus dados para resposta a este pedido. *</span></label>
+                <p class="erro-campo" id="e-consentimento" hidden></p>
+              </div>
+
+              <div class="formulario-acoes">
+                <button class="botao" type="submit">Enviar pedido <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M5 12h14"/> <path d="m12 5 7 7-7 7"/> </svg></button>
+              </div>
+              <div class="formulario-estado" role="status" aria-live="polite"></div>
+            </form>
+          </div>
+
+          <aside aria-labelledby="contactos-diretos">
+            <h2 id="contactos-diretos" style="font-size:1.4rem">Contactos diretos</h2>
             <ul class="contactos-lista">
               <li><span class="icone"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/> <circle cx="12" cy="10" r="3"/> </svg></span><div><strong>Morada</strong>Rua das Cruzes, 625<br>4100-195 Porto, Portugal<br><a href="https://www.openstreetmap.org/search?query=Rua%20das%20Cruzes%20625%2C%204100-195%20Porto" rel="noopener">Ver no mapa</a></div></li>
               <li><span class="icone"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/> </svg></span><div><strong>Telefone</strong><a href="tel:+351915416112">+351&nbsp;915&nbsp;416&nbsp;112</a><br><span class="nota">Chamada para a rede móvel nacional</span></div></li>
-              <li><span class="icone"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/> <rect x="2" y="4" width="20" height="16" rx="2"/> </svg></span><div><strong>Email</strong><a href="mailto:gadgetmetodo@gmail.com">gadgetmetodo@gmail.com</a></div></li>
+              <li><span class="icone"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/> <rect x="2" y="4" width="20" height="16" rx="2"/> </svg></span><div><strong>Email</strong><a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a></div></li>
             </ul>
-          </div>
-          <div class="cartao">
-            <span class="icone"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/> <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/> <path d="m9 14 2 2 4-4"/> </svg></span>
-            <h2 style="font-size:1.4rem">Pedir uma proposta</h2>
-            <p>Para prepararmos uma proposta ajustada, indique no seu contacto:</p>
-            <ul class="lista-check">
-            <li>A empresa e o setor de atividade</li>
-            <li>O desafio ou objetivo</li>
-            <li>Os prazos pretendidos</li>
-            <li>A melhor forma e hora de contacto</li>
-          </ul>
-            <div class="acoes">
-              <a class="botao" href="mailto:gadgetmetodo@gmail.com?subject=Pedido%20de%20proposta&amp;body=Empresa%20e%20setor%3A%0ADesafio%20ou%20objetivo%3A%0APrazos%20pretendidos%3A%0AContacto%20preferido%3A%0A"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/> <rect x="2" y="4" width="20" height="16" rx="2"/> </svg> Enviar pedido por email</a>
-            </div>
-            <p class="nota espaco-topo mb-0">Os dados que nos enviar são usados apenas para responder ao seu pedido. Saiba mais na <a href="/privacidade/">política de privacidade</a>.</p>
-          </div>
+            <p class="nota espaco-topo mb-0">Os dados enviados são usados apenas para responder ao seu pedido. Saiba mais na <a href="/privacidade/">política de privacidade</a>.</p>
+          </aside>
         </div>
       </div>
     </section>
@@ -291,7 +355,7 @@
             <ul>
               <li>Rua das Cruzes, 625<br>4100-195 Porto, Portugal</li>
               <li><a href="tel:+351915416112">+351&nbsp;915&nbsp;416&nbsp;112</a><br><span class="nota">Chamada para a rede móvel nacional</span></li>
-              <li><a href="mailto:gadgetmetodo@gmail.com">gadgetmetodo@gmail.com</a></li>
+              <li><a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a></li>
             </ul>
           </address>
         </div>
@@ -306,5 +370,6 @@
     </div>
   </footer>
   <script src="/assets/js/site.js" defer></script>
+  <script src="/assets/js/formulario.js" defer></script>
 </body>
 </html>
