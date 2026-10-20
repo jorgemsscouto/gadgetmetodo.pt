@@ -140,6 +140,7 @@ function rodape() {
             <li><a href="/abordagem/">Abordagem</a></li>
             <li><a href="/experiencia/">Experiência</a></li>
             <li><a href="/sobre/">Sobre nós</a></li>
+            <li><a href="/catalogo/">Catálogo de serviços</a></li>
             <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
             <li><a href="/contactos/">Contactos</a></li>
           </ul>
@@ -413,6 +414,7 @@ pagina({
             <span class="mais">Ver a abordagem ${seta}</span>
           </a>
         </div>
+        <p class="espaco-topo mb-0"><a class="botao botao-secundario" href="/catalogo/">${icone('file-text')} Descarregar o catálogo de serviços</a></p>
       </div>
     </section>
 
@@ -524,7 +526,7 @@ pagina({
         <div class="grelha grelha-3 espaco-topo">
           ${SERVICOS.map(cartaoServico).join('\n          ')}
         </div>
-        <p class="espaco-topo mb-0"><a class="botao botao-secundario" href="/catalogo-servicos-2026.pdf">${icone('file-text')} Descarregar o catálogo de serviços (PDF)</a></p>
+        <p class="espaco-topo mb-0"><a class="botao botao-secundario" href="/catalogo/">${icone('file-text')} Descarregar o catálogo de serviços</a></p>
       </div>
     </section>
 
@@ -1306,6 +1308,64 @@ pagina({
         </div>
       </div>
     </section>
+  `,
+});
+
+/* Catálogo */
+const CATALOGO_PDF = '/catalogo-servicos-2026.pdf';
+pagina({
+  url: '/catalogo/',
+  titulo: 'Catálogo de Serviços 2026 (PDF)',
+  descricao: 'Descarregue o Catálogo de Serviços 2026 da Gadgetmetodo, Lda.: áreas de serviço, abordagem, exemplos de intervenção e contactos, em 16 páginas (PDF).',
+  prioridade: '0.7',
+  llms: 'Página de download do Catálogo de Serviços 2026 em PDF.',
+  trilho: [['/', 'Início'], ['/catalogo/', 'Catálogo de serviços']],
+  schemaExtra: [{
+    '@type': 'DigitalDocument',
+    '@id': URL_BASE + '/catalogo/#catalogo',
+    name: 'Catálogo de Serviços 2026',
+    description: 'Catálogo da Gadgetmetodo, Lda. com as cinco áreas de serviço, a abordagem em quatro fases, os modelos de colaboração, exemplos de intervenção e contactos.',
+    url: URL_BASE + CATALOGO_PDF,
+    encodingFormat: 'application/pdf',
+    inLanguage: 'pt-PT',
+    datePublished: HOJE,
+    publisher: { '@id': ORG_ID },
+    image: URL_BASE + '/assets/img/catalogo-capa.jpg',
+    __mainEntity: true,
+  }],
+  corpo: `
+    ${topoPagina({ trilho: [['/', 'Início'], ['/catalogo/', 'Catálogo de serviços']], h1: 'Catálogo de Serviços 2026', lead: 'As cinco áreas de serviço da Gadgetmetodo, a forma como trabalhamos e exemplos de intervenção, num documento de 16 páginas.' })}
+
+    <section class="secao">
+      <div class="contentor">
+        <div class="duas-colunas">
+          <div>
+            ${resumo([
+              'O Catálogo de Serviços 2026 da Gadgetmetodo, Lda. apresenta, em 16 páginas, as cinco áreas de serviço (Organização e Métodos, inteligência artificial e transformação digital, proteção de dados e conformidade, estratégia e gestão, e formação AI Essentials), as questões a que cada uma responde, o que inclui e os entregáveis habituais.',
+              'Inclui também a abordagem em quatro fases, os modelos de colaboração, exemplos de intervenção por setor e os contactos.',
+            ], 'O que contém o catálogo?')}
+            <div class="acoes" style="margin-top:24px">
+              <a class="botao" href="${CATALOGO_PDF}">${icone('file-text')} Descarregar o catálogo (PDF, 1,1 MB)</a>
+              <a class="botao botao-secundario" href="/contactos/#formulario">Pedir proposta</a>
+            </div>
+            <h2 class="espaco-topo" style="font-size:1.3rem">Conteúdo</h2>
+            ${listaCheck([
+              'Síntese e ponto de vista sobre organização, tecnologia e conformidade',
+              'Mapa das cinco áreas de serviço',
+              'Uma página por área: questões, o que inclui e entregáveis',
+              'Abordagem em quatro fases e modelos de colaboração',
+              'Exemplos de intervenção na indústria, tecnologia, turismo e retalho',
+              'Equipa, como iniciar um projeto e contactos',
+            ])}
+          </div>
+          <a href="${CATALOGO_PDF}" aria-label="Abrir o Catálogo de Serviços 2026 (PDF)">
+            <img src="/assets/img/catalogo-capa.jpg" alt="Capa do Catálogo de Serviços 2026 da Gadgetmetodo, Lda." width="960" height="679" loading="lazy" style="width:100%;height:auto;border:1px solid var(--cinzento-claro);border-radius:var(--raio);box-shadow:var(--sombra)">
+          </a>
+        </div>
+      </div>
+    </section>
+
+    ${chamada()}
   `,
 });
 

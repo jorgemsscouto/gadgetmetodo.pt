@@ -33,6 +33,7 @@ Factos essenciais:
 - [Experiência](https://www.gadgetmetodo.pt/experiencia/): exemplos de intervenção por setor, sem identificação de clientes
 - [Sobre](https://www.gadgetmetodo.pt/sobre/): quem somos, identidade e perfil do gestor de projeto
 - [Perguntas frequentes](https://www.gadgetmetodo.pt/perguntas-frequentes/): respostas sobre a empresa, os serviços e o funcionamento dos projetos
+- [Catálogo de serviços](https://www.gadgetmetodo.pt/catalogo/): página de download do Catálogo de Serviços 2026 (PDF, 16 páginas)
 - [Contactos](https://www.gadgetmetodo.pt/contactos/): formulário de pedido de orçamento ou informações, morada, telefone e email
 
 ## Optional
