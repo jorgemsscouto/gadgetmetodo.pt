@@ -238,6 +238,7 @@ strong {
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .nav-clientes svg {
@@ -247,7 +248,7 @@ strong {
 }
 
 /* Entre o menu compacto e os ecrãs largos, a ligação mostra só o ícone */
-@media (min-width: 1061px) and (max-width: 1279px) {
+@media (min-width: 1061px) and (max-width: 1229px) {
   .nav-clientes svg {
     width: 20px;
     height: 20px;

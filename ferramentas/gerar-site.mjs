@@ -1,5 +1,6 @@
 // Gerador das páginas HTML do site gadgetmetodo.pt.
 // Utilização (a partir desta pasta): npm install && node gerar-site.mjs ..
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
@@ -14,6 +15,11 @@ const TEL_HTML = TEL.replace(/ /g, '&nbsp;');
 const MORADA = { rua: 'Rua das Cruzes, 625', cp: '4100-195', local: 'Porto', pais: 'Portugal' };
 const MAPA = 'https://www.openstreetmap.org/search?query=Rua%20das%20Cruzes%20625%2C%204100-195%20Porto';
 const ICONES = 'node_modules/lucide-static/icons/';
+
+// Versão dos ficheiros de estilo e de script: muda quando o conteúdo muda, para os navegadores não usarem cópias antigas
+const versao = ficheiro => crypto.createHash('sha256').update(fs.readFileSync(path.join(OUT, ficheiro))).digest('hex').slice(0, 10);
+const CSS = `/assets/css/site.css?v=${versao('assets/css/site.css')}`;
+const JS = `/assets/js/site.js?v=${versao('assets/js/site.js')}`;
 
 // Ícones Lucide (licença ISC) incorporados inline
 function icone(nome, classe = '') {
@@ -113,7 +119,7 @@ function cabecalho(atual) {
       <nav id="navegacao" class="navegacao" aria-label="Principal">
         <ul>
           ${links}
-          <li><a class="nav-clientes" href="/clientes/" title="Área de clientes">${icone('circle-user-round').replace('<svg ', '<svg width="18" height="18" ')}<span class="nav-clientes-texto">Área de clientes</span></a></li>
+          <li><a class="nav-clientes" href="/clientes/" title="Área reservada a clientes">${icone('circle-user-round').replace('<svg ', '<svg width="18" height="18" ')}<span class="nav-clientes-texto">Área reservada</span></a></li>
           <li><a class="botao" href="/contactos/#formulario"${atual === '/contactos/' ? ' aria-current="page"' : ''}>Pedir proposta</a></li>
         </ul>
       </nav>
@@ -303,7 +309,7 @@ function pagina({ url, titulo, descricao, h1Schema, tipo = 'WebPage', trilho, co
   <link rel="alternate" type="text/plain" href="/llms.txt" title="Resumo do site para modelos de linguagem">
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/css/site.css">
+  <link rel="stylesheet" href="${CSS}">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 ${jsonld}
@@ -316,7 +322,7 @@ ${jsonld}
     ${corpo.trim()}
   </main>
   ${rodape()}
-  <script src="/assets/js/site.js" defer></script>
+  <script src="${JS}" defer></script>
 ${scripts.map(s => `  <script src="${s}" defer></script>\n`).join('')}</body>
 </html>
 `;

@@ -15,6 +15,13 @@ function menu_area(string $atual): string
     return '<nav class="area-nav" aria-label="Área de clientes"><div class="contentor"><ul>' . $html . '</ul></div></nav>';
 }
 
+// Acrescenta ao endereço a data de alteração do ficheiro, para os navegadores não usarem cópias antigas
+function versao_ficheiro(string $caminho): string
+{
+    $t = @filemtime(dirname(__DIR__, 2) . $caminho);
+    return $caminho . ($t ? '?v=' . $t : '');
+}
+
 function documento(string $titulo, string $corpo): void
 {
     echo '<!doctype html>
@@ -25,8 +32,8 @@ function documento(string $titulo, string $corpo): void
   <meta name="robots" content="noindex, nofollow">
   <title>' . h($titulo) . ' | Área de clientes | Gadgetmetodo, Lda.</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/assets/css/site.css">
-  <link rel="stylesheet" href="/assets/css/area.css">
+  <link rel="stylesheet" href="' . h(versao_ficheiro('/assets/css/site.css')) . '">
+  <link rel="stylesheet" href="' . h(versao_ficheiro('/assets/css/area.css')) . '">
 </head>
 <body class="area">
 ' . $corpo . '

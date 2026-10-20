@@ -119,6 +119,7 @@ Depois de publicar:
 ## Manutenção
 
 - As páginas HTML, o `sitemap.xml` e os dados estruturados são gerados por `ferramentas/gerar-site.mjs`, que contém o texto de todas as páginas, o menu, o rodapé e os dados da empresa. Para alterar conteúdo: editar o gerador, atualizar as constantes `HOJE` e `HOJE_TXT` e correr `cd ferramentas && npm install && npm run site`. Editar diretamente os `index.html` funciona, mas a alteração perde-se na geração seguinte.
+- Os endereços de `site.css` e `site.js` nas páginas levam um código de versão (`?v=`) calculado pelo gerador a partir do conteúdo do ficheiro, para os navegadores não usarem cópias antigas (o `.htaccess` deixa guardar o CSS e o JS durante 7 dias). Depois de alterar o CSS ou o JS, voltar a gerar as páginas. A área de clientes usa a data de alteração do ficheiro e não precisa deste passo.
 - O catálogo é gerado por `ferramentas/gerar-catalogo.mjs` (`npm run catalogo`), com os estilos em `ferramentas/catalogo.css`.
 - As respostas das perguntas frequentes alimentam ao mesmo tempo o texto visível e os dados estruturados, por isso ficam sempre iguais.
 - O `llms.txt` e o `robots.txt` são editados à mão.
