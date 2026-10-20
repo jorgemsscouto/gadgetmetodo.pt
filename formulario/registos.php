@@ -84,10 +84,10 @@ if ($autenticado && ($_GET['exportar'] ?? '') === 'csv') {
     foreach ($registos as $p) {
         $ab = $p['aberturas'];
         $auto = count(array_filter($ab, function ($a) { return $a['automatica']; }));
-        fputcsv($saida, [
+        fputcsv($saida, array_map('celula_csv', [
             $p['ref'], data_pt($p['criado']), $p['tipo'], $p['nome'], $p['empresa'], $p['email'], $p['telemovel'], $p['servicos'],
             count($ab), $auto, $ab ? data_pt($ab[0]['aberto']) : '', $ab ? data_pt(end($ab)['aberto']) : '',
-        ], ';', '"', '\\');
+        ]), ';', '"', '\\');
     }
     fclose($saida);
     exit;

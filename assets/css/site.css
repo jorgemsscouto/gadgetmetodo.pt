@@ -234,6 +234,35 @@ strong {
   font-weight: 600;
 }
 
+.navegacao .nav-clientes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-clientes svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+/* Entre o menu compacto e os ecrãs largos, a ligação mostra só o ícone */
+@media (min-width: 1061px) and (max-width: 1279px) {
+  .nav-clientes svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .nav-clientes-texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
 .navegacao .botao {
   display: inline-flex;
   min-height: 44px;

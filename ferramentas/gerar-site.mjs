@@ -113,6 +113,7 @@ function cabecalho(atual) {
       <nav id="navegacao" class="navegacao" aria-label="Principal">
         <ul>
           ${links}
+          <li><a class="nav-clientes" href="/clientes/" title="Área de clientes">${icone('circle-user-round').replace('<svg ', '<svg width="18" height="18" ')}<span class="nav-clientes-texto">Área de clientes</span></a></li>
           <li><a class="botao" href="/contactos/#formulario"${atual === '/contactos/' ? ' aria-current="page"' : ''}>Pedir proposta</a></li>
         </ul>
       </nav>
@@ -143,6 +144,7 @@ function rodape() {
             <li><a href="/catalogo/">Catálogo de serviços</a></li>
             <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
             <li><a href="/contactos/">Contactos</a></li>
+            <li><a href="/clientes/">Área de clientes</a></li>
           </ul>
         </div>
         <div>
@@ -1391,6 +1393,8 @@ pagina({
           <li><strong>Dados que nos envia</strong> por email ou telefone: nome, contactos, empresa e o conteúdo da mensagem.</li>
           <li><strong>Dados técnicos de acesso</strong> registados pelo serviço de alojamento do site, como o endereço IP, a data e hora do pedido, a página pedida e o tipo de navegador, para garantir o funcionamento e a segurança do site.</li>
           <li><strong>Acesso ao catálogo enviado por email:</strong> quando abre o catálogo através da ligação incluída na confirmação do pedido, registamos a data e hora do acesso e o tipo de navegador, associados à referência do pedido.</li>
+          <li><strong>Área de clientes:</strong> nome, email profissional e entidade dos utilizadores com acesso, e data do último acesso.</li>
+          <li><strong>Inscrições em formações:</strong> nome, email profissional e função do formando, respostas ao diagnóstico de utilização de inteligência artificial, ferramentas usadas e expectativas sobre a formação, indicados pela entidade cliente que faz a inscrição.</li>
           <li><strong>Prevenção de abusos do formulário:</strong> o servidor guarda, durante uma hora, um código derivado do endereço IP, que não revela o endereço, para limitar envios repetidos.</li>
         </ul>
 
@@ -1402,6 +1406,7 @@ pagina({
               <tr><td>Responder a pedidos de orçamento ou de informação e preparar propostas</td><td>Diligências pré-contratuais a pedido do titular, artigo 6.º, n.º 1, alínea b)</td></tr>
               <tr><td>Enviar a confirmação de receção do pedido</td><td>Diligências pré-contratuais a pedido do titular, artigo 6.º, n.º 1, alínea b)</td></tr>
               <tr><td>Acompanhamento comercial do pedido, incluindo o registo do acesso ao catálogo enviado por email</td><td>Interesse legítimo, artigo 6.º, n.º 1, alínea f)</td></tr>
+              <tr><td>Organizar as formações, gerir as inscrições e adaptar os conteúdos ao nível dos formandos</td><td>Execução do contrato com a entidade cliente, artigo 6.º, n.º 1, alínea b), e interesse legítimo na adequação da formação, artigo 6.º, n.º 1, alínea f)</td></tr>
               <tr><td>Gestão da relação contratual com clientes</td><td>Execução de contrato, artigo 6.º, n.º 1, alínea b)</td></tr>
               <tr><td>Cumprimento de obrigações legais, como as fiscais e contabilísticas</td><td>Obrigação jurídica, artigo 6.º, n.º 1, alínea c)</td></tr>
               <tr><td>Funcionamento e segurança do site e prevenção de abusos do formulário</td><td>Interesse legítimo, artigo 6.º, n.º 1, alínea f)</td></tr>
@@ -1412,22 +1417,25 @@ pagina({
         <h2>4. Ditado por voz no formulário</h2>
         <p>O ditado é opcional e só é ativado quando carrega no botão "Ditar". Usa o serviço de reconhecimento de voz do seu navegador: o áudio é tratado pelo fornecedor do navegador (por exemplo, a Google no Chrome ou a Apple no Safari), de acordo com as condições desse fornecedor. Este site recebe apenas o texto que decidir enviar e não grava nem guarda áudio.</p>
 
-        <h2>5. Cookies e tecnologias semelhantes</h2>
-        <p>Este site não utiliza cookies, ferramentas de análise de tráfego ou de publicidade, nem incorpora conteúdos de terceiros, como mapas ou vídeos. As fontes tipográficas são alojadas no próprio site. A área reservada da empresa, usada apenas por pessoas autorizadas, utiliza um cookie de sessão estritamente necessário.</p>
+        <h2>5. Área de clientes e diagnóstico de utilização de IA</h2>
+        <p>A área de clientes é reservada a pessoas autorizadas. Cada entidade cliente vê apenas as formações disponíveis e as inscrições dos seus próprios formandos; a Gadgetmetodo vê todas. O diagnóstico de utilização de IA é uma autoavaliação curta, usada apenas para ajustar os exemplos e os exercícios ao ponto de partida do grupo; não se destina a avaliar o desempenho profissional do formando. A entidade cliente que faz a inscrição deve informar o formando deste tratamento.</p>
 
-        <h2>6. Destinatários</h2>
+        <h2>6. Cookies e tecnologias semelhantes</h2>
+        <p>Este site não utiliza cookies, ferramentas de análise de tráfego ou de publicidade, nem incorpora conteúdos de terceiros, como mapas ou vídeos. As fontes tipográficas são alojadas no próprio site. A área de clientes e a área reservada da empresa, usadas apenas por pessoas autorizadas, utilizam um cookie de sessão estritamente necessário, que expira ao fechar o navegador.</p>
+
+        <h2>7. Destinatários</h2>
         <p>Os dados podem ser tratados por prestadores de serviços de alojamento e de correio eletrónico, que atuam como subcontratantes. Quando algum destes prestadores trate dados fora do Espaço Económico Europeu, a transferência baseia-se nas garantias previstas no RGPD, como decisões de adequação ou cláusulas contratuais-tipo. Os dados não são vendidos nem cedidos para fins de marketing de terceiros.</p>
 
-        <h2>7. Conservação</h2>
-        <p>Os pedidos de contacto que não deem origem a uma relação contratual são conservados até 12 meses após o último contacto. Os registos de pedidos e de acessos ao catálogo guardados no site são apagados automaticamente 12 meses após o pedido. Os dados de clientes são conservados durante a relação contratual e, depois dela, pelos prazos exigidos por lei.</p>
+        <h2>8. Conservação</h2>
+        <p>Os pedidos de contacto que não deem origem a uma relação contratual são conservados até 12 meses após o último contacto. Os registos de pedidos e de acessos ao catálogo guardados no site são apagados automaticamente 12 meses após o pedido. Os dados das inscrições em formações, incluindo as respostas ao diagnóstico, são apagados automaticamente 2 anos após a data da formação. As contas de acesso à área de clientes são mantidas enquanto durar a relação com o cliente. Os dados de clientes são conservados durante a relação contratual e, depois dela, pelos prazos exigidos por lei.</p>
 
-        <h2>8. Os seus direitos</h2>
+        <h2>9. Os seus direitos</h2>
         <p>Pode pedir o acesso, a retificação, o apagamento, a limitação do tratamento, a portabilidade dos seus dados e opor-se ao tratamento baseado em interesse legítimo, através de <a href="mailto:${EMAIL}">${EMAIL}</a>. Tem também o direito de apresentar reclamação à Comissão Nacional de Proteção de Dados (CNPD), em <a href="https://www.cnpd.pt" rel="noopener">www.cnpd.pt</a>.</p>
 
-        <h2>9. Segurança</h2>
+        <h2>10. Segurança</h2>
         <p>Aplicamos medidas técnicas e organizativas adequadas para proteger os dados contra acesso não autorizado, perda ou divulgação indevida.</p>
 
-        <h2>10. Alterações</h2>
+        <h2>11. Alterações</h2>
         <p class="mb-0">Esta política pode ser atualizada. A data da versão em vigor está indicada no topo desta página.</p>
       </div>
     </section>

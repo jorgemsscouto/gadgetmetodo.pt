@@ -2,7 +2,7 @@
 # Cria formulario/config.php com os dados de envio de email do formulário e do registo do catálogo.
 # Utilização: ./configurar-formulario.sh              configura e envia um email de teste
 #             ./configurar-formulario.sh --automatico  só gera o config.php (usado pelo publicar.sh)
-#             ./configurar-formulario.sh --acesso      mostra o endereço e a palavra-passe da área reservada
+#             ./configurar-formulario.sh --acesso      mostra o endereço e a palavra-passe da área reservada e da área de clientes
 #             ./configurar-formulario.sh --esquecer    apaga os segredos guardados e o config.php
 # A palavra-passe do email é pedida uma única vez. Os segredos ficam nas Chaves do macOS (noutros
 # sistemas, em ficheiros .formulario.* com acesso só do dono) e nunca entram no Git nem no site.
@@ -79,6 +79,10 @@ fi
 mostrar_acesso() {
   echo "Área reservada (pedidos e aberturas do catálogo): $AREA_RESERVADA"
   echo "Palavra-passe: $SENHA_REGISTOS"
+  echo
+  echo "Área de clientes: https://www.gadgetmetodo.pt/clientes/"
+  echo "Primeiro acesso: email info@gadgetmetodo.pt com a mesma palavra-passe; fica criada a conta de administração."
+  echo "Depois do primeiro acesso, a palavra-passe da área de clientes muda-se em \"A minha conta\"."
 }
 
 if [ "$MODO" = "--acesso" ]; then

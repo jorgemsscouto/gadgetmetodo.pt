@@ -63,6 +63,16 @@ function ligacao(array $cfg): ?PDO
     return $pdo;
 }
 
+/* Exportação para Excel: impede que um texto começado por =, +, - ou @ seja executado como fórmula */
+
+function celula_csv($valor)
+{
+    if (!is_string($valor) || $valor === '' || preg_match('/^\+?[\d\s]+$/', $valor)) {
+        return $valor;
+    }
+    return strpbrk($valor[0], "=+-@\t\r") !== false ? "'" . $valor : $valor;
+}
+
 /* Assinatura dos links: impede que alguém registe aberturas de referências que não recebeu */
 
 function assinatura(array $cfg, string $ref): string

@@ -20,6 +20,8 @@ Site estático em HTML e CSS, sem dependências nem passo de compilação. Funci
 | `robots.txt`, `sitemap.xml`, `llms.txt` | Indexação por motores de pesquisa e assistentes de IA |
 | `.htaccess` | Regras para alojamentos Apache ou LiteSpeed |
 | `formulario/` | Envio do formulário de contactos (PHP); a configuração `config.php` fica fora do Git |
+| `clientes/` | Área de clientes (PHP): calendário de formações, inscrições com diagnóstico de IA e gestão de acessos |
+| `assets/css/area.css` | Estilos próprios da área de clientes (só carregados nessas páginas) |
 | `ferramentas/` | Geradores das páginas e do catálogo (não publicados) |
 | `documentos/` | Catálogo de serviços em PDF e respetiva fonte (não publicados) |
 
@@ -27,7 +29,7 @@ Site estático em HTML e CSS, sem dependências nem passo de compilação. Funci
 
 - Todo o conteúdo está no HTML entregue pelo servidor, sem depender de JavaScript, para poder ser lido por qualquer rastreador.
 - Cada página começa com um bloco "Em resumo": um parágrafo factual que responde diretamente a "o que é" e "quem faz".
-- Dados estruturados schema.org em JSON-LD em todas as páginas: organização (`ProfessionalService`), website, página, migalhas de navegação, serviços, curso, metodologia (`HowTo`), pessoa e perguntas frequentes (`FAQPage`).
+- Dados estruturados schema.org em JSON-LD em todas as páginas: organização (`ProfessionalService`), website, página, migalhas de navegação, serviços, curso, metodologia (`ItemList`), pessoa e perguntas frequentes (`FAQPage`).
 - Nome, morada e telefone escritos da mesma forma em todo o site.
 - `robots.txt` aberto aos rastreadores de pesquisa e de IA (OpenAI, Anthropic, Perplexity, Google, Microsoft e Apple). Os robôs de treino de modelos também estão permitidos, por decisão de visibilidade da marca; estão num grupo separado para poderem ser fechados sem perder presença nas respostas.
 - `llms.txt` com o resumo da empresa e as ligações principais. É uma convenção proposta e ainda sem adoção garantida pelos grandes motores; não tem custo nem risco.
@@ -79,6 +81,22 @@ Proteções incluídas: campo isca para robôs, tempo mínimo de preenchimento, 
 
 A pasta `documentos/` (catálogo e outros documentos) não é enviada para o site.
 
+### Área de clientes
+
+Endereço: `https://www.gadgetmetodo.pt/clientes/` (ligação no cabeçalho e no rodapé do site). Usa o mesmo `formulario/config.php` e a mesma base de dados SQLite dos registos de pedidos; não precisa de configuração adicional.
+
+- **Primeiro acesso:** entrar com `info@gadgetmetodo.pt` e a palavra-passe da área reservada (`./configurar-formulario.sh --acesso`). Fica criada a conta de administração; a partir daí, a palavra-passe muda-se em "A minha conta" e deixa de depender da área reservada.
+- **Perfis:** *Gadgetmetodo* vê e gere tudo (calendário, inscrições, clientes, utilizadores, pedidos do site). *Cliente* vê apenas as formações disponíveis e as inscrições do seu cliente; o acesso a páginas de gestão ou a inscrições de outros clientes é recusado no servidor.
+- **Acessos:** em Clientes, criar a entidade; em Utilizadores, criar o acesso (o email é o nome de utilizador). A palavra-passe gerada é mostrada uma única vez, para comunicar ao cliente. Não há recuperação automática de palavra-passe: a Gadgetmetodo gera uma nova na ficha do utilizador.
+- **Calendário:** formações com módulo, data, horário, modalidade, local, vagas e estado (inscrições abertas, fechadas ou cancelada). Formações sem inscrições podem ser apagadas; com inscrições, cancelam-se.
+- **Inscrição:** dados do formando, diagnóstico de 8 perguntas (0 a 24 pontos, com subtotal de uso responsável de 0 a 9), ferramentas usadas, expectativas e confirmação de que o formando foi informado. O nível (Inicial, Exploratório, Em adoção, Avançado) e a recomendação de módulos são calculados no servidor. O cliente não pode exceder as vagas; a Gadgetmetodo pode.
+- **Emails:** cada inscrição gera um aviso para `info@gadgetmetodo.pt` (com a cópia oculta configurada) e uma confirmação de receção para o utilizador do cliente. A Gadgetmetodo confirma ou altera o estado da inscrição e pode avisar o cliente por email. Os cancelamentos feitos pelo cliente geram um aviso interno.
+- **Exportação:** inscrições, inscritos por formação e pedidos do site exportam para Excel (CSV com `;`).
+- **Segurança:** palavras-passe guardadas com `password_hash`, sessão com cookie `HttpOnly` limitado a `/clientes/` e expiração após 2 horas de inatividade, proteção contra pedidos forjados (CSRF) em todos os formulários, limite de 10 tentativas de entrada em 15 minutos por origem, cabeçalhos `noindex` e `Content-Security-Policy`, e `/clientes/` bloqueado no `robots.txt`.
+- **Conservação:** as inscrições e os diagnósticos são apagados automaticamente 2 anos após a data da formação (constante `DIAS_INSCRICOES` em `clientes/inc/nucleo.php`).
+
+A área precisa de SQLite no alojamento. Se não existir, mostra "Área indisponível" (o formulário de contacto continua a funcionar com ficheiros CSV).
+
 ## Catálogo de serviços
 
 O catálogo está publicado em `https://www.gadgetmetodo.pt/catalogo-servicos-2026.pdf` (ficheiro `catalogo-servicos-2026.pdf` na raiz) e tem uma página de download própria em `/catalogo/`, ligada no rodapé, na página inicial e na página de Serviços. A imagem da capa usada nessa página é `assets/img/catalogo-capa.jpg`. É uma cópia de `documentos/Gadgetmetodo-Catalogo-de-Servicos-2026.pdf` (16 páginas, A4 horizontal), gerado a partir de `documentos/catalogo/catalogo.html`, que usa as fontes e o logótipo de `assets/`. Para alterar o texto, editar o HTML e voltar a gerar o PDF no Chrome: Imprimir, Guardar como PDF, margens "Nenhuma" e "Gráficos de fundo" ativado. Depois, copiar o PDF para `catalogo-servicos-2026.pdf` na raiz e publicar.
@@ -96,7 +114,7 @@ Depois de publicar:
 - [x] **Email com domínio próprio**: o site usa `info@gadgetmetodo.pt`.
 - [x] **Exemplos de intervenção** (`experiencia/` e catálogo): divulgação confirmada.
 - [ ] **Perfil de Jorge Sá Couto**: confirmar a função a indicar (por exemplo, sócio-gerente) e, se desejado, acrescentar fotografia.
-- [ ] **Política de privacidade**: confirmar o prazo de conservação de 12 meses para pedidos de contacto sem seguimento.
+- [ ] **Política de privacidade**: confirmar o prazo de conservação de 12 meses para pedidos de contacto sem seguimento e o de 2 anos para inscrições em formações e respostas ao diagnóstico.
 
 ## Manutenção
 
