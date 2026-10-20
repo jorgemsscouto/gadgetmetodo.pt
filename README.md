@@ -45,9 +45,9 @@ Com o script incluído (requer `lftp`; no macOS: `brew install lftp`):
 ./publicar.sh
 ```
 
-O script pede o servidor, o utilizador, a pasta do site (por omissão `public_html`) e a palavra-passe, que não fica guardada. Usa ligação cifrada quando o servidor a suporta, envia apenas ficheiros novos ou alterados, não apaga nada no servidor e exclui `.git`, `README.md`, `.nojekyll` e o próprio script.
+O script pede o servidor, o utilizador, a pasta do site e a palavra-passe, que não fica guardada. Os valores por omissão correspondem ao alojamento atual na Amen: servidor `gadgf9.ftp.tb-hosting.com` e pasta `www`, que é a pasta pública do domínio principal (a pasta `subsites` destina-se a subdomínios). É necessária uma conta FTP com permissão de escrita. Usa ligação cifrada quando o servidor a suporta, envia apenas ficheiros novos ou alterados, não apaga nada no servidor e exclui `.git`, `README.md`, `.nojekyll` e o próprio script.
 
-Com um programa de FTP (FileZilla, Cyberduck ou o gestor de ficheiros do alojamento), enviar o conteúdo desta pasta para a pasta pública do domínio, exceto `.git`, `README.md`, `.nojekyll` e `publicar.sh`. O ficheiro `.htaccess` está oculto no Finder e tem de ser enviado.
+Com um programa de FTP (FileZilla, Cyberduck ou o gestor de ficheiros do alojamento), enviar o conteúdo desta pasta para a pasta pública do domínio (na Amen, `www`), exceto `.git`, `README.md`, `.nojekyll` e `publicar.sh`. O ficheiro `.htaccess` está oculto no Finder e tem de ser enviado.
 
 Se a pasta pública tiver uma página por omissão do alojamento (por exemplo `index.php` ou `default.html`), apagá-la.
 

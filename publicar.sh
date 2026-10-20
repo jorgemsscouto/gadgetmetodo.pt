@@ -12,10 +12,11 @@ if ! command -v lftp >/dev/null 2>&1; then
   exit 1
 fi
 
-read -rp "Servidor FTP (ex.: ftp.gadgetmetodo.pt): " SERVIDOR
+read -rp "Servidor FTP [gadgf9.ftp.tb-hosting.com]: " SERVIDOR
+SERVIDOR=${SERVIDOR:-gadgf9.ftp.tb-hosting.com}
 read -rp "Utilizador FTP: " UTILIZADOR
-read -rp "Pasta do site no servidor [public_html]: " PASTA
-PASTA=${PASTA:-public_html}
+read -rp "Pasta do site no servidor [www]: " PASTA
+PASTA=${PASTA:-www}
 read -rsp "Palavra-passe FTP: " LFTP_PASSWORD
 echo
 export LFTP_PASSWORD
