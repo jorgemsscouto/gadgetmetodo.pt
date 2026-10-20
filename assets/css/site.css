@@ -612,6 +612,7 @@ strong {
   margin-bottom: 12px;
   color: var(--profundo);
   font-size: 0.82rem;
+  line-height: 1.5;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;

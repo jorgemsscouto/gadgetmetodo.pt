@@ -40,8 +40,20 @@ mirror --reverse --verbose --no-perms \
   --exclude-glob configurar-formulario.sh \
   --exclude-glob formulario/config.exemplo.php \
   --exclude-glob documentos/ \
+  --exclude-glob ferramentas/ \
   . "$PASTA"
 bye
 EOF
 
 echo "Publicação concluída. Verifique em https://www.gadgetmetodo.pt"
+
+# Avisa o Bing e outros motores aderentes ao IndexNow das páginas do sitemap (não bloqueia em caso de falha)
+CHAVE_INDEXNOW="3c88a8903774d00a271eaa88a1eaeeb1"
+URLS=$(grep -o '<loc>[^<]*</loc>' sitemap.xml | sed 's#</*loc>##g' | sed 's/.*/"&"/' | paste -sd, -)
+if curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.indexnow.org/indexnow" \
+  -H "Content-Type: application/json; charset=utf-8" \
+  -d "{\"host\":\"www.gadgetmetodo.pt\",\"key\":\"$CHAVE_INDEXNOW\",\"keyLocation\":\"https://www.gadgetmetodo.pt/$CHAVE_INDEXNOW.txt\",\"urlList\":[$URLS]}" | grep -qE "^20[02]$"; then
+  echo "Motores de pesquisa avisados via IndexNow."
+else
+  echo "Aviso IndexNow sem sucesso (não afeta o site)."
+fi

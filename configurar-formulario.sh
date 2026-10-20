@@ -20,13 +20,15 @@ php_str() {
   printf "'%s'" "$v"
 }
 
-echo "Dados da caixa de email que envia as mensagens (consultar no painel da Amen, secção de email)."
+echo "Dados da caixa de email que envia as mensagens (painel da Amen, secção de email)."
 read -rp "Email remetente [info@gadgetmetodo.pt]: " REMETENTE
 REMETENTE=${REMETENTE:-info@gadgetmetodo.pt}
 read -rp "Email que recebe os pedidos [info@gadgetmetodo.pt]: " DESTINATARIO
 DESTINATARIO=${DESTINATARIO:-info@gadgetmetodo.pt}
 read -rp "Email em cópia oculta (BCC), vazio para nenhum: " BCC
-read -rp "Servidor SMTP (vazio para usar o envio do próprio alojamento): " SMTP_HOST
+read -rp "Servidor SMTP [smtp-pt.securemail.pro] (escreva - para usar o envio do alojamento): " SMTP_HOST
+SMTP_HOST=${SMTP_HOST:-smtp-pt.securemail.pro}
+[ "$SMTP_HOST" = "-" ] && SMTP_HOST=""
 
 SMTP_PORTA=465
 SMTP_SEGURANCA=ssl
@@ -65,4 +67,27 @@ return [
 ];
 EOF
 
-echo "Criado $DESTINO. Publique com ./publicar.sh para o enviar para o alojamento."
+echo "Criado $DESTINO."
+
+# Envio de teste a partir deste computador, com os mesmos dados, para confirmar servidor, porta e palavra-passe
+if [ -n "$SMTP_HOST" ]; then
+  read -rp "Enviar um email de teste para $DESTINATARIO? [S/n]: " TESTE
+  if [[ ! "$TESTE" =~ ^[nN]$ ]]; then
+    CRED=$(mktemp); MSG=$(mktemp)
+    printf 'machine %s login %s password %s\n' "$SMTP_HOST" "$SMTP_UTILIZADOR" "$SMTP_SENHA" > "$CRED"
+    printf 'From: Gadgetmetodo, Lda. <%s>\r\nTo: <%s>\r\nSubject: Teste do formulario do site\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nEmail de teste enviado por configurar-formulario.sh. Se o recebeu, o envio do formulario esta bem configurado.\r\n' "$REMETENTE" "$DESTINATARIO" > "$MSG"
+    case "$SMTP_SEGURANCA" in
+      ssl) URL="smtps://$SMTP_HOST:$SMTP_PORTA"; TLS=(--ssl-reqd) ;;
+      tls) URL="smtp://$SMTP_HOST:$SMTP_PORTA"; TLS=(--ssl-reqd) ;;
+      *)   URL="smtp://$SMTP_HOST:$SMTP_PORTA"; TLS=() ;;
+    esac
+    if curl -sS --max-time 30 ${TLS[@]+"${TLS[@]}"} --netrc-file "$CRED" --mail-from "$REMETENTE" --mail-rcpt "$DESTINATARIO" --upload-file "$MSG" "$URL"; then
+      echo "Email de teste enviado. Confirme a receção em $DESTINATARIO."
+    else
+      echo "O envio de teste falhou. Volte a correr este script com a porta 587 e cifra tls, ou confirme os dados no painel da Amen."
+    fi
+    rm -f "$CRED" "$MSG"
+  fi
+fi
+
+echo "Publique com ./publicar.sh para enviar a configuração para o alojamento."

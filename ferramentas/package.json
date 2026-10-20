@@ -1,0 +1,13 @@
+{
+  "name": "gadgetmetodo-ferramentas",
+  "private": true,
+  "description": "Geradores das páginas do site e do catálogo de serviços",
+  "type": "module",
+  "scripts": {
+    "site": "node gerar-site.mjs ..",
+    "catalogo": "node gerar-catalogo.mjs ../documentos/catalogo"
+  },
+  "dependencies": {
+    "lucide-static": "1.59.0"
+  }
+}

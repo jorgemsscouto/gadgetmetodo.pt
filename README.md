@@ -19,6 +19,9 @@ Site estático em HTML e CSS, sem dependências nem passo de compilação. Funci
 | `assets/marca/` | Logótipo e símbolo em SVG e PNG |
 | `robots.txt`, `sitemap.xml`, `llms.txt` | Indexação por motores de pesquisa e assistentes de IA |
 | `.htaccess` | Regras para alojamentos Apache ou LiteSpeed |
+| `formulario/` | Envio do formulário de contactos (PHP); a configuração `config.php` fica fora do Git |
+| `ferramentas/` | Geradores das páginas e do catálogo (não publicados) |
+| `documentos/` | Catálogo de serviços em PDF e respetiva fonte (não publicados) |
 
 ## Preparação para pesquisa com inteligência artificial
 
@@ -26,7 +29,7 @@ Site estático em HTML e CSS, sem dependências nem passo de compilação. Funci
 - Cada página começa com um bloco "Em resumo": um parágrafo factual que responde diretamente a "o que é" e "quem faz".
 - Dados estruturados schema.org em JSON-LD em todas as páginas: organização (`ProfessionalService`), website, página, migalhas de navegação, serviços, curso, metodologia (`HowTo`), pessoa e perguntas frequentes (`FAQPage`).
 - Nome, morada e telefone escritos da mesma forma em todo o site.
-- `robots.txt` aberto aos rastreadores de pesquisa e de IA (OpenAI, Anthropic, Perplexity, Google, Microsoft e Apple), com o grupo de treino de modelos separado para poder ser fechado sem perder presença nas respostas.
+- `robots.txt` aberto aos rastreadores de pesquisa e de IA (OpenAI, Anthropic, Perplexity, Google, Microsoft e Apple). Os robôs de treino de modelos também estão permitidos, por decisão de visibilidade da marca; estão num grupo separado para poderem ser fechados sem perder presença nas respostas.
 - `llms.txt` com o resumo da empresa e as ligações principais. É uma convenção proposta e ainda sem adoção garantida pelos grandes motores; não tem custo nem risco.
 - `sitemap.xml` com data de atualização e datas visíveis "Atualizado em" nas páginas.
 - Sem cookies, sem ferramentas de análise e sem conteúdos de terceiros.
@@ -75,7 +78,8 @@ Depois de publicar:
 ## Pendentes antes de publicar
 
 - [ ] **Logótipo oficial.** Os ficheiros em `assets/marca/` são uma reconstrução vetorial provisória feita a partir do Manual Gráfico, que exige a validação do desenho final em vetor. Quando existirem os ficheiros aprovados, substituir os SVG mantendo os nomes e voltar a gerar `favicon.svg`, `favicon.ico`, `apple-touch-icon.png`, os ícones em `assets/img/` e a imagem de partilha `assets/img/partilha.png`.
-- [ ] **Identificação legal da sociedade.** O artigo 171.º do Código das Sociedades Comerciais exige que os sítios na Internet indiquem a conservatória do registo comercial, o número de matrícula e de identificação de pessoa coletiva (NIPC) e, nas sociedades por quotas, o capital social. Acrescentar estes dados ao rodapé e à página "Sobre".
+- [ ] **Identificação legal da sociedade.** O artigo 171.º do Código das Sociedades Comerciais exige que os sítios na Internet indiquem a conservatória do registo comercial, o número de matrícula e de identificação de pessoa coletiva (NIPC) e, nas sociedades por quotas, o capital social. O NIPC (513 978 011) já está no rodapé, na página "Sobre", nos dados estruturados e no catálogo; faltam a conservatória e o capital social.
+- [ ] **Redes sociais**: quando existirem, acrescentar os endereços ao campo `sameAs` da organização em `ferramentas/gerar-site.mjs`.
 - [x] **Email com domínio próprio**: o site usa `info@gadgetmetodo.pt`.
 - [ ] **Exemplos de intervenção** (`experiencia/`): confirmar que os quatro casos podem ser publicados, mesmo sem nomes, e que descrevem trabalho realizado.
 - [ ] **Perfil de Jorge Sá Couto**: confirmar a função a indicar (por exemplo, sócio-gerente) e, se desejado, acrescentar fotografia.
@@ -83,9 +87,11 @@ Depois de publicar:
 
 ## Manutenção
 
-- O cabeçalho e o rodapé estão repetidos em cada página. Uma alteração ao menu ou aos contactos tem de ser feita em todos os ficheiros `index.html` e no `404.html`.
-- Ao alterar conteúdo, atualizar a data "Atualizado em" e o `dateModified` dos dados estruturados da página, o `<lastmod>` no `sitemap.xml` e, se for caso disso, o `llms.txt`.
-- As respostas das perguntas frequentes aparecem no texto da página e nos dados estruturados; devem ser alteradas nos dois sítios.
+- As páginas HTML, o `sitemap.xml` e os dados estruturados são gerados por `ferramentas/gerar-site.mjs`, que contém o texto de todas as páginas, o menu, o rodapé e os dados da empresa. Para alterar conteúdo: editar o gerador, atualizar as constantes `HOJE` e `HOJE_TXT` e correr `cd ferramentas && npm install && npm run site`. Editar diretamente os `index.html` funciona, mas a alteração perde-se na geração seguinte.
+- O catálogo é gerado por `ferramentas/gerar-catalogo.mjs` (`npm run catalogo`), com os estilos em `ferramentas/catalogo.css`.
+- As respostas das perguntas frequentes alimentam ao mesmo tempo o texto visível e os dados estruturados, por isso ficam sempre iguais.
+- O `llms.txt` e o `robots.txt` são editados à mão.
+- O `publicar.sh` avisa o Bing e outros motores aderentes ao IndexNow no fim de cada publicação. A chave está no ficheiro `<chave>.txt` na raiz do site e tem de continuar publicada.
 
 ## Licenças de terceiros
 
