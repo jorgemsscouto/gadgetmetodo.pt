@@ -1,7 +1,7 @@
 # Configuração para alojamentos Apache ou LiteSpeed (ignorada noutros servidores).
 
 ErrorDocument 404 /404.html
-DirectoryIndex index.html
+DirectoryIndex index.html index.php
 
 # Redirecionar para https://www.gadgetmetodo.pt
 # Ativar só depois de o certificado SSL estar ativo e se o alojamento não fizer já este redirecionamento.

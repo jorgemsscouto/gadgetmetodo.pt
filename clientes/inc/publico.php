@@ -1,0 +1,235 @@
+<?php
+// Páginas públicas de formações (/formacoes/): novas formações, calendário e inscrição sem conta.
+// As páginas formacoes/index.php e formacoes/inscricao.php são geradas por ferramentas/gerar-site.mjs
+// com o cabeçalho e o rodapé do site e chamam as funções deste ficheiro.
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/nucleo.php';
+require_once __DIR__ . '/diagnostico.php';
+require_once __DIR__ . '/vistas.php';
+require_once __DIR__ . '/paginas-cliente.php';
+
+const SITE_CANONICO = 'https://www.gadgetmetodo.pt';
+const MODOS_EVENTO = ['presencial' => 'OfflineEventAttendanceMode', 'online' => 'OnlineEventAttendanceMode', 'misto' => 'MixedEventAttendanceMode'];
+
+function indisponivel_publico(): string
+{
+    return '<section class="secao"><div class="contentor estreito"><div class="aviso aviso-info">O calendário de formações está temporariamente indisponível. Para saber as próximas datas ou pedir uma inscrição, escreva para <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</div></div></section>';
+}
+
+function botao_inscrever_publico(array $f, int $restantes): string
+{
+    if ($f['estado'] !== 'aberta') {
+        return '';
+    }
+    return $restantes > 0
+        ? '<a class="botao" href="/formacoes/inscricao.php?f=' . (int) $f['id'] . '">Inscrever</a>'
+        : '<a href="/contactos/#formulario">Pedir lista de espera</a>';
+}
+
+// Dados estruturados de cada sessão (schema.org EducationEvent), para motores de pesquisa e assistentes de IA
+function jsonld_formacoes(array $formacoes): string
+{
+    $eventos = [];
+    foreach ($formacoes as $f) {
+        $online = $f['modalidade'] === 'online';
+        $evento = [
+            '@type' => 'EducationEvent',
+            '@id' => SITE_CANONICO . '/formacoes/#formacao-' . (int) $f['id'],
+            'name' => $f['titulo'] . (isset(MODULOS[$f['modulo']]) && $f['modulo'] !== 'completo' ? ': ' . MODULOS[$f['modulo']] : ''),
+            'description' => (MODULOS[$f['modulo']] ?? $f['titulo']) . '. Formação em inteligência artificial aplicada à gestão, com diagnóstico prévio do nível de utilização de IA de cada formando.',
+            'startDate' => date('c', strtotime($f['inicio'])),
+            'eventStatus' => 'https://schema.org/' . ($f['estado'] === 'cancelada' ? 'EventCancelled' : 'EventScheduled'),
+            'eventAttendanceMode' => 'https://schema.org/' . (MODOS_EVENTO[$f['modalidade']] ?? 'OfflineEventAttendanceMode'),
+            'inLanguage' => 'pt-PT',
+            'organizer' => ['@id' => SITE_CANONICO . '/#organizacao'],
+            'url' => SITE_CANONICO . '/formacoes/',
+            'location' => $online
+                ? ['@type' => 'VirtualLocation', 'url' => SITE_CANONICO . '/formacoes/']
+                : ['@type' => 'Place', 'name' => $f['local'] ?: 'Porto', 'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Porto', 'addressCountry' => 'PT']],
+            'maximumAttendeeCapacity' => (int) $f['vagas'],
+        ];
+        if (!empty($f['fim'])) {
+            $evento['endDate'] = date('c', strtotime($f['fim']));
+        }
+        $eventos[] = $evento;
+    }
+    if (!$eventos) {
+        return '';
+    }
+    $json = json_encode(['@context' => 'https://schema.org', '@graph' => $eventos], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_PRETTY_PRINT);
+    return "  <script type=\"application/ld+json\">\n" . $json . "\n  </script>\n";
+}
+
+// Página /formacoes/: novas formações e calendário
+function formacoes_publico(): array
+{
+    header('Cache-Control: no-cache');
+    if (!bd()) {
+        return ['conteudo' => indisponivel_publico(), 'jsonld' => ''];
+    }
+    $formacoes = proximas_formacoes();
+    $novas = formacoes_novas();
+    $html = '<section class="secao secao-calendario"><div class="contentor">';
+    if ($novas) {
+        $html .= '<div class="cabeca-secao"><span class="sobretitulo">Novidades</span><h2 id="novas">Novas formações</h2><p>Sessões agendadas nos últimos ' . DIAS_NOVA . ' dias.</p></div>'
+            . calendario($novas, 'botao_inscrever_publico', true);
+    }
+    $html .= '<div class="cabeca-secao' . ($novas ? ' espaco-topo' : '') . '"><span class="sobretitulo">Calendário</span><h2 id="calendario">Próximas sessões</h2><p>Escolha a sessão e inscreva um ou mais formandos. Cada inscrição fica pendente até ser confirmada pela Gadgetmetodo por email.</p></div>';
+    $html .= $formacoes
+        ? calendario($formacoes, 'botao_inscrever_publico', true)
+        : '<div class="aviso aviso-info">Não há sessões agendadas neste momento. Para receber as próximas datas ou organizar uma formação para a sua equipa, <a href="/contactos/#formulario">contacte-nos</a>.</div>';
+    $html .= '</div></section>';
+    return ['conteudo' => $html, 'jsonld' => jsonld_formacoes($formacoes)];
+}
+
+/* Inscrição pública */
+
+// Código com a hora em que o formulário foi mostrado, assinado: impede envios automáticos imediatos e forjados
+function token_formulario(): string
+{
+    $t = (string) time();
+    return $t . '.' . substr(hash_hmac('sha256', 'formacoes|' . $t, (string) (cfg()['chave'] ?? 'gm')), 0, 16);
+}
+
+function token_valido(string $token): bool
+{
+    [$t, $assinatura] = array_pad(explode('.', $token, 2), 2, '');
+    if (!ctype_digit($t) || !hash_equals(substr(hash_hmac('sha256', 'formacoes|' . $t, (string) (cfg()['chave'] ?? 'gm')), 0, 16), $assinatura)) {
+        return false;
+    }
+    $idade = time() - (int) $t;
+    return $idade >= 4 && $idade <= 7200;
+}
+
+function inscricao_publica(): array
+{
+    header('Cache-Control: no-store');
+    header('X-Robots-Tag: noindex, nofollow');
+    if (!bd()) {
+        return ['conteudo' => indisponivel_publico()];
+    }
+    $id = (int) ($_GET['f'] ?? 0);
+    if (isset($_GET['recebida'])) {
+        return ['conteudo' => '<section class="secao"><div class="contentor estreito">
+          <div class="aviso aviso-ok"><strong>Inscrição recebida.</strong> Enviámos uma confirmação para o email indicado. A Gadgetmetodo confirma a inscrição nos próximos dias úteis.</div>
+          <p>Se não receber o email nos próximos minutos, verifique a pasta de correio não desejado ou escreva para <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</p>
+          <div class="acoes">' . ($id ? '<a class="botao" href="/formacoes/inscricao.php?f=' . $id . '">Inscrever outra pessoa</a>' : '') . '<a class="botao botao-secundario" href="/formacoes/">Voltar ao calendário</a></div>
+        </div></section>'];
+    }
+    $f = $id ? linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]) : null;
+    if (!$f || $f['estado'] !== 'aberta' || strtotime($f['inicio']) < strtotime('today')) {
+        http_response_code($f ? 410 : 404);
+        return ['conteudo' => '<section class="secao"><div class="contentor estreito"><div class="aviso aviso-info">Esta sessão não existe ou já não aceita inscrições.</div><div class="acoes"><a class="botao" href="/formacoes/">Ver as próximas sessões</a></div></div></section>'];
+    }
+    $restantes = max(0, (int) $f['vagas'] - inscritos((int) $f['id']));
+    if ($restantes === 0) {
+        return ['conteudo' => '<section class="secao"><div class="contentor estreito"><div class="aviso aviso-info">Esta sessão está esgotada.</div><div class="acoes"><a class="botao" href="/formacoes/">Ver outras sessões</a><a class="botao botao-secundario" href="/contactos/#formulario">Pedir lista de espera</a></div></div></section>'];
+    }
+
+    $cfg = cfg();
+    $erros = [];
+    $v = ['empresa' => '', 'nif' => '', 'contacto_nome' => '', 'contacto_email' => '', 'contacto_telefone' => '', 'eu' => false,
+          'formando' => '', 'email' => '', 'funcao' => '', 'expectativas' => '', 'ferramentas' => [], 'diag' => []];
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+        $origem = rtrim((string) ($_SERVER['HTTP_ORIGIN'] ?? ''), '/');
+        if ($origem !== '' && !empty($cfg['origens']) && !in_array($origem, $cfg['origens'], true)) {
+            http_response_code(403);
+            return ['conteudo' => '<section class="secao"><div class="contentor estreito"><div class="aviso aviso-erro">Pedido inválido.</div></div></section>'];
+        }
+        if (texto('website', 200) !== '') {
+            // Campo isca preenchido: robô. Responde como se tivesse corrido bem, sem gravar nada.
+            header('Location: /formacoes/inscricao.php?recebida=1', true, 303);
+            exit;
+        }
+        $v = [
+            'empresa' => texto('empresa', 160), 'nif' => preg_replace('/\D+/', '', texto('nif', 20)),
+            'contacto_nome' => texto('contacto_nome', 120), 'contacto_email' => texto('contacto_email', 160), 'contacto_telefone' => texto('contacto_telefone', 30),
+            'eu' => !empty($_POST['eu']),
+            'formando' => texto('formando', 120), 'email' => texto('email', 160), 'funcao' => texto('funcao', 120),
+            'expectativas' => texto('expectativas', 1500, true),
+            'ferramentas' => array_values(array_intersect(FERRAMENTAS_IA, array_filter((array) ($_POST['ferramentas'] ?? []), 'is_string'))),
+            'diag' => array_filter(array_intersect_key((array) ($_POST['diag'] ?? []), DIAGNOSTICO), 'is_string'),
+        ];
+        if ($v['eu']) {
+            $v['formando'] = $v['formando'] ?: $v['contacto_nome'];
+            $v['email'] = $v['email'] ?: $v['contacto_email'];
+        }
+        $respostas = respostas_diagnostico();
+        if (!token_valido(is_string($_POST['t'] ?? null) ? $_POST['t'] : '')) {
+            $erros[] = 'O formulário expirou ou foi enviado demasiado depressa. Confirme os dados e envie de novo.';
+        }
+        if ($v['empresa'] === '') {
+            $erros[] = 'Indique a empresa.';
+        }
+        if ($v['nif'] !== '' && strlen($v['nif']) !== 9) {
+            $erros[] = 'O NIF deve ter 9 algarismos.';
+        }
+        if ($v['contacto_nome'] === '' || !filter_var($v['contacto_email'], FILTER_VALIDATE_EMAIL)) {
+            $erros[] = 'Indique o seu nome e um email válido.';
+        }
+        if ($v['formando'] === '') {
+            $erros[] = 'Indique o nome do formando.';
+        }
+        if ($v['email'] !== '' && !filter_var($v['email'], FILTER_VALIDATE_EMAIL)) {
+            $erros[] = 'O email do formando não é válido.';
+        }
+        if ($respostas === null) {
+            $erros[] = 'Responda a todas as perguntas do diagnóstico.';
+        }
+        if (empty($_POST['consentimento'])) {
+            $erros[] = 'É necessário aceitar a política de privacidade.';
+        }
+        if (!$erros && limite_excedido('formacoes', 6, 3600, false)) {
+            $erros[] = 'Recebemos várias inscrições a partir desta ligação na última hora. Para inscrever mais pessoas, escreva para info@gadgetmetodo.pt.';
+        }
+        if (!$erros) {
+            $r = gravar_inscricao($f, ['cliente_id' => null, 'utilizador_id' => null, 'origem' => 'site'] + $v, $respostas, false);
+            if ($r['erro']) {
+                $erros[] = $r['erro'];
+            } else {
+                limite_excedido('formacoes', 6, 3600, true);
+                emails_nova_inscricao($r['id']);
+                header('Location: /formacoes/inscricao.php?recebida=1&f=' . (int) $f['id'], true, 303);
+                exit;
+            }
+        }
+    }
+
+    $ferramentas = '';
+    foreach (FERRAMENTAS_IA as $nome) {
+        $ferramentas .= '<label class="opcao"><input type="checkbox" name="ferramentas[]" value="' . h($nome) . '"' . (in_array($nome, $v['ferramentas'], true) ? ' checked' : '') . '> ' . h($nome) . '</label>';
+    }
+    $html = '<section class="secao"><div class="contentor estreito">
+      <div class="resumo-formacao"><strong>' . h($f['titulo']) . '</strong> · ' . h(MODULOS[$f['modulo']] ?? '') . '<br>' . h(horario($f)) . ' · ' . h(MODALIDADES[$f['modalidade']] ?? '') . ($f['local'] ? ' · ' . h($f['local']) : '') . '<br><span class="texto-suave">' . ($restantes <= 3 ? 'Últimas vagas' : $restantes . ' vagas disponíveis') . '</span></div>
+      ' . ($erros ? '<div class="aviso aviso-erro" role="alert">' . h(implode(' ', $erros)) . '</div>' : '') . '
+      <form method="post" action="/formacoes/inscricao.php?f=' . (int) $f['id'] . '" class="formulario formulario-inscricao">
+        <input type="hidden" name="t" value="' . h(token_formulario()) . '">
+        <div class="campo-oculto" aria-hidden="true"><label for="c-website">Não preencher</label><input id="c-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        <h2 class="mb-0">1. Empresa e contacto</h2>
+        <div class="campos-2">
+          ' . campo('empresa', 'Empresa *', $v['empresa'], 'text', 'required maxlength="160" autocomplete="organization"') . '
+          ' . campo('nif', 'NIF da empresa', $v['nif'], 'text', 'maxlength="11" inputmode="numeric" pattern="[0-9 ]{9,11}"') . '
+          ' . campo('contacto_nome', 'O seu nome *', $v['contacto_nome'], 'text', 'required maxlength="120" autocomplete="name"') . '
+          ' . campo('contacto_email', 'O seu email *', $v['contacto_email'], 'email', 'required maxlength="160" autocomplete="email"') . '
+          ' . campo('contacto_telefone', 'Telefone', $v['contacto_telefone'], 'tel', 'maxlength="30" autocomplete="tel"') . '
+        </div>
+        <h2 class="mb-0 espaco-topo">2. Formando</h2>
+        <label class="opcao consentimento"><input type="checkbox" name="eu" value="1"' . ($v['eu'] ? ' checked' : '') . '> <span>O formando sou eu (pode deixar os campos seguintes em branco)</span></label>
+        <div class="campos-2">
+          ' . campo('formando', 'Nome completo do formando', $v['formando'], 'text', 'maxlength="120"') . '
+          ' . campo('email', 'Email profissional do formando', $v['email'], 'email', 'maxlength="160"') . '
+          ' . campo('funcao', 'Função ou departamento', $v['funcao'], 'text', 'maxlength="120"') . '
+        </div>
+        <h2 class="mb-0 espaco-topo">3. Diagnóstico de utilização de IA</h2>
+        <p class="texto-suave mb-0">Oito perguntas, cerca de dois minutos, respondidas pelo formando ou com base no que ele indicar. Não há respostas certas: servem para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>
+        ' . campos_diagnostico($v['diag']) . '
+        <fieldset class="campo-grupo"><legend>Que ferramentas de IA usa atualmente?</legend><div class="opcoes opcoes-linha">' . $ferramentas . '</div></fieldset>
+        ' . campo('expectativas', 'O que espera da formação? Há algum caso concreto do seu trabalho que gostaria de ver tratado?', $v['expectativas'], 'textarea', 'maxlength="1500"') . '
+        <label class="opcao consentimento"><input type="checkbox" name="consentimento" value="1" required> <span>Li a <a href="/privacidade/" target="_blank" rel="noopener">Política de privacidade</a> e autorizo o tratamento destes dados pela Gadgetmetodo, Lda. para organizar a formação e adaptar os conteúdos. Se inscrevo outra pessoa, confirmo que a informei. *</span></label>
+        <div><button class="botao" type="submit">Enviar inscrição</button></div>
+      </form>
+    </div></section>';
+    return ['conteudo' => $html];
+}

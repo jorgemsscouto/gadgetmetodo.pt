@@ -7,16 +7,17 @@ function admin_painel(): void
 {
     $n = function (string $sql) { return (int) (linha_bd($sql)['n'] ?? 0); };
     $proximas = consulta("SELECT * FROM formacoes WHERE inicio >= ? AND estado != 'cancelada' ORDER BY inicio LIMIT 5", [date('Y-m-d 00:00:00')]);
-    $ultimas = consulta('SELECT i.*, c.nome AS cliente, f.titulo, f.inicio FROM inscricoes i JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id ORDER BY i.criado DESC LIMIT 8');
+    $ultimas = consulta('SELECT i.*, ' . SQL_CLIENTE . ', f.titulo, f.inicio FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id ORDER BY i.criado DESC LIMIT 8');
     $linhas = '';
     foreach ($ultimas as $i) {
-        $linhas .= '<tr><td>' . h(data_hora($i['criado'])) . '</td><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . h($i['cliente']) . '</td><td>' . h($i['titulo']) . ', ' . h(data_hora($i['inicio'], false)) . '</td><td>' . nivel_etiqueta($i['nivel']) . '</td></tr>';
+        $linhas .= '<tr><td>' . h(data_hora($i['criado'])) . '</td><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . h($i['cliente']) . etiqueta_origem($i) . '</td><td>' . h($i['titulo']) . ', ' . h(data_hora($i['inicio'], false)) . '</td><td>' . nivel_etiqueta($i['nivel']) . '</td></tr>';
     }
     pagina_area('painel', 'Painel', '
       <div class="numeros">
         <div><strong>' . $n("SELECT COUNT(*) AS n FROM formacoes WHERE inicio >= '" . date('Y-m-d') . "' AND estado != 'cancelada'") . '</strong>formações agendadas</div>
         <div><strong>' . $n("SELECT COUNT(*) AS n FROM inscricoes WHERE estado != 'cancelada'") . '</strong>inscrições ativas</div>
         <div><strong>' . $n('SELECT COUNT(*) AS n FROM clientes') . '</strong>clientes</div>
+        <div><a href="' . h(url('inscricoes', ['origem' => 'por_associar'])) . '"><strong>' . $n("SELECT COUNT(*) AS n FROM inscricoes WHERE cliente_id IS NULL AND estado != 'cancelada'") . '</strong>inscrições do site por associar</a></div>
         <div><strong>' . $n('SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1') . '</strong>utilizadores ativos</div>
       </div>
       <div class="acoes mb-0" style="margin-top:0"><a class="botao" href="' . h(url('formacao')) . '">Nova formação</a><a class="botao botao-secundario" href="' . h(url('utilizadores')) . '">Novo utilizador</a></div>
@@ -24,6 +25,15 @@ function admin_painel(): void
       ' . calendario($proximas, function ($f) { return '<a href="' . h(url('formacao', ['id' => $f['id']])) . '">Gerir</a>'; }) . '
       <h2 class="espaco-topo">Últimas inscrições</h2>
       ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Data</th><th>Formando</th><th>Cliente</th><th>Formação</th><th>Nível de IA</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições.</p>'), 'Gadgetmetodo');
+}
+
+// Assinala as inscrições feitas no site e as que ainda não têm cliente associado
+function etiqueta_origem(array $i): string
+{
+    if (($i['origem'] ?? '') !== 'site') {
+        return '';
+    }
+    return ' ' . etiqueta($i['cliente_id'] === null ? 'Site, por associar' : 'Site', $i['cliente_id'] === null ? 'info' : '');
 }
 
 /* Calendário de formações */
@@ -36,7 +46,8 @@ function admin_calendario(): void
         : consulta('SELECT * FROM formacoes WHERE inicio >= ? ORDER BY inicio', [date('Y-m-d 00:00:00')]);
     pagina_area('calendario', 'Calendário de formações', '
       <div class="acoes" style="margin-top:0"><a class="botao" href="' . h(url('formacao')) . '">Nova formação</a>
-      <a class="botao botao-secundario" href="' . h(url('calendario', $passadas ? [] : ['ver' => 'passadas'])) . '">' . ($passadas ? 'Ver próximas' : 'Ver formações passadas') . '</a></div>
+      <a class="botao botao-secundario" href="' . h(url('calendario', $passadas ? [] : ['ver' => 'passadas'])) . '">' . ($passadas ? 'Ver próximas' : 'Ver formações passadas') . '</a>
+      <a class="botao botao-secundario" href="/formacoes/" target="_blank" rel="noopener">Ver página pública</a></div>
       ' . calendario($formacoes, function ($f) {
           return '<a href="' . h(url('formacao', ['id' => $f['id']])) . '">Gerir e ver inscritos</a>'
               . ($f['estado'] !== 'cancelada' ? '<a href="' . h(url('inscrever', ['formacao' => $f['id']])) . '">Inscrever formando</a>' : '');
@@ -114,10 +125,10 @@ function admin_formacao(): void
       </form>';
     $inscritos = '';
     if ($id) {
-        $lista = consulta('SELECT i.*, c.nome AS cliente FROM inscricoes i JOIN clientes c ON c.id = i.cliente_id WHERE i.formacao_id = ? ORDER BY i.criado', [$id]);
+        $lista = consulta('SELECT i.*, ' . SQL_CLIENTE . ' FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id WHERE i.formacao_id = ? ORDER BY i.criado', [$id]);
         $linhas = '';
         foreach ($lista as $i) {
-            $linhas .= '<tr><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . h($i['funcao']) . '</td><td>' . h($i['cliente']) . '</td><td>' . nivel_etiqueta($i['nivel']) . '</td><td>' . estado_etiqueta($i['estado'], ESTADOS_INSCRICAO) . '</td></tr>';
+            $linhas .= '<tr><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . h($i['funcao']) . '</td><td>' . h($i['cliente']) . etiqueta_origem($i) . '</td><td>' . nivel_etiqueta($i['nivel']) . '</td><td>' . estado_etiqueta($i['estado'], ESTADOS_INSCRICAO) . '</td></tr>';
         }
         $inscritos = '<h2 class="espaco-topo">Inscritos (' . inscritos($id) . ' de ' . (int) $v['vagas'] . ')</h2>'
             . '<p><a class="botao" href="' . h(url('inscrever', ['formacao' => $id])) . '">Inscrever formando</a>'
@@ -134,19 +145,22 @@ function admin_formacao(): void
 
 function admin_inscricoes(): void
 {
-    $filtros = ['formacao' => (int) ($_GET['formacao'] ?? 0), 'cliente' => (int) ($_GET['cliente'] ?? 0), 'estado' => isset(ESTADOS_INSCRICAO[$_GET['estado'] ?? '']) ? $_GET['estado'] : ''];
-    $sql = 'SELECT i.*, c.nome AS cliente, f.titulo, f.inicio FROM inscricoes i JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id WHERE 1 = 1';
+    $origens = ['site' => 'Site', 'por_associar' => 'Site, por associar a cliente', 'area' => 'Área de clientes'];
+    $filtros = ['formacao' => (int) ($_GET['formacao'] ?? 0), 'cliente' => (int) ($_GET['cliente'] ?? 0), 'estado' => isset(ESTADOS_INSCRICAO[$_GET['estado'] ?? '']) ? $_GET['estado'] : '', 'origem' => isset($origens[$_GET['origem'] ?? '']) ? $_GET['origem'] : ''];
+    $sql = 'SELECT i.*, ' . SQL_CLIENTE . ', f.titulo, f.inicio FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id WHERE 1 = 1';
     $par = [];
     if ($filtros['formacao']) { $sql .= ' AND i.formacao_id = ?'; $par[] = $filtros['formacao']; }
     if ($filtros['cliente']) { $sql .= ' AND i.cliente_id = ?'; $par[] = $filtros['cliente']; }
     if ($filtros['estado']) { $sql .= ' AND i.estado = ?'; $par[] = $filtros['estado']; }
+    if ($filtros['origem'] === 'por_associar') { $sql .= ' AND i.cliente_id IS NULL'; }
+    elseif ($filtros['origem']) { $sql .= ' AND i.origem = ?'; $par[] = $filtros['origem']; }
     $lista = consulta($sql . ' ORDER BY f.inicio DESC, i.criado', $par);
     if (!empty($_GET['exportar'])) {
         $linhas = [];
         foreach ($lista as $i) {
-            $linhas[] = [$i['titulo'], data_hora($i['inicio']), $i['cliente'], $i['formando'], $i['email'], $i['funcao'], ESTADOS_INSCRICAO[$i['estado']] ?? $i['estado'], $i['nivel'], $i['pontuacao'], $i['responsavel'], $i['ferramentas'], $i['expectativas'], data_hora($i['criado'])];
+            $linhas[] = [$i['titulo'], data_hora($i['inicio']), $i['cliente'], ORIGENS[$i['origem']] ?? $i['origem'], $i['contacto_nome'], $i['contacto_email'], $i['contacto_telefone'], $i['formando'], $i['email'], $i['funcao'], ESTADOS_INSCRICAO[$i['estado']] ?? $i['estado'], $i['nivel'], $i['pontuacao'], $i['responsavel'], $i['ferramentas'], $i['expectativas'], data_hora($i['criado'])];
         }
-        exportar_csv('gadgetmetodo-inscricoes', ['Formação', 'Data da formação', 'Cliente', 'Formando', 'Email', 'Função', 'Estado', 'Nível de IA', 'Pontuação (0-24)', 'Uso responsável (0-9)', 'Ferramentas usadas', 'Expectativas', 'Data da inscrição'], $linhas);
+        exportar_csv('gadgetmetodo-inscricoes', ['Formação', 'Data da formação', 'Cliente ou empresa', 'Origem', 'Contacto (site)', 'Email do contacto', 'Telefone do contacto', 'Formando', 'Email', 'Função', 'Estado', 'Nível de IA', 'Pontuação (0-24)', 'Uso responsável (0-9)', 'Ferramentas usadas', 'Expectativas', 'Data da inscrição'], $linhas);
     }
     $formacoes = [];
     foreach (consulta('SELECT id, titulo, inicio FROM formacoes ORDER BY inicio DESC') as $f) {
@@ -155,12 +169,12 @@ function admin_inscricoes(): void
     $clientes = array_column(consulta('SELECT id, nome FROM clientes ORDER BY nome'), 'nome', 'id');
     $linhas = '';
     foreach ($lista as $i) {
-        $linhas .= '<tr><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . h($i['cliente']) . '</td><td>' . h($i['titulo']) . '<br><span class="texto-suave">' . h(data_hora($i['inicio'])) . '</span></td><td>' . nivel_etiqueta($i['nivel']) . '</td><td>' . estado_etiqueta($i['estado'], ESTADOS_INSCRICAO) . '</td><td>' . h(data_hora($i['criado'])) . '</td></tr>';
+        $linhas .= '<tr><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . h($i['cliente']) . etiqueta_origem($i) . '</td><td>' . h($i['titulo']) . '<br><span class="texto-suave">' . h(data_hora($i['inicio'])) . '</span></td><td>' . nivel_etiqueta($i['nivel']) . '</td><td>' . estado_etiqueta($i['estado'], ESTADOS_INSCRICAO) . '</td><td>' . h(data_hora($i['criado'])) . '</td></tr>';
     }
     pagina_area('inscricoes', 'Inscrições', '
       <form method="get" class="filtros">
         <input type="hidden" name="p" value="inscricoes">
-        ' . campo_select('formacao', 'Formação', $formacoes, $filtros['formacao'], 'Todas') . campo_select('cliente', 'Cliente', $clientes, $filtros['cliente'], 'Todos') . campo_select('estado', 'Estado', ESTADOS_INSCRICAO, $filtros['estado'], 'Todos') . '
+        ' . campo_select('formacao', 'Formação', $formacoes, $filtros['formacao'], 'Todas') . campo_select('cliente', 'Cliente', $clientes, $filtros['cliente'], 'Todos') . campo_select('estado', 'Estado', ESTADOS_INSCRICAO, $filtros['estado'], 'Todos') . campo_select('origem', 'Origem', $origens, $filtros['origem'], 'Todas') . '
         <div class="filtros-acoes"><button class="botao" type="submit">Filtrar</button><a class="botao botao-secundario" href="' . h(url('inscricoes', array_filter($filtros) + ['exportar' => 1])) . '">Exportar para Excel</a></div>
       </form>
       ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Formando</th><th>Cliente</th><th>Formação</th><th>Nível de IA</th><th>Estado</th><th>Inscrito em</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Sem inscrições para os filtros escolhidos.</p>'), 'Formações');

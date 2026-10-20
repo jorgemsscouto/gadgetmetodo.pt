@@ -1587,3 +1587,47 @@ a.cartao:hover .mais svg {
 .sucesso-envio p:last-child {
   margin-bottom: 0;
 }
+
+/* Formações: destaque na página AI Essentials e passos de inscrição */
+
+.destaque-formacoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(24px, 4vw, 40px);
+  background: var(--petroleo-tinta);
+  border-left: 4px solid var(--petroleo);
+  border-radius: var(--raio);
+}
+
+.destaque-formacoes > div {
+  flex: 1 1 420px;
+}
+
+.destaque-formacoes h2 {
+  font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+}
+
+.destaque-formacoes .botao svg {
+  width: 20px;
+  height: 20px;
+}
+
+.etapas-compactas {
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.etapas-compactas li {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  column-gap: 16px;
+  padding: 18px 20px;
+}
+
+.etapas-compactas li::before {
+  grid-row: span 2;
+  margin-bottom: 0;
+}

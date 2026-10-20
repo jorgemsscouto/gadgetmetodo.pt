@@ -26,6 +26,7 @@ Factos essenciais:
 - [Proteção de dados e conformidade](https://www.gadgetmetodo.pt/servicos/protecao-de-dados-e-conformidade/): DPO externo, RGPD, Diretiva NIS2, contratos com subcontratantes e governação da IA
 - [Estratégia e gestão](https://www.gadgetmetodo.pt/servicos/estrategia-e-gestao/): alinhamento estratégico, objetivos e indicadores (KPI), modelos de incentivos e conselho à administração
 - [Formação AI Essentials](https://www.gadgetmetodo.pt/servicos/formacao-ai-essentials/): cinco módulos sobre IA para administrações e equipas
+- [Calendário de formações](https://www.gadgetmetodo.pt/formacoes/): próximas sessões abertas da formação AI Essentials, com vagas e inscrição online
 
 ## Empresa
 

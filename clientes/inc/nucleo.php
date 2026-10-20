@@ -23,6 +23,8 @@ const MODULOS = [
 ];
 const SESSAO_MAXIMA = 7200; // segundos de inatividade
 const DIAS_INSCRICOES = 730; // conservação das inscrições após a data da formação
+const DIAS_NOVA = 30; // formações agendadas há menos de 30 dias aparecem como novas
+const ORIGENS = ['area' => 'Área de clientes', 'site' => 'Site'];
 
 function cfg(): array
 {
@@ -52,11 +54,15 @@ function bd(): ?PDO
             id INTEGER PRIMARY KEY AUTOINCREMENT, titulo TEXT NOT NULL, modulo TEXT, inicio TEXT NOT NULL, fim TEXT,
             modalidade TEXT, local TEXT, vagas INTEGER NOT NULL DEFAULT 12, estado TEXT NOT NULL DEFAULT 'aberta',
             notas TEXT, criado TEXT NOT NULL)");
-        $pdo->exec("CREATE TABLE IF NOT EXISTS inscricoes (
+        // As inscrições feitas no site público ficam sem cliente até a Gadgetmetodo as associar
+        $tabela_inscricoes = "CREATE TABLE IF NOT EXISTS inscricoes (
             id INTEGER PRIMARY KEY AUTOINCREMENT, formacao_id INTEGER NOT NULL REFERENCES formacoes(id),
-            cliente_id INTEGER NOT NULL REFERENCES clientes(id), utilizador_id INTEGER, formando TEXT NOT NULL,
+            cliente_id INTEGER REFERENCES clientes(id), utilizador_id INTEGER, origem TEXT NOT NULL DEFAULT 'area',
+            empresa TEXT, nif TEXT, contacto_nome TEXT, contacto_email TEXT, contacto_telefone TEXT, formando TEXT NOT NULL,
             email TEXT, funcao TEXT, respostas TEXT, pontuacao INTEGER, responsavel INTEGER, nivel TEXT,
-            ferramentas TEXT, expectativas TEXT, estado TEXT NOT NULL DEFAULT 'pendente', criado TEXT NOT NULL)");
+            ferramentas TEXT, expectativas TEXT, estado TEXT NOT NULL DEFAULT 'pendente', criado TEXT NOT NULL)";
+        $pdo->exec($tabela_inscricoes);
+        migrar_inscricoes($pdo, $tabela_inscricoes);
         $pdo->exec('CREATE INDEX IF NOT EXISTS inscricoes_formacao ON inscricoes (formacao_id)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS inscricoes_cliente ON inscricoes (cliente_id)');
         // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação
@@ -65,6 +71,24 @@ function bd(): ?PDO
         $pronta = true;
     }
     return $pdo;
+}
+
+// Bases criadas pela primeira versão da área: cliente obrigatório e sem campos de origem
+function migrar_inscricoes(PDO $pdo, string $tabela): void
+{
+    $colunas = array_column($pdo->query('PRAGMA table_info(inscricoes)')->fetchAll(PDO::FETCH_ASSOC), 'name');
+    if (in_array('origem', $colunas, true)) {
+        return;
+    }
+    $comuns = 'id, formacao_id, cliente_id, utilizador_id, formando, email, funcao, respostas, pontuacao, responsavel, nivel, ferramentas, expectativas, estado, criado';
+    $pdo->exec('PRAGMA foreign_keys = OFF');
+    $pdo->beginTransaction();
+    $pdo->exec('ALTER TABLE inscricoes RENAME TO inscricoes_v1');
+    $pdo->exec($tabela);
+    $pdo->exec("INSERT INTO inscricoes ($comuns) SELECT $comuns FROM inscricoes_v1");
+    $pdo->exec('DROP TABLE inscricoes_v1');
+    $pdo->commit();
+    $pdo->exec('PRAGMA foreign_keys = ON');
 }
 
 function consulta(string $sql, array $parametros = []): array
@@ -175,14 +199,14 @@ function negar(): void
     pagina_erro('Sem permissão', 'Não tem permissão para ver esta página.');
 }
 
-// Limite de tentativas de entrada por origem: 10 em 15 minutos
-function entradas_excedidas(bool $registar): bool
+// Limite de pedidos por origem (endereço IP, guardado só como código derivado)
+function limite_excedido(string $nome, int $maximo, int $segundos, bool $registar): bool
 {
-    $ficheiro = sys_get_temp_dir() . '/gm-area-' . hash('sha256', 'area|' . ($_SERVER['REMOTE_ADDR'] ?? '')) . '.json';
+    $ficheiro = sys_get_temp_dir() . '/gm-' . $nome . '-' . hash('sha256', $nome . '|' . ($_SERVER['REMOTE_ADDR'] ?? '')) . '.json';
     $agora = time();
     $lista = is_readable($ficheiro) ? json_decode((string) @file_get_contents($ficheiro), true) : [];
-    $lista = array_values(array_filter(is_array($lista) ? $lista : [], function ($t) use ($agora) { return is_int($t) && $t > $agora - 900; }));
-    if (count($lista) >= 10) {
+    $lista = array_values(array_filter(is_array($lista) ? $lista : [], function ($t) use ($agora, $segundos) { return is_int($t) && $t > $agora - $segundos; }));
+    if (count($lista) >= $maximo) {
         return true;
     }
     if ($registar) {
@@ -190,6 +214,12 @@ function entradas_excedidas(bool $registar): bool
         @file_put_contents($ficheiro, json_encode($lista), LOCK_EX);
     }
     return false;
+}
+
+// Tentativas de entrada na área: 10 em 15 minutos
+function entradas_excedidas(bool $registar): bool
+{
+    return limite_excedido('area', 10, 900, $registar);
 }
 
 function entrar(string $email, string $senha): ?string
@@ -291,6 +321,19 @@ function inscritos(int $formacao_id): int
 {
     return (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado != 'cancelada'", [$formacao_id])['n'] ?? 0);
 }
+
+function formacao_nova(array $f): bool
+{
+    return !empty($f['criado']) && strtotime($f['criado']) >= time() - DIAS_NOVA * 86400;
+}
+
+function formacoes_novas(): array
+{
+    return consulta("SELECT * FROM formacoes WHERE inicio >= ? AND criado >= ? AND estado = 'aberta' ORDER BY inicio", [date('Y-m-d 00:00:00'), date('Y-m-d H:i:s', time() - DIAS_NOVA * 86400)]);
+}
+
+// Nome da entidade de uma inscrição: o cliente associado ou, nas inscrições do site, a empresa indicada
+const SQL_CLIENTE = "COALESCE(c.nome, i.empresa) AS cliente";
 
 function etiqueta(string $texto, string $tipo = ''): string
 {

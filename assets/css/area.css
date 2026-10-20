@@ -193,6 +193,18 @@
   background: #fbe2df;
 }
 
+.etiqueta-nova {
+  color: var(--branco);
+  background: var(--marinho);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.evento-info h3 .etiqueta {
+  margin-left: 6px;
+  vertical-align: 2px;
+}
+
 .etiqueta-nivel1 {
   color: #7a4b00;
   background: #fdecc8;
@@ -241,7 +253,7 @@
 
 /* Calendário de formações */
 
-.area .calendario-mes {
+h2.calendario-mes {
   margin: 28px 0 12px;
   color: var(--petroleo);
   font-size: 1rem;
@@ -446,4 +458,24 @@
   color: var(--marinho);
   font-family: var(--fonte-titulos);
   font-size: 1.4rem;
+}
+
+.numeros a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.numeros a:hover strong {
+  color: var(--petroleo);
+}
+
+/* Formulário público de inscrição (/formacoes/inscricao.php) */
+
+.formulario-inscricao h2 {
+  font-size: clamp(1.2rem, 2vw, 1.45rem);
+}
+
+.formulario-inscricao h2.espaco-topo {
+  margin-top: 16px;
 }

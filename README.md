@@ -21,6 +21,7 @@ Site estático em HTML e CSS, sem dependências nem passo de compilação. Funci
 | `.htaccess` | Regras para alojamentos Apache ou LiteSpeed |
 | `formulario/` | Envio do formulário de contactos (PHP); a configuração `config.php` fica fora do Git |
 | `clientes/` | Área de clientes (PHP): calendário de formações, inscrições com diagnóstico de IA e gestão de acessos |
+| `formacoes/` | Calendário público de formações e inscrição sem conta (PHP, gerado com o cabeçalho e o rodapé do site) |
 | `assets/css/area.css` | Estilos próprios da área de clientes (só carregados nessas páginas) |
 | `ferramentas/` | Geradores das páginas e do catálogo (não publicados) |
 | `documentos/` | Catálogo de serviços em PDF e respetiva fonte (não publicados) |
@@ -96,6 +97,19 @@ Endereço: `https://www.gadgetmetodo.pt/clientes/` (ligação no cabeçalho e no
 - **Conservação:** as inscrições e os diagnósticos são apagados automaticamente 2 anos após a data da formação (constante `DIAS_INSCRICOES` em `clientes/inc/nucleo.php`).
 
 A área precisa de SQLite no alojamento. Se não existir, mostra "Área indisponível" (o formulário de contacto continua a funcionar com ficheiros CSV).
+
+### Calendário público de formações
+
+Endereço: `https://www.gadgetmetodo.pt/formacoes/` (ligado na página Formação AI Essentials, no rodapé, no `sitemap.xml` e no `llms.txt`). Mostra as sessões criadas no calendário da área de clientes, lidas da mesma base de dados.
+
+- **Novas formações:** secção no topo com as sessões abertas agendadas nos últimos 30 dias (constante `DIAS_NOVA`), também assinaladas com a etiqueta "Nova" no calendário, na área de clientes e no painel dos clientes.
+- **Inscrição sem conta** (`/formacoes/inscricao.php`): empresa e NIF, quem inscreve (com a opção "o formando sou eu"), formando, diagnóstico de IA e consentimento. Respeita as vagas; não mostra publicamente o número de inscritos, só as vagas disponíveis.
+- **Proteções:** campo isca, tempo mínimo de 4 segundos com código assinado, verificação da origem, limite de 6 inscrições por hora por origem, validação no servidor e página `noindex`.
+- **Depois da inscrição:** aviso para `info@gadgetmetodo.pt` (com cópia oculta) e confirmação de receção para quem inscreveu. Na área de clientes, a inscrição aparece com a etiqueta "Site, por associar" (há um contador no painel e um filtro em Inscrições); na ficha, a Gadgetmetodo associa-a a um cliente existente ou cria o cliente com os dados indicados. Só depois de associada fica visível para os utilizadores desse cliente. A confirmação do estado é enviada por email a quem fez a inscrição.
+- **Dados estruturados:** cada sessão é publicada como `EducationEvent` (schema.org), com data, modalidade, local e organizador.
+- **Base de dados existente:** se a área de clientes já tiver sido usada, a tabela de inscrições é atualizada automaticamente no primeiro acesso, sem perder dados.
+
+A página `/formacoes/` é um `index.php`. O `.htaccess` declara `DirectoryIndex index.html index.php`; depois de publicar, confirmar que `curl -sI https://www.gadgetmetodo.pt/formacoes/` devolve `200`. Se devolver `403` ou `404`, o servidor não está a aplicar essa regra e as ligações devem passar a apontar para `/formacoes/index.php`.
 
 ## Catálogo de serviços
 

@@ -20,6 +20,7 @@ const ICONES = 'node_modules/lucide-static/icons/';
 const versao = ficheiro => crypto.createHash('sha256').update(fs.readFileSync(path.join(OUT, ficheiro))).digest('hex').slice(0, 10);
 const CSS = `/assets/css/site.css?v=${versao('assets/css/site.css')}`;
 const JS = `/assets/js/site.js?v=${versao('assets/js/site.js')}`;
+const CSS_AREA = `/assets/css/area.css?v=${versao('assets/css/area.css')}`;
 
 // Ícones Lucide (licença ISC) incorporados inline
 function icone(nome, classe = '') {
@@ -148,6 +149,7 @@ function rodape() {
             <li><a href="/experiencia/">Experiência</a></li>
             <li><a href="/sobre/">Sobre nós</a></li>
             <li><a href="/catalogo/">Catálogo de serviços</a></li>
+            <li><a href="/formacoes/">Calendário de formações</a></li>
             <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
             <li><a href="/contactos/">Contactos</a></li>
             <li><a href="/clientes/">Área de clientes</a></li>
@@ -250,7 +252,9 @@ function cartaoServico(s) {
 
 // Página completa
 const paginas = [];
-function pagina({ url, titulo, descricao, h1Schema, tipo = 'WebPage', trilho, corpo, schemaExtra = [], prioridade = '0.7', llms, indexar = true, scripts = [] }) {
+// Páginas com conteúdo dinâmico (formações) são geradas como PHP: "php" é o código inicial,
+// "jsonldExtra" acrescenta dados estruturados calculados no servidor e "estilos" folhas de estilo adicionais.
+function pagina({ url, titulo, descricao, h1Schema, tipo = 'WebPage', trilho, corpo, schemaExtra = [], prioridade = '0.7', llms, indexar = true, scripts = [], ficheiro = 'index.html', php = '', jsonldExtra = '', estilos = [] }) {
   const canonical = URL_BASE + url;
   const webpage = {
     '@type': tipo,
@@ -280,7 +284,7 @@ function pagina({ url, titulo, descricao, h1Schema, tipo = 'WebPage', trilho, co
   if (tipo === 'FAQPage') webpage.mainEntity = schemaExtra.__faq;
   const jsonld = JSON.stringify({ '@context': 'https://schema.org', '@graph': grafo }, null, 2).replace(/</g, '\\u003c');
   const tituloCompleto = url === '/' ? titulo : `${titulo} | Gadgetmetodo, Lda.`;
-  const html = `<!doctype html>
+  const html = `${php}<!doctype html>
 <html lang="pt-PT">
 <head>
   <meta charset="utf-8">
@@ -310,11 +314,11 @@ function pagina({ url, titulo, descricao, h1Schema, tipo = 'WebPage', trilho, co
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="${CSS}">
-  <script>document.documentElement.classList.add("js")</script>
+${estilos.map(e => `  <link rel="stylesheet" href="${e}">\n`).join('')}  <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 ${jsonld}
   </script>
-</head>
+${jsonldExtra}</head>
 <body>
   <a class="saltar" href="#conteudo">Saltar para o conteúdo</a>
   ${cabecalho(url)}
@@ -326,7 +330,7 @@ ${jsonld}
 ${scripts.map(s => `  <script src="${s}" defer></script>\n`).join('')}</body>
 </html>
 `;
-  const destino = url === '/404.html' ? path.join(OUT, '404.html') : path.join(OUT, url, 'index.html');
+  const destino = url === '/404.html' ? path.join(OUT, '404.html') : url.endsWith('.php') ? path.join(OUT, url) : path.join(OUT, url, ficheiro);
   fs.mkdirSync(path.dirname(destino), { recursive: true });
   fs.writeFileSync(destino, html);
   if (url !== '/404.html' && indexar) paginas.push({ url, titulo, descricao, prioridade, llms });
@@ -872,7 +876,20 @@ paginaServico({
     'A empresa vai iniciar um projeto de IA e quer preparar as pessoas',
     'É necessário sensibilizar para privacidade e segurança na utilização de IA',
   ],
-  extra: `<section class="secao secao-nevoa" aria-labelledby="modulos">
+  extra: `<section class="secao" aria-labelledby="proximas-sessoes">
+      <div class="contentor">
+        <div class="destaque-formacoes">
+          <div>
+            <span class="sobretitulo">Calendário</span>
+            <h2 id="proximas-sessoes">Próximas sessões e inscrições</h2>
+            <p class="mb-0">Consulte as datas das próximas sessões abertas e inscreva-se online. A inscrição inclui um diagnóstico curto de utilização de IA, para ajustar a formação ao ponto de partida de cada formando.</p>
+          </div>
+          <a class="botao" href="/formacoes/">${icone('calendar-days')} Ver calendário e inscrever</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao secao-nevoa" aria-labelledby="modulos">
       <div class="contentor">
         <div class="cabeca-secao">
           <span class="sobretitulo">Programa</span>
@@ -1377,6 +1394,64 @@ pagina({
   `,
 });
 
+/* Formações: calendário público e inscrição (PHP, conteúdo lido da base de dados da área de clientes) */
+pagina({
+  url: '/formacoes/',
+  ficheiro: 'index.php',
+  php: `<?php require __DIR__ . '/../clientes/inc/publico.php'; $pagina = formacoes_publico(); ?>\n`,
+  jsonldExtra: '<?= $pagina[\'jsonld\'] ?>',
+  estilos: [CSS_AREA],
+  tipo: 'CollectionPage',
+  titulo: 'Calendário de formações AI Essentials',
+  descricao: 'Próximas sessões da formação AI Essentials da Gadgetmetodo, Lda.: datas, modalidade, vagas e inscrição online com diagnóstico de utilização de IA.',
+  prioridade: '0.8',
+  llms: 'Calendário das próximas sessões de formação AI Essentials, com inscrição online.',
+  trilho: [['/', 'Início'], ['/servicos/formacao-ai-essentials/', 'Formação AI Essentials'], ['/formacoes/', 'Calendário']],
+  corpo: `
+    ${topoPagina({ trilho: [['/', 'Início'], ['/servicos/formacao-ai-essentials/', 'Formação AI Essentials'], ['/formacoes/', 'Calendário']], h1: 'Calendário de formações', lead: 'Próximas sessões da formação AI Essentials, abertas a empresas e profissionais, com inscrição online.', atualizado: false })}
+
+    <?= $pagina['conteudo'] ?>
+
+    <section class="secao secao-nevoa" aria-labelledby="como-inscrever">
+      <div class="contentor">
+        <div class="duas-colunas">
+          <div>
+            ${resumo([
+              'A Gadgetmetodo, Lda. organiza sessões abertas da <a href="/servicos/formacao-ai-essentials/">formação AI Essentials</a>, sobre inteligência artificial (IA) aplicada à gestão, ministradas por formador com Certificado de Competências Pedagógicas (CCP).',
+              'Qualquer empresa pode inscrever formandos nesta página. Os clientes com acesso à área reservada podem também inscrever e acompanhar as inscrições da sua equipa.',
+            ], 'Como funcionam as sessões abertas?')}
+          </div>
+          <div>
+            <h2 id="como-inscrever" style="font-size:1.3rem">Como se inscrever</h2>
+            <ol class="etapas etapas-compactas">
+              <li><h3>Escolha a sessão</h3><p>Veja a data, a modalidade e as vagas disponíveis.</p></li>
+              <li><h3>Preencha a inscrição</h3><p>Dados da empresa, do formando e um diagnóstico de oito perguntas sobre a utilização de IA.</p></li>
+              <li><h3>Receba a confirmação</h3><p>A inscrição fica pendente e é confirmada por email pela Gadgetmetodo.</p></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    ${chamada({ titulo: 'Prefere uma formação só para a sua equipa?', texto: 'Organizamos o AI Essentials na sua empresa, com datas, duração e exemplos ajustados ao setor e às funções do grupo.' })}
+  `,
+});
+
+pagina({
+  url: '/formacoes/inscricao.php',
+  php: `<?php require __DIR__ . '/../clientes/inc/publico.php'; $pagina = inscricao_publica(); ?>\n`,
+  estilos: [CSS_AREA],
+  indexar: false,
+  titulo: 'Inscrição em formação',
+  descricao: 'Inscrição numa sessão da formação AI Essentials da Gadgetmetodo, Lda., com diagnóstico de utilização de inteligência artificial.',
+  trilho: [['/', 'Início'], ['/formacoes/', 'Calendário de formações'], ['/formacoes/inscricao.php', 'Inscrição']],
+  corpo: `
+    ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Calendário de formações'], ['/formacoes/inscricao.php', 'Inscrição']], h1: 'Inscrição em formação', lead: 'Preencha os dados da empresa e do formando e responda ao diagnóstico de utilização de inteligência artificial.', atualizado: false })}
+
+    <?= $pagina['conteudo'] ?>
+  `,
+});
+
 /* Privacidade */
 pagina({
   url: '/privacidade/',
@@ -1400,7 +1475,7 @@ pagina({
           <li><strong>Dados técnicos de acesso</strong> registados pelo serviço de alojamento do site, como o endereço IP, a data e hora do pedido, a página pedida e o tipo de navegador, para garantir o funcionamento e a segurança do site.</li>
           <li><strong>Acesso ao catálogo enviado por email:</strong> quando abre o catálogo através da ligação incluída na confirmação do pedido, registamos a data e hora do acesso e o tipo de navegador, associados à referência do pedido.</li>
           <li><strong>Área de clientes:</strong> nome, email profissional e entidade dos utilizadores com acesso, e data do último acesso.</li>
-          <li><strong>Inscrições em formações:</strong> nome, email profissional e função do formando, respostas ao diagnóstico de utilização de inteligência artificial, ferramentas usadas e expectativas sobre a formação, indicados pela entidade cliente que faz a inscrição.</li>
+          <li><strong>Inscrições em formações:</strong> nome, email profissional e função do formando, respostas ao diagnóstico de utilização de inteligência artificial, ferramentas usadas e expectativas sobre a formação. Nas inscrições feitas no calendário público, também o nome e o NIF da empresa e o nome, o email e o telefone de quem faz a inscrição.</li>
           <li><strong>Prevenção de abusos do formulário:</strong> o servidor guarda, durante uma hora, um código derivado do endereço IP, que não revela o endereço, para limitar envios repetidos.</li>
         </ul>
 
@@ -1424,7 +1499,7 @@ pagina({
         <p>O ditado é opcional e só é ativado quando carrega no botão "Ditar". Usa o serviço de reconhecimento de voz do seu navegador: o áudio é tratado pelo fornecedor do navegador (por exemplo, a Google no Chrome ou a Apple no Safari), de acordo com as condições desse fornecedor. Este site recebe apenas o texto que decidir enviar e não grava nem guarda áudio.</p>
 
         <h2>5. Área de clientes e diagnóstico de utilização de IA</h2>
-        <p>A área de clientes é reservada a pessoas autorizadas. Cada entidade cliente vê apenas as formações disponíveis e as inscrições dos seus próprios formandos; a Gadgetmetodo vê todas. O diagnóstico de utilização de IA é uma autoavaliação curta, usada apenas para ajustar os exemplos e os exercícios ao ponto de partida do grupo; não se destina a avaliar o desempenho profissional do formando. A entidade cliente que faz a inscrição deve informar o formando deste tratamento.</p>
+        <p>A área de clientes é reservada a pessoas autorizadas. Cada entidade cliente vê apenas as formações disponíveis e as inscrições dos seus próprios formandos; a Gadgetmetodo vê todas. As inscrições feitas no <a href="/formacoes/">calendário público</a> ficam visíveis apenas para a Gadgetmetodo até serem associadas à entidade cliente correspondente. O diagnóstico de utilização de IA é uma autoavaliação curta, usada apenas para ajustar os exemplos e os exercícios ao ponto de partida do grupo; não se destina a avaliar o desempenho profissional do formando. Quem inscreve outra pessoa deve informá-la deste tratamento.</p>
 
         <h2>6. Cookies e tecnologias semelhantes</h2>
         <p>Este site não utiliza cookies, ferramentas de análise de tráfego ou de publicidade, nem incorpora conteúdos de terceiros, como mapas ou vídeos. As fontes tipográficas são alojadas no próprio site. A área de clientes e a área reservada da empresa, usadas apenas por pessoas autorizadas, utilizam um cookie de sessão estritamente necessário, que expira ao fechar o navegador.</p>

@@ -123,8 +123,9 @@ function estado_etiqueta(string $estado, array $nomes): string
     return etiqueta($nomes[$estado] ?? $estado, $tipos[$estado] ?? '');
 }
 
-// Lista de formações agrupada por mês, em formato de calendário
-function calendario(array $formacoes, callable $acoes): string
+// Lista de formações agrupada por mês, em formato de calendário.
+// Na versão pública mostra as vagas disponíveis em vez do número de inscritos.
+function calendario(array $formacoes, callable $acoes, bool $publico = false): string
 {
     if (!$formacoes) {
         return '<p class="texto-suave">Não há formações agendadas.</p>';
@@ -144,14 +145,17 @@ function calendario(array $formacoes, callable $acoes): string
         $n = inscritos((int) $f['id']);
         $restantes = max(0, (int) $f['vagas'] - $n);
         $local = trim((MODALIDADES[$f['modalidade']] ?? '') . ($f['local'] ? ' · ' . $f['local'] : ''));
+        $vagas = $publico
+            ? ($f['estado'] !== 'aberta' ? '' : ($restantes === 0 ? ' · Esgotada' : ($restantes <= 3 ? ' · Últimas vagas' : ' · ' . $restantes . ' vagas disponíveis')))
+            : ' · ' . $n . ' inscrito(s), ' . $restantes . ' vaga(s)';
         $html .= '<article class="evento">
           <div class="evento-data"><strong>' . date('j', $t) . '</strong><span>' . $abrev[(int) date('n', $t)] . '</span><small>' . $dias[(int) date('w', $t)] . '</small></div>
           <div class="evento-info">
-            <h3>' . h($f['titulo']) . '</h3>
+            <h3>' . h($f['titulo']) . (formacao_nova($f) && $f['estado'] === 'aberta' ? ' ' . etiqueta('Nova', 'nova') : '') . '</h3>
             <p class="mb-0">' . h(MODULOS[$f['modulo']] ?? (string) $f['modulo']) . '</p>
-            <p class="evento-meta mb-0">' . h(date('H:i', $t) . (!empty($f['fim']) ? ' às ' . date('H:i', strtotime($f['fim'])) : '')) . ($local ? ' · ' . h($local) : '') . ' · ' . $n . ' inscrito(s), ' . $restantes . ' vaga(s)</p>
+            <p class="evento-meta mb-0">' . h(date('H:i', $t) . (!empty($f['fim']) ? ' às ' . date('H:i', strtotime($f['fim'])) : '')) . ($local ? ' · ' . h($local) : '') . h($vagas) . '</p>
           </div>
-          <div class="evento-acoes">' . estado_etiqueta($f['estado'], ESTADOS_FORMACAO) . $acoes($f, $restantes) . '</div>
+          <div class="evento-acoes">' . ($publico && $f['estado'] === 'aberta' ? '' : estado_etiqueta($f['estado'], ESTADOS_FORMACAO)) . $acoes($f, $restantes) . '</div>
         </article>';
     }
     return $html . '</div>';

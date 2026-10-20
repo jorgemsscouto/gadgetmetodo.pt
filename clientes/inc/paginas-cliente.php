@@ -31,6 +31,7 @@ function cliente_painel(): void
     pagina_area('painel', 'Bem-vindo, ' . $u['nome'], '
       <p class="lead">Nesta área pode consultar o calendário das formações AI Essentials, inscrever formandos da ' . h($u['cliente_nome']) . ' e acompanhar o estado das inscrições.</p>
       <div class="acoes" style="margin-top:0"><a class="botao" href="' . h(url('calendario')) . '">Ver formações e inscrever</a><a class="botao botao-secundario" href="' . h(url('inscricoes')) . '">As nossas inscrições</a></div>
+      ' . (($novas = formacoes_novas()) ? '<h2 class="espaco-topo">Novas formações</h2><p class="texto-suave">Sessões agendadas nos últimos ' . DIAS_NOVA . ' dias.</p>' . calendario($novas, 'botao_inscrever') : '') . '
       <h2 class="espaco-topo">Próximas formações com formandos inscritos</h2>
       ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Formando</th><th>Formação</th><th>Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há formandos inscritos em formações futuras.</p>'), $u['cliente_nome']);
 }
@@ -101,25 +102,14 @@ function pagina_inscrever(): void
             $erros[] = 'Confirme que o formando foi informado do tratamento dos dados.';
         }
         if (!$erros) {
-            $pdo = bd();
-            $pdo->exec('BEGIN IMMEDIATE');
-            $repetida = $v['email'] !== '' && linha_bd("SELECT id FROM inscricoes WHERE formacao_id = ? AND email = ? COLLATE NOCASE AND estado != 'cancelada'", [$f['id'], $v['email']]);
-            if ($repetida) {
-                $erros[] = 'Este formando já está inscrito nesta formação.';
-            } elseif (!$admin && inscritos((int) $f['id']) >= (int) $f['vagas']) {
-                // A Gadgetmetodo pode inscrever acima do limite de vagas; o cliente não
-                $erros[] = 'Já não há vagas nesta formação.';
-            }
-            if ($erros) {
-                $pdo->exec('ROLLBACK');
+            // A Gadgetmetodo pode inscrever acima do limite de vagas; o cliente não
+            $r = gravar_inscricao($f, ['cliente_id' => $v['cliente_id'], 'utilizador_id' => $u['id'], 'origem' => 'area'] + $v, $respostas, $admin);
+            if ($r['erro']) {
+                $erros[] = $r['erro'];
             } else {
-                $a = avaliar_diagnostico($respostas);
-                $id = executar('INSERT INTO inscricoes (formacao_id, cliente_id, utilizador_id, formando, email, funcao, respostas, pontuacao, responsavel, nivel, ferramentas, expectativas, estado, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    [$f['id'], $v['cliente_id'], $u['id'], $v['formando'], $v['email'], $v['funcao'], json_encode($respostas), $a['pontuacao'], $a['responsavel'], $a['nivel'], implode(', ', $v['ferramentas']), $v['expectativas'], 'pendente', agora()]);
-                $pdo->exec('COMMIT');
-                emails_nova_inscricao($id);
-                aviso('Inscrição de ' . h($v['formando']) . ' registada. Resultado do diagnóstico: <strong>' . h($a['nivel']) . '</strong> (' . $a['pontuacao'] . ' em 24). Recebe a confirmação por email.');
-                redirecionar('inscricao', ['id' => $id]);
+                emails_nova_inscricao($r['id']);
+                aviso('Inscrição de ' . h($v['formando']) . ' registada. Resultado do diagnóstico: <strong>' . h($r['nivel']) . '</strong> (' . $r['pontuacao'] . ' em 24). Recebe a confirmação por email.');
+                redirecionar('inscricao', ['id' => $r['id']]);
             }
         }
     }
@@ -149,21 +139,66 @@ function pagina_inscrever(): void
       </form>', 'AI Essentials');
 }
 
+// Quem recebe as confirmações de uma inscrição: o utilizador do cliente que a fez ou, no site, o contacto indicado
+function contacto_inscricao(array $i): ?array
+{
+    if (($i['autor_papel'] ?? '') === 'cliente' && !empty($i['autor_email'])) {
+        return ['email' => (string) $i['autor_email'], 'nome' => (string) $i['autor'], 'area' => true];
+    }
+    if (($i['origem'] ?? '') === 'site' && !empty($i['contacto_email'])) {
+        return ['email' => (string) $i['contacto_email'], 'nome' => (string) $i['contacto_nome'], 'area' => false];
+    }
+    return null;
+}
+
+const SQL_INSCRICAO = 'SELECT i.*, ' . SQL_CLIENTE . ', f.titulo, f.modulo, f.inicio, f.fim, f.modalidade, f.local, f.estado AS estado_formacao, u.nome AS autor, u.email AS autor_email, u.papel AS autor_papel FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id LEFT JOIN utilizadores u ON u.id = i.utilizador_id WHERE i.id = ?';
+
+// Grava uma inscrição numa transação, para que duas inscrições em simultâneo não ultrapassem as vagas.
+// Devolve o identificador e o resultado do diagnóstico, ou a mensagem de erro.
+function gravar_inscricao(array $f, array $v, array $respostas, bool $sem_limite_vagas): array
+{
+    $pdo = bd();
+    $pdo->exec('BEGIN IMMEDIATE');
+    $erro = '';
+    if ($v['email'] !== '' && linha_bd("SELECT id FROM inscricoes WHERE formacao_id = ? AND email = ? COLLATE NOCASE AND estado != 'cancelada'", [$f['id'], $v['email']])) {
+        $erro = 'Este formando já está inscrito nesta formação.';
+    } elseif (!$sem_limite_vagas && inscritos((int) $f['id']) >= (int) $f['vagas']) {
+        $erro = 'Já não há vagas nesta formação.';
+    }
+    if ($erro) {
+        $pdo->exec('ROLLBACK');
+        return ['erro' => $erro];
+    }
+    $a = avaliar_diagnostico($respostas);
+    $id = executar('INSERT INTO inscricoes (formacao_id, cliente_id, utilizador_id, origem, empresa, nif, contacto_nome, contacto_email, contacto_telefone, formando, email, funcao, respostas, pontuacao, responsavel, nivel, ferramentas, expectativas, estado, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [$f['id'], $v['cliente_id'] ?: null, $v['utilizador_id'] ?? null, $v['origem'], $v['empresa'] ?? null, $v['nif'] ?? null, $v['contacto_nome'] ?? null, $v['contacto_email'] ?? null, $v['contacto_telefone'] ?? null,
+         $v['formando'], $v['email'], $v['funcao'], json_encode($respostas), $a['pontuacao'], $a['responsavel'], $a['nivel'], implode(', ', $v['ferramentas']), $v['expectativas'], 'pendente', agora()]);
+    $pdo->exec('COMMIT');
+    return ['erro' => '', 'id' => $id] + $a;
+}
+
 function emails_nova_inscricao(int $id): void
 {
-    $i = linha_bd('SELECT i.*, c.nome AS cliente, f.titulo, f.modulo, f.inicio, f.fim, f.modalidade, f.local, u.nome AS autor, u.email AS autor_email, u.papel AS autor_papel FROM inscricoes i JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id LEFT JOIN utilizadores u ON u.id = i.utilizador_id WHERE i.id = ?', [$id]);
+    $i = linha_bd(SQL_INSCRICAO, [$id]);
     if (!$i) {
         return;
     }
     $cfg = cfg();
+    $site = rtrim((string) ($cfg['site'] ?? 'https://www.gadgetmetodo.pt'), '/');
+    $publica = $i['origem'] === 'site';
     $quando = horario($i) . ' · ' . (MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ' · ' . $i['local'] : '');
     $a = avaliar_diagnostico((array) json_decode((string) $i['respostas'], true));
-    $link = rtrim((string) ($cfg['site'] ?? 'https://www.gadgetmetodo.pt'), '/') . '/clientes/' . url('inscricao', ['id' => $id]);
+    $link_area = $site . '/clientes/' . url('inscricao', ['id' => $id]);
+    $contacto = contacto_inscricao($i);
     $linhas = [
-        'Formação' => $i['titulo'] . ' (' . (MODULOS[$i['modulo']] ?? '') . ')', 'Data' => $quando, 'Cliente' => $i['cliente'],
+        'Formação' => $i['titulo'] . ' (' . (MODULOS[$i['modulo']] ?? '') . ')', 'Data' => $quando,
+        'Origem' => $publica ? 'Inscrição pública no site, por associar a um cliente' : ORIGENS['area'],
+        $publica ? 'Empresa' : 'Cliente' => $i['cliente'] . ($i['nif'] ? ' (NIF ' . $i['nif'] . ')' : ''),
+        'Contacto' => $publica ? trim($i['contacto_nome'] . ' · ' . $i['contacto_email'] . ($i['contacto_telefone'] ? ' · ' . $i['contacto_telefone'] : '')) : '',
         'Formando' => $i['formando'], 'Email' => $i['email'], 'Função' => $i['funcao'],
         'Diagnóstico' => $i['nivel'] . ' (' . $i['pontuacao'] . ' em 24; uso responsável ' . $i['responsavel'] . ' em 9)',
-        'Ferramentas' => $i['ferramentas'], 'Expectativas' => $i['expectativas'], 'Inscrito por' => $i['autor'] . ' (' . $i['autor_email'] . ')',
+        'Ferramentas' => $i['ferramentas'], 'Expectativas' => $i['expectativas'],
+        'Inscrito por' => $i['autor'] ? $i['autor'] . ' (' . $i['autor_email'] . ')' : '',
     ];
     $tabela = '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">';
     $texto = '';
@@ -175,23 +210,27 @@ function emails_nova_inscricao(int $id): void
         $texto .= $k . ': ' . $val . "\n";
     }
     $tabela .= '</table>';
-    $botao = '<p style="margin:22px 0 0;"><a href="' . h($link) . '" style="display:inline-block;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">Ver inscrição na área de clientes</a></p>';
+    $botao = function (string $href, string $rotulo) {
+        return '<p style="margin:22px 0 0;"><a href="' . h($href) . '" style="display:inline-block;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">' . h($rotulo) . '</a></p>';
+    };
 
     // Aviso interno para a Gadgetmetodo
     $destino = (string) ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt');
-    enviar_aviso($destino, 'Nova inscrição: ' . $i['formando'] . ' (' . $i['cliente'] . '), ' . data_hora($i['inicio'], false), 'Nova inscrição em formação',
-        '<p style="margin:0 0 16px;">Foi registada uma nova inscrição, pendente de confirmação.</p>' . $tabela
-        . '<p style="margin:16px 0 0;"><strong>Recomendação:</strong> ' . h($a['recomendacao']) . '</p>' . $botao,
-        "Foi registada uma nova inscrição, pendente de confirmação.\n\n" . $texto . "\nRecomendação: " . $a['recomendacao'] . "\n\n" . $link,
-        (string) $i['autor_email'], (string) ($cfg['bcc'] ?? ''));
+    enviar_aviso($destino, ($publica ? 'Nova inscrição pelo site: ' : 'Nova inscrição: ') . $i['formando'] . ' (' . $i['cliente'] . '), ' . data_hora($i['inicio'], false), 'Nova inscrição em formação',
+        '<p style="margin:0 0 16px;">Foi registada uma nova inscrição, pendente de confirmação.' . ($publica ? ' Veio do site público: associe-a a um cliente na área de clientes.' : '') . '</p>' . $tabela
+        . '<p style="margin:16px 0 0;"><strong>Recomendação:</strong> ' . h($a['recomendacao']) . '</p>' . $botao($link_area, 'Ver inscrição na área de clientes'),
+        "Foi registada uma nova inscrição, pendente de confirmação.\n\n" . $texto . "\nRecomendação: " . $a['recomendacao'] . "\n\n" . $link_area,
+        $contacto['email'] ?? '', (string) ($cfg['bcc'] ?? ''));
 
-    // Confirmação de receção para o utilizador do cliente que inscreveu
-    if ($i['autor_papel'] === 'cliente' && $i['autor_email']) {
-        enviar_aviso((string) $i['autor_email'], 'Inscrição recebida: ' . $i['formando'] . ', ' . $i['titulo'] . ' de ' . data_hora($i['inicio'], false), 'Inscrição recebida',
-            '<p style="margin:0 0 14px;">' . h(nome_curto((string) $i['autor'])) . ',</p><p style="margin:0 0 16px;">Recebemos a inscrição de <strong>' . h($i['formando']) . '</strong> na formação ' . h($i['titulo']) . ', em ' . h($quando) . '. A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.</p>'
-            . '<p style="margin:0 0 16px;">O diagnóstico indica o nível <strong>' . h($i['nivel']) . '</strong> de utilização de IA. Vamos usá-lo para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>' . $botao
-            . '<p style="margin:22px 0 0;color:#687280;font-size:13px;">Para alterar ou cancelar a inscrição, use a área de clientes ou responda a este email.</p>',
-            nome_curto((string) $i['autor']) . ",\n\nRecebemos a inscrição de " . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . $quando . ". A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.\n\nNível de utilização de IA indicado pelo diagnóstico: " . $i['nivel'] . ".\n\nVer a inscrição: " . $link,
+    // Confirmação de receção para quem fez a inscrição
+    if ($contacto) {
+        $ver = $contacto['area'] ? $botao($link_area, 'Ver inscrição na área de clientes') : $botao($site . '/formacoes/', 'Ver o calendário de formações');
+        $alterar = $contacto['area'] ? 'Para alterar ou cancelar a inscrição, use a área de clientes ou responda a este email.' : 'Para alterar ou cancelar a inscrição, basta responder a este email.';
+        enviar_aviso($contacto['email'], 'Inscrição recebida: ' . $i['formando'] . ', ' . $i['titulo'] . ' de ' . data_hora($i['inicio'], false), 'Inscrição recebida',
+            '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 16px;">Recebemos a inscrição de <strong>' . h($i['formando']) . '</strong> na formação ' . h($i['titulo']) . ', em ' . h($quando) . '. A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.</p>'
+            . '<p style="margin:0 0 16px;">O diagnóstico indica o nível <strong>' . h($i['nivel']) . '</strong> de utilização de IA. Vamos usá-lo para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>' . $ver
+            . '<p style="margin:22px 0 0;color:#687280;font-size:13px;">' . h($alterar) . '</p>',
+            nome_curto($contacto['nome']) . ",\n\nRecebemos a inscrição de " . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . $quando . ". A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.\n\nNível de utilização de IA indicado pelo diagnóstico: " . $i['nivel'] . ".\n\n" . $alterar,
             $destino);
     }
 }
@@ -207,14 +246,15 @@ function nome_curto(string $nome): string
 function pagina_inscricao(): void
 {
     $id = (int) ($_GET['id'] ?? 0);
-    $i = linha_bd('SELECT i.*, c.nome AS cliente, f.titulo, f.modulo, f.inicio, f.fim, f.modalidade, f.local, f.estado AS estado_formacao, u.nome AS autor, u.email AS autor_email, u.papel AS autor_papel FROM inscricoes i JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id LEFT JOIN utilizadores u ON u.id = i.utilizador_id WHERE i.id = ?', [$id]);
+    $i = linha_bd(SQL_INSCRICAO, [$id]);
     $admin = eh_admin();
-    if (!$i || (!$admin && (int) $i['cliente_id'] !== (int) utilizador()['cliente_id'])) {
+    if (!$i || (!$admin && ($i['cliente_id'] === null || (int) $i['cliente_id'] !== (int) utilizador()['cliente_id']))) {
         // A mesma resposta para inexistente e para alheia: não revela que a inscrição existe
         http_response_code(404);
         pagina_erro('Inscrição não encontrada', 'A inscrição pedida não existe ou não pertence ao seu cliente.');
     }
     $futura = strtotime($i['inicio']) >= strtotime('today');
+    $contacto = contacto_inscricao($i);
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $acao = (string) ($_POST['acao'] ?? '');
         if ($acao === 'cancelar' && $i['estado'] !== 'cancelada' && ($admin || $futura)) {
@@ -229,18 +269,33 @@ function pagina_inscricao(): void
         } elseif ($acao === 'estado' && $admin && isset(ESTADOS_INSCRICAO[$_POST['estado'] ?? ''])) {
             $novo = $_POST['estado'];
             executar('UPDATE inscricoes SET estado = ? WHERE id = ?', [$novo, $id]);
-            if (!empty($_POST['avisar']) && $novo !== $i['estado'] && $i['autor_papel'] === 'cliente' && $i['autor_email']) {
+            if (!empty($_POST['avisar']) && $novo !== $i['estado'] && $contacto) {
                 $frase = $novo === 'confirmada'
                     ? 'A inscrição de ' . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . horario($i) . ', está confirmada.'
                     : 'A inscrição de ' . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . horario($i) . ', passou ao estado: ' . strtolower(ESTADOS_INSCRICAO[$novo]) . '.';
                 $local = $novo === 'confirmada' ? (MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ': ' . $i['local'] : '') : '';
-                enviar_aviso((string) $i['autor_email'], ($novo === 'confirmada' ? 'Inscrição confirmada: ' : 'Inscrição atualizada: ') . $i['formando'] . ', ' . data_hora($i['inicio'], false), $novo === 'confirmada' ? 'Inscrição confirmada' : 'Inscrição atualizada',
-                    '<p style="margin:0 0 14px;">' . h(nome_curto((string) $i['autor'])) . ',</p><p style="margin:0 0 14px;">' . h($frase) . '</p>' . ($local ? '<p style="margin:0 0 14px;"><strong>Local:</strong> ' . h($local) . '</p>' : '') . '<p style="margin:0;">Para qualquer questão, basta responder a este email.</p>',
-                    nome_curto((string) $i['autor']) . ",\n\n" . $frase . ($local ? "\n\nLocal: " . $local : '') . "\n\nPara qualquer questão, basta responder a este email.",
+                enviar_aviso($contacto['email'], ($novo === 'confirmada' ? 'Inscrição confirmada: ' : 'Inscrição atualizada: ') . $i['formando'] . ', ' . data_hora($i['inicio'], false), $novo === 'confirmada' ? 'Inscrição confirmada' : 'Inscrição atualizada',
+                    '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 14px;">' . h($frase) . '</p>' . ($local ? '<p style="margin:0 0 14px;"><strong>Local:</strong> ' . h($local) . '</p>' : '') . '<p style="margin:0;">Para qualquer questão, basta responder a este email.</p>',
+                    nome_curto($contacto['nome']) . ",\n\n" . $frase . ($local ? "\n\nLocal: " . $local : '') . "\n\nPara qualquer questão, basta responder a este email.",
                     (string) (cfg()['destinatario'] ?? 'info@gadgetmetodo.pt'));
-                aviso('Estado atualizado e cliente avisado por email.');
+                aviso('Estado atualizado e aviso enviado por email para ' . h($contacto['email']) . '.');
             } else {
                 aviso('Estado atualizado.');
+            }
+        } elseif ($acao === 'associar' && $admin && $i['cliente_id'] === null) {
+            // Inscrição feita no site: associa a um cliente existente ou cria o cliente com os dados indicados
+            $escolha = (string) ($_POST['cliente_id'] ?? '');
+            if ($escolha === 'novo') {
+                $cliente_id = executar('INSERT INTO clientes (nome, nif, contacto, email, telefone, notas, criado) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [$i['empresa'], $i['nif'], $i['contacto_nome'], $i['contacto_email'], $i['contacto_telefone'], 'Criado a partir de uma inscrição no site.', agora()]);
+            } else {
+                $cliente_id = (int) (linha_bd('SELECT id FROM clientes WHERE id = ?', [(int) $escolha])['id'] ?? 0);
+            }
+            if ($cliente_id) {
+                executar('UPDATE inscricoes SET cliente_id = ? WHERE id = ?', [$cliente_id, $id]);
+                aviso('Inscrição associada ao cliente. Os utilizadores desse cliente passam a vê-la na área de clientes.');
+            } else {
+                aviso('Escolha o cliente.', 'erro');
             }
         }
         redirecionar('inscricao', ['id' => $id]);
@@ -249,23 +304,38 @@ function pagina_inscricao(): void
     if ($admin) {
         $acoes = '<form method="post" class="formulario linha-form">' . campo_csrf() . '<input type="hidden" name="acao" value="estado">
           ' . campo_select('estado', 'Estado da inscrição', ESTADOS_INSCRICAO, $i['estado']) . '
-          <label class="opcao consentimento"><input type="checkbox" name="avisar" value="1" checked> Avisar o cliente por email</label>
+          <label class="opcao consentimento"><input type="checkbox" name="avisar" value="1"' . ($contacto ? ' checked' : ' disabled') . '> Avisar por email quem fez a inscrição</label>
           <div><button class="botao" type="submit">Guardar estado</button></div></form>';
+        if ($i['cliente_id'] === null) {
+            $clientes = ['novo' => 'Criar cliente novo com estes dados'] + array_column(consulta('SELECT id, nome FROM clientes ORDER BY nome'), 'nome', 'id');
+            $acoes .= '<div class="aviso aviso-info">Inscrição feita no site público, ainda sem cliente associado.</div>
+            <form method="post" class="formulario linha-form">' . campo_csrf() . '<input type="hidden" name="acao" value="associar">
+              ' . campo_select('cliente_id', 'Associar a cliente', $clientes, '', 'Escolha o cliente', 'required') . '
+              <div></div><div><button class="botao botao-secundario" type="submit">Associar</button></div></form>';
+        }
     } elseif ($i['estado'] !== 'cancelada' && $futura) {
         $acoes = '<form method="post" class="espaco-topo">' . campo_csrf() . '<input type="hidden" name="acao" value="cancelar"><button class="botao botao-secundario" type="submit">Cancelar esta inscrição</button></form>';
     }
+    $publica = $i['origem'] === 'site';
     $dados = [
         'Formação' => h($i['titulo']) . '<br><span class="texto-suave">' . h(MODULOS[$i['modulo']] ?? '') . '</span>',
         'Data e local' => h(horario($i)) . '<br><span class="texto-suave">' . h(MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ' · ' . h($i['local']) : '') . '</span>',
-        'Cliente' => h($i['cliente']), 'Formando' => h($i['formando']), 'Email' => h($i['email']), 'Função' => h($i['funcao']),
+        $publica && $i['cliente_id'] === null ? 'Empresa' : 'Cliente' => h($i['cliente']) . ($i['nif'] ? ' <span class="texto-suave">· NIF ' . h($i['nif']) . '</span>' : ''),
+        'Formando' => h($i['formando']), 'Email' => h($i['email']), 'Função' => h($i['funcao']),
         'Estado' => estado_etiqueta($i['estado'], ESTADOS_INSCRICAO),
-        'Inscrito por' => h($i['autor']) . ', ' . h(data_hora($i['criado'])),
+        'Origem' => h(ORIGENS[$i['origem']] ?? $i['origem']),
+        'Inscrito por' => $publica
+            ? h($i['contacto_nome']) . ', ' . h(data_hora($i['criado'])) . '<br><span class="texto-suave"><a href="mailto:' . h($i['contacto_email']) . '">' . h($i['contacto_email']) . '</a>' . ($i['contacto_telefone'] ? ' · ' . h($i['contacto_telefone']) : '') . '</span>'
+            : h($i['autor']) . ', ' . h(data_hora($i['criado'])),
     ];
+    if (!$admin) {
+        unset($dados['Origem']);
+    }
     $tabela = '';
     foreach ($dados as $k => $val) {
         $tabela .= '<tr><th scope="row">' . h($k) . '</th><td>' . $val . '</td></tr>';
     }
-    pagina_area('inscricoes', $i['formando'], ($acoes && $admin ? $acoes : '') . '
+    pagina_area('inscricoes', $i['formando'], ($admin ? $acoes : '') . '
       <div class="conteudo"><table class="tabela-ficha"><tbody>' . $tabela . '</tbody></table></div>
       <h2 class="espaco-topo">Diagnóstico de utilização de IA</h2>
       <div class="diagnostico-resultado">
