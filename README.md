@@ -60,9 +60,11 @@ Se a pasta pública tiver uma página por omissão do alojamento (por exemplo `i
 
 O formulário em `/contactos/` envia os pedidos para `formulario/enviar.php`, que precisa de PHP no alojamento. Cada pedido gera dois emails: o pedido para `info@gadgetmetodo.pt` (com cópia oculta opcional e resposta direta ao remetente) e uma confirmação de receção para quem o enviou. O campo de mensagem aceita ditado por voz nos navegadores que o suportam.
 
-1. Confirmar que o alojamento executa PHP: `curl -s https://www.gadgetmetodo.pt/formulario/enviar.php` deve devolver uma resposta em JSON e não o código do ficheiro. Fazer esta verificação antes de enviar a configuração.
-2. Criar a configuração com `./configurar-formulario.sh`, que pede os dados da caixa de email (servidor SMTP, porta, utilizador e palavra-passe) e o endereço em cópia oculta. Gera `formulario/config.php`, que fica fora do Git.
-3. Publicar com `./publicar.sh`.
+1. Confirmar que o alojamento executa PHP: `curl -s https://www.gadgetmetodo.pt/formulario/enviar.php` deve devolver uma resposta em JSON e não o código do ficheiro (verificado em outubro de 2026).
+2. Correr uma vez `./configurar-formulario.sh`. Os dados de envio da Amen já estão no script (servidor `smtp-pt.securemail.pro`, porta 465 com SSL, utilizador `info@gadgetmetodo.pt`, cópia oculta para o email pessoal do gestor). Só pede a palavra-passe da caixa, envia um email de teste para a caixa e para a cópia oculta e, se o envio funcionar, guarda a palavra-passe nas Chaves do macOS.
+3. Publicar com `./publicar.sh`. A partir daí, se `formulario/config.php` não existir, o `publicar.sh` gera-o sozinho a partir da palavra-passe guardada.
+
+Se a palavra-passe do email mudar: `./configurar-formulario.sh --esquecer` e voltar ao passo 2.
 
 Proteções incluídas: campo isca para robôs, tempo mínimo de preenchimento, limite de 5 pedidos por hora por origem, validação no servidor, verificação da origem do pedido e bloqueio de injeção de cabeçalhos. Os testes foram feitos com um servidor de email local.
 

@@ -1,15 +1,54 @@
 #!/usr/bin/env bash
 # Cria formulario/config.php com os dados de envio de email do formulário de contacto.
-# O ficheiro fica só neste computador (não entra no Git) e é enviado para o alojamento pelo publicar.sh.
+# Utilização: ./configurar-formulario.sh              configura e envia um email de teste
+#             ./configurar-formulario.sh --automatico  só gera o config.php (usado pelo publicar.sh)
+#             ./configurar-formulario.sh --esquecer    apaga a palavra-passe guardada e o config.php
+# A palavra-passe é pedida uma única vez e fica nas Chaves do macOS (noutros sistemas, em
+# .formulario.senha com acesso só do dono). Nem ela nem o config.php entram no Git.
 
 set -euo pipefail
 cd "$(dirname "$0")"
 
-DESTINO="formulario/config.php"
+# Dados de envio (Amen)
+REMETENTE="info@gadgetmetodo.pt"
+DESTINATARIO="info@gadgetmetodo.pt"
+BCC="jorgemsscouto@gmail.com"
+SMTP_HOST="smtp-pt.securemail.pro"
+SMTP_PORTA=465
+SMTP_SEGURANCA="ssl"
+SMTP_UTILIZADOR="info@gadgetmetodo.pt"
 
-if [ -f "$DESTINO" ]; then
-  read -rp "Já existe $DESTINO. Substituir? [s/N]: " RESPOSTA
-  [[ "$RESPOSTA" =~ ^[sS]$ ]] || exit 0
+DESTINO="formulario/config.php"
+FICHEIRO_SENHA=".formulario.senha"
+SERVICO_CHAVES="gadgetmetodo-smtp"
+TEM_CHAVES=false
+command -v security >/dev/null 2>&1 && TEM_CHAVES=true
+MODO="${1:-}"
+
+if [ "$MODO" = "--esquecer" ]; then
+  $TEM_CHAVES && security delete-generic-password -s "$SERVICO_CHAVES" -a "$SMTP_UTILIZADOR" >/dev/null 2>&1 || true
+  rm -f "$FICHEIRO_SENHA" "$DESTINO"
+  echo "Palavra-passe do email e config.php apagados."
+  exit 0
+fi
+
+SMTP_SENHA=""
+if $TEM_CHAVES; then
+  SMTP_SENHA=$(security find-generic-password -s "$SERVICO_CHAVES" -a "$SMTP_UTILIZADOR" -w 2>/dev/null || true)
+elif [ -f "$FICHEIRO_SENHA" ]; then
+  SMTP_SENHA=$(cat "$FICHEIRO_SENHA")
+fi
+
+if [ -z "$SMTP_SENHA" ]; then
+  if [ "$MODO" = "--automatico" ]; then
+    echo "Formulário por configurar: corra ./configurar-formulario.sh uma vez."
+    exit 1
+  fi
+  read -rsp "Palavra-passe da caixa $SMTP_UTILIZADOR (pedida só desta vez): " SMTP_SENHA
+  echo
+  NOVA_SENHA=true
+else
+  NOVA_SENHA=false
 fi
 
 # Escapa um valor para uma string PHP entre plicas
@@ -20,34 +59,8 @@ php_str() {
   printf "'%s'" "$v"
 }
 
-echo "Dados da caixa de email que envia as mensagens (painel da Amen, secção de email)."
-read -rp "Email remetente [info@gadgetmetodo.pt]: " REMETENTE
-REMETENTE=${REMETENTE:-info@gadgetmetodo.pt}
-read -rp "Email que recebe os pedidos [info@gadgetmetodo.pt]: " DESTINATARIO
-DESTINATARIO=${DESTINATARIO:-info@gadgetmetodo.pt}
-read -rp "Email em cópia oculta (BCC), vazio para nenhum: " BCC
-read -rp "Servidor SMTP [smtp-pt.securemail.pro] (escreva - para usar o envio do alojamento): " SMTP_HOST
-SMTP_HOST=${SMTP_HOST:-smtp-pt.securemail.pro}
-[ "$SMTP_HOST" = "-" ] && SMTP_HOST=""
-
-SMTP_PORTA=465
-SMTP_SEGURANCA=ssl
-SMTP_UTILIZADOR="$REMETENTE"
-SMTP_SENHA=""
-if [ -n "$SMTP_HOST" ]; then
-  read -rp "Porta SMTP [465]: " P
-  SMTP_PORTA=${P:-465}
-  if [ "$SMTP_PORTA" = "587" ]; then SMTP_SEGURANCA=tls; fi
-  read -rp "Cifra: ssl (porta 465) ou tls (porta 587) [$SMTP_SEGURANCA]: " C
-  SMTP_SEGURANCA=${C:-$SMTP_SEGURANCA}
-  read -rp "Utilizador SMTP [$REMETENTE]: " U
-  SMTP_UTILIZADOR=${U:-$REMETENTE}
-  read -rsp "Palavra-passe da caixa de email: " SMTP_SENHA
-  echo
-fi
-
-umask 077
-cat > "$DESTINO" <<EOF
+escrever_config() {
+  (umask 077; cat > "$DESTINO" <<EOF
 <?php
 // Gerado por configurar-formulario.sh. Não colocar no Git.
 return [
@@ -57,7 +70,7 @@ return [
     'bcc'             => $(php_str "$BCC"),
     'smtp' => [
         'host'       => $(php_str "$SMTP_HOST"),
-        'porta'      => $(printf '%d' "$SMTP_PORTA"),
+        'porta'      => $SMTP_PORTA,
         'seguranca'  => $(php_str "$SMTP_SEGURANCA"),
         'utilizador' => $(php_str "$SMTP_UTILIZADOR"),
         'senha'      => $(php_str "$SMTP_SENHA"),
@@ -66,28 +79,40 @@ return [
     'site'    => 'https://www.gadgetmetodo.pt',
 ];
 EOF
+  )
+}
 
-echo "Criado $DESTINO."
+if [ "$MODO" = "--automatico" ]; then
+  escrever_config
+  exit 0
+fi
 
-# Envio de teste a partir deste computador, com os mesmos dados, para confirmar servidor, porta e palavra-passe
-if [ -n "$SMTP_HOST" ]; then
-  read -rp "Enviar um email de teste para $DESTINATARIO? [S/n]: " TESTE
-  if [[ ! "$TESTE" =~ ^[nN]$ ]]; then
-    CRED=$(mktemp); MSG=$(mktemp)
-    printf 'machine %s login %s password %s\n' "$SMTP_HOST" "$SMTP_UTILIZADOR" "$SMTP_SENHA" > "$CRED"
-    printf 'From: Gadgetmetodo, Lda. <%s>\r\nTo: <%s>\r\nSubject: Teste do formulario do site\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nEmail de teste enviado por configurar-formulario.sh. Se o recebeu, o envio do formulario esta bem configurado.\r\n' "$REMETENTE" "$DESTINATARIO" > "$MSG"
-    case "$SMTP_SEGURANCA" in
-      ssl) URL="smtps://$SMTP_HOST:$SMTP_PORTA"; TLS=(--ssl-reqd) ;;
-      tls) URL="smtp://$SMTP_HOST:$SMTP_PORTA"; TLS=(--ssl-reqd) ;;
-      *)   URL="smtp://$SMTP_HOST:$SMTP_PORTA"; TLS=() ;;
-    esac
-    if curl -sS --max-time 30 ${TLS[@]+"${TLS[@]}"} --netrc-file "$CRED" --mail-from "$REMETENTE" --mail-rcpt "$DESTINATARIO" --upload-file "$MSG" "$URL"; then
-      echo "Email de teste enviado. Confirme a receção em $DESTINATARIO."
-    else
-      echo "O envio de teste falhou. Volte a correr este script com a porta 587 e cifra tls, ou confirme os dados no painel da Amen."
-    fi
-    rm -f "$CRED" "$MSG"
+# Envio de teste a partir deste computador para a caixa da empresa e para a cópia oculta
+CRED=$(mktemp); MSG=$(mktemp)
+trap 'rm -f "$CRED" "$MSG"' EXIT
+printf 'machine %s login %s password %s\n' "$SMTP_HOST" "$SMTP_UTILIZADOR" "$SMTP_SENHA" > "$CRED"
+printf 'From: Gadgetmetodo, Lda. <%s>\r\nTo: <%s>\r\nSubject: Teste de envio do formulario do site\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nEmail de teste enviado por configurar-formulario.sh atraves de %s (porta %s).\r\nSe o recebeu, o envio do formulario esta bem configurado.\r\n' "$REMETENTE" "$DESTINATARIO" "$SMTP_HOST" "$SMTP_PORTA" > "$MSG"
+if [ "$SMTP_SEGURANCA" = "ssl" ]; then URL="smtps://$SMTP_HOST:$SMTP_PORTA"; else URL="smtp://$SMTP_HOST:$SMTP_PORTA"; fi
+
+echo "A enviar email de teste para $DESTINATARIO e $BCC..."
+if curl -sS --max-time 30 --ssl-reqd --netrc-file "$CRED" --mail-from "$REMETENTE" \
+  --mail-rcpt "$DESTINATARIO" --mail-rcpt "$BCC" --upload-file "$MSG" "$URL"; then
+  echo "Email de teste enviado. Confirme a receção em $DESTINATARIO e em $BCC (veja também o spam)."
+else
+  echo "O envio de teste falhou: a palavra-passe não foi guardada. Confirme-a no painel da Amen e corra o script de novo."
+  exit 1
+fi
+
+# Guarda a palavra-passe só depois de um envio bem-sucedido
+if $NOVA_SENHA; then
+  if $TEM_CHAVES; then
+    security add-generic-password -U -s "$SERVICO_CHAVES" -a "$SMTP_UTILIZADOR" -w "$SMTP_SENHA" >/dev/null
+    echo "Palavra-passe guardada nas Chaves do macOS."
+  else
+    (umask 077; printf '%s' "$SMTP_SENHA" > "$FICHEIRO_SENHA")
+    echo "Palavra-passe guardada em $FICHEIRO_SENHA."
   fi
 fi
 
-echo "Publique com ./publicar.sh para enviar a configuração para o alojamento."
+escrever_config
+echo "Criado $DESTINO. Publique com ./publicar.sh para o enviar para o alojamento."

@@ -64,6 +64,11 @@ if [ -z "$LFTP_PASSWORD" ]; then
 fi
 export LFTP_PASSWORD
 
+# Gera a configuração do formulário a partir da palavra-passe guardada, se ainda não existir
+if [ ! -f formulario/config.php ]; then
+  ./configurar-formulario.sh --automatico || true
+fi
+
 if ! lftp --env-password -u "$UTILIZADOR" "$SERVIDOR" <<EOF
 set ftp:ssl-allow yes
 set net:max-retries 2
@@ -74,6 +79,7 @@ mirror --reverse --verbose --no-perms \
   --exclude-glob .DS_Store \
   --exclude-glob .publicar.conf \
   --exclude-glob .publicar.senha \
+  --exclude-glob .formulario.senha \
   --exclude-glob README.md \
   --exclude-glob publicar.sh \
   --exclude-glob configurar-formulario.sh \
