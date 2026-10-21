@@ -1,11 +1,12 @@
 {
   "name": "gadgetmetodo-ferramentas",
   "private": true,
-  "description": "Geradores das páginas do site e do catálogo de serviços",
+  "description": "Geradores das páginas do site, do catálogo de serviços e da página de instalação das assinaturas de email",
   "type": "module",
   "scripts": {
     "site": "node gerar-site.mjs ..",
-    "catalogo": "node gerar-catalogo.mjs ../documentos/catalogo"
+    "catalogo": "node gerar-catalogo.mjs ../documentos/catalogo",
+    "assinatura": "node gerar-assinatura.mjs ../documentos/assinatura-email"
   },
   "dependencies": {
     "lucide-static": "1.59.0"
