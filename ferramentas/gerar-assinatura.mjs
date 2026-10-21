@@ -6,10 +6,15 @@ import path from 'path';
 
 const PASTA = process.argv[2];
 
+// Logótipo incorporado na própria assinatura: o Outlook guarda a imagem e envia-a com cada mensagem,
+// sem depender de o site estar publicado nem de o destinatário autorizar imagens externas
+const URL_LOGOTIPO = 'https://www.gadgetmetodo.pt/assets/img/assinatura/gadgetmetodo-logotipo.png';
+const LOGOTIPO = 'data:image/png;base64,' + fs.readFileSync(path.join(PASTA, '../../assets/img/assinatura/gadgetmetodo-logotipo.png')).toString('base64');
+
 // Extrai a tabela da assinatura (do primeiro <table> ao último </table>)
 function assinatura(ficheiro) {
   const html = fs.readFileSync(path.join(PASTA, ficheiro), 'utf8');
-  return html.slice(html.indexOf('<table'), html.lastIndexOf('</table>') + '</table>'.length);
+  return html.slice(html.indexOf('<table'), html.lastIndexOf('</table>') + '</table>'.length).replaceAll(URL_LOGOTIPO, LOGOTIPO);
 }
 
 const ASSINATURAS = [
@@ -48,7 +53,7 @@ const pagina = `<!doctype html>
 <body>
 <main>
   <h1>Instalar a assinatura no Outlook</h1>
-  <p class="lead">Carregue em "Copiar" e cole no editor de assinaturas do Outlook (Cmd+V no Mac, Ctrl+V no Windows). Não cole o código HTML: o Outlook mostraria o código em vez da assinatura.</p>
+  <p class="lead">Carregue em "Copiar" e cole no editor de assinaturas do Outlook (Cmd+V no Mac, Ctrl+V no Windows). Não cole o código HTML: o Outlook mostraria o código em vez da assinatura. Se já tinha uma assinatura com o logótipo em falta, apague-a primeiro.</p>
 ${ASSINATURAS.map(a => `
   <section class="cartao" aria-labelledby="t-${a.id}">
     <div class="cabeca">
@@ -66,7 +71,7 @@ ${ASSINATURAS.map(a => `
       <li><strong>Outlook para Windows (novo) e Outlook na Web:</strong> Definições, Contas, Assinaturas (nalgumas versões: Correio, Compor e responder). Crie uma assinatura nova, cole e defina as predefinições.</li>
       <li><strong>Outlook clássico para Windows:</strong> Ficheiro, Opções, Correio, Assinaturas, Novo. Cole no editor e defina as predefinições.</li>
     </ol>
-    <p class="nota">O logótipo é carregado de <code>www.gadgetmetodo.pt</code>: se não aparecer, o site ainda não foi publicado com a versão mais recente. No Outlook clássico para Windows pode também instalar o ficheiro diretamente: copie <code>assinatura-completa.html</code> para a pasta <code>%APPDATA%\\Microsoft\\Signatures</code> com o nome <code>Jorge Sá Couto.htm</code> e reinicie o Outlook.</p>
+    <p class="nota">O logótipo vai incorporado na assinatura copiada. Antes de guardar, confirme que aparece no editor do Outlook; se aparecer um quadrado vazio ou "image.png", apague-o e insira a imagem <code>gadgetmetodo-logotipo.png</code> com o botão de imagem do editor. Depois, envie uma mensagem de teste para um endereço externo (por exemplo, Gmail).</p>
   </section>
 </main>
 <script>
