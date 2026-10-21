@@ -24,7 +24,7 @@ Site estático em HTML e CSS, sem dependências nem passo de compilação. Funci
 | `formacoes/` | Calendário público de formações e inscrição sem conta (PHP, gerado com o cabeçalho e o rodapé do site) |
 | `assets/css/area.css` | Estilos próprios da área de clientes (só carregados nessas páginas) |
 | `ferramentas/` | Geradores das páginas e do catálogo (não publicados) |
-| `documentos/` | Catálogo de serviços em PDF e respetiva fonte (não publicados) |
+| `documentos/` | Catálogo de serviços em PDF e respetiva fonte, e assinaturas de email em `assinatura-email/` (não publicados) |
 
 ## Preparação para pesquisa com inteligência artificial
 
@@ -138,6 +138,10 @@ Depois de publicar:
 - As respostas das perguntas frequentes alimentam ao mesmo tempo o texto visível e os dados estruturados, por isso ficam sempre iguais.
 - O `llms.txt` e o `robots.txt` são editados à mão.
 - O `publicar.sh` avisa o Bing e outros motores aderentes ao IndexNow no fim de cada publicação. A chave está no ficheiro `<chave>.txt` na raiz do site e tem de continuar publicada.
+
+## Assinatura de email
+
+Duas assinaturas para o Outlook em `documentos/assinatura-email/`: `assinatura-completa.html` (mensagens novas) e `assinatura-resposta.html` (respostas e reencaminhamentos). O logótipo é carregado de `https://www.gadgetmetodo.pt/assets/img/assinatura/gadgetmetodo-logotipo.png`, por isso tem de estar publicado. Para instalar: abrir o ficheiro no navegador, selecionar tudo (Cmd+A), copiar e colar no editor de assinaturas do Outlook. Usam apenas tabelas, estilos em linha e a fonte Arial, para aparecerem iguais no Outlook, no Gmail e nos telemóveis.
 
 ## Licenças de terceiros
 
