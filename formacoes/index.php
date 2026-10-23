@@ -29,7 +29,7 @@
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/site.css?v=239f9b98b7">
-  <link rel="stylesheet" href="/assets/css/area.css?v=4457f5c266">
+  <link rel="stylesheet" href="/assets/css/area.css?v=284a0d3bdf">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -326,7 +326,7 @@
           </details>
           <details>
             <summary>Como me inscrevo e o que é a pré-inscrição?</summary>
-            <div class="resposta"><p>Na <a href="/formacoes/">área de formação</a>, cada curso tem um botão de inscrição. Se já houver datas, inscreve-se numa sessão, sem precisar de conta; a inscrição fica pendente até ser confirmada por email. Se ainda não houver datas, faz a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a>: recebe logo uma confirmação por email e, quando as datas forem marcadas, o convite para a inscrição. A pré-inscrição não obriga a inscrever-se.</p></div>
+            <div class="resposta"><p>Na <a href="/formacoes/">área de formação</a>, cada curso tem um botão de inscrição. Pode inscrever-se como particular ou em nome de uma empresa. Se já houver datas, inscreve-se numa sessão, sem precisar de conta; a inscrição fica pendente até ser confirmada por email. Se ainda não houver datas, faz a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a>: recebe logo uma confirmação por email e, quando as datas forem marcadas, o convite para a inscrição. A pré-inscrição não obriga a inscrever-se.</p></div>
           </details>
           <details>
             <summary>Que requisitos técnicos são necessários?</summary>
@@ -412,6 +412,6 @@
       </div>
     </div>
   </footer>
-  <script src="/assets/js/site.js?v=09b9cdd609" defer></script>
+  <script src="/assets/js/site.js?v=f53e4340b5" defer></script>
 </body>
 </html>

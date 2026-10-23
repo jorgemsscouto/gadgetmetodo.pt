@@ -10,7 +10,7 @@ function admin_painel(): void
     $ultimas = consulta('SELECT i.*, ' . SQL_CLIENTE . ', f.titulo, f.inicio FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id ORDER BY i.criado DESC LIMIT 8');
     $linhas = '';
     foreach ($ultimas as $i) {
-        $linhas .= '<tr><td>' . h(data_hora($i['criado'])) . '</td><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . h($i['cliente']) . etiqueta_origem($i) . '</td><td>' . h($i['titulo']) . ', ' . h(data_hora($i['inicio'], false)) . '</td><td>' . nivel_etiqueta($i['nivel']) . '</td></tr>';
+        $linhas .= '<tr><td>' . h(data_hora($i['criado'])) . '</td><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . cliente_html($i) . etiqueta_origem($i) . '</td><td>' . h($i['titulo']) . ', ' . h(data_hora($i['inicio'], false)) . '</td><td>' . nivel_etiqueta($i['nivel']) . '</td></tr>';
     }
     pagina_area('painel', 'Painel', '
       <div class="numeros">
@@ -152,7 +152,7 @@ function admin_formacao(): void
         $lista = consulta('SELECT i.*, ' . SQL_CLIENTE . ' FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id WHERE i.formacao_id = ? ORDER BY i.criado', [$id]);
         $linhas = '';
         foreach ($lista as $i) {
-            $linhas .= '<tr><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . h($i['funcao']) . '</td><td>' . h($i['cliente']) . etiqueta_origem($i) . '</td><td>' . nivel_etiqueta($i['nivel']) . '</td><td>' . estado_etiqueta($i['estado'], ESTADOS_INSCRICAO) . '</td></tr>';
+            $linhas .= '<tr><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . h($i['funcao']) . '</td><td>' . cliente_html($i) . etiqueta_origem($i) . '</td><td>' . nivel_etiqueta($i['nivel']) . '</td><td>' . estado_etiqueta($i['estado'], ESTADOS_INSCRICAO) . '</td></tr>';
         }
         $inscritos = ($programa ? '<div class="espaco-topo">' . $programa . '</div>' : '')
             . '<h2 class="espaco-topo">Inscritos (' . inscritos($id) . ' de ' . (int) $v['vagas'] . ')</h2>'
@@ -547,7 +547,7 @@ function lista_preinscricoes(array $c): string
             return '<form method="post" class="form-linha">' . campo_csrf() . '<input type="hidden" name="acao" value="' . $acao . '"><input type="hidden" name="pre_id" value="' . (int) $p['id'] . '">' . $conteudo . '</form>';
         };
         $linhas .= '<tr><td>' . h(data_hora($p['criado'])) . '</td>'
-            . '<td><a href="' . h(url('preinscricao', ['id' => $p['id']])) . '"><strong>' . h($p['nome']) . '</strong></a>' . ($p['empresa'] ? '<br>' . h($p['empresa']) : '')
+            . '<td><a href="' . h(url('preinscricao', ['id' => $p['id']])) . '"><strong>' . h($p['nome']) . '</strong></a>' . ($p['tipo_cliente'] === 'particular' ? '<br>' . etiqueta('Particular') : ($p['empresa'] ? '<br>' . h($p['empresa']) : ''))
             . ($p['estado'] === 'inscrita' && $p['inscricao_id'] ? '<br><a href="' . h(url('inscricao', ['id' => $p['inscricao_id']])) . '">Ver a inscrição</a>' : '') . '</td>'
             . '<td><a href="mailto:' . h($p['email']) . '">' . h($p['email']) . '</a>' . ($p['telefone'] ? '<br>' . h($p['telefone']) : '') . '</td>'
             . '<td>' . (int) $p['formandos'] . '</td>'
@@ -618,9 +618,9 @@ function admin_preinscricao(): void
                 if ($nova) {
                     $f = linha_bd('SELECT * FROM formacoes WHERE id = ?', [gravar_sessao(...$nova)]);
                 }
-                $r = gravar_inscricao($f, ['cliente_id' => null, 'utilizador_id' => utilizador()['id'], 'origem' => 'site', 'empresa' => $p['empresa'], 'nif' => null,
+                $r = gravar_inscricao($f, ['cliente_id' => null, 'utilizador_id' => utilizador()['id'], 'origem' => 'site', 'tipo_cliente' => $p['tipo_cliente'], 'empresa' => $p['empresa'], 'nif' => null,
                     'contacto_nome' => $p['nome'], 'contacto_email' => $p['email'], 'contacto_telefone' => $p['telefone'],
-                    'formando' => $formando, 'email' => $email, 'funcao' => '', 'ferramentas' => [], 'expectativas' => ''], $respostas, true);
+                    'formando' => $formando, 'email' => $email, 'funcao' => '', 'ferramentas' => $p['ferramentas'] ? explode(', ', (string) $p['ferramentas']) : [], 'expectativas' => ''], $respostas, true);
                 if ($r['erro']) {
                     $erros[] = $r['erro'];
                 } else {
@@ -660,11 +660,12 @@ function admin_preinscricao(): void
     $dados = array_filter([
         'Curso' => '<a href="' . h(url('curso', ['id' => $c['id']])) . '">' . h($c['nome']) . '</a>',
         'Pedido em' => h(data_hora($p['criado'])),
-        'Empresa' => h($p['empresa']),
+        'Cliente' => $p['tipo_cliente'] === 'particular' ? 'Particular' : h((string) $p['empresa']),
         'Contactos' => '<a href="mailto:' . h($p['email']) . '">' . h($p['email']) . '</a>' . ($p['telefone'] ? ' · ' . h($p['telefone']) : ''),
         'Formandos previstos' => (string) (int) $p['formandos'],
         'Modalidade preferida' => h(MODALIDADES[$p['modalidade']] ?? 'Indiferente'),
-        'Preferências de datas' => nl2br(h($p['preferencias'])),
+        'Preferências de datas' => nl2br(h((string) $p['preferencias'])),
+        'Ferramentas de IA' => h((string) $p['ferramentas']),
         'Estado' => etiqueta('Pré-inscrição', 'pre') . ' ' . h(ESTADOS_PREINSCRICAO[$p['estado']] ?? $p['estado'])
             . ($p['estado'] === 'inscrita' && $p['inscricao_id'] ? ' · <a href="' . h(url('inscricao', ['id' => $p['inscricao_id']])) . '">Ver a inscrição</a>' : ''),
     ], function ($x) { return $x !== ''; });
@@ -788,12 +789,12 @@ function admin_inscricoes(): void
         $linhas = [];
         foreach ($pre as $p) {
             $a = ($r = json_decode((string) $p['respostas'], true)) ? avaliar_diagnostico($r) : ['nivel' => '', 'pontuacao' => '', 'responsavel' => ''];
-            $linhas[] = [$p['curso'], '', $p['empresa'], 'Site (pré-inscrição)', $p['nome'], $p['email'], $p['telefone'], $p['nome'], $p['email'], '', 'Pré-inscrição: ' . (ESTADOS_PREINSCRICAO[$p['estado']] ?? $p['estado']), $a['nivel'], $a['pontuacao'], $a['responsavel'], '', $p['preferencias'], data_hora($p['criado'])];
+            $linhas[] = [$p['curso'], '', $p['empresa'] ?: $p['nome'], TIPOS_CLIENTE[$p['tipo_cliente'] ?? ''] ?? '', 'Site (pré-inscrição)', $p['nome'], $p['email'], $p['telefone'], $p['nome'], $p['email'], '', 'Pré-inscrição: ' . (ESTADOS_PREINSCRICAO[$p['estado']] ?? $p['estado']), $a['nivel'], $a['pontuacao'], $a['responsavel'], $p['ferramentas'], $p['preferencias'], data_hora($p['criado'])];
         }
         foreach ($lista as $i) {
-            $linhas[] = [$i['titulo'], data_hora($i['inicio']), $i['cliente'], ORIGENS[$i['origem']] ?? $i['origem'], $i['contacto_nome'], $i['contacto_email'], $i['contacto_telefone'], $i['formando'], $i['email'], $i['funcao'], ESTADOS_INSCRICAO[$i['estado']] ?? $i['estado'], $i['nivel'], $i['pontuacao'], $i['responsavel'], $i['ferramentas'], $i['expectativas'], data_hora($i['criado'])];
+            $linhas[] = [$i['titulo'], data_hora($i['inicio']), $i['cliente'], TIPOS_CLIENTE[$i['cliente_tipo']] ?? '', ORIGENS[$i['origem']] ?? $i['origem'], $i['contacto_nome'], $i['contacto_email'], $i['contacto_telefone'], $i['formando'], $i['email'], $i['funcao'], ESTADOS_INSCRICAO[$i['estado']] ?? $i['estado'], $i['nivel'], $i['pontuacao'], $i['responsavel'], $i['ferramentas'], $i['expectativas'], data_hora($i['criado'])];
         }
-        exportar_csv('gadgetmetodo-inscricoes', ['Formação', 'Data da formação', 'Cliente ou empresa', 'Origem', 'Contacto (site)', 'Email do contacto', 'Telefone do contacto', 'Formando', 'Email', 'Função', 'Estado', 'Nível de IA', 'Pontuação (0-24)', 'Uso responsável (0-9)', 'Ferramentas usadas', 'Expectativas', 'Data da inscrição'], $linhas);
+        exportar_csv('gadgetmetodo-inscricoes', ['Formação', 'Data da formação', 'Cliente', 'Tipo de cliente', 'Origem', 'Contacto (site)', 'Email do contacto', 'Telefone do contacto', 'Formando', 'Email', 'Função', 'Estado', 'Nível de IA', 'Pontuação (0-24)', 'Uso responsável (0-9)', 'Ferramentas usadas', 'Expectativas', 'Data da inscrição'], $linhas);
     }
     $formacoes = [];
     foreach (consulta('SELECT id, titulo, inicio FROM formacoes ORDER BY inicio DESC') as $f) {
@@ -804,12 +805,12 @@ function admin_inscricoes(): void
     foreach ($pre as $p) {
         $r = json_decode((string) $p['respostas'], true);
         $linhas .= '<tr class="linha-pre"><td><a href="' . h(url('preinscricao', ['id' => $p['id']])) . '">' . h($p['nome']) . '</a>' . ((int) $p['formandos'] > 1 ? '<br><span class="texto-suave">' . (int) $p['formandos'] . ' formandos previstos</span>' : '') . '</td>'
-            . '<td>' . h($p['empresa']) . ' ' . etiqueta('Site') . '</td><td>' . h($p['curso']) . '<br><span class="texto-suave">Sem data definida</span></td>'
+            . '<td>' . cliente_html(['cliente' => $p['empresa'] ?: $p['nome'], 'cliente_tipo' => $p['tipo_cliente']]) . ' ' . etiqueta('Site') . '</td><td>' . h($p['curso']) . '<br><span class="texto-suave">Sem data definida</span></td>'
             . '<td>' . (is_array($r) && $r ? nivel_etiqueta(avaliar_diagnostico($r)['nivel']) : '') . '</td>'
             . '<td>' . etiqueta('Pré-inscrição', 'pre') . ($p['estado'] !== 'nova' ? '<br><span class="texto-suave">' . h(ESTADOS_PREINSCRICAO[$p['estado']] ?? $p['estado']) . '</span>' : '') . '</td><td>' . h(data_hora($p['criado'])) . '</td></tr>';
     }
     foreach ($lista as $i) {
-        $linhas .= '<tr><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . h($i['cliente']) . etiqueta_origem($i) . '</td><td>' . h($i['titulo']) . '<br><span class="texto-suave">' . h(data_hora($i['inicio'])) . '</span></td><td>' . nivel_etiqueta($i['nivel']) . '</td><td>' . estado_etiqueta($i['estado'], ESTADOS_INSCRICAO) . '</td><td>' . h(data_hora($i['criado'])) . '</td></tr>';
+        $linhas .= '<tr><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . cliente_html($i) . etiqueta_origem($i) . '</td><td>' . h($i['titulo']) . '<br><span class="texto-suave">' . h(data_hora($i['inicio'])) . '</span></td><td>' . nivel_etiqueta($i['nivel']) . '</td><td>' . estado_etiqueta($i['estado'], ESTADOS_INSCRICAO) . '</td><td>' . h(data_hora($i['criado'])) . '</td></tr>';
     }
     pagina_area('inscricoes', 'Inscrições', '
       <form method="get" class="filtros">
@@ -830,18 +831,18 @@ function admin_clientes(): void
             aviso('Indique o nome do cliente.', 'erro');
             redirecionar('clientes');
         }
-        $id = executar('INSERT INTO clientes (nome, nif, contacto, email, telefone, notas, criado) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [$nome, texto('nif', 20), texto('contacto', 120), texto('email', 160), texto('telefone', 30), texto('notas', 2000, true), agora()]);
+        $id = executar('INSERT INTO clientes (tipo, nome, nif, contacto, email, telefone, notas, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [tipo_cliente_post() ?: 'empresa', $nome, texto('nif', 20), texto('contacto', 120), texto('email', 160), texto('telefone', 30), texto('notas', 2000, true), agora()]);
         aviso('Cliente criado. Crie agora o acesso de um utilizador deste cliente.');
         redirecionar('utilizadores', ['cliente' => $id]);
     }
     $lista = consulta('SELECT c.*, (SELECT COUNT(*) FROM utilizadores u WHERE u.cliente_id = c.id) AS n_utilizadores, (SELECT COUNT(*) FROM inscricoes i WHERE i.cliente_id = c.id AND i.estado != \'cancelada\') AS n_inscricoes FROM clientes c ORDER BY c.nome');
     $linhas = '';
     foreach ($lista as $c) {
-        $linhas .= '<tr><td><a href="' . h(url('cliente', ['id' => $c['id']])) . '">' . h($c['nome']) . '</a></td><td>' . h($c['nif']) . '</td><td>' . h($c['contacto']) . '<br><span class="texto-suave">' . h($c['email']) . '</span></td><td>' . (int) $c['n_utilizadores'] . '</td><td>' . (int) $c['n_inscricoes'] . '</td></tr>';
+        $linhas .= '<tr><td><a href="' . h(url('cliente', ['id' => $c['id']])) . '">' . h($c['nome']) . '</a></td><td>' . h(TIPOS_CLIENTE[$c['tipo']] ?? '') . '</td><td>' . h($c['nif']) . '</td><td>' . h($c['contacto']) . '<br><span class="texto-suave">' . h($c['email']) . '</span></td><td>' . (int) $c['n_utilizadores'] . '</td><td>' . (int) $c['n_inscricoes'] . '</td></tr>';
     }
     pagina_area('clientes', 'Clientes', '
-      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Cliente</th><th>NIF</th><th>Contacto</th><th>Utilizadores</th><th>Inscrições</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há clientes.</p>') . '
+      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Cliente</th><th>Tipo</th><th>NIF</th><th>Contacto</th><th>Utilizadores</th><th>Inscrições</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há clientes.</p>') . '
       <h2 class="espaco-topo">Novo cliente</h2>
       ' . form_cliente([]), 'Gestão');
 }
@@ -849,9 +850,10 @@ function admin_clientes(): void
 function form_cliente(array $c): string
 {
     return '<form method="post" class="formulario">' . campo_csrf() . '<div class="campos-2">
-        ' . campo('nome', 'Empresa *', (string) ($c['nome'] ?? ''), 'text', 'required maxlength="160"') . '
+        ' . campo_select('tipo_cliente', 'Tipo de cliente *', TIPOS_CLIENTE, (string) ($c['tipo'] ?? 'empresa')) . '
+        ' . campo('nome', 'Nome da empresa ou da pessoa *', (string) ($c['nome'] ?? ''), 'text', 'required maxlength="160"') . '
         ' . campo('nif', 'NIF', (string) ($c['nif'] ?? ''), 'text', 'maxlength="20"') . '
-        ' . campo('contacto', 'Pessoa de contacto', (string) ($c['contacto'] ?? ''), 'text', 'maxlength="120"') . '
+        ' . campo('contacto', 'Pessoa de contacto (nas empresas)', (string) ($c['contacto'] ?? ''), 'text', 'maxlength="120"') . '
         ' . campo('email', 'Email', (string) ($c['email'] ?? ''), 'email', 'maxlength="160"') . '
         ' . campo('telefone', 'Telefone', (string) ($c['telefone'] ?? ''), 'tel', 'maxlength="30"') . '
       </div>' . campo('notas', 'Notas internas', (string) ($c['notas'] ?? ''), 'textarea', 'maxlength="2000"') . '
@@ -868,8 +870,8 @@ function admin_cliente(): void
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $nome = texto('nome', 160);
         if ($nome !== '') {
-            executar('UPDATE clientes SET nome = ?, nif = ?, contacto = ?, email = ?, telefone = ?, notas = ? WHERE id = ?',
-                [$nome, texto('nif', 20), texto('contacto', 120), texto('email', 160), texto('telefone', 30), texto('notas', 2000, true), $id]);
+            executar('UPDATE clientes SET tipo = ?, nome = ?, nif = ?, contacto = ?, email = ?, telefone = ?, notas = ? WHERE id = ?',
+                [tipo_cliente_post() ?: $c['tipo'], $nome, texto('nif', 20), texto('contacto', 120), texto('email', 160), texto('telefone', 30), texto('notas', 2000, true), $id]);
             aviso('Cliente atualizado.');
         }
         redirecionar('cliente', ['id' => $id]);
@@ -998,7 +1000,7 @@ function admin_pedidos(): void
         $linhas = [];
         foreach ($registos as $p) {
             $ab = $p['aberturas'];
-            $linhas[] = [$p['ref'], data_hora($p['criado']), $p['tipo'], $p['nome'], $p['empresa'], $p['email'], $p['telemovel'], $p['servicos'], count($ab), $ab ? data_hora($ab[0]['aberto']) : '', $ab ? data_hora($ab[count($ab) - 1]['aberto']) : ''];
+            $linhas[] = [$p['ref'], data_hora($p['criado']), $p['tipo'], $p['nome'], $p['empresa'] ?: 'Particular', $p['email'], $p['telemovel'], $p['servicos'], count($ab), $ab ? data_hora($ab[0]['aberto']) : '', $ab ? data_hora($ab[count($ab) - 1]['aberto']) : ''];
         }
         exportar_csv('gadgetmetodo-pedidos', ['Referência', 'Data do pedido', 'Tipo', 'Nome', 'Empresa', 'Email', 'Telemóvel', 'Serviços', 'Aberturas do catálogo', 'Primeira abertura', 'Última abertura'], $linhas);
     }
@@ -1006,7 +1008,7 @@ function admin_pedidos(): void
     foreach ($registos as $p) {
         $reais = array_filter($p['aberturas'], function ($a) { return !$a['automatica']; });
         $ab = $p['aberturas'] ? implode('<br>', array_map(function ($a) { return h(data_hora($a['aberto'])) . ($a['automatica'] ? ' ' . etiqueta('automática') : ''); }, $p['aberturas'])) : etiqueta('Não aberto');
-        $linhas .= '<tr><td>' . h($p['ref']) . '<br><span class="texto-suave">' . h(data_hora($p['criado'])) . '</span></td><td>' . h($p['nome']) . '<br><span class="texto-suave">' . h($p['empresa']) . '</span></td><td><a href="mailto:' . h($p['email']) . '">' . h($p['email']) . '</a><br>' . h($p['telemovel']) . '</td><td>' . h($p['servicos']) . '</td><td>' . ($reais ? etiqueta('Aberto', 'ok') . '<br>' : '') . $ab . '</td></tr>';
+        $linhas .= '<tr><td>' . h($p['ref']) . '<br><span class="texto-suave">' . h(data_hora($p['criado'])) . '</span></td><td>' . h($p['nome']) . '<br><span class="texto-suave">' . h($p['empresa'] ?: 'Particular') . '</span></td><td><a href="mailto:' . h($p['email']) . '">' . h($p['email']) . '</a><br>' . h($p['telemovel']) . '</td><td>' . h($p['servicos']) . '</td><td>' . ($reais ? etiqueta('Aberto', 'ok') . '<br>' : '') . $ab . '</td></tr>';
     }
     pagina_area('pedidos', 'Pedidos do site', '
       <p class="texto-suave">Pedidos de orçamento e de informações recebidos pelo formulário do site e aberturas do catálogo enviado na confirmação. Registos dos últimos 12 meses.</p>

@@ -19,6 +19,9 @@ const DIAS_NOVA = 30; // formações agendadas há menos de 30 dias aparecem com
 const ORIGENS = ['area' => 'Área reservada', 'site' => 'Site'];
 const ESTADOS_PREINSCRICAO = ['nova' => 'Nova', 'convidada' => 'Convite enviado', 'inscrita' => 'Inscrita', 'arquivada' => 'Arquivada'];
 const DIAS_PREINSCRICOES = 365; // conservação das pré-inscrições após o registo
+const TIPOS_CLIENTE = ['particular' => 'Particular', 'empresa' => 'Empresa'];
+// Rótulos das opções nos formulários públicos
+const OPCOES_TIPO_CLIENTE = ['particular' => 'Particular', 'empresa' => 'Empresa ou outra organização'];
 
 function cfg(): array
 {
@@ -36,9 +39,11 @@ function bd(): ?PDO
     $pdo = ligacao(cfg());
     if ($pdo && !$pronta) {
         $pdo->exec('PRAGMA foreign_keys = ON');
-        $pdo->exec('CREATE TABLE IF NOT EXISTS clientes (
+        $pdo->exec("CREATE TABLE IF NOT EXISTS clientes (
             id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, nif TEXT, contacto TEXT, email TEXT,
-            telefone TEXT, notas TEXT, criado TEXT NOT NULL)');
+            telefone TEXT, notas TEXT, criado TEXT NOT NULL, tipo TEXT NOT NULL DEFAULT 'empresa')");
+        // Os clientes podem ser empresas (ou outras organizações) ou particulares
+        acrescentar_colunas($pdo, 'clientes', ['tipo' => "TEXT NOT NULL DEFAULT 'empresa'"]);
         $pdo->exec("CREATE TABLE IF NOT EXISTS utilizadores (
             id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE COLLATE NOCASE, nome TEXT NOT NULL,
             senha TEXT NOT NULL, papel TEXT NOT NULL CHECK (papel IN ('admin', 'cliente')),
@@ -77,17 +82,19 @@ function bd(): ?PDO
             cliente_id INTEGER REFERENCES clientes(id), utilizador_id INTEGER, origem TEXT NOT NULL DEFAULT 'area',
             empresa TEXT, nif TEXT, contacto_nome TEXT, contacto_email TEXT, contacto_telefone TEXT, formando TEXT NOT NULL,
             email TEXT, funcao TEXT, respostas TEXT, pontuacao INTEGER, responsavel INTEGER, nivel TEXT,
-            ferramentas TEXT, expectativas TEXT, estado TEXT NOT NULL DEFAULT 'pendente', criado TEXT NOT NULL)";
+            ferramentas TEXT, expectativas TEXT, estado TEXT NOT NULL DEFAULT 'pendente', criado TEXT NOT NULL, tipo_cliente TEXT)";
         $pdo->exec($tabela_inscricoes);
         migrar_inscricoes($pdo, $tabela_inscricoes);
+        acrescentar_colunas($pdo, 'inscricoes', ['tipo_cliente' => 'TEXT']);
         $pdo->exec('CREATE INDEX IF NOT EXISTS inscricoes_formacao ON inscricoes (formacao_id)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS inscricoes_cliente ON inscricoes (cliente_id)');
         // Pré-inscrições em cursos sem datas: o candidato recebe o convite quando houver sessões
         $pdo->exec("CREATE TABLE IF NOT EXISTS preinscricoes (
             id INTEGER PRIMARY KEY AUTOINCREMENT, curso_id INTEGER NOT NULL REFERENCES cursos(id), nome TEXT NOT NULL,
             empresa TEXT, email TEXT NOT NULL, telefone TEXT, formandos INTEGER NOT NULL DEFAULT 1, modalidade TEXT,
-            preferencias TEXT, estado TEXT NOT NULL DEFAULT 'nova', criado TEXT NOT NULL, respostas TEXT, inscricao_id INTEGER)");
-        acrescentar_colunas($pdo, 'preinscricoes', ['respostas' => 'TEXT', 'inscricao_id' => 'INTEGER']);
+            preferencias TEXT, estado TEXT NOT NULL DEFAULT 'nova', criado TEXT NOT NULL, respostas TEXT, inscricao_id INTEGER,
+            tipo_cliente TEXT, ferramentas TEXT)");
+        acrescentar_colunas($pdo, 'preinscricoes', ['respostas' => 'TEXT', 'inscricao_id' => 'INTEGER', 'tipo_cliente' => 'TEXT', 'ferramentas' => 'TEXT']);
         $pdo->exec('CREATE INDEX IF NOT EXISTS preinscricoes_curso ON preinscricoes (curso_id)');
         // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação; as pré-inscrições, 12 meses depois do registo
         $pdo->prepare('DELETE FROM inscricoes WHERE formacao_id IN (SELECT id FROM formacoes WHERE inicio < ?)')
@@ -369,8 +376,32 @@ function formacoes_novas(): array
     return consulta("SELECT * FROM formacoes WHERE inicio >= ? AND criado >= ? AND estado = 'aberta' ORDER BY inicio", [date('Y-m-d 00:00:00'), date('Y-m-d H:i:s', time() - DIAS_NOVA * 86400)]);
 }
 
-// Nome da entidade de uma inscrição: o cliente associado ou, nas inscrições do site, a empresa indicada
-const SQL_CLIENTE = "COALESCE(c.nome, i.empresa) AS cliente";
+// Nome e tipo do cliente de uma inscrição: o cliente associado ou, nas inscrições do site, a empresa indicada
+// ou, se for particular, quem fez a inscrição (as inscrições antigas do site eram todas de empresas)
+const SQL_CLIENTE = "COALESCE(c.nome, NULLIF(i.empresa, ''), i.contacto_nome) AS cliente, COALESCE(c.tipo, i.tipo_cliente, 'empresa') AS cliente_tipo";
+
+// Nome do cliente com a indicação "Particular", para as listas e fichas da área reservada
+function cliente_html(array $i): string
+{
+    return h((string) $i['cliente']) . (($i['cliente_tipo'] ?? '') === 'particular' ? ' ' . etiqueta('Particular') : '');
+}
+
+// Tipo de cliente escolhido num formulário (vazio se não for válido)
+function tipo_cliente_post(): string
+{
+    $t = (string) ($_POST['tipo_cliente'] ?? '');
+    return isset(TIPOS_CLIENTE[$t]) ? $t : '';
+}
+
+// Escolha "Particular / Empresa" dos formulários públicos; o nome da empresa (data-so-empresa) só aparece para empresas (assets/js/site.js)
+function campo_tipo_cliente(string $selecionado, string $legenda): string
+{
+    $op = '';
+    foreach (OPCOES_TIPO_CLIENTE as $valor => $rotulo) {
+        $op .= '<label class="opcao"><input type="radio" name="tipo_cliente" value="' . $valor . '"' . ($selecionado === $valor ? ' checked' : '') . ' required> ' . h($rotulo) . '</label>';
+    }
+    return '<fieldset class="campo-grupo" data-tipo-cliente><legend>' . h($legenda) . ' *</legend><div class="opcoes opcoes-linha">' . $op . '</div></fieldset>';
+}
 
 function etiqueta(string $texto, string $tipo = ''): string
 {

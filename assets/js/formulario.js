@@ -16,11 +16,17 @@
 
   var REGRAS = {
     nome: function (v) { return v.trim().length >= 2 || "Indique o seu nome."; },
-    empresa: function (v) { return v.trim().length >= 2 || "Indique o nome da empresa."; },
+    empresa: function (v) { return !paraEmpresa() || v.trim().length >= 2 || "Indique o nome da empresa."; },
     email: function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || "Indique um email válido."; },
     telemovel: function (v) { return /^[0-9 +()\-]{9,20}$/.test(v.trim()) || "Indique um número de telemóvel válido."; },
     mensagem: function (v) { return v.trim().length >= 10 || "Descreva o pedido com pelo menos 10 caracteres."; },
   };
+
+  // Nos pedidos de particulares o nome da empresa não é pedido
+  function paraEmpresa() {
+    var t = form.querySelector('input[name="tipo_cliente"]:checked');
+    return !t || t.value === "empresa";
+  }
 
   function mostrarErro(nome, texto) {
     var p = document.getElementById("e-" + nome);
@@ -67,6 +73,7 @@
   form.addEventListener("change", function (e) {
     if (e.target.name === "servicos[]" && form.querySelector('input[name="servicos[]"]:checked')) mostrarErro("servicos", "");
     if (e.target.name === "consentimento" && e.target.checked) mostrarErro("consentimento", "");
+    if (e.target.name === "tipo_cliente" && !paraEmpresa()) mostrarErro("empresa", "");
   });
 
   /* Envio */

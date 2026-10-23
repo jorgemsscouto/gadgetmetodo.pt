@@ -270,14 +270,22 @@
                 </div>
               </fieldset>
 
+              <fieldset class="campo-grupo" data-tipo-cliente>
+                <legend>Faz o pedido como *</legend>
+                <div class="opcoes opcoes-linha">
+                  <label class="opcao"><input type="radio" name="tipo_cliente" value="empresa" checked required> Empresa ou outra organização</label>
+                  <label class="opcao"><input type="radio" name="tipo_cliente" value="particular"> Particular</label>
+                </div>
+              </fieldset>
+
               <div class="campos-2">
                 <div class="campo">
                   <label for="f-nome">Nome *</label>
                   <input id="f-nome" name="nome" type="text" autocomplete="name" required maxlength="100">
                   <p class="erro-campo" id="e-nome" hidden></p>
                 </div>
-                <div class="campo">
-                  <label for="f-empresa">Empresa *</label>
+                <div class="campo" data-so-empresa>
+                  <label for="f-empresa">Empresa ou organização *</label>
                   <input id="f-empresa" name="empresa" type="text" autocomplete="organization" required maxlength="120">
                   <p class="erro-campo" id="e-empresa" hidden></p>
                 </div>
@@ -398,7 +406,7 @@
       </div>
     </div>
   </footer>
-  <script src="/assets/js/site.js?v=09b9cdd609" defer></script>
+  <script src="/assets/js/site.js?v=f53e4340b5" defer></script>
   <script src="/assets/js/formulario.js" defer></script>
 </body>
 </html>

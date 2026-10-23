@@ -46,7 +46,7 @@ function email_confirmacao_html(array $d): string
 
     $passos = '';
     foreach ([
-        ['Análise', 'A nossa equipa analisa o pedido e o contexto da sua organização.'],
+        ['Análise', 'A nossa equipa analisa o pedido e o respetivo contexto.'],
         ['Primeira conversa', 'Entramos em contacto para compreender os seus objetivos, prioridades e prazos.'],
         ['Proposta à medida', 'Apresentamos uma proposta com âmbito, entregáveis, calendário e investimento claros.'],
     ] as $i => [$titulo, $texto]) {
@@ -125,7 +125,7 @@ function email_confirmacao_texto(array $d): string
         . "Áreas de interesse: " . implode('; ', $d['servicos']) . "\n"
         . "Data de receção: " . $d['data'] . "\n\n"
         . "PRÓXIMOS PASSOS\n"
-        . "01. Análise: a nossa equipa analisa o pedido e o contexto da sua organização.\n"
+        . "01. Análise: a nossa equipa analisa o pedido e o respetivo contexto.\n"
         . "02. Primeira conversa: entramos em contacto para compreender os seus objetivos, prioridades e prazos.\n"
         . "03. Proposta à medida: apresentamos uma proposta com âmbito, entregáveis, calendário e investimento claros.\n\n"
         . "Se pretender acrescentar informação, basta responder a este email indicando a referência do pedido.\n\n"
@@ -145,7 +145,7 @@ function email_interno_html(array $d): string
     $campos = [
         ['Tipo de pedido', h($d['tipo'])],
         ['Nome', h($d['nome'])],
-        ['Empresa', h($d['empresa'])],
+        [$d['empresa'] !== '' ? 'Empresa' : 'Cliente', h($d['cliente'] ?? $d['empresa'])],
         ['Email', '<a href="mailto:' . h($d['email']) . '" style="color:' . COR_PETROLEO . ';">' . h($d['email']) . '</a>'],
         ['Telemóvel', '<a href="tel:' . h(preg_replace('/[^0-9+]/', '', $d['telemovel'])) . '" style="color:' . COR_PETROLEO . ';">' . h($d['telemovel']) . '</a>'],
         ['Serviços', implode('<br>', array_map('h', $d['servicos']))],
@@ -178,7 +178,7 @@ function email_interno_texto(array $d): string
     return "NOVO PEDIDO PELO WEBSITE\n"
         . $d['tipo'] . " · " . $d['referencia'] . "\n\n"
         . "Nome: " . $d['nome'] . "\n"
-        . "Empresa: " . $d['empresa'] . "\n"
+        . ($d['empresa'] !== '' ? "Empresa: " . $d['empresa'] : "Cliente: Particular") . "\n"
         . "Email: " . $d['email'] . "\n"
         . "Telemóvel: " . $d['telemovel'] . "\n"
         . "Serviços: " . implode('; ', $d['servicos']) . "\n"

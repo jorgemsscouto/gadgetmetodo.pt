@@ -1161,3 +1161,6 @@ h2.calendario-mes {
 .sessoes-datas li + li {
   margin-top: 4px;
 }
+
+/* Campo de texto a seguir a um grupo de opções (por exemplo, a "Outra" ferramenta de IA do diagnóstico) */
+.campo-grupo > .opcoes + .campo { margin-top: 14px; }

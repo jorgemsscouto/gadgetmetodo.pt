@@ -3,7 +3,25 @@
 
 declare(strict_types=1);
 
-const FERRAMENTAS_IA = ['ChatGPT', 'Microsoft Copilot', 'Google Gemini', 'Claude', 'Perplexity', 'Outras'];
+// As seis ferramentas de IA generativa mais usadas; a opção "Outra" pede qual
+const FERRAMENTAS_IA = ['ChatGPT', 'Google Gemini', 'Microsoft Copilot', 'Perplexity', 'Claude', 'DeepSeek'];
+
+// Resposta à pergunta das ferramentas de IA: as escolhidas da lista e, se indicada, a outra ("Outra: nome")
+function ferramentas_post(bool $ativo = true): array
+{
+    $marcadas = $ativo ? array_filter((array) ($_POST['ferramentas'] ?? []), 'is_string') : [];
+    $outra = $ativo ? texto('ferramenta_outra', 80) : '';
+    $lista = array_values(array_intersect(FERRAMENTAS_IA, $marcadas));
+    if ($outra !== '') {
+        $lista[] = 'Outra: ' . $outra;
+    }
+    return ['ferramentas' => $lista, 'ferramenta_outra' => $outra, 'outra_marcada' => in_array('Outra', $marcadas, true) || $outra !== ''];
+}
+
+function erro_ferramentas(array $v): string
+{
+    return !empty($v['outra_marcada']) && ($v['ferramenta_outra'] ?? '') === '' ? 'Indique qual é a outra ferramenta de IA que utiliza.' : '';
+}
 
 function proximas_formacoes(): array
 {
@@ -82,13 +100,15 @@ function pagina_inscrever(): void
         $v = [
             'formando' => texto('formando', 120), 'email' => texto('email', 160), 'funcao' => texto('funcao', 120),
             'expectativas' => texto('expectativas', 1500, true),
-            'ferramentas' => $diag ? array_values(array_intersect(FERRAMENTAS_IA, array_filter((array) ($_POST['ferramentas'] ?? []), 'is_string'))) : [],
             'diag' => array_filter(array_intersect_key((array) ($_POST['diag'] ?? []), perguntas_diagnostico(com_nivel($f))), 'is_string'),
             'cliente_id' => $admin ? (int) ($_POST['cliente_id'] ?? 0) : (int) $u['cliente_id'],
-        ];
+        ] + ferramentas_post($diag);
         $respostas = $diag ? respostas_diagnostico(com_nivel($f)) : [];
         if ($v['formando'] === '') {
             $erros[] = 'Indique o nome do formando.';
+        }
+        if ($e = erro_ferramentas($v)) {
+            $erros[] = $e;
         }
         if ($v['email'] !== '' && !filter_var($v['email'], FILTER_VALIDATE_EMAIL)) {
             $erros[] = 'O email do formando não é válido.';
@@ -145,22 +165,27 @@ function resumo_sessao(array $f, int $restantes, bool $publico): string
 
 // Perguntas do diagnóstico de IA e ferramentas usadas, só nos cursos que o têm ativo
 // Nos cursos de um percurso, o diagnóstico inclui as perguntas de nível e indica o curso mais adequado
-function bloco_diagnostico_form(array $f, array $v, int $numero, string $quem, bool $com_ferramentas = true): string
+function bloco_diagnostico_form(array $f, array $v, int $numero, string $quem): string
 {
     if (!com_diagnostico($f)) {
         return '';
     }
     $nivel = com_nivel($f);
     $ferramentas = '';
-    foreach (FERRAMENTAS_IA as $nome) {
-        $ferramentas .= '<label class="opcao"><input type="checkbox" name="ferramentas[]" value="' . h($nome) . '"' . (in_array($nome, $v['ferramentas'] ?? [], true) ? ' checked' : '') . '> ' . h($nome) . '</label>';
+    foreach (array_merge(FERRAMENTAS_IA, ['Outra']) as $nome) {
+        $marcada = $nome === 'Outra' ? !empty($v['outra_marcada']) : in_array($nome, $v['ferramentas'] ?? [], true);
+        $ferramentas .= '<label class="opcao"><input type="checkbox" name="ferramentas[]" value="' . h($nome) . '"' . ($marcada ? ' checked' : '') . '> ' . h($nome) . '</label>';
     }
     return '<h2 class="mb-0 espaco-topo">' . $numero . '. Diagnóstico ' . ($nivel ? 'de nível' : 'de utilização de IA') . '</h2>
         <p class="texto-suave mb-0">' . ($nivel
             ? count(perguntas_diagnostico(true)) . ' perguntas, cerca de três minutos. ' . h($quem) . ' Não há respostas certas: servem para indicar o curso do percurso mais adequado ao ponto de partida do formando e para ajustar os exemplos e os exercícios ao grupo.'
             : 'Oito perguntas, cerca de dois minutos. ' . h($quem) . ' Não há respostas certas: servem para ajustar os exemplos e os exercícios ao ponto de partida do grupo.') . '</p>
         ' . campos_diagnostico($v['diag'], $nivel) . '
-        ' . ($com_ferramentas ? '<fieldset class="campo-grupo"><legend>Que ferramentas de IA usa atualmente?</legend><div class="opcoes opcoes-linha">' . $ferramentas . '</div></fieldset>' : '');
+        <fieldset class="campo-grupo"><legend>Que ferramentas de IA utiliza?</legend>
+          <p class="ajuda">Pode escolher várias. Se ainda não utiliza nenhuma, deixe em branco.</p>
+          <div class="opcoes opcoes-linha">' . $ferramentas . '</div>
+          ' . campo('ferramenta_outra', 'Se escolheu "Outra", indique qual', (string) ($v['ferramenta_outra'] ?? ''), 'text', 'maxlength="80"') . '
+        </fieldset>';
 }
 
 function link_curso_publico(array $curso): string
@@ -222,8 +247,8 @@ function gravar_inscricao(array $f, array $v, array $respostas, bool $sem_limite
         return ['erro' => $erro];
     }
     $a = $respostas ? avaliar_diagnostico($respostas) : ['pontuacao' => null, 'responsavel' => null, 'nivel' => null, 'recomendacao' => ''];
-    $id = executar('INSERT INTO inscricoes (formacao_id, cliente_id, utilizador_id, origem, empresa, nif, contacto_nome, contacto_email, contacto_telefone, formando, email, funcao, respostas, pontuacao, responsavel, nivel, ferramentas, expectativas, estado, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [$f['id'], $v['cliente_id'] ?: null, $v['utilizador_id'] ?? null, $v['origem'], $v['empresa'] ?? null, $v['nif'] ?? null, $v['contacto_nome'] ?? null, $v['contacto_email'] ?? null, $v['contacto_telefone'] ?? null,
+    $id = executar('INSERT INTO inscricoes (formacao_id, cliente_id, utilizador_id, origem, tipo_cliente, empresa, nif, contacto_nome, contacto_email, contacto_telefone, formando, email, funcao, respostas, pontuacao, responsavel, nivel, ferramentas, expectativas, estado, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [$f['id'], $v['cliente_id'] ?: null, $v['utilizador_id'] ?? null, $v['origem'], ($v['tipo_cliente'] ?? '') ?: null, ($v['empresa'] ?? '') ?: null, ($v['nif'] ?? '') ?: null, $v['contacto_nome'] ?? null, $v['contacto_email'] ?? null, $v['contacto_telefone'] ?? null,
          $v['formando'], $v['email'], $v['funcao'], $respostas ? json_encode($respostas) : null, $a['pontuacao'], $a['responsavel'], $a['nivel'], implode(', ', $v['ferramentas']), $v['expectativas'], 'pendente', agora()]);
     $pdo->exec('COMMIT');
     return ['erro' => '', 'id' => $id] + $a;
@@ -248,7 +273,7 @@ function emails_nova_inscricao(int $id): void
     $linhas = [
         'Formação' => $i['titulo'] . ' (' . nome_modulo($i) . ')', 'Data' => $quando,
         'Origem' => $publica ? 'Inscrição pública no site, por associar a um cliente' : ORIGENS['area'],
-        $publica ? 'Empresa' : 'Cliente' => $i['cliente'] . ($i['nif'] ? ' (NIF ' . $i['nif'] . ')' : ''),
+        'Cliente' => $i['cliente'] . ($i['cliente_tipo'] === 'particular' ? ' (particular)' : '') . ($i['nif'] ? ' (NIF ' . $i['nif'] . ')' : ''),
         'Contacto' => $publica ? trim($i['contacto_nome'] . ' · ' . $i['contacto_email'] . ($i['contacto_telefone'] ? ' · ' . $i['contacto_telefone'] : '')) : '',
         'Formando' => $i['formando'], 'Email' => $i['email'], 'Função' => $i['funcao'],
         'Diagnóstico' => $i['nivel'] ? $i['nivel'] . ' (' . $i['pontuacao'] . ' em 24; uso responsável ' . $i['responsavel'] . ' em 9)' : '',
@@ -336,8 +361,9 @@ function pagina_inscricao(): void
             // Inscrição feita no site: associa a um cliente existente ou cria o cliente com os dados indicados
             $escolha = (string) ($_POST['cliente_id'] ?? '');
             if ($escolha === 'novo') {
-                $cliente_id = executar('INSERT INTO clientes (nome, nif, contacto, email, telefone, notas, criado) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [$i['empresa'], $i['nif'], $i['contacto_nome'], $i['contacto_email'], $i['contacto_telefone'], 'Criado a partir de uma inscrição no site.', agora()]);
+                // O cliente novo é a empresa indicada ou, se a inscrição for de um particular, quem a fez
+                $cliente_id = executar('INSERT INTO clientes (tipo, nome, nif, contacto, email, telefone, notas, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [$i['cliente_tipo'], $i['cliente'], $i['nif'], $i['contacto_nome'], $i['contacto_email'], $i['contacto_telefone'], 'Criado a partir de uma inscrição no site.', agora()]);
             } else {
                 $cliente_id = (int) (linha_bd('SELECT id FROM clientes WHERE id = ?', [(int) $escolha])['id'] ?? 0);
             }
@@ -370,7 +396,7 @@ function pagina_inscricao(): void
     $dados = [
         'Formação' => h($i['titulo']) . '<br><span class="texto-suave">' . h(nome_modulo($i)) . '</span>',
         'Data e local' => h(horario($i)) . '<br><span class="texto-suave">' . h(MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ' · ' . h($i['local']) : '') . '</span>',
-        $publica && $i['cliente_id'] === null ? 'Empresa' : 'Cliente' => h($i['cliente']) . ($i['nif'] ? ' <span class="texto-suave">· NIF ' . h($i['nif']) . '</span>' : ''),
+        'Cliente' => cliente_html($i) . ($i['nif'] ? ' <span class="texto-suave">· NIF ' . h($i['nif']) . '</span>' : ''),
         'Formando' => h($i['formando']), 'Email' => h($i['email']), 'Função' => h($i['funcao']),
         'Estado' => estado_etiqueta($i['estado'], ESTADOS_INSCRICAO),
         'Sessão online' => $i['modalidade'] === 'presencial' || !$i['reuniao'] ? '' : ($admin || $i['estado'] === 'confirmada'

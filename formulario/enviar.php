@@ -100,8 +100,10 @@ function texto_longo(string $chave, int $maximo): string
 }
 
 $tipo      = (string) ($_POST['tipo'] ?? '');
+// Pedido de um particular ou de uma empresa (os formulários antigos, sem esta escolha, eram só de empresas)
+$particular = ($_POST['tipo_cliente'] ?? '') === 'particular';
 $nome      = linha('nome', 100);
-$empresa   = linha('empresa', 120);
+$empresa   = $particular ? '' : linha('empresa', 120);
 $email     = linha('email', 160);
 $telemovel = linha('telemovel', 20);
 $mensagem  = texto_longo('mensagem', 5000);
@@ -122,7 +124,7 @@ if (!isset(TIPOS[$tipo])) {
 if (comprimento($nome) < 2) {
     $erros['nome'] = 'Indique o seu nome.';
 }
-if (comprimento($empresa) < 2) {
+if (!$particular && comprimento($empresa) < 2) {
     $erros['empresa'] = 'Indique o nome da empresa.';
 }
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -181,6 +183,7 @@ $dados = [
     'tipo'       => TIPOS[$tipo],
     'nome'       => $nome,
     'empresa'    => $empresa,
+    'cliente'    => $particular ? 'Particular' : $empresa,
     'email'      => $email,
     'telemovel'  => $telemovel,
     'servicos'   => array_map(function ($s) { return SERVICOS[$s]; }, $servicos),
@@ -199,7 +202,7 @@ try {
         $interno->addBCC($cfg['bcc']);
     }
     $interno->addReplyTo($email, $nome);
-    $interno->Subject = sprintf('%s: %s (%s) [%s]', $dados['tipo'], $empresa, $nome, $referencia);
+    $interno->Subject = sprintf('%s: %s (%s) [%s]', $dados['tipo'], $dados['cliente'], $nome, $referencia);
     $interno->isHTML(true);
     $interno->Body = email_interno_html($dados);
     $interno->AltBody = email_interno_texto($dados);

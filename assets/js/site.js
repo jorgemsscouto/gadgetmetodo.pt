@@ -25,3 +25,25 @@
     if (e.matches) fechar();
   });
 })();
+
+// Formulários com a escolha "Particular / Empresa": o nome da empresa só aparece, e só é obrigatório, para empresas.
+// Sem JavaScript o campo fica sempre visível e a validação é feita no servidor.
+(function () {
+  document.querySelectorAll("[data-tipo-cliente]").forEach(function (grupo) {
+    var form = grupo.closest("form");
+    if (!form) return;
+    function aplicar() {
+      var marcado = form.querySelector('input[name="tipo_cliente"]:checked');
+      var empresa = !!marcado && marcado.value === "empresa";
+      form.querySelectorAll("[data-so-empresa]").forEach(function (bloco) {
+        bloco.hidden = !empresa;
+        bloco.querySelectorAll("input").forEach(function (campo) {
+          campo.disabled = !empresa;
+          campo.required = empresa;
+        });
+      });
+    }
+    grupo.addEventListener("change", aplicar);
+    aplicar();
+  });
+})();

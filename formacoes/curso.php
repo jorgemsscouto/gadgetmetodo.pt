@@ -29,7 +29,7 @@
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/site.css?v=239f9b98b7">
-  <link rel="stylesheet" href="/assets/css/area.css?v=4457f5c266">
+  <link rel="stylesheet" href="/assets/css/area.css?v=284a0d3bdf">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -273,7 +273,7 @@
       </div>
     </div>
   </footer>
-  <script src="/assets/js/site.js?v=09b9cdd609" defer></script>
+  <script src="/assets/js/site.js?v=f53e4340b5" defer></script>
   <script src="/assets/js/copiar.js?v=ebe85aad80" defer></script>
 </body>
 </html>

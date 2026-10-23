@@ -364,10 +364,10 @@ const FAQ_SERVICOS = [
 ];
 // Formação: respostas baseadas no catálogo de cursos (clientes/inc/catalogo/ia-generativa.json)
 const FAQ_FORMACAO = [
-  ['Que formação oferece a Gadgetmetodo?', 'Dois formatos. <a href="/formacoes/">Cursos abertos</a>, com inscrição individual, organizados no percurso IA Generativa no Trabalho: quatro cursos de seis horas, da iniciação à liderança da implementação. E <a href="/formacoes/ai-essentials/">programas à medida</a>, como o AI Essentials, organizados na empresa para administrações e equipas.'],
+  ['Que formação oferece a Gadgetmetodo?', 'Dois formatos. <a href="/formacoes/">Cursos abertos</a> a particulares e a empresas, com inscrição individual, organizados no percurso IA Generativa no Trabalho: quatro cursos de seis horas, da iniciação à liderança da implementação. E <a href="/formacoes/ai-essentials/">programas à medida</a>, como o AI Essentials, organizados na empresa para administrações e equipas.'],
   ['Como está organizado o percurso IA Generativa no Trabalho?', 'Tem quatro cursos sequenciais, cada um com seis sessões de 60 minutos (24 horas no total): Curso 1, Iniciação à IA Generativa no Trabalho; Curso 2, Produtividade com IA Generativa; Curso 3, IA nos Processos da Organização; Curso 4, Liderança e Implementação de IA. Todas as sessões terminam num Laboratório de Casos Práticos, que passa de 10 para 40 minutos por sessão ao longo do percurso. A ferramenta de referência é o Claude (Anthropic); os conceitos são transferíveis para outros assistentes de IA generativa.'],
   ['Por que curso devo começar?', 'A inscrição e a pré-inscrição incluem um diagnóstico de nível, com 11 perguntas, que indica o curso mais adequado ao ponto de partida de cada formando. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital.'],
-  ['Como me inscrevo e o que é a pré-inscrição?', 'Na <a href="/formacoes/">área de formação</a>, cada curso tem um botão de inscrição. Se já houver datas, inscreve-se numa sessão, sem precisar de conta; a inscrição fica pendente até ser confirmada por email. Se ainda não houver datas, faz a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a>: recebe logo uma confirmação por email e, quando as datas forem marcadas, o convite para a inscrição. A pré-inscrição não obriga a inscrever-se.'],
+  ['Como me inscrevo e o que é a pré-inscrição?', 'Na <a href="/formacoes/">área de formação</a>, cada curso tem um botão de inscrição. Pode inscrever-se como particular ou em nome de uma empresa. Se já houver datas, inscreve-se numa sessão, sem precisar de conta; a inscrição fica pendente até ser confirmada por email. Se ainda não houver datas, faz a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a>: recebe logo uma confirmação por email e, quando as datas forem marcadas, o convite para a inscrição. A pré-inscrição não obriga a inscrever-se.'],
   ['Que requisitos técnicos são necessários?', 'Um computador por formando, com navegador atualizado, e conta própria no Claude. Nos Cursos 1 e 2, o plano gratuito é suficiente para a maioria dos exercícios; nos Cursos 3 e 4 é necessário um plano pago (Pro, Max, Team ou Enterprise), porque as sessões sobre conectores, tarefas agendadas e agentes usam funcionalidades que não estão disponíveis, ou estão limitadas, no plano gratuito. As turmas têm 8 a 14 formandos, em modalidade presencial ou à distância síncrona.'],
   ['Como é feita a avaliação?', 'Combina avaliação prática, teste e participação, e o peso da prática cresce de curso para curso: 40% no Curso 1, 60% no Curso 2, 70% no Curso 3 e 85% no Curso 4, onde inclui um projeto final e não há teste. A aprovação exige 50% e presença em 5 das 6 sessões; no Curso 4, 50% e a entrega do projeto final.'],
   ['Que relação tem esta formação com o Regulamento da IA?', 'O artigo 4.º do Regulamento (UE) 2024/1689 (Regulamento da IA), aplicável desde 2 de fevereiro de 2025 e reescrito pelo Regulamento (UE) 2026/1744, em vigor desde 27 de julho de 2026, exige que as organizações que fornecem ou utilizam sistemas de IA adotem medidas para apoiar o desenvolvimento da literacia em IA do seu pessoal. O percurso pode integrar essas medidas e produz evidência documentada da formação realizada. Não constitui, por si só, garantia de conformidade legal.'],
@@ -1297,14 +1297,22 @@ pagina({
                 </div>
               </fieldset>
 
+              <fieldset class="campo-grupo" data-tipo-cliente>
+                <legend>Faz o pedido como *</legend>
+                <div class="opcoes opcoes-linha">
+                  <label class="opcao"><input type="radio" name="tipo_cliente" value="empresa" checked required> Empresa ou outra organização</label>
+                  <label class="opcao"><input type="radio" name="tipo_cliente" value="particular"> Particular</label>
+                </div>
+              </fieldset>
+
               <div class="campos-2">
                 <div class="campo">
                   <label for="f-nome">Nome *</label>
                   <input id="f-nome" name="nome" type="text" autocomplete="name" required maxlength="100">
                   <p class="erro-campo" id="e-nome" hidden></p>
                 </div>
-                <div class="campo">
-                  <label for="f-empresa">Empresa *</label>
+                <div class="campo" data-so-empresa>
+                  <label for="f-empresa">Empresa ou organização *</label>
                   <input id="f-empresa" name="empresa" type="text" autocomplete="organization" required maxlength="120">
                   <p class="erro-campo" id="e-empresa" hidden></p>
                 </div>
@@ -1599,13 +1607,13 @@ pagina({
 
         <h2>2. Que dados tratamos</h2>
         <ul>
-          <li><strong>Dados do formulário de contacto:</strong> nome, empresa, email, telemóvel, tipo de pedido, serviços de interesse e mensagem.</li>
+          <li><strong>Dados do formulário de contacto:</strong> nome, indicação de pedido particular ou de empresa e, neste caso, o nome da empresa, email, telemóvel, tipo de pedido, serviços de interesse e mensagem.</li>
           <li><strong>Dados que nos envia</strong> por email ou telefone: nome, contactos, empresa e o conteúdo da mensagem.</li>
           <li><strong>Dados técnicos de acesso</strong> registados pelo serviço de alojamento do site, como o endereço IP, a data e hora do pedido, a página pedida e o tipo de navegador, para garantir o funcionamento e a segurança do site.</li>
           <li><strong>Acesso ao catálogo enviado por email:</strong> quando abre o catálogo através da ligação incluída na confirmação do pedido, registamos a data e hora do acesso e o tipo de navegador, associados à referência do pedido.</li>
           <li><strong>Área reservada:</strong> nome, email profissional e entidade dos utilizadores com acesso, e data do último acesso.</li>
-          <li><strong>Inscrições em formações:</strong> nome, email profissional e função do formando, respostas ao diagnóstico de utilização de inteligência artificial, ferramentas usadas e expectativas sobre a formação. Nas inscrições feitas na área de formação do site, também o nome e o NIF da empresa e o nome, o email e o telefone de quem faz a inscrição.</li>
-          <li><strong>Pré-inscrições em cursos:</strong> nome, email, empresa e telefone, número previsto de formandos, modalidade preferida, preferências de datas e horários e respostas ao diagnóstico de nível.</li>
+          <li><strong>Inscrições em formações:</strong> nome, email e função do formando, respostas ao diagnóstico de utilização de inteligência artificial, ferramentas de IA usadas e expectativas sobre a formação. Nas inscrições feitas na área de formação do site, também a indicação de inscrição particular ou de empresa, o nome da empresa (se for o caso), o NIF e o nome, o email e o telefone de quem faz a inscrição.</li>
+          <li><strong>Pré-inscrições em cursos:</strong> nome, email e telefone, indicação de pré-inscrição particular ou de empresa e, neste caso, o nome da empresa, número previsto de formandos, modalidade preferida, preferências de datas e horários, respostas ao diagnóstico de nível e ferramentas de IA usadas.</li>
           <li><strong>Prevenção de abusos do formulário:</strong> o servidor guarda, durante uma hora, um código derivado do endereço IP, que não revela o endereço, para limitar envios repetidos.</li>
         </ul>
 

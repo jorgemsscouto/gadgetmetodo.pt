@@ -85,7 +85,7 @@ if ($autenticado && ($_GET['exportar'] ?? '') === 'csv') {
         $ab = $p['aberturas'];
         $auto = count(array_filter($ab, function ($a) { return $a['automatica']; }));
         fputcsv($saida, array_map('celula_csv', [
-            $p['ref'], data_pt($p['criado']), $p['tipo'], $p['nome'], $p['empresa'], $p['email'], $p['telemovel'], $p['servicos'],
+            $p['ref'], data_pt($p['criado']), $p['tipo'], $p['nome'], $p['empresa'] ?: 'Particular', $p['email'], $p['telemovel'], $p['servicos'],
             count($ab), $auto, $ab ? data_pt($ab[0]['aberto']) : '', $ab ? data_pt(end($ab)['aberto']) : '',
         ]), ';', '"', '\\');
     }
@@ -166,7 +166,7 @@ $abriram = count(array_filter($registos, function ($p) {
               <td><?= h(data_pt($p['criado'])) ?></td>
               <td><?= h(str_replace('Pedido de ', '', $p['tipo'])) ?></td>
               <td><?= h($p['nome']) ?></td>
-              <td><?= h($p['empresa']) ?></td>
+              <td><?= h($p['empresa'] ?: 'Particular') ?></td>
               <td><a href="mailto:<?= h($p['email']) ?>"><?= h($p['email']) ?></a><br><?= h($p['telemovel']) ?></td>
               <td class="quebra"><?= h($p['servicos']) ?></td>
               <td>

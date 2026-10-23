@@ -315,7 +315,7 @@ function inscricao_publica(): array
 
     $cfg = cfg();
     $erros = [];
-    $v = ['empresa' => '', 'nif' => '', 'contacto_nome' => '', 'contacto_email' => '', 'contacto_telefone' => '', 'eu' => false,
+    $v = ['tipo_cliente' => '', 'empresa' => '', 'nif' => '', 'contacto_nome' => '', 'contacto_email' => '', 'contacto_telefone' => '', 'eu' => false,
           'formando' => '', 'email' => '', 'funcao' => '', 'expectativas' => '', 'ferramentas' => [], 'diag' => []];
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $origem = rtrim((string) ($_SERVER['HTTP_ORIGIN'] ?? ''), '/');
@@ -329,14 +329,16 @@ function inscricao_publica(): array
             exit;
         }
         $v = [
-            'empresa' => texto('empresa', 160), 'nif' => preg_replace('/\D+/', '', texto('nif', 20)),
+            'tipo_cliente' => tipo_cliente_post(), 'empresa' => texto('empresa', 160), 'nif' => preg_replace('/\D+/', '', texto('nif', 20)),
             'contacto_nome' => texto('contacto_nome', 120), 'contacto_email' => texto('contacto_email', 160), 'contacto_telefone' => texto('contacto_telefone', 30),
             'eu' => !empty($_POST['eu']),
             'formando' => texto('formando', 120), 'email' => texto('email', 160), 'funcao' => texto('funcao', 120),
             'expectativas' => texto('expectativas', 1500, true),
-            'ferramentas' => com_diagnostico($f) ? array_values(array_intersect(FERRAMENTAS_IA, array_filter((array) ($_POST['ferramentas'] ?? []), 'is_string'))) : [],
             'diag' => array_filter(array_intersect_key((array) ($_POST['diag'] ?? []), perguntas_diagnostico(com_nivel($f))), 'is_string'),
-        ];
+        ] + ferramentas_post(com_diagnostico($f));
+        if ($v['tipo_cliente'] === 'particular') {
+            $v['empresa'] = '';
+        }
         if ($v['eu']) {
             $v['formando'] = $v['formando'] ?: $v['contacto_nome'];
             $v['email'] = $v['email'] ?: $v['contacto_email'];
@@ -345,8 +347,10 @@ function inscricao_publica(): array
         if (!token_valido(is_string($_POST['t'] ?? null) ? $_POST['t'] : '')) {
             $erros[] = 'O formulário expirou ou foi enviado demasiado depressa. Confirme os dados e envie de novo.';
         }
-        if ($v['empresa'] === '') {
-            $erros[] = 'Indique a empresa.';
+        if ($v['tipo_cliente'] === '') {
+            $erros[] = 'Indique se se inscreve como particular ou em nome de uma empresa.';
+        } elseif ($v['tipo_cliente'] === 'empresa' && $v['empresa'] === '') {
+            $erros[] = 'Indique o nome da empresa.';
         }
         if ($v['nif'] !== '' && strlen($v['nif']) !== 9) {
             $erros[] = 'O NIF deve ter 9 algarismos.';
@@ -362,6 +366,9 @@ function inscricao_publica(): array
         }
         if ($respostas === null) {
             $erros[] = 'Responda a todas as perguntas do diagnóstico.';
+        }
+        if ($e = erro_ferramentas($v)) {
+            $erros[] = $e;
         }
         if (empty($_POST['consentimento'])) {
             $erros[] = 'É necessário aceitar a política de privacidade.';
@@ -389,10 +396,11 @@ function inscricao_publica(): array
       <form method="post" action="/formacoes/inscricao.php?f=' . (int) $f['id'] . '" class="formulario formulario-inscricao">
         <input type="hidden" name="t" value="' . h(token_formulario()) . '">
         <div class="campo-oculto" aria-hidden="true"><label for="c-website">Não preencher</label><input id="c-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-        <h2 class="mb-0">1. Empresa e contacto</h2>
+        <h2 class="mb-0">1. Cliente e contacto</h2>
+        ' . campo_tipo_cliente($v['tipo_cliente'], 'Inscreve-se como') . '
         <div class="campos-2">
-          ' . campo('empresa', 'Empresa *', $v['empresa'], 'text', 'required maxlength="160" autocomplete="organization"') . '
-          ' . campo('nif', 'NIF da empresa', $v['nif'], 'text', 'maxlength="11" inputmode="numeric" pattern="[0-9 ]{9,11}"') . '
+          <div data-so-empresa>' . campo('empresa', 'Nome da empresa ou organização *', $v['empresa'], 'text', 'maxlength="160" autocomplete="organization"') . '</div>
+          ' . campo('nif', 'NIF (para a fatura)', $v['nif'], 'text', 'maxlength="11" inputmode="numeric" pattern="[0-9 ]{9,11}"') . '
           ' . campo('contacto_nome', 'O seu nome *', $v['contacto_nome'], 'text', 'required maxlength="120" autocomplete="name"') . '
           ' . campo('contacto_email', 'O seu email *', $v['contacto_email'], 'email', 'required maxlength="160" autocomplete="email"') . '
           ' . campo('contacto_telefone', 'Telefone', $v['contacto_telefone'], 'tel', 'maxlength="30" autocomplete="tel"') . '
@@ -401,7 +409,7 @@ function inscricao_publica(): array
         <label class="opcao consentimento"><input type="checkbox" name="eu" value="1"' . ($v['eu'] ? ' checked' : '') . '> <span>O formando sou eu (pode deixar os campos seguintes em branco)</span></label>
         <div class="campos-2">
           ' . campo('formando', 'Nome completo do formando', $v['formando'], 'text', 'maxlength="120"') . '
-          ' . campo('email', 'Email profissional do formando', $v['email'], 'email', 'maxlength="160"') . '
+          ' . campo('email', 'Email do formando', $v['email'], 'email', 'maxlength="160"') . '
           ' . campo('funcao', 'Função ou departamento', $v['funcao'], 'text', 'maxlength="120"') . '
         </div>
         ' . bloco_diagnostico_form($f, $v, 3, 'Respondidas pelo formando ou com base no que ele indicar.') . '
@@ -449,7 +457,7 @@ function pre_inscricao_publica(): array
 
     $cfg = cfg();
     $erros = [];
-    $v = ['nome' => '', 'empresa' => '', 'email' => '', 'telefone' => '', 'formandos' => '1', 'modalidade' => '', 'preferencias' => '', 'diag' => []];
+    $v = ['tipo_cliente' => '', 'nome' => '', 'empresa' => '', 'email' => '', 'telefone' => '', 'formandos' => '1', 'modalidade' => '', 'preferencias' => '', 'diag' => [], 'ferramentas' => []];
     // Diagnóstico do curso escolhido; sem curso, o mais completo entre os cursos abertos (com perguntas de nível, se houver)
     $ref = ['curso_id' => $id];
     if (!$c) {
@@ -470,12 +478,16 @@ function pre_inscricao_publica(): array
             exit;
         }
         $v = [
+            'tipo_cliente' => tipo_cliente_post(),
             'nome' => texto('nome', 120), 'empresa' => texto('empresa', 160), 'email' => texto('email', 160), 'telefone' => texto('telefone', 30),
             'formandos' => (string) max(1, min(50, (int) texto('formandos', 3))),
             'modalidade' => array_key_exists($m = texto('modalidade', 20), MODALIDADES_PREFERIDAS) ? $m : '',
             'preferencias' => texto('preferencias', 1000, true),
             'diag' => array_filter(array_intersect_key((array) ($_POST['diag'] ?? []), perguntas_diagnostico(com_nivel($ref))), 'is_string'),
-        ];
+        ] + ferramentas_post($diag);
+        if ($v['tipo_cliente'] === 'particular') {
+            $v['empresa'] = '';
+        }
         $respostas = $diag ? respostas_diagnostico(com_nivel($ref)) : [];
         if (!token_valido(is_string($_POST['t'] ?? null) ? $_POST['t'] : '')) {
             $erros[] = 'O formulário expirou ou foi enviado demasiado depressa. Confirme os dados e envie de novo.';
@@ -483,11 +495,19 @@ function pre_inscricao_publica(): array
         if (!$c) {
             $erros[] = 'Escolha o curso que pretende.';
         }
+        if ($v['tipo_cliente'] === '') {
+            $erros[] = 'Indique se a pré-inscrição é feita como particular ou em nome de uma empresa.';
+        } elseif ($v['tipo_cliente'] === 'empresa' && $v['empresa'] === '') {
+            $erros[] = 'Indique o nome da empresa.';
+        }
         if ($v['nome'] === '' || !filter_var($v['email'], FILTER_VALIDATE_EMAIL)) {
             $erros[] = 'Indique o seu nome e um email válido.';
         }
         if ($respostas === null) {
             $erros[] = 'Responda a todas as perguntas do diagnóstico.';
+        }
+        if ($e = erro_ferramentas($v)) {
+            $erros[] = $e;
         }
         if (empty($_POST['consentimento'])) {
             $erros[] = 'É necessário aceitar a política de privacidade.';
@@ -498,14 +518,15 @@ function pre_inscricao_publica(): array
         if (!$erros) {
             // Uma pré-inscrição por email e curso: um novo envio atualiza a que ainda está por tratar
             $existente = linha_bd("SELECT id FROM preinscricoes WHERE curso_id = ? AND email = ? COLLATE NOCASE AND estado = 'nova'", [$id, $v['email']]);
-            $dados = [$v['nome'], $v['empresa'], $v['email'], $v['telefone'], (int) $v['formandos'], $v['modalidade'], $v['preferencias'], $respostas ? json_encode($respostas) : ''];
+            $dados = [$v['tipo_cliente'], $v['nome'], $v['email'], $v['telefone'], (int) $v['formandos'], $v['modalidade'], $v['preferencias'], $respostas ? json_encode($respostas) : '', implode(', ', $v['ferramentas'])];
             if ($existente) {
-                // Os campos deixados em branco mantêm o valor anterior
-                executar("UPDATE preinscricoes SET nome = ?, empresa = COALESCE(NULLIF(?, ''), empresa), email = ?, telefone = COALESCE(NULLIF(?, ''), telefone), formandos = ?,
-                    modalidade = COALESCE(NULLIF(?, ''), modalidade), preferencias = COALESCE(NULLIF(?, ''), preferencias), respostas = COALESCE(NULLIF(?, ''), respostas) WHERE id = ?", array_merge($dados, [$existente['id']]));
+                // Os campos opcionais deixados em branco mantêm o valor anterior; a empresa acompanha o tipo de cliente
+                executar("UPDATE preinscricoes SET tipo_cliente = ?, nome = ?, email = ?, telefone = COALESCE(NULLIF(?, ''), telefone), formandos = ?,
+                    modalidade = COALESCE(NULLIF(?, ''), modalidade), preferencias = COALESCE(NULLIF(?, ''), preferencias), respostas = COALESCE(NULLIF(?, ''), respostas),
+                    ferramentas = COALESCE(NULLIF(?, ''), ferramentas), empresa = ? WHERE id = ?", array_merge($dados, [$v['empresa'] ?: null, $existente['id']]));
                 $pid = (int) $existente['id'];
             } else {
-                $pid = executar('INSERT INTO preinscricoes (nome, empresa, email, telefone, formandos, modalidade, preferencias, respostas, curso_id, estado, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_merge($dados, [$id, 'nova', agora()]));
+                $pid = executar('INSERT INTO preinscricoes (tipo_cliente, nome, email, telefone, formandos, modalidade, preferencias, respostas, ferramentas, empresa, curso_id, estado, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_merge($dados, [$v['empresa'] ?: null, $id, 'nova', agora()]));
             }
             limite_excedido('preinscricoes', 5, 3600, true);
             emails_pre_inscricao($pid, (bool) $existente);
@@ -549,16 +570,17 @@ function pre_inscricao_publica(): array
         <h2 class="mb-0">1. Curso</h2>
         <div class="campo"><label for="c-curso">Curso pretendido *</label><select id="c-curso" name="curso" required>' . $opcoes . '</select></div>
         <h2 class="mb-0 espaco-topo">2. Os seus dados</h2>
+        ' . campo_tipo_cliente($v['tipo_cliente'], 'Faz a pré-inscrição como') . '
         <div class="campos-2">
+          <div data-so-empresa>' . campo('empresa', 'Nome da empresa ou organização *', $v['empresa'], 'text', 'maxlength="160" autocomplete="organization"') . '</div>
           ' . campo('nome', 'O seu nome *', $v['nome'], 'text', 'required maxlength="120" autocomplete="name"') . '
           ' . campo('email', 'O seu email *', $v['email'], 'email', 'required maxlength="160" autocomplete="email"') . '
-          ' . campo('empresa', 'Empresa', $v['empresa'], 'text', 'maxlength="160" autocomplete="organization"') . '
           ' . campo('telefone', 'Telefone', $v['telefone'], 'tel', 'maxlength="30" autocomplete="tel"') . '
           ' . campo('formandos', 'Número previsto de formandos', $v['formandos'], 'number', 'min="1" max="50" inputmode="numeric"') . '
           ' . campo_select('modalidade', 'Modalidade preferida', MODALIDADES_PREFERIDAS, $v['modalidade']) . '
         </div>
         ' . campo('preferencias', 'Preferências de datas e horários (opcional)', $v['preferencias'], 'textarea', 'maxlength="1000" rows="3" placeholder="Por exemplo: terças e quintas ao fim do dia, a partir de janeiro"') . '
-        ' . bloco_diagnostico_form($ref, $v, 3, 'Responda a pensar no formando; se forem vários, no perfil mais comum do grupo.', false) . '
+        ' . bloco_diagnostico_form($ref, $v, 3, 'Responda a pensar no formando; se forem vários, no perfil mais comum do grupo.') . '
         <label class="opcao consentimento"><input type="checkbox" name="consentimento" value="1" required> <span>Li a <a href="/privacidade/" target="_blank" rel="noopener">Política de privacidade</a> e autorizo o tratamento destes dados pela Gadgetmetodo, Lda. para registar a pré-inscrição e enviar o convite quando houver datas. *</span></label>
         <p class="texto-suave mb-0">A pré-inscrição não o(a) obriga a inscrever-se. Os dados são apagados automaticamente 12 meses após o registo.</p>
         <div><button class="botao" type="submit">Enviar pré-inscrição</button></div>
@@ -585,10 +607,11 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
     $link_area = $site . '/clientes/' . url('preinscricao', ['id' => $id]);
     $destino = (string) ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt');
     $linhas = [
-        'Curso' => $p['curso'], 'Nome' => $p['nome'], 'Empresa' => $p['empresa'], 'Email' => $p['email'], 'Telefone' => $p['telefone'],
+        'Curso' => $p['curso'], 'Nome' => $p['nome'], 'Cliente' => $p['tipo_cliente'] === 'particular' ? 'Particular' : (string) $p['empresa'], 'Email' => $p['email'], 'Telefone' => $p['telefone'],
         'Formandos' => (string) $p['formandos'], 'Modalidade' => MODALIDADES_PREFERIDAS[$p['modalidade'] ?? ''] ?? 'Indiferente', 'Preferências' => $p['preferencias'],
         'Diagnóstico' => $diagnostico ? $diagnostico['nivel'] . ' (' . $diagnostico['pontuacao'] . ' em 24; uso responsável ' . $diagnostico['responsavel'] . ' em 9)' : '',
         'Curso indicado' => $ind ? $ind['curso']['nome'] : '',
+        'Ferramentas de IA' => (string) $p['ferramentas'],
     ];
     $tabela = '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">';
     $texto = '';
