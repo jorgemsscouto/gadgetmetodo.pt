@@ -418,6 +418,7 @@ function lista_preinscricoes(array $c): string
             . '<td><strong>' . h($p['nome']) . '</strong>' . ($p['empresa'] ? '<br>' . h($p['empresa']) : '') . '</td>'
             . '<td><a href="mailto:' . h($p['email']) . '">' . h($p['email']) . '</a>' . ($p['telefone'] ? '<br>' . h($p['telefone']) : '') . '</td>'
             . '<td>' . (int) $p['formandos'] . '</td>'
+            . '<td>' . diagnostico_preinscricao($p, $c) . '</td>'
             . '<td>' . h(trim((MODALIDADES[$p['modalidade']] ?? 'Indiferente') . ($p['preferencias'] ? '. ' . $p['preferencias'] : ''))) . '</td>'
             . '<td>' . $form('pre_estado', '<label class="visualmente-oculto" for="pre-estado-' . (int) $p['id'] . '">Estado</label><select id="pre-estado-' . (int) $p['id'] . '" name="estado">' . opcoes_select(ESTADOS_PREINSCRICAO, $p['estado']) . '</select><button class="botao botao-secundario botao-pequeno" type="submit">Guardar</button>') . '</td>'
             . '<td class="acoes-celula">' . ($com_datas ? $form('pre_convidar', '<button class="botao botao-pequeno" type="submit">' . ($p['estado'] === 'convidada' ? 'Reenviar convite' : 'Enviar convite') . '</button>') : '')
@@ -426,8 +427,22 @@ function lista_preinscricoes(array $c): string
     return '<h2 class="espaco-topo" id="preinscricoes">Pré-inscrições</h2>
       <p class="texto-suave">Pedidos feitos na página do curso, para receber o convite quando houver datas. O candidato recebeu uma confirmação por email. ' . ($com_datas ? 'O convite leva-o à página do curso, com as datas e a inscrição, e passa a pré-inscrição para "Convite enviado".' : 'Para enviar convites, agende primeiro uma sessão com inscrições abertas.') . ' As pré-inscrições são apagadas automaticamente 12 meses após o registo.</p>'
         . ($lista ? ($com_datas && $novas > 1 ? '<form method="post" class="espaco-topo-curto">' . campo_csrf() . '<input type="hidden" name="acao" value="pre_convidar_todas"><button class="botao" type="submit">Enviar convite às ' . $novas . ' pré-inscrições novas</button></form>' : '')
-            . '<div class="conteudo tabela-rolante espaco-topo-curto"><table><thead><tr><th>Data</th><th>Nome e empresa</th><th>Contactos</th><th>Formandos</th><th>Modalidade e preferências</th><th>Estado</th><th>Ações</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>'
+            . '<div class="conteudo tabela-rolante espaco-topo-curto"><table><thead><tr><th>Data</th><th>Nome e empresa</th><th>Contactos</th><th>Formandos</th><th>Diagnóstico</th><th>Modalidade e preferências</th><th>Estado</th><th>Ações</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>'
             : '<p class="texto-suave">Ainda não há pré-inscrições neste curso.</p>');
+}
+
+// Nível e curso indicado pelo diagnóstico de uma pré-inscrição, com aviso quando difere do curso escolhido
+function diagnostico_preinscricao(array $p, array $c): string
+{
+    $r = json_decode((string) ($p['respostas'] ?? ''), true);
+    if (!is_array($r) || !$r) {
+        return '<span class="texto-suave">Sem diagnóstico</span>';
+    }
+    $a = avaliar_diagnostico($r);
+    $ind = curso_indicado($r, $c);
+    return nivel_etiqueta($a['nivel']) . ($ind ? '<br>Indica: ' . h(partes_nome($ind['curso'])[0])
+        . ((int) $ind['curso']['id'] !== (int) $c['id'] ? ' ' . etiqueta('Diferente do curso escolhido', 'info') : '') : '')
+        . ($a['responsavel'] <= 4 ? '<br><span class="texto-suave">Uso responsável baixo (' . (int) $a['responsavel'] . ' em 9)</span>' : '');
 }
 
 // Convite por email para a página de um curso, com as próximas sessões abertas

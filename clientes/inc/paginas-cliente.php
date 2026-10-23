@@ -83,10 +83,10 @@ function pagina_inscrever(): void
             'formando' => texto('formando', 120), 'email' => texto('email', 160), 'funcao' => texto('funcao', 120),
             'expectativas' => texto('expectativas', 1500, true),
             'ferramentas' => $diag ? array_values(array_intersect(FERRAMENTAS_IA, array_filter((array) ($_POST['ferramentas'] ?? []), 'is_string'))) : [],
-            'diag' => array_filter(array_intersect_key((array) ($_POST['diag'] ?? []), DIAGNOSTICO), 'is_string'),
+            'diag' => array_filter(array_intersect_key((array) ($_POST['diag'] ?? []), perguntas_diagnostico(com_nivel($f))), 'is_string'),
             'cliente_id' => $admin ? (int) ($_POST['cliente_id'] ?? 0) : (int) $u['cliente_id'],
         ];
-        $respostas = $diag ? respostas_diagnostico() : [];
+        $respostas = $diag ? respostas_diagnostico(com_nivel($f)) : [];
         if ($v['formando'] === '') {
             $erros[] = 'Indique o nome do formando.';
         }
@@ -109,7 +109,9 @@ function pagina_inscrever(): void
                 $erros[] = $r['erro'];
             } else {
                 emails_nova_inscricao($r['id']);
-                aviso('Inscrição de ' . h($v['formando']) . ' registada.' . ($r['nivel'] ? ' Resultado do diagnóstico: <strong>' . h($r['nivel']) . '</strong> (' . $r['pontuacao'] . ' em 24).' : '') . ' Recebe a confirmação por email.');
+                $ind = $respostas ? curso_indicado($respostas, curso((int) $f['curso_id'])) : null;
+                aviso('Inscrição de ' . h($v['formando']) . ' registada.' . ($r['nivel'] ? ' Resultado do diagnóstico: <strong>' . h($r['nivel']) . '</strong> (' . $r['pontuacao'] . ' em 24).' : '')
+                    . ($ind ? ' ' . h(frase_indicacao($ind, curso((int) $f['curso_id']), false)) : '') . ' Recebe a confirmação por email.');
                 redirecionar('inscricao', ['id' => $r['id']]);
             }
         }
@@ -142,19 +144,23 @@ function resumo_sessao(array $f, int $restantes, bool $publico): string
 }
 
 // Perguntas do diagnóstico de IA e ferramentas usadas, só nos cursos que o têm ativo
-function bloco_diagnostico_form(array $f, array $v, int $numero, string $quem): string
+// Nos cursos de um percurso, o diagnóstico inclui as perguntas de nível e indica o curso mais adequado
+function bloco_diagnostico_form(array $f, array $v, int $numero, string $quem, bool $com_ferramentas = true): string
 {
     if (!com_diagnostico($f)) {
         return '';
     }
+    $nivel = com_nivel($f);
     $ferramentas = '';
     foreach (FERRAMENTAS_IA as $nome) {
-        $ferramentas .= '<label class="opcao"><input type="checkbox" name="ferramentas[]" value="' . h($nome) . '"' . (in_array($nome, $v['ferramentas'], true) ? ' checked' : '') . '> ' . h($nome) . '</label>';
+        $ferramentas .= '<label class="opcao"><input type="checkbox" name="ferramentas[]" value="' . h($nome) . '"' . (in_array($nome, $v['ferramentas'] ?? [], true) ? ' checked' : '') . '> ' . h($nome) . '</label>';
     }
-    return '<h2 class="mb-0 espaco-topo">' . $numero . '. Diagnóstico de utilização de IA</h2>
-        <p class="texto-suave mb-0">Oito perguntas, cerca de dois minutos. ' . h($quem) . ' Não há respostas certas: servem para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>
-        ' . campos_diagnostico($v['diag']) . '
-        <fieldset class="campo-grupo"><legend>Que ferramentas de IA usa atualmente?</legend><div class="opcoes opcoes-linha">' . $ferramentas . '</div></fieldset>';
+    return '<h2 class="mb-0 espaco-topo">' . $numero . '. Diagnóstico ' . ($nivel ? 'de nível' : 'de utilização de IA') . '</h2>
+        <p class="texto-suave mb-0">' . ($nivel
+            ? count(perguntas_diagnostico(true)) . ' perguntas, cerca de três minutos. ' . h($quem) . ' Não há respostas certas: servem para indicar o curso do percurso mais adequado ao ponto de partida do formando e para ajustar os exemplos e os exercícios ao grupo.'
+            : 'Oito perguntas, cerca de dois minutos. ' . h($quem) . ' Não há respostas certas: servem para ajustar os exemplos e os exercícios ao ponto de partida do grupo.') . '</p>
+        ' . campos_diagnostico($v['diag'], $nivel) . '
+        ' . ($com_ferramentas ? '<fieldset class="campo-grupo"><legend>Que ferramentas de IA usa atualmente?</legend><div class="opcoes opcoes-linha">' . $ferramentas . '</div></fieldset>' : '');
 }
 
 function link_curso_publico(array $curso): string
@@ -162,10 +168,10 @@ function link_curso_publico(array $curso): string
     return '/formacoes/curso.php?c=' . (int) $curso['id'];
 }
 
-// Ficha do curso para exportar em PDF; com $imprimir, abre logo a janela de impressão (Guardar como PDF)
-function link_ficha(array $curso, bool $imprimir = false): string
+// Ficha do curso: com $pdf, o PDF gerado no servidor; sem, a versão em HTML para ver no ecrã
+function link_ficha(array $curso, bool $pdf = false): string
 {
-    return '/formacoes/ficha.php?c=' . (int) $curso['id'] . ($imprimir ? '&imprimir=1' : '');
+    return '/formacoes/ficha.php?c=' . (int) $curso['id'] . ($pdf ? '&pdf=1' : '');
 }
 
 function link_pre_inscricao(int $curso_id): string
@@ -235,6 +241,8 @@ function emails_nova_inscricao(int $id): void
     $quando = horario($i) . ' · ' . (MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ' · ' . $i['local'] : '');
     $a = $i['respostas'] ? avaliar_diagnostico((array) json_decode((string) $i['respostas'], true)) : null;
     $recomendacao = $a ? recomendacao_de($i) : '';
+    $ind = $a ? curso_indicado((array) json_decode((string) $i['respostas'], true), curso((int) $i['curso_id'])) : null;
+    $indicacao = $ind ? frase_indicacao($ind, curso((int) $i['curso_id'])) : '';
     $link_area = $site . '/clientes/' . url('inscricao', ['id' => $id]);
     $contacto = contacto_inscricao($i);
     $linhas = [
@@ -275,9 +283,10 @@ function emails_nova_inscricao(int $id): void
         $alterar = $contacto['area'] ? 'Para alterar ou cancelar a inscrição, use a área de clientes ou responda a este email.' : 'Para alterar ou cancelar a inscrição, basta responder a este email.';
         enviar_aviso($contacto['email'], 'Inscrição recebida: ' . $i['formando'] . ', ' . $i['titulo'] . ' de ' . data_hora($i['inicio'], false), 'Inscrição recebida',
             '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 16px;">Recebemos a inscrição de <strong>' . h($i['formando']) . '</strong> na formação ' . h($i['titulo']) . ', em ' . h($quando) . '. A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.</p>'
-            . ($i['nivel'] ? '<p style="margin:0 0 16px;">O diagnóstico indica o nível <strong>' . h($i['nivel']) . '</strong> de utilização de IA. Vamos usá-lo para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>' : '') . $ver
+            . ($i['nivel'] ? '<p style="margin:0 0 16px;">O diagnóstico indica o nível <strong>' . h($i['nivel']) . '</strong> de utilização de IA. Vamos usá-lo para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>' : '')
+            . ($indicacao ? '<p style="margin:0 0 16px;">' . h($indicacao) . '</p>' : '') . $ver
             . '<p style="margin:22px 0 0;color:#687280;font-size:13px;">' . h($alterar) . '</p>',
-            nome_curto($contacto['nome']) . ",\n\nRecebemos a inscrição de " . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . $quando . ". A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.\n\n" . ($i['nivel'] ? 'Nível de utilização de IA indicado pelo diagnóstico: ' . $i['nivel'] . ".\n\n" : '') . $alterar,
+            nome_curto($contacto['nome']) . ",\n\nRecebemos a inscrição de " . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . $quando . ". A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.\n\n" . ($i['nivel'] ? 'Nível de utilização de IA indicado pelo diagnóstico: ' . $i['nivel'] . ".\n\n" : '') . ($indicacao ? $indicacao . "\n\n" : '') . $alterar,
             $destino);
     }
 }

@@ -108,9 +108,14 @@ body {
   cursor: pointer;
 }
 
-.barra-ficha button.principal {
+.barra-ficha a.principal {
+  display: inline-block;
+  padding: 9px 16px;
+  font: 600 14px/1.2 "Inter", Arial, sans-serif;
+  text-decoration: none;
   background: var(--petroleo);
-  border-color: var(--petroleo);
+  border: 1px solid var(--petroleo);
+  border-radius: 8px;
 }
 
 .barra-ficha .estado-copia {

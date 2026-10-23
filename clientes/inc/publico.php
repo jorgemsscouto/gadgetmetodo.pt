@@ -45,15 +45,6 @@ function opcao_inscricao(array $c, bool $na_pagina_do_curso = false): array
     ];
 }
 
-// "Curso 1: Iniciação..." passa a sobretítulo "Curso 1" e título "Iniciação..."
-function partes_nome(array $c): array
-{
-    if (preg_match('/^((?:Curso|Módulo|Nível|Parte)\s+\S+)\s*:\s*(.+)$/u', (string) $c['nome'], $m)) {
-        return [$m[1], $m[2]];
-    }
-    return [(string) ($c['tipologia'] ?: 'Curso'), (string) $c['nome']];
-}
-
 // Dados estruturados de cada sessão (schema.org EducationEvent), para motores de pesquisa e assistentes de IA
 function jsonld_formacoes(array $formacoes, array $cursos = []): string
 {
@@ -223,7 +214,8 @@ function formacoes_publico(): array
         $intro = count($lista) . ' cursos' . ($horas > 0 ? ', ' . horas((string) $horas) . ' no total' : '') . '.'
             . ($crescente
                 ? ' A prática no Laboratório de Casos Práticos passa de ' . reset($labs) . ' para ' . end($labs) . ' minutos por sessão ao longo do percurso.' : '')
-            . (count($publicos) === 1 ? ' Destinatários: ' . rtrim(lcfirst((string) reset($publicos)), '.') . '.' : '');
+            . (count($publicos) === 1 ? ' Destinatários: ' . rtrim(lcfirst((string) reset($publicos)), '.') . '.' : '')
+            . (com_nivel(['curso_id' => $lista[0]['id']]) ? ' Não sabe por qual começar? A inscrição e a pré-inscrição incluem um diagnóstico de nível que indica o curso mais adequado.' : '');
         $html .= '<section class="secao secao-nevoa secao-percurso" aria-labelledby="' . $id . '"><div class="contentor">
           <div class="cabeca-secao"><span class="sobretitulo">Cursos abertos · Percurso</span><h2 id="' . $id . '">' . h($titulo) . '</h2>' . ($sub !== '' ? '<p class="lead-secao">' . h(ucfirst($sub)) . '</p>' : '') . '<p>' . h($intro) . '</p></div>
           <div class="lista-cursos">' . implode('', array_map('cartao_curso', $lista)) . '</div>';
@@ -291,8 +283,10 @@ function inscricao_publica(): array
     }
     $id = (int) ($_GET['f'] ?? 0);
     if (isset($_GET['recebida'])) {
+        $sessao = $id ? linha_bd('SELECT curso_id FROM formacoes WHERE id = ?', [$id]) : null;
         return ['conteudo' => '<section class="secao"><div class="contentor estreito">
           <div class="aviso aviso-ok"><strong>Inscrição recebida.</strong> Enviámos uma confirmação para o email indicado. A Gadgetmetodo confirma a inscrição nos próximos dias úteis.</div>
+          ' . aviso_indicacao(curso((int) ($sessao['curso_id'] ?? 0))) . '
           <p>Se não receber o email nos próximos minutos, verifique a pasta de correio não desejado ou escreva para <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</p>
           <div class="acoes">' . ($id ? '<a class="botao" href="/formacoes/inscricao.php?f=' . $id . '">Inscrever outra pessoa</a>' : '') . '<a class="botao botao-secundario" href="/formacoes/">Voltar à área de formação</a></div>
         </div></section>'];
@@ -329,13 +323,13 @@ function inscricao_publica(): array
             'formando' => texto('formando', 120), 'email' => texto('email', 160), 'funcao' => texto('funcao', 120),
             'expectativas' => texto('expectativas', 1500, true),
             'ferramentas' => com_diagnostico($f) ? array_values(array_intersect(FERRAMENTAS_IA, array_filter((array) ($_POST['ferramentas'] ?? []), 'is_string'))) : [],
-            'diag' => array_filter(array_intersect_key((array) ($_POST['diag'] ?? []), DIAGNOSTICO), 'is_string'),
+            'diag' => array_filter(array_intersect_key((array) ($_POST['diag'] ?? []), perguntas_diagnostico(com_nivel($f))), 'is_string'),
         ];
         if ($v['eu']) {
             $v['formando'] = $v['formando'] ?: $v['contacto_nome'];
             $v['email'] = $v['email'] ?: $v['contacto_email'];
         }
-        $respostas = com_diagnostico($f) ? respostas_diagnostico() : [];
+        $respostas = com_diagnostico($f) ? respostas_diagnostico(com_nivel($f)) : [];
         if (!token_valido(is_string($_POST['t'] ?? null) ? $_POST['t'] : '')) {
             $erros[] = 'O formulário expirou ou foi enviado demasiado depressa. Confirme os dados e envie de novo.';
         }
@@ -370,7 +364,8 @@ function inscricao_publica(): array
             } else {
                 limite_excedido('formacoes', 6, 3600, true);
                 emails_nova_inscricao($r['id']);
-                header('Location: /formacoes/inscricao.php?recebida=1&f=' . (int) $f['id'], true, 303);
+                $ind = $respostas ? curso_indicado($respostas, curso((int) $f['curso_id'])) : null;
+                header('Location: /formacoes/inscricao.php?recebida=1&f=' . (int) $f['id'] . ($ind ? '&indicado=' . (int) $ind['curso']['id'] : ''), true, 303);
                 exit;
             }
         }
@@ -426,6 +421,7 @@ function pre_inscricao_publica(): array
     if (isset($_GET['recebida'])) {
         return ['conteudo' => '<section class="secao"><div class="contentor estreito">
           <div class="aviso aviso-ok"><strong>Pré-inscrição recebida.</strong> Enviámos uma confirmação para o email indicado. Quando houver datas para ' . h(curso_com_artigo((string) $c['nome'])) . ', enviamos-lhe o convite para a inscrição.</div>
+          ' . aviso_indicacao($c) . '
           <p>Se não receber o email nos próximos minutos, verifique a pasta de correio não desejado ou escreva para <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</p>
           <div class="acoes"><a class="botao" href="' . h(link_curso_publico($c)) . '">Voltar ao curso</a><a class="botao botao-secundario" href="/formacoes/">Ver os outros cursos</a></div>
         </div></section>'];
@@ -433,7 +429,9 @@ function pre_inscricao_publica(): array
 
     $cfg = cfg();
     $erros = [];
-    $v = ['nome' => '', 'empresa' => '', 'email' => '', 'telefone' => '', 'formandos' => '1', 'modalidade' => '', 'preferencias' => ''];
+    $v = ['nome' => '', 'empresa' => '', 'email' => '', 'telefone' => '', 'formandos' => '1', 'modalidade' => '', 'preferencias' => '', 'diag' => []];
+    $ref = ['curso_id' => $id];
+    $diag = com_diagnostico($ref);
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $origem = rtrim((string) ($_SERVER['HTTP_ORIGIN'] ?? ''), '/');
         if ($origem !== '' && !empty($cfg['origens']) && !in_array($origem, $cfg['origens'], true)) {
@@ -450,12 +448,17 @@ function pre_inscricao_publica(): array
             'formandos' => (string) max(1, min(50, (int) texto('formandos', 3))),
             'modalidade' => array_key_exists($m = texto('modalidade', 20), MODALIDADES_PREFERIDAS) ? $m : '',
             'preferencias' => texto('preferencias', 1000, true),
+            'diag' => array_filter(array_intersect_key((array) ($_POST['diag'] ?? []), perguntas_diagnostico(com_nivel($ref))), 'is_string'),
         ];
+        $respostas = $diag ? respostas_diagnostico(com_nivel($ref)) : [];
         if (!token_valido(is_string($_POST['t'] ?? null) ? $_POST['t'] : '')) {
             $erros[] = 'O formulário expirou ou foi enviado demasiado depressa. Confirme os dados e envie de novo.';
         }
         if ($v['nome'] === '' || !filter_var($v['email'], FILTER_VALIDATE_EMAIL)) {
             $erros[] = 'Indique o seu nome e um email válido.';
+        }
+        if ($respostas === null) {
+            $erros[] = 'Responda a todas as perguntas do diagnóstico.';
         }
         if (empty($_POST['consentimento'])) {
             $erros[] = 'É necessário aceitar a política de privacidade.';
@@ -466,18 +469,19 @@ function pre_inscricao_publica(): array
         if (!$erros) {
             // Uma pré-inscrição por email e curso: um novo envio atualiza a que ainda está por tratar
             $existente = linha_bd("SELECT id FROM preinscricoes WHERE curso_id = ? AND email = ? COLLATE NOCASE AND estado = 'nova'", [$id, $v['email']]);
-            $dados = [$v['nome'], $v['empresa'], $v['email'], $v['telefone'], (int) $v['formandos'], $v['modalidade'], $v['preferencias']];
+            $dados = [$v['nome'], $v['empresa'], $v['email'], $v['telefone'], (int) $v['formandos'], $v['modalidade'], $v['preferencias'], $respostas ? json_encode($respostas) : ''];
             if ($existente) {
                 // Os campos deixados em branco mantêm o valor anterior
                 executar("UPDATE preinscricoes SET nome = ?, empresa = COALESCE(NULLIF(?, ''), empresa), email = ?, telefone = COALESCE(NULLIF(?, ''), telefone), formandos = ?,
-                    modalidade = COALESCE(NULLIF(?, ''), modalidade), preferencias = COALESCE(NULLIF(?, ''), preferencias) WHERE id = ?", array_merge($dados, [$existente['id']]));
+                    modalidade = COALESCE(NULLIF(?, ''), modalidade), preferencias = COALESCE(NULLIF(?, ''), preferencias), respostas = COALESCE(NULLIF(?, ''), respostas) WHERE id = ?", array_merge($dados, [$existente['id']]));
                 $pid = (int) $existente['id'];
             } else {
-                $pid = executar('INSERT INTO preinscricoes (nome, empresa, email, telefone, formandos, modalidade, preferencias, curso_id, estado, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_merge($dados, [$id, 'nova', agora()]));
+                $pid = executar('INSERT INTO preinscricoes (nome, empresa, email, telefone, formandos, modalidade, preferencias, respostas, curso_id, estado, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_merge($dados, [$id, 'nova', agora()]));
             }
             limite_excedido('preinscricoes', 5, 3600, true);
             emails_pre_inscricao($pid, (bool) $existente);
-            header('Location: /formacoes/pre-inscricao.php?recebida=1&c=' . $id, true, 303);
+            $ind = $respostas ? curso_indicado($respostas, $c) : null;
+            header('Location: /formacoes/pre-inscricao.php?recebida=1&c=' . $id . ($ind ? '&indicado=' . (int) $ind['curso']['id'] : ''), true, 303);
             exit;
         }
     }
@@ -496,6 +500,7 @@ function pre_inscricao_publica(): array
       <form method="post" action="/formacoes/pre-inscricao.php?c=' . $id . '" class="formulario formulario-inscricao">
         <input type="hidden" name="t" value="' . h(token_formulario()) . '">
         <div class="campo-oculto" aria-hidden="true"><label for="c-website">Não preencher</label><input id="c-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        ' . ($diag ? '<h2 class="mb-0">1. Os seus dados</h2>' : '') . '
         <div class="campos-2">
           ' . campo('nome', 'O seu nome *', $v['nome'], 'text', 'required maxlength="120" autocomplete="name"') . '
           ' . campo('email', 'O seu email *', $v['email'], 'email', 'required maxlength="160" autocomplete="email"') . '
@@ -505,6 +510,7 @@ function pre_inscricao_publica(): array
           ' . campo_select('modalidade', 'Modalidade preferida', MODALIDADES_PREFERIDAS, $v['modalidade']) . '
         </div>
         ' . campo('preferencias', 'Preferências de datas e horários (opcional)', $v['preferencias'], 'textarea', 'maxlength="1000" rows="3" placeholder="Por exemplo: terças e quintas ao fim do dia, a partir de janeiro"') . '
+        ' . bloco_diagnostico_form($ref, $v, 2, 'Responda a pensar no formando; se forem vários, no perfil mais comum do grupo.', false) . '
         <label class="opcao consentimento"><input type="checkbox" name="consentimento" value="1" required> <span>Li a <a href="/privacidade/" target="_blank" rel="noopener">Política de privacidade</a> e autorizo o tratamento destes dados pela Gadgetmetodo, Lda. para registar a pré-inscrição e enviar o convite quando houver datas. *</span></label>
         <p class="texto-suave mb-0">A pré-inscrição não o(a) obriga a inscrever-se. Os dados são apagados automaticamente 12 meses após o registo.</p>
         <div><button class="botao" type="submit">Enviar pré-inscrição</button></div>
@@ -520,16 +526,21 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
     if (!$p) {
         return;
     }
+    $respostas = json_decode((string) $p['respostas'], true);
+    $diagnostico = is_array($respostas) && $respostas ? avaliar_diagnostico($respostas) : null;
+    $ind = $diagnostico ? curso_indicado($respostas, curso((int) $p['curso_id'])) : null;
     $cfg = cfg();
     $site = rtrim((string) ($cfg['site'] ?? SITE_CANONICO), '/');
     $c = ['id' => $p['curso_id']];
     $link_curso = $site . link_curso_publico($c);
-    $link_ficha = $site . link_ficha($c);
+    $link_ficha = $site . link_ficha($c, true);
     $link_area = $site . '/clientes/' . url('curso', ['id' => $p['curso_id']]) . '#preinscricoes';
     $destino = (string) ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt');
     $linhas = [
         'Curso' => $p['curso'], 'Nome' => $p['nome'], 'Empresa' => $p['empresa'], 'Email' => $p['email'], 'Telefone' => $p['telefone'],
         'Formandos' => (string) $p['formandos'], 'Modalidade' => MODALIDADES_PREFERIDAS[$p['modalidade'] ?? ''] ?? 'Indiferente', 'Preferências' => $p['preferencias'],
+        'Diagnóstico' => $diagnostico ? $diagnostico['nivel'] . ' (' . $diagnostico['pontuacao'] . ' em 24; uso responsável ' . $diagnostico['responsavel'] . ' em 9)' : '',
+        'Curso indicado' => $ind ? $ind['curso']['nome'] : '',
     ];
     $tabela = '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">';
     $texto = '';
@@ -547,6 +558,7 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
 
     enviar_aviso($destino, ($atualizada ? 'Pré-inscrição atualizada: ' : 'Nova pré-inscrição pelo site: ') . $p['nome'] . ($p['empresa'] ? ' (' . $p['empresa'] . ')' : '') . ', ' . $p['curso'], 'Nova pré-inscrição em curso',
         '<p style="margin:0 0 16px;">' . ($atualizada ? 'Uma pré-inscrição por tratar foi atualizada pelo candidato.' : 'Foi registada uma pré-inscrição. Quando houver datas, envie o convite na área de clientes (Cursos, página do curso).') . '</p>' . $tabela
+        . ($ind && (int) $ind['curso']['id'] !== (int) $p['curso_id'] ? '<p style="margin:16px 0 0;"><strong>Atenção:</strong> o diagnóstico indica ' . h(curso_com_artigo((string) $ind['curso']['nome'])) . ' (' . h($ind['motivo']) . '), e não o curso escolhido. Confirmar com o candidato.</p>' : '')
         . '<p style="margin:22px 0 0;">' . $botao($link_area, 'Ver pré-inscrições do curso') . '</p>',
         "Foi registada uma pré-inscrição.\n\n" . $texto . "\n" . $link_area,
         (string) $p['email'], (string) ($cfg['bcc'] ?? ''));
@@ -554,14 +566,30 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
     $nome = nome_curto((string) $p['nome']);
     $frase = 'Recebemos a sua pré-inscrição n' . curso_com_artigo((string) $p['curso']) . ($p['percurso'] ? ', do percurso ' . explode(':', (string) $p['percurso'])[0] : '') . '.';
     $seguinte = 'Quando houver datas, enviamos-lhe o convite para a inscrição, com a data, o horário e a modalidade de cada sessão. A pré-inscrição não o(a) obriga a inscrever-se.';
+    $indicacao = $ind ? frase_indicacao($ind, curso((int) $p['curso_id'])) : '';
     enviar_aviso((string) $p['email'], 'Pré-inscrição recebida: ' . $p['curso'], 'Pré-inscrição recebida',
         '<p style="margin:0 0 14px;">' . h($nome) . ',</p><p style="margin:0 0 12px;">' . h($frase) . '</p><p style="margin:0 0 16px;">' . h($seguinte) . '</p>'
+        . ($indicacao ? '<p style="margin:0 0 16px;padding:12px 14px;background:#E8F1F1;border-left:3px solid #00636A;">' . h($indicacao) . '</p>' : '')
         . '<p style="margin:0 0 6px;"><strong>Dados da pré-inscrição</strong></p>' . $tabela
         . '<p style="margin:22px 0 0;">' . $botao($link_curso, 'Ver o programa do curso') . $botao($link_ficha, 'Ficha do curso (PDF)') . '</p>'
         . '<p style="margin:14px 0 0;color:#687280;font-size:13px;">Para alterar ou cancelar a pré-inscrição, basta responder a este email. Os dados são apagados automaticamente 12 meses após o registo.</p>',
-        $nome . ",\n\n" . $frase . "\n\n" . $seguinte . "\n\nDados da pré-inscrição:\n" . $texto . "\nPrograma do curso: " . $link_curso . "\nFicha do curso (PDF): " . $link_ficha
+        $nome . ",\n\n" . $frase . "\n\n" . $seguinte . ($indicacao ? "\n\n" . $indicacao : '') . "\n\nDados da pré-inscrição:\n" . $texto . "\nPrograma do curso: " . $link_curso . "\nFicha do curso (PDF): " . $link_ficha
         . "\n\nPara alterar ou cancelar a pré-inscrição, basta responder a este email.",
         $destino);
+}
+
+// Aviso, depois da inscrição ou da pré-inscrição, com o curso indicado pelo diagnóstico (parâmetro "indicado")
+function aviso_indicacao(?array $curso): string
+{
+    $ind = curso((int) ($_GET['indicado'] ?? 0));
+    if (!$curso || !$ind || !$ind['ativo'] || !in_array((int) $ind['id'], array_map('intval', array_column(cursos_do_percurso($curso), 'id')), true)) {
+        return '';
+    }
+    if ((int) $ind['id'] === (int) $curso['id']) {
+        return '<div class="aviso aviso-info"><strong>Diagnóstico de nível:</strong> confirma que este é o curso indicado para o ponto de partida do formando.</div>';
+    }
+    return '<div class="aviso aviso-info"><strong>Diagnóstico de nível:</strong> pelas respostas, o curso mais adequado ao ponto de partida do formando é ' . h(curso_com_artigo((string) $ind['nome'])) . '. A Gadgetmetodo vai confirmar consigo o curso antes de avançar. '
+        . '<a href="' . h(link_curso_publico($ind)) . '">Ver ' . h(curso_com_artigo((string) $ind['nome'])) . '</a>.</div>';
 }
 
 // Encurta um texto no fim de uma palavra (sem depender da extensão mbstring)
@@ -629,7 +657,9 @@ function curso_publico(): array
           </div>
           <aside class="ficha-curso">
             ' . ($factos ? '<dl>' . implode('', array_map(function ($k, $x) { return '<dt>' . h($k) . '</dt><dd>' . h($x) . '</dd>'; }, array_keys($factos), $factos)) . '</dl>' : '') . '
-            ' . ($c['diagnostico'] ? '<p class="texto-suave">A inscrição inclui um diagnóstico curto de utilização de inteligência artificial, para ajustar a formação ao ponto de partida de cada formando.</p>' : '') . '
+            ' . ($c['diagnostico'] ? '<p class="texto-suave">' . (com_nivel(['curso_id' => $c['id']])
+                ? 'A inscrição e a pré-inscrição incluem um diagnóstico de nível, que indica qual dos cursos do percurso é o mais adequado ao ponto de partida do formando.'
+                : 'A inscrição inclui um diagnóstico curto de utilização de inteligência artificial, para ajustar a formação ao ponto de partida de cada formando.') . '</p>' : '') . '
             <p class="cartao-curso-datas' . ($op['sessoes'] ? ' com-datas' : '') . '">' . h($op['nota']) . '</p>
             <div class="ficha-acoes">
               <a class="botao" href="' . h($op['href']) . '">' . h($op['rotulo']) . '</a>

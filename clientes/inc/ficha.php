@@ -1,6 +1,6 @@
 <?php
-// Ficha do curso em formato A4, para guardar em PDF a partir do navegador (/formacoes/ficha.php?c=ID).
-// Usa os mesmos dados da página pública do curso; com ?imprimir=1 abre logo a janela de impressão.
+// Ficha do curso (/formacoes/ficha.php?c=ID): em PDF gerado no servidor com &pdf=1 (clientes/inc/ficha-pdf.php)
+// ou em HTML A4 para ver no ecrã. Usa os mesmos dados da página pública do curso.
 
 declare(strict_types=1);
 
@@ -14,6 +14,20 @@ function texto_css(string $t): string
     return '"' . str_replace(['\\', '"', "\n", "\r", '<'], ['\\\\', '\\"', ' ', ' ', '\\3C '], $t) . '"';
 }
 
+// Dados comuns à ficha em HTML e em PDF
+function dados_ficha(array $c): array
+{
+    $mods = modulos_curso((int) $c['id']);
+    $factos = factos_curso($c, $mods);
+    unset($factos['Tipologia']);
+    return [
+        'mods' => $mods, 'u' => unidade($c), 'min_caso' => minutos_caso($c), 'factos' => $factos,
+        'sessoes' => consulta("SELECT * FROM formacoes WHERE curso_id = ? AND inicio >= ? AND estado = 'aberta' ORDER BY inicio LIMIT 8", [$c['id'], date('Y-m-d 00:00:00')]),
+        'link' => SITE_CANONICO . link_curso_publico($c),
+        'hoje' => date('j') . ' de ' . MESES_FICHA[(int) date('n')] . ' de ' . date('Y'),
+    ];
+}
+
 function ficha_curso(): void
 {
     header('Cache-Control: no-cache');
@@ -25,14 +39,13 @@ function ficha_curso(): void
             . '<body class="ficha-ecra"><main class="folha"><h1>Ficha não encontrada</h1><p>Este curso não existe ou já não está disponível.</p><p><a href="/formacoes/">Ver a área de formação</a></p></main></body></html>';
         return;
     }
-    $mods = modulos_curso((int) $c['id']);
-    $u = unidade($c);
-    $min_caso = minutos_caso($c);
-    $factos = factos_curso($c, $mods);
-    unset($factos['Tipologia']);
-    $sessoes = consulta("SELECT * FROM formacoes WHERE curso_id = ? AND inicio >= ? AND estado = 'aberta' ORDER BY inicio LIMIT 8", [$c['id'], date('Y-m-d 00:00:00')]);
-    $link = SITE_CANONICO . link_curso_publico($c);
-    $hoje = date('j') . ' de ' . MESES_FICHA[(int) date('n')] . ' de ' . date('Y');
+    $d = dados_ficha($c);
+    if (!empty($_GET['pdf'])) {
+        require_once __DIR__ . '/ficha-pdf.php';
+        ficha_pdf($c, $d);
+        return;
+    }
+    ['mods' => $mods, 'u' => $u, 'min_caso' => $min_caso, 'factos' => $factos, 'sessoes' => $sessoes, 'link' => $link, 'hoje' => $hoje] = $d;
 
     // Secções numeradas: só entram as que têm conteúdo
     $seccoes = [];
@@ -104,11 +117,10 @@ function ficha_curso(): void
       <a href="' . h(link_curso_publico($c)) . '">Ver a página do curso</a>
       <span class="barra-acoes">
         <button type="button" data-copiar="' . h($link) . '">Copiar ligação</button>
-        <button type="button" class="principal" data-imprimir>Guardar em PDF</button>
+        <a class="principal" href="' . h(link_ficha($c, true)) . '">Descarregar PDF</a>
       </span>
       <p class="estado-copia" role="status" aria-live="polite"></p>
     </div>
-    <p class="barra-ajuda">Na janela de impressão, escolha "Guardar como PDF" e ative "Gráficos de fundo".</p>
   </div>
   <main class="folha ficha">
     <header class="capa">

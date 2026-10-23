@@ -144,6 +144,15 @@ function curso_com_artigo(string $nome): string
     return (preg_match('/^Curso\b/u', $nome) ? 'o ' : 'o curso ') . $nome;
 }
 
+// "Curso 1: Iniciação..." passa a sobretítulo "Curso 1" e título "Iniciação..."
+function partes_nome(array $c): array
+{
+    if (preg_match('/^((?:Curso|Módulo|Nível|Parte)\s+\S+)\s*:\s*(.+)$/u', (string) $c['nome'], $m)) {
+        return [$m[1], $m[2]];
+    }
+    return [(string) ($c['tipologia'] ?: 'Curso'), (string) $c['nome']];
+}
+
 // Nome das unidades do curso: "Módulo" ou "Sessão"
 function unidade(?array $curso, bool $plural = false): string
 {
