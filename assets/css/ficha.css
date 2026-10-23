@@ -1,0 +1,540 @@
+/* Ficha do curso (A4) para guardar em PDF a partir do navegador */
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("../fonts/montserrat-var-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/inter-var-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  --petroleo: #00636a;
+  --profundo: #003f46;
+  --marinho: #0a0f26;
+  --texto: #2b2f36;
+  --suave: #687280;
+  --linha: #e5e7eb;
+  --nevoa: #f5f7f8;
+  --tinta: #e8f1f1;
+}
+
+@page {
+  size: A4;
+  margin: 16mm 16mm 18mm;
+
+  @bottom-left {
+    color: #687280;
+    font-family: "Inter", Arial, sans-serif;
+    font-size: 7.5pt;
+  }
+
+  @bottom-right {
+    content: "Página " counter(page) " de " counter(pages);
+    color: #687280;
+    font-family: "Inter", Arial, sans-serif;
+    font-size: 7.5pt;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+body {
+  margin: 0;
+  color: var(--texto);
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-size: 9.6pt;
+  line-height: 1.5;
+}
+
+.ficha-ecra {
+  background: #dfe3e6;
+}
+
+/* Barra de ações (só no ecrã) */
+
+.barra-ficha {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 10px 16px;
+  color: #fff;
+  background: var(--marinho);
+}
+
+.barra-ficha-interior {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 210mm;
+  margin: 0 auto;
+}
+
+.barra-ficha a {
+  color: #fff;
+  font-size: 14px;
+}
+
+.barra-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.barra-ficha button {
+  padding: 9px 16px;
+  color: #fff;
+  background: transparent;
+  font: 600 14px/1.2 "Inter", Arial, sans-serif;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.barra-ficha button.principal {
+  background: var(--petroleo);
+  border-color: var(--petroleo);
+}
+
+.barra-ficha .estado-copia {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 13px;
+}
+
+.barra-ficha .estado-copia:empty {
+  display: none;
+}
+
+.barra-ajuda {
+  max-width: 210mm;
+  margin: 6px auto 0;
+  color: #c9ced8;
+  font-size: 12px;
+}
+
+/* Folha */
+
+.folha {
+  width: 210mm;
+  max-width: 100%;
+  margin: 24px auto 48px;
+  padding: 16mm;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(10, 15, 38, 0.18);
+}
+
+@media (max-width: 820px) {
+  .folha {
+    margin: 0;
+    padding: 20px 16px;
+    box-shadow: none;
+  }
+}
+
+h1,
+h2,
+h3 {
+  color: var(--marinho);
+  font-family: "Montserrat", "Segoe UI", Arial, sans-serif;
+  line-height: 1.2;
+}
+
+p {
+  margin: 0 0 6px;
+}
+
+a {
+  color: var(--petroleo);
+}
+
+.suave {
+  color: var(--suave);
+  font-weight: 400;
+}
+
+/* Capa */
+
+.capa-topo {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--linha);
+}
+
+.capa-topo img {
+  display: block;
+  width: 46mm;
+  height: auto;
+}
+
+.doc-tipo {
+  color: var(--petroleo);
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1.5;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.doc-tipo span {
+  color: var(--suave);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.capa-faixa {
+  position: relative;
+  margin: 7mm 0 0;
+  padding: 8mm 9mm 7mm;
+  color: #fff;
+  background: var(--marinho);
+  border-left: 3mm solid var(--petroleo);
+}
+
+.capa-percurso {
+  margin: 0 0 3mm;
+  color: #8fc3c6;
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.capa-faixa h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 21pt;
+  letter-spacing: -0.01em;
+}
+
+.capa-sub {
+  margin: 3mm 0 0;
+  color: #c9ced8;
+  font-size: 10pt;
+}
+
+.factos {
+  display: flex;
+  gap: 0;
+  margin: 0 0 7mm;
+  border: 1px solid var(--linha);
+  border-top: 0;
+}
+
+.factos > div {
+  flex: 1 1 0;
+  padding: 3.5mm 4mm;
+  border-right: 1px solid var(--linha);
+}
+
+.factos > div.largo {
+  flex-grow: 2.2;
+}
+
+.factos > div:last-child {
+  border-right: 0;
+}
+
+.factos dt {
+  color: var(--petroleo);
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 6.8pt;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.factos dd {
+  margin: 1mm 0 0;
+  color: var(--marinho);
+  font-size: 8.8pt;
+  font-weight: 600;
+}
+
+/* Secções numeradas */
+
+.seccao {
+  margin: 0 0 5.5mm;
+}
+
+.seccao h2 {
+  display: flex;
+  gap: 3mm;
+  align-items: baseline;
+  margin: 0 0 3mm;
+  padding-bottom: 1.5mm;
+  font-size: 12.5pt;
+  border-bottom: 1.5px solid var(--marinho);
+  break-after: avoid;
+}
+
+.seccao h2 .secnum {
+  color: var(--petroleo);
+  font-size: 10pt;
+}
+
+.seccao h3 {
+  margin: 0 0 1.5mm;
+  font-size: 9.5pt;
+}
+
+.duas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4mm;
+}
+
+.caixa {
+  padding: 4mm 5mm;
+  background: var(--nevoa);
+  border-top: 2px solid var(--petroleo);
+}
+
+ul {
+  margin: 0;
+  padding-left: 4.5mm;
+}
+
+li + li {
+  margin-top: 0.6mm;
+}
+
+/* Tabelas */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 2.2mm 2.5mm;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--linha);
+}
+
+thead th {
+  color: #fff;
+  background: var(--profundo);
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 7.6pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+tr {
+  break-inside: avoid;
+}
+
+table.programa td {
+  font-size: 8.8pt;
+}
+
+table.programa td p {
+  margin: 0.8mm 0 1mm;
+}
+
+table.programa td ul {
+  color: #3d434c;
+}
+
+table.programa tbody tr:nth-child(even) td {
+  background: #fafbfb;
+}
+
+.n {
+  width: 13mm;
+  color: var(--petroleo);
+  font-family: "Montserrat", Arial, sans-serif;
+  font-weight: 700;
+  text-align: center;
+}
+
+thead th.n {
+  color: #fff;
+}
+
+.num {
+  width: 22mm;
+  text-align: right;
+}
+
+.tabela-pares tr.destaque td {
+  color: var(--profundo);
+  background: var(--tinta);
+  font-weight: 600;
+}
+
+.tabela-pares tr.total th,
+.tabela-pares tr.total td {
+  font-weight: 700;
+  border-bottom: 0;
+  border-top: 1.5px solid var(--marinho);
+}
+
+.tabela-pares th,
+.tabela-pares td {
+  padding: 1.6mm 2.5mm;
+}
+
+.estrutura-sessao,
+.tabela-pares,
+.seccao-fecho,
+.duas > div {
+  break-inside: avoid;
+}
+
+/* Estrutura da sessão: barra de 60 minutos */
+
+.barra-sessao {
+  display: flex;
+  height: 8mm;
+  margin: 0 0 3mm;
+  overflow: hidden;
+  border-radius: 1.5mm;
+}
+
+.barra-sessao .seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 6mm;
+  color: #fff;
+  font-size: 7.5pt;
+  font-weight: 700;
+}
+
+.seg-0 {
+  background: #6b8f94;
+}
+
+.seg-1 {
+  background: #44737a;
+}
+
+.seg-2 {
+  background: #2f5d64;
+}
+
+.seg-lab {
+  background: var(--petroleo);
+}
+
+.datas li {
+  margin-bottom: 1mm;
+}
+
+/* Enquadramento legal e contactos */
+
+.nota-legal {
+  margin: 2mm 0 6mm;
+  padding: 4mm 5mm;
+  font-size: 8.4pt;
+  background: var(--nevoa);
+  border-left: 2px solid var(--suave);
+  break-inside: avoid;
+}
+
+.nota-legal h2 {
+  margin: 0 0 1.5mm;
+  font-size: 9pt;
+}
+
+.contactos {
+  padding: 4mm 5mm;
+  font-size: 8.6pt;
+  background: var(--nevoa);
+  border-top: 2px solid var(--petroleo);
+}
+
+.contactos p:last-child {
+  margin: 0;
+}
+
+.nota-documento {
+  margin-top: 4mm;
+  color: var(--suave);
+  font-size: 7.5pt;
+}
+
+.contactos-titulo {
+  color: var(--petroleo);
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+
+@media (max-width: 640px) {
+  .duas {
+    grid-template-columns: 1fr;
+  }
+
+  .factos {
+    flex-direction: column;
+  }
+
+  .factos > div {
+    border-right: 0;
+    border-bottom: 1px solid var(--linha);
+  }
+
+  .capa-faixa h1 {
+    font-size: 18pt;
+  }
+
+  table.programa th:last-child,
+  table.programa td:last-child {
+    min-width: 30mm;
+  }
+}
+
+/* Impressão: só a folha, sem fundo, sombras nem barra */
+
+@media print {
+  .ficha-ecra {
+    background: #fff;
+  }
+
+  .barra-ficha {
+    display: none;
+  }
+
+  .folha {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  a {
+    color: var(--petroleo);
+    text-decoration: none;
+  }
+}

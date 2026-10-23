@@ -1,5 +1,5 @@
 <?php
-// Cursos e módulos: dados iniciais, migração das sessões antigas e apresentação do programa.
+// Cursos e módulos: catálogo inicial, migração das sessões antigas e apresentação do programa.
 // Cada sessão do calendário pertence a um curso e pode ser de um só módulo ou do curso completo.
 
 declare(strict_types=1);
@@ -7,46 +7,91 @@ declare(strict_types=1);
 const TIPOLOGIAS = ['Programa de formação', 'Curso de curta duração', 'Workshop', 'Masterclass', 'Webinar', 'Formação à medida'];
 const CURSO_AI_ESSENTIALS = 'ai-essentials';
 
-// Cursos criados na primeira utilização: o AI Essentials, com o conteúdo do site, e um exemplo para adaptar
-function semear_cursos(PDO $pdo): void
+const CATALOGO = __DIR__ . '/catalogo/ia-generativa.json';
+
+function catalogo(): array
 {
-    $cursos = [
-        [
-            'chave' => CURSO_AI_ESSENTIALS, 'nome' => 'AI Essentials', 'tipologia' => 'Programa de formação', 'diagnostico' => 1, 'ativo' => 1,
-            'descricao' => 'Programa de formação em inteligência artificial aplicada à gestão, em cinco módulos, para decidir, utilizar e governar a IA com conhecimento de causa. Os exemplos e o nível técnico são ajustados ao setor e a cada grupo. Ministrado por formador com Certificado de Competências Pedagógicas (CCP).',
-            'publico' => 'Administrações, direções e equipas que vão decidir sobre IA, utilizá-la no dia a dia ou garantir a sua conformidade.',
-            'duracao' => '',
-            'modulos' => [
-                ['Fundamentos de IA para a administração', 'Bases para decidir sobre inteligência artificial na empresa.', "O que a IA faz e não faz\nTipos de ferramentas\nImpacto no negócio\nCritérios de decisão"],
-                ['Casos de uso e integração em sistemas', 'Como passar das ideias aos casos de uso com retorno.', "Identificar oportunidades\nPriorizar pelo retorno\nIntegrar a IA em processos e aplicações existentes"],
-                ['Governação e ética da IA', 'Regras e responsabilidades para uma utilização controlada.', "Regras de utilização\nResponsabilidades\nRiscos e controlo"],
-                ['RGPD, privacidade e IA', 'Proteção de dados pessoais na utilização de ferramentas de IA.', "Dados pessoais em ferramentas de IA\nTransferências internacionais\nContratos com fornecedores"],
-                ['NIS2 e segurança da informação', 'Cibersegurança e o papel de cada pessoa.', "Requisitos de cibersegurança\nBoas práticas\nO papel de cada pessoa"],
-            ],
-        ],
-        [
-            // Fica inativo (não aparece no site nem pode ser agendado) até ser adaptado e ativado
-            'chave' => 'exemplo-processos', 'nome' => 'Mapeamento e melhoria de processos (exemplo)', 'tipologia' => 'Workshop', 'diagnostico' => 0, 'ativo' => 0,
-            'descricao' => 'Exemplo de curso para adaptar ou apagar. Workshop prático para mapear um processo real da empresa, identificar desperdícios e preparar o plano de melhoria.',
-            'publico' => 'Responsáveis de área, chefias intermédias e equipas de qualidade.',
-            'duracao' => '7 horas',
-            'modulos' => [
-                ['Levantamento e mapeamento', 'Do processo real ao mapa partilhado pela equipa.', "Técnicas de levantamento\nNotação essencial de processos\nFronteiras, entradas, saídas e responsáveis", 2],
-                ['Análise e oportunidades', 'Onde se perde tempo, qualidade e controlo.', "Indicadores de tempo e de qualidade\nPontos de controlo\nOportunidades de simplificação e automação", 2],
-                ['Redesenho e plano de melhoria', 'Do processo futuro à execução.', "Processo futuro\nNormas e procedimentos\nPlano de ação com responsáveis e prazos", 3],
-            ],
-        ],
-    ];
+    $dados = json_decode((string) @file_get_contents(CATALOGO), true);
+    return is_array($dados) ? $dados : [];
+}
+
+/* Definições guardadas na base de dados (por exemplo, a versão do catálogo carregado) */
+
+function definicao(PDO $pdo, string $chave): ?string
+{
+    $st = $pdo->prepare('SELECT valor FROM definicoes WHERE chave = ?');
+    $st->execute([$chave]);
+    $v = $st->fetchColumn();
+    return $v === false ? null : (string) $v;
+}
+
+function definir(PDO $pdo, string $chave, string $valor): void
+{
+    $pdo->prepare('INSERT OR REPLACE INTO definicoes (chave, valor) VALUES (?, ?)')->execute([$chave, $valor]);
+}
+
+// Carrega os cursos do catálogo (ficheiro de dados) para a base de dados
+function carregar_catalogo(PDO $pdo): int
+{
+    $cat = catalogo();
+    $comum = $cat['comum'] ?? [];
     $agora = date('Y-m-d H:i:s');
-    foreach ($cursos as $c) {
-        $pdo->prepare('INSERT INTO cursos (chave, nome, tipologia, descricao, publico, duracao, diagnostico, ativo, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-            ->execute([$c['chave'], $c['nome'], $c['tipologia'], $c['descricao'], $c['publico'], $c['duracao'], $c['diagnostico'], $c['ativo'], $agora]);
+    $n = 0;
+    foreach ($cat['cursos'] ?? [] as $c) {
+        $c += $comum;
+        $pdo->prepare('INSERT INTO cursos (chave, nome, tipologia, descricao, publico, duracao, diagnostico, ativo, criado, percurso, unidade, objetivo, prerequisitos, resultado, estrutura, avaliacao, requisitos, enquadramento, investimento)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            ->execute([$c['chave'] ?? null, $c['nome'], $c['tipologia'] ?? '', $c['descricao'] ?? '', $c['publico'] ?? '', $c['duracao'] ?? '', (int) ($c['diagnostico'] ?? 0), $agora,
+                $c['percurso'] ?? '', $c['unidade'] ?? 'Módulo', $c['objetivo'] ?? '', $c['prerequisitos'] ?? '', $c['resultado'] ?? '', $c['estrutura'] ?? '', $c['avaliacao'] ?? '', $c['requisitos'] ?? '', $c['enquadramento'] ?? '', $c['investimento'] ?? '']);
         $curso_id = (int) $pdo->lastInsertId();
-        foreach ($c['modulos'] as $n => $m) {
-            $pdo->prepare('INSERT INTO modulos (curso_id, ordem, nome, descricao, temas, horas) VALUES (?, ?, ?, ?, ?, ?)')
-                ->execute([$curso_id, $n + 1, $m[0], $m[1], $m[2], $m[3] ?? null]);
+        foreach ($c['modulos'] ?? [] as $i => $m) {
+            $pdo->prepare('INSERT INTO modulos (curso_id, ordem, nome, descricao, temas, horas, caso_pratico) VALUES (?, ?, ?, ?, ?, ?, ?)')
+                ->execute([$curso_id, $i + 1, $m['nome'], $m['descricao'] ?? '', $m['temas'] ?? '', $m['horas'] ?? null, $m['caso_pratico'] ?? '']);
         }
+        $n++;
     }
+    return $n;
+}
+
+// Apaga todas as sessões do calendário (e as respetivas inscrições), os módulos e os cursos
+function limpar_agenda_e_cursos(PDO $pdo): void
+{
+    $pdo->exec('DELETE FROM inscricoes');
+    $pdo->exec('DELETE FROM formacoes');
+    $pdo->exec('DELETE FROM modulos');
+    $pdo->exec('DELETE FROM cursos');
+}
+
+function repor_catalogo(PDO $pdo): int
+{
+    $pdo->beginTransaction();
+    limpar_agenda_e_cursos($pdo);
+    $n = carregar_catalogo($pdo);
+    definir($pdo, 'catalogo', (string) (catalogo()['versao'] ?? ''));
+    $pdo->commit();
+    return $n;
+}
+
+// Na primeira utilização de uma versão nova do catálogo: substitui a agenda e os cursos só quando não há
+// inscrições a perder; caso contrário, a Gadgetmetodo decide na administração (Cursos, "Repor o catálogo")
+function aplicar_catalogo(PDO $pdo): void
+{
+    $versao = (string) (catalogo()['versao'] ?? '');
+    if ($versao === '' || definicao($pdo, 'catalogo') === $versao) {
+        return;
+    }
+    if (!$pdo->query('SELECT 1 FROM inscricoes LIMIT 1')->fetchColumn()) {
+        repor_catalogo($pdo);
+    } elseif (!$pdo->query('SELECT 1 FROM cursos LIMIT 1')->fetchColumn()) {
+        carregar_catalogo($pdo);
+        definir($pdo, 'catalogo', $versao);
+    }
+}
+
+function catalogo_pendente(): bool
+{
+    $versao = (string) (catalogo()['versao'] ?? '');
+    return $versao !== '' && definicao(bd(), 'catalogo') !== $versao;
 }
 
 // Sessões criadas antes da configuração de cursos: passam a pertencer ao AI Essentials
@@ -92,12 +137,20 @@ function modulos_curso(?int $curso_id): array
     return $cache[$curso_id];
 }
 
-// "Módulo N: nome", com N pela ordem atual dos módulos do curso
+// Nome das unidades do curso: "Módulo" ou "Sessão"
+function unidade(?array $curso, bool $plural = false): string
+{
+    $u = ($curso['unidade'] ?? '') === 'Sessão' ? 'Sessão' : 'Módulo';
+    return $plural ? ($u === 'Sessão' ? 'sessões' : 'módulos') : $u;
+}
+
+// "Módulo N: nome" (ou "Sessão N: nome"), com N pela ordem atual dos módulos do curso
 function rotulo_modulo(array $m): string
 {
+    $u = unidade(curso((int) $m['curso_id']));
     foreach (modulos_curso((int) $m['curso_id']) as $n => $outro) {
         if ((int) $outro['id'] === (int) $m['id']) {
-            return 'Módulo ' . ($n + 1) . ': ' . $m['nome'];
+            return $u . ' ' . ($n + 1) . ': ' . $m['nome'];
         }
     }
     return $m['nome'];
@@ -127,7 +180,7 @@ function nome_modulo(array $f): string
         return '';
     }
     $n = count(modulos_curso((int) $c['id']));
-    return $n > 1 ? 'Curso completo (' . $n . ' módulos)' : (string) ($c['tipologia'] ?: 'Curso completo');
+    return $n > 1 ? 'Curso completo (' . $n . ' ' . unidade($c, true) . ')' : (string) ($c['tipologia'] ?: 'Curso completo');
 }
 
 function com_diagnostico(array $f): bool
@@ -166,17 +219,104 @@ function programa_html(array $f, bool $aberto = false): string
         return $t ? '<ul>' . implode('', array_map(function ($x) { return '<li>' . h($x) . '</li>'; }, $t)) . '</ul>' : '';
     };
     if ($m = modulo_da_sessao($f)) {
-        $corpo = ($m['descricao'] ? '<p>' . h($m['descricao']) . '</p>' : '') . $lista(temas($m['temas']));
+        $corpo = ($m['descricao'] ? '<p>' . h($m['descricao']) . '</p>' : '') . $lista(temas($m['temas'])) . caso_html($m);
     } else {
         $corpo = ($c['descricao'] ? '<p>' . nl2br(h($c['descricao'])) . '</p>' : '');
         foreach (modulos_curso((int) $c['id']) as $m) {
-            $corpo .= '<h4>' . h(rotulo_modulo($m)) . ($m['horas'] ? ' <span class="texto-suave">· ' . h(horas((string) $m['horas'])) . '</span>' : '') . '</h4>' . $lista(temas($m['temas']));
+            $corpo .= '<h4>' . h(rotulo_modulo($m)) . ($m['horas'] ? ' <span class="texto-suave">· ' . h(horas((string) $m['horas'])) . '</span>' : '') . '</h4>' . $lista(temas($m['temas'])) . caso_html($m);
         }
     }
     if ($c['publico']) {
         $corpo .= '<p class="texto-suave"><strong>Destinatários:</strong> ' . h($c['publico']) . '</p>';
     }
     return $corpo === '' ? '' : '<details class="programa"' . ($aberto ? ' open' : '') . '><summary>Programa e temas</summary><div class="programa-corpo">' . $corpo . '</div></details>';
+}
+
+function caso_html(array $m): string
+{
+    return !empty($m['caso_pratico']) ? '<p class="caso"><strong>Caso prático:</strong> ' . h($m['caso_pratico']) . '</p>' : '';
+}
+
+// Linhas "rótulo: valor" (estrutura da sessão, avaliação), separadas no primeiro ":"
+function pares(?string $texto): array
+{
+    $r = [];
+    foreach (temas($texto) as $linha) {
+        $i = strpos($linha, ':');
+        $r[] = $i === false ? [$linha, ''] : [trim(substr($linha, 0, $i)), trim(substr($linha, $i + 1))];
+    }
+    return $r;
+}
+
+// Minutos do Laboratório de Casos Práticos por sessão, a partir da estrutura-tipo
+function minutos_caso(array $c): int
+{
+    foreach (pares($c['estrutura'] ?? '') as [$bloco, $min]) {
+        if (stripos($bloco, 'caso') !== false || stripos($bloco, 'laborat') !== false) {
+            return (int) $min;
+        }
+    }
+    return 0;
+}
+
+/* Blocos da ficha do curso, usados na página pública e na ficha em PDF */
+
+function lista_html(array $itens, string $classe = ''): string
+{
+    return $itens ? '<ul' . ($classe ? ' class="' . $classe . '"' : '') . '>' . implode('', array_map(function ($x) { return '<li>' . h($x) . '</li>'; }, $itens)) . '</ul>' : '';
+}
+
+function paragrafos_html(string $texto): string
+{
+    return implode('', array_map(function ($p) { return '<p>' . h($p) . '</p>'; }, temas($texto)));
+}
+
+// Factos principais do curso (duração, número de sessões ou módulos, destinatários, pré-requisitos)
+function factos_curso(array $c, array $mods): array
+{
+    $total = array_sum(array_map(function ($m) { return (float) $m['horas']; }, $mods));
+    return array_filter([
+        'Tipologia' => (string) $c['tipologia'],
+        'Duração' => (string) ($c['duracao'] ?: horas($total ? (string) $total : null)),
+        (unidade($c) === 'Sessão' ? 'Sessões' : 'Módulos') => $mods ? (string) count($mods) : '',
+        'Destinatários' => (string) $c['publico'],
+        'Pré-requisitos' => (string) $c['prerequisitos'],
+    ]);
+}
+
+// Estrutura-tipo da sessão: barra proporcional (decorativa) e tabela com os minutos de cada bloco
+function estrutura_html(array $c): string
+{
+    $pares = pares($c['estrutura'] ?? '');
+    if (!$pares) {
+        return '';
+    }
+    $total = array_sum(array_map(function ($x) { return (int) $x[1]; }, $pares));
+    $barra = '';
+    $linhas = '';
+    foreach ($pares as $i => [$bloco, $min]) {
+        $lab = stripos($bloco, 'laborat') !== false || stripos($bloco, 'caso') !== false;
+        if ($total > 0 && (int) $min > 0) {
+            $barra .= '<span class="seg ' . ($lab ? 'seg-lab' : 'seg-' . ($i % 3)) . '" style="width:' . round((int) $min / $total * 100, 2) . '%">' . (int) $min . '</span>';
+        }
+        $linhas .= '<tr' . ($lab ? ' class="destaque"' : '') . '><td>' . h($bloco) . '</td><td class="num">' . h($min) . '</td></tr>';
+    }
+    return '<div class="estrutura-sessao">' . ($barra ? '<div class="barra-sessao" aria-hidden="true">' . $barra . '</div>' : '')
+        . '<table class="tabela-pares"><thead><tr><th scope="col">Bloco</th><th scope="col" class="num">Minutos</th></tr></thead><tbody>' . $linhas
+        . ($total ? '<tr class="total"><th scope="row">Total</th><td class="num">' . $total . '</td></tr>' : '') . '</tbody></table></div>';
+}
+
+function avaliacao_html(array $c): string
+{
+    $pares = pares($c['avaliacao'] ?? '');
+    if (!$pares) {
+        return '';
+    }
+    $linhas = '';
+    foreach ($pares as [$componente, $peso]) {
+        $linhas .= '<tr><td>' . h($componente) . '</td><td>' . h($peso) . '</td></tr>';
+    }
+    return '<table class="tabela-pares"><thead><tr><th scope="col">Componente</th><th scope="col">Peso ou critério</th></tr></thead><tbody>' . $linhas . '</tbody></table>';
 }
 
 // Atalho para criar a sessão no Google Calendar, com data e hora preenchidas, e acrescentar o Google Meet

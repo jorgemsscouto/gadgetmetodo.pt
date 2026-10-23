@@ -275,44 +275,71 @@ function curso_publico(): array
     $mods = modulos_curso((int) $c['id']);
     $sessoes = consulta("SELECT * FROM formacoes WHERE curso_id = ? AND inicio >= ? AND estado != 'cancelada' ORDER BY inicio", [$c['id'], date('Y-m-d 00:00:00')]);
     $total_horas = array_sum(array_map(function ($m) { return (float) $m['horas']; }, $mods));
-    $factos = array_filter([
-        'Tipologia' => (string) $c['tipologia'],
-        'Duração' => (string) ($c['duracao'] ?: horas($total_horas ? (string) $total_horas : null)),
-        'Módulos' => $mods ? (string) count($mods) : '',
-        'Destinatários' => (string) $c['publico'],
-    ]);
+    $u = unidade($c);
+    $factos = factos_curso($c, $mods);
+    $min_caso = minutos_caso($c);
     $modulos = '';
     foreach ($mods as $n => $m) {
-        $modulos .= '<li class="modulo-publico"><h3><span>Módulo ' . ($n + 1) . '</span> ' . h($m['nome']) . ($m['horas'] ? ' <small>' . h(horas((string) $m['horas'])) . '</small>' : '') . '</h3>'
+        $modulos .= '<li class="modulo-publico"><h3><span>' . h($u) . ' ' . ($n + 1) . '</span> ' . h($m['nome']) . ($m['horas'] ? ' <small>' . h(horas((string) $m['horas'])) . '</small>' : '') . '</h3>'
             . ($m['descricao'] ? '<p>' . h($m['descricao']) . '</p>' : '')
-            . (($t = temas($m['temas'])) ? '<ul>' . implode('', array_map(function ($x) { return '<li>' . h($x) . '</li>'; }, $t)) . '</ul>' : '') . '</li>';
+            . lista_html(temas($m['temas']))
+            . ($m['caso_pratico'] ? '<p class="caso"><strong>Caso prático' . ($min_caso ? ' (' . $min_caso . ' min)' : '') . ':</strong> ' . h($m['caso_pratico']) . '</p>' : '') . '</li>';
     }
+    $link = SITE_CANONICO . link_curso_publico($c);
+    $seccao = function (string $id, string $titulo, string $corpo) {
+        return $corpo === '' ? '' : '<h2 class="espaco-topo" id="' . $id . '">' . h($titulo) . '</h2>' . $corpo;
+    };
     $html = '<section class="topo-pagina"><div class="contentor">
         <nav class="migalhas" aria-label="Localização"><ol><li><a href="/">Início</a></li><li><a href="/formacoes/">Calendário de formações</a></li><li aria-current="page">' . h($c['nome']) . '</li></ol></nav>
+        ' . ($c['percurso'] ? '<span class="sobretitulo">' . h($c['percurso']) . '</span>' : '') . '
         <h1>' . h($c['nome']) . '</h1>
-        ' . ($c['tipologia'] ? '<p class="lead">' . h($c['tipologia']) . ($c['duracao'] ? ' · ' . h($c['duracao']) : '') . '</p>' : '') . '
+        ' . ($c['tipologia'] || $c['duracao'] ? '<p class="lead">' . h(implode(' · ', array_filter([(string) $c['tipologia'], (string) $c['duracao']]))) . '</p>' : '') . '
       </div></section>
       <section class="secao"><div class="contentor">
         <div class="duas-colunas texto-largo">
           <div>
-            ' . ($c['descricao'] ? '<div class="resumo"><h2>Sobre o curso</h2><p>' . nl2br(h($c['descricao'])) . '</p></div>' : '') . '
-            ' . ($modulos ? '<h2 class="espaco-topo">Programa e temas</h2><ol class="modulos-publicos">' . $modulos . '</ol>' : '') . '
+            ' . ($c['descricao'] ? '<div class="resumo"><h2>Sobre o curso</h2>' . paragrafos_html((string) $c['descricao']) . '</div>' : '') . '
+            ' . $seccao('objetivo', 'Objetivo', $c['objetivo'] ? paragrafos_html((string) $c['objetivo']) : '') . '
+            ' . $seccao('programa', 'Programa e temas', $modulos ? '<ol class="modulos-publicos">' . $modulos . '</ol>' : '') . '
+            ' . $seccao('sessao', 'Como funciona uma sessão', estrutura_html($c)) . '
+            ' . $seccao('resultado', 'Resultado esperado', $c['resultado'] ? paragrafos_html((string) $c['resultado']) : '') . '
+            ' . $seccao('avaliacao', 'Avaliação', avaliacao_html($c)) . '
+            ' . $seccao('requisitos', 'Requisitos técnicos e condições', lista_html(temas($c['requisitos']))) . '
+            ' . $seccao('investimento', 'Investimento', $c['investimento'] ? paragrafos_html((string) $c['investimento']) : '') . '
+            ' . ($c['enquadramento'] ? '<div class="nota-legal espaco-topo"><h2 id="enquadramento">Enquadramento legal</h2>' . paragrafos_html((string) $c['enquadramento']) . '</div>' : '') . '
           </div>
           <aside class="ficha-curso">
             ' . ($factos ? '<dl>' . implode('', array_map(function ($k, $x) { return '<dt>' . h($k) . '</dt><dd>' . h($x) . '</dd>'; }, array_keys($factos), $factos)) . '</dl>' : '') . '
             ' . ($c['diagnostico'] ? '<p class="texto-suave">A inscrição inclui um diagnóstico curto de utilização de inteligência artificial, para ajustar a formação ao ponto de partida de cada formando.</p>' : '') . '
-            <a class="botao" href="#sessoes">Ver datas e inscrever</a>
+            <div class="ficha-acoes">
+              <a class="botao" href="#sessoes">Ver datas e inscrever</a>
+              <a class="botao botao-secundario" href="' . h(link_ficha($c, true)) . '" target="_blank" rel="noopener">Exportar PDF</a>
+              <button class="botao botao-secundario" type="button" data-copiar="' . h($link) . '">Copiar ligação</button>
+              <p class="estado-copia" role="status" aria-live="polite"></p>
+            </div>
           </aside>
         </div>
         <div class="cabeca-secao espaco-topo"><span class="sobretitulo">Calendário</span><h2 id="sessoes">Próximas sessões</h2></div>
         ' . ($sessoes ? calendario($sessoes, 'botao_inscrever_publico', true)
-            : '<div class="aviso aviso-info">Não há sessões agendadas deste curso neste momento. Para saber as próximas datas ou organizar uma sessão para a sua equipa, <a href="/contactos/#formulario">contacte-nos</a>.</div>') . '
+            : '<div class="aviso aviso-info">Não há sessões agendadas deste curso neste momento. Para saber as próximas datas, fazer uma pré-inscrição ou organizar uma sessão para a sua equipa, <a href="/contactos/#formulario">contacte-nos</a>.</div>') . '
       </div></section>';
     $curso_ld = [
         '@context' => 'https://schema.org', '@type' => 'Course', '@id' => SITE_CANONICO . link_curso_publico($c) . '#curso',
         'name' => $c['nome'], 'description' => (string) ($c['descricao'] ?: $c['nome']), 'inLanguage' => 'pt-PT',
         'url' => SITE_CANONICO . link_curso_publico($c), 'provider' => ['@id' => SITE_CANONICO . '/#organizacao'],
     ];
+    if ($c['objetivo']) {
+        $curso_ld['teaches'] = (string) $c['objetivo'];
+    }
+    if ($c['prerequisitos']) {
+        $curso_ld['coursePrerequisites'] = (string) $c['prerequisitos'];
+    }
+    if ($total_horas > 0) {
+        $curso_ld['timeRequired'] = 'PT' . rtrim(rtrim(number_format($total_horas, 1, '.', ''), '0'), '.') . 'H';
+    }
+    if ($c['percurso']) {
+        $curso_ld['isPartOf'] = ['@type' => 'EducationalOccupationalProgram', 'name' => (string) $c['percurso']];
+    }
     if ($mods) {
         $curso_ld['syllabusSections'] = array_map(function ($m) { return ['@type' => 'Syllabus', 'name' => $m['nome'], 'description' => implode('; ', temas($m['temas'])) ?: (string) $m['descricao']]; }, $mods);
     }

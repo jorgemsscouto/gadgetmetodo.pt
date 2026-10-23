@@ -737,3 +737,161 @@ h2.calendario-mes {
 .modulos-publicos > li + li {
   margin-top: 0;
 }
+
+/* Página pública do curso: ações, estrutura da sessão, avaliação e enquadramento legal */
+
+.ficha-acoes {
+  display: grid;
+  gap: 10px;
+}
+
+.ficha-acoes .botao {
+  justify-content: center;
+}
+
+.estado-copia {
+  margin: 0;
+  color: var(--profundo);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.estado-copia:empty {
+  display: none;
+}
+
+.modulo-publico .caso,
+.programa-corpo .caso {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  font-size: 0.93rem;
+  background: var(--petroleo-tinta);
+  border-radius: var(--raio-pequeno);
+}
+
+.estrutura-sessao {
+  max-width: 640px;
+}
+
+.barra-sessao {
+  display: flex;
+  height: 34px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  border-radius: var(--raio-pequeno);
+}
+
+.barra-sessao .seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  color: var(--branco);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.seg-0 {
+  background: #6b8f94;
+}
+
+.seg-1 {
+  background: #44737a;
+}
+
+.seg-2 {
+  background: #2f5d64;
+}
+
+.seg-lab {
+  background: var(--petroleo);
+}
+
+.tabela-pares {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.97rem;
+}
+
+.tabela-pares th,
+.tabela-pares td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--cinzento-claro);
+}
+
+.tabela-pares thead th {
+  color: var(--marinho);
+  background: var(--nevoa);
+}
+
+.tabela-pares .num {
+  width: 90px;
+  text-align: right;
+}
+
+.tabela-pares tr.destaque td {
+  color: var(--profundo);
+  background: var(--petroleo-tinta);
+  font-weight: 600;
+}
+
+.tabela-pares tr.total th,
+.tabela-pares tr.total td {
+  font-weight: 700;
+  border-top: 2px solid var(--marinho);
+  border-bottom: 0;
+}
+
+.nota-legal {
+  padding: 20px 24px;
+  font-size: 0.95rem;
+  background: var(--nevoa);
+  border-left: 3px solid var(--cinzento);
+  border-radius: var(--raio-pequeno);
+}
+
+.nota-legal h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.nota-legal p:last-child {
+  margin-bottom: 0;
+}
+
+/* Administração: partilha com mais botões e zona de reposição do catálogo */
+
+.partilha-ligacao {
+  flex-wrap: wrap;
+}
+
+.partilha-ligacao input {
+  flex-basis: 260px;
+}
+
+.partilha .estado-copia {
+  margin-top: 8px;
+}
+
+.zona-perigo {
+  padding: clamp(16px, 3vw, 28px);
+  background: #fdf3f2;
+  border: 1px solid #f1c7c2;
+  border-radius: var(--raio);
+}
+
+.zona-perigo .formulario {
+  margin-top: 12px;
+}
+
+.botao-perigo {
+  background: #b42318;
+  border-color: #b42318;
+}
+
+.botao-perigo:hover {
+  background: #8f1d14;
+  border-color: #8f1d14;
+}

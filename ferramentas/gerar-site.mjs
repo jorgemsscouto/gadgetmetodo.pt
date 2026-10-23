@@ -21,6 +21,7 @@ const versao = ficheiro => crypto.createHash('sha256').update(fs.readFileSync(pa
 const CSS = `/assets/css/site.css?v=${versao('assets/css/site.css')}`;
 const JS = `/assets/js/site.js?v=${versao('assets/js/site.js')}`;
 const CSS_AREA = `/assets/css/area.css?v=${versao('assets/css/area.css')}`;
+const JS_COPIAR = `/assets/js/copiar.js?v=${versao('assets/js/copiar.js')}`;
 
 // Ícones Lucide (licença ISC) incorporados inline
 function icone(nome, classe = '') {
@@ -1461,6 +1462,7 @@ pagina({
   cabecaPhp: { titulo: "<?= h($pagina['titulo']) ?>", descricao: "<?= h($pagina['descricao']) ?>", canonical: "<?= h($pagina['canonical']) ?>" },
   jsonldExtra: '<?= $pagina[\'jsonld\'] ?>',
   estilos: [CSS_AREA],
+  scripts: [JS_COPIAR],
   titulo: 'Curso de formação',
   descricao: 'Programa, módulos, temas e próximas sessões de um curso da Gadgetmetodo, Lda.',
   corpo: `

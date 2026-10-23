@@ -1,0 +1,211 @@
+{
+  "versao": "ia-generativa-2026-10",
+  "_nota": "Catálogo carregado no separador Cursos da área de clientes. Depois de carregado, os cursos editam-se na administração; este ficheiro só volta a ser usado ao repor o catálogo.",
+  "comum": {
+    "percurso": "IA Generativa no Trabalho: do primeiro uso à liderança da implementação",
+    "tipologia": "Curso de curta duração",
+    "duracao": "6 horas (6 sessões de 60 minutos)",
+    "unidade": "Sessão",
+    "publico": "Profissionais de serviços, indústria, comércio e administração, sem formação técnica prévia em informática.",
+    "diagnostico": 1,
+    "enquadramento": "O artigo 4.º do Regulamento (UE) 2024/1689 (Regulamento da IA), aplicável desde 2 de fevereiro de 2025 e reescrito pelo Regulamento (UE) 2026/1744, em vigor desde 27 de julho de 2026, exige que as organizações que fornecem ou utilizam sistemas de IA adotem medidas para apoiar o desenvolvimento da literacia em IA do seu pessoal. Este percurso pode integrar essas medidas e produz evidência documentada da formação realizada. Não constitui, por si só, garantia de conformidade legal."
+  },
+  "cursos": [
+    {
+      "chave": "ia-generativa-1",
+      "nome": "Curso 1: Iniciação à IA Generativa no Trabalho",
+      "objetivo": "Utilizar o Claude com segurança em tarefas simples do dia a dia e reconhecer o que a ferramenta faz bem e onde falha.",
+      "prerequisitos": "Nenhum.",
+      "resultado": "O formando produz, sozinho, um e-mail e um resumo de documento de qualidade profissional e sabe que informação não deve introduzir na ferramenta.",
+      "avaliacao": "Avaliação prática: 40%\nTeste: 40% (escolha múltipla)\nParticipação: 20%\nAprovação: 50% e presença em 5 de 6 sessões",
+      "estrutura": "Abertura e ligação à sessão anterior: 5\nExposição de conceitos: 25\nDemonstração pelo formador: 15\nLaboratório de Casos Práticos: 10\nFecho, síntese e uso responsável: 5",
+      "requisitos": "Computador com navegador atualizado e conta própria no Claude.\nO plano gratuito do Claude é suficiente para a maioria dos exercícios.\nModalidade presencial ou à distância síncrona, com computador por formando.\nTurmas de 8 a 14 formandos.",
+      "modulos": [
+        {
+          "nome": "O que é a IA generativa",
+          "temas": "Modelos de linguagem em termos simples\nO que é e o que não é\nAlucinações\nPanorama de ferramentas",
+          "caso_pratico": "Fazer 3 perguntas ao Claude e identificar qual resposta precisa de verificação e porquê.",
+          "horas": 1
+        },
+        {
+          "nome": "Primeiros passos com o Claude",
+          "temas": "Interface\nConversas\nHistórico\nAnexar ficheiros\nIdioma\nLimites de utilização",
+          "caso_pratico": "Anexar um folheto e pedir um resumo em 5 pontos.",
+          "horas": 1
+        },
+        {
+          "nome": "Pedir bem: instruções básicas",
+          "temas": "Clareza\nContexto\nFormato pretendido\nPedir correções na mesma conversa",
+          "caso_pratico": "Reescrever um pedido vago até obter um resultado utilizável, comparando versões.",
+          "horas": 1
+        },
+        {
+          "nome": "Escrita profissional",
+          "temas": "E-mails\nMensagens\nCorreção de texto\nAjuste de tom e extensão",
+          "caso_pratico": "Responder a uma reclamação de cliente em dois tons: formal e próximo.",
+          "horas": 1
+        },
+        {
+          "nome": "Ler e resumir documentos",
+          "temas": "Resumos\nExtração de pontos-chave\nPerguntas sobre um documento\nTradução",
+          "caso_pratico": "Extrair prazos e obrigações de um contrato simples fictício.",
+          "horas": 1
+        },
+        {
+          "nome": "Uso responsável e avaliação",
+          "temas": "Dados pessoais e confidenciais\nVerificação de factos\nDireitos de autor\nQuando não usar IA",
+          "caso_pratico": "Classificar 6 situações como \"pode usar\", \"usar com cuidado\" ou \"não usar\"; teste final.",
+          "horas": 1
+        }
+      ],
+      "descricao": "Curso 1 de 4 do percurso de Inteligência Artificial (IA) generativa \"IA Generativa no Trabalho: do primeiro uso à liderança da implementação\", com 24 horas no total (4 cursos de 6 sessões de 60 minutos). Ferramenta de referência: Claude (Anthropic). Os conceitos são transferíveis para outros assistentes de IA generativa.\nLaboratório de Casos Práticos: presente em todas as sessões, com 10 minutos por sessão neste curso. Ao longo do percurso cresce em tempo (de 10 a 40 minutos por sessão), em complexidade (de tarefas guiadas a problemas abertos) e em autonomia (de exercícios demonstrados a casos desenhados e defendidos pelos formandos).\nUso responsável: em cada sessão, o caso prático aplica a verificação de resultados e os cuidados com dados pessoais e confidencialidade."
+    },
+    {
+      "chave": "ia-generativa-2",
+      "nome": "Curso 2: Produtividade com IA Generativa",
+      "objetivo": "Transformar o Claude numa ferramenta de trabalho regular, com instruções estruturadas, contexto persistente e verificação sistemática.",
+      "prerequisitos": "Curso 1 ou utilização regular demonstrada.",
+      "resultado": "O formando tem uma biblioteca de instruções e pelo menos um projeto configurado, e verifica os dados numéricos e as fontes antes de usar qualquer resultado.",
+      "avaliacao": "Avaliação prática: 60%\nTeste: 25% (teste prático curto)\nParticipação: 15%\nAprovação: 50% e presença em 5 de 6 sessões",
+      "estrutura": "Abertura e ligação à sessão anterior: 5\nExposição de conceitos: 15\nDemonstração pelo formador: 15\nLaboratório de Casos Práticos: 20\nFecho, síntese e uso responsável: 5",
+      "requisitos": "Computador com navegador atualizado e conta própria no Claude.\nO plano gratuito do Claude é suficiente para a maioria dos exercícios.\nModalidade presencial ou à distância síncrona, com computador por formando.\nTurmas de 8 a 14 formandos.",
+      "modulos": [
+        {
+          "nome": "Instruções estruturadas",
+          "temas": "Papel, contexto, tarefa, restrições, exemplos, formato de saída\nIteração deliberada",
+          "caso_pratico": "Construir uma instrução reutilizável para propostas comerciais e testá-la com 2 clientes diferentes.",
+          "horas": 1
+        },
+        {
+          "nome": "Contexto persistente",
+          "temas": "Projetos\nDocumentos de referência\nPreferências e instruções permanentes",
+          "caso_pratico": "Criar um projeto de \"apoio ao cliente\" com políticas da empresa e responder a 3 pedidos.",
+          "horas": 1
+        },
+        {
+          "nome": "Análise de dados e Excel",
+          "temas": "Leitura de ficheiros\nFórmulas\nTabelas dinâmicas\nGráficos\nValidação de cálculos",
+          "caso_pratico": "Analisar uma folha de vendas fictícia: tendências, 3 conclusões e um gráfico.",
+          "horas": 1
+        },
+        {
+          "nome": "Documentos e apresentações",
+          "temas": "Gerar documentos, apresentações e tabelas\nRever e editar o resultado",
+          "caso_pratico": "Transformar um relatório de 10 páginas numa apresentação de 6 diapositivos para a direção.",
+          "horas": 1
+        },
+        {
+          "nome": "Pesquisa e verificação de fontes",
+          "temas": "Pesquisa na web\nCitações\nAvaliação de fiabilidade\nContradições entre fontes",
+          "caso_pratico": "Preparar uma ficha de um concorrente e confirmar cada dado numa fonte primária.",
+          "horas": 1
+        },
+        {
+          "nome": "O meu fluxo de trabalho e avaliação",
+          "temas": "Biblioteca pessoal de instruções\nRotinas semanais\nMedição do tempo poupado",
+          "caso_pratico": "Mapear 3 tarefas da semana do formando e redesenhá-las com IA; teste final.",
+          "horas": 1
+        }
+      ],
+      "descricao": "Curso 2 de 4 do percurso de Inteligência Artificial (IA) generativa \"IA Generativa no Trabalho: do primeiro uso à liderança da implementação\", com 24 horas no total (4 cursos de 6 sessões de 60 minutos). Ferramenta de referência: Claude (Anthropic). Os conceitos são transferíveis para outros assistentes de IA generativa.\nLaboratório de Casos Práticos: presente em todas as sessões, com 20 minutos por sessão neste curso. Ao longo do percurso cresce em tempo (de 10 a 40 minutos por sessão), em complexidade (de tarefas guiadas a problemas abertos) e em autonomia (de exercícios demonstrados a casos desenhados e defendidos pelos formandos).\nUso responsável: em cada sessão, o caso prático aplica a verificação de resultados e os cuidados com dados pessoais e confidencialidade."
+    },
+    {
+      "chave": "ia-generativa-3",
+      "nome": "Curso 3: IA nos Processos da Organização",
+      "objetivo": "Passar do uso individual para a aplicação em processos de equipa, com ligação a ferramentas empresariais, automatização de tarefas recorrentes e regras de governação.",
+      "prerequisitos": "Curso 2.",
+      "resultado": "Cada grupo entrega uma proposta de piloto fundamentada e cada formando conhece as regras mínimas de conformidade para usar IA com dados da organização.",
+      "avaliacao": "Avaliação prática: 70%\nTeste: 15% (cenários de conformidade)\nParticipação: 15%\nAprovação: 50% e presença em 5 de 6 sessões",
+      "estrutura": "Abertura e ligação à sessão anterior: 5\nExposição de conceitos: 10\nDemonstração pelo formador: 10\nLaboratório de Casos Práticos: 30\nFecho, síntese e uso responsável: 5",
+      "requisitos": "Computador com navegador atualizado e conta própria no Claude.\nÉ necessário um plano pago do Claude (Pro, Max, Team ou Enterprise), porque as sessões sobre conectores, tarefas agendadas e agentes usam funcionalidades que não estão disponíveis, ou estão limitadas, no plano gratuito.\nModalidade presencial ou à distância síncrona, com computador por formando.\nTurmas de 8 a 14 formandos.",
+      "modulos": [
+        {
+          "nome": "Identificar casos de uso",
+          "temas": "Mapeamento de processos\nCritérios de seleção (volume, repetição, risco, valor)\nMatriz impacto e esforço",
+          "caso_pratico": "Mapear o processo de resposta a pedidos de cotação de uma pequena e média empresa (PME) e escolher 2 pontos de intervenção.",
+          "horas": 1
+        },
+        {
+          "nome": "Ligação a ferramentas",
+          "temas": "Conectores a e-mail, calendário, armazenamento de documentos e Customer Relationship Management (CRM)\nPermissões e riscos",
+          "caso_pratico": "Preparar uma reunião com cliente cruzando e-mails, documentos e agenda.",
+          "horas": 1
+        },
+        {
+          "nome": "Automatizar tarefas recorrentes",
+          "temas": "Tarefas agendadas\nProcedimentos reutilizáveis (skills)\nModelos de documento",
+          "caso_pratico": "Desenhar e testar um relatório semanal automático de indicadores.",
+          "horas": 1
+        },
+        {
+          "nome": "Dados e indicadores",
+          "temas": "Painéis\nKey Performance Indicators (KPI)\nAnálise de desvios\nLimitações da análise automática",
+          "caso_pratico": "Construir um painel de cobranças a partir de uma exportação fictícia de um Enterprise Resource Planning (ERP) e explicar 3 desvios.",
+          "horas": 1
+        },
+        {
+          "nome": "Governação e conformidade",
+          "temas": "Regulamento Geral sobre a Proteção de Dados (RGPD)\nRegulamento (UE) 2024/1689 (Regulamento da IA) e alterações do Regulamento (UE) 2026/1744\nPolítica interna de utilização\nClassificação de informação",
+          "caso_pratico": "Redigir a política de utilização de IA de uma empresa fictícia de 50 pessoas e testá-la em 5 cenários.",
+          "horas": 1
+        },
+        {
+          "nome": "Medir valor e avaliação",
+          "temas": "Tempo poupado, qualidade, erro, custo, Return on Investment (ROI)\nPiloto e critérios de sucesso",
+          "caso_pratico": "Projeto de grupo: proposta de piloto para um processo real anonimizado, com métricas, apresentado em 5 minutos.",
+          "horas": 1
+        }
+      ],
+      "descricao": "Curso 3 de 4 do percurso de Inteligência Artificial (IA) generativa \"IA Generativa no Trabalho: do primeiro uso à liderança da implementação\", com 24 horas no total (4 cursos de 6 sessões de 60 minutos). Ferramenta de referência: Claude (Anthropic). Os conceitos são transferíveis para outros assistentes de IA generativa.\nLaboratório de Casos Práticos: presente em todas as sessões, com 30 minutos por sessão neste curso. Ao longo do percurso cresce em tempo (de 10 a 40 minutos por sessão), em complexidade (de tarefas guiadas a problemas abertos) e em autonomia (de exercícios demonstrados a casos desenhados e defendidos pelos formandos).\nUso responsável: em cada sessão, o caso prático aplica a verificação de resultados e os cuidados com dados pessoais e confidencialidade."
+    },
+    {
+      "chave": "ia-generativa-4",
+      "nome": "Curso 4: Liderança e Implementação de IA",
+      "objetivo": "Desenhar, decidir e liderar a adoção de IA generativa numa organização, incluindo agentes, gestão da mudança e gestão de risco.",
+      "prerequisitos": "Curso 3. Recomendado para quadros, chefias, consultores e responsáveis por transformação digital.",
+      "resultado": "Cada formando sai com um plano de implementação defendido, com casos de uso priorizados, métricas, riscos identificados e plano de capacitação.",
+      "avaliacao": "Avaliação prática: 85% (inclui projeto final)\nTeste: sem teste\nParticipação: 15%\nAprovação: 50% e entrega do projeto final",
+      "estrutura": "Abertura e ligação à sessão anterior: 5\nExposição de conceitos: 5\nDemonstração pelo formador: 5\nLaboratório de Casos Práticos: 40\nFecho, síntese e uso responsável: 5",
+      "requisitos": "Computador com navegador atualizado e conta própria no Claude.\nÉ necessário um plano pago do Claude (Pro, Max, Team ou Enterprise), porque as sessões sobre conectores, tarefas agendadas e agentes usam funcionalidades que não estão disponíveis, ou estão limitadas, no plano gratuito.\nModalidade presencial ou à distância síncrona, com computador por formando.\nTurmas de 8 a 14 formandos.",
+      "modulos": [
+        {
+          "nome": "Estratégia e roteiro de adoção",
+          "temas": "Diagnóstico de maturidade\nPriorização de casos de uso\nRoteiro a 12 meses\nOrçamento",
+          "caso_pratico": "Estudo de caso: indústria com 200 pessoas; definir as 3 prioridades e o roteiro, com debate entre grupos.",
+          "horas": 1
+        },
+        {
+          "nome": "Agentes e tarefas com várias etapas",
+          "temas": "O que é um agente\nDelegação de tarefas longas\nSupervisão humana\nLimites",
+          "caso_pratico": "Delegar uma pesquisa de mercado completa ao Claude e auditar o resultado contra fontes.",
+          "horas": 1
+        },
+        {
+          "nome": "Soluções sem programação e com apoio técnico",
+          "temas": "Pequenas aplicações e painéis gerados por IA\nNoções de Claude Code\nQuando envolver a equipa de Tecnologias de Informação (TI)",
+          "caso_pratico": "Prototipar uma ferramenta interna simples (por exemplo, um calculador de preços) e definir o caderno de encargos para TI.",
+          "horas": 1
+        },
+        {
+          "nome": "Gestão da mudança e capacitação",
+          "temas": "Resistências\nEmbaixadores internos\nPlano de formação\nComunicação à organização",
+          "caso_pratico": "Simulação: apresentar o projeto a uma administração cética e responder a objeções.",
+          "horas": 1
+        },
+        {
+          "nome": "Risco, segurança e auditoria",
+          "temas": "Fuga de informação\nInjeção de instruções (prompt injection)\nDependência de fornecedor\nRastreabilidade\nResponsabilidade",
+          "caso_pratico": "Analisar um incidente fictício, identificar falhas de controlo e propor medidas corretivas.",
+          "horas": 1
+        },
+        {
+          "nome": "Projeto final",
+          "temas": "Apresentação e defesa perante o grupo e o formador",
+          "caso_pratico": "Cada formando apresenta, em 10 minutos, um plano de implementação para a sua organização ou para um caso fornecido.",
+          "horas": 1
+        }
+      ],
+      "descricao": "Curso 4 de 4 do percurso de Inteligência Artificial (IA) generativa \"IA Generativa no Trabalho: do primeiro uso à liderança da implementação\", com 24 horas no total (4 cursos de 6 sessões de 60 minutos). Ferramenta de referência: Claude (Anthropic). Os conceitos são transferíveis para outros assistentes de IA generativa.\nLaboratório de Casos Práticos: presente em todas as sessões, com 40 minutos por sessão neste curso. Ao longo do percurso cresce em tempo (de 10 a 40 minutos por sessão), em complexidade (de tarefas guiadas a problemas abertos) e em autonomia (de exercícios demonstrados a casos desenhados e defendidos pelos formandos).\nUso responsável: em cada sessão, o caso prático aplica a verificação de resultados e os cuidados com dados pessoais e confidencialidade."
+    }
+  ]
+}

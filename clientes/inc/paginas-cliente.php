@@ -162,6 +162,12 @@ function link_curso_publico(array $curso): string
     return '/formacoes/curso.php?c=' . (int) $curso['id'];
 }
 
+// Ficha do curso para exportar em PDF; com $imprimir, abre logo a janela de impressão (Guardar como PDF)
+function link_ficha(array $curso, bool $imprimir = false): string
+{
+    return '/formacoes/ficha.php?c=' . (int) $curso['id'] . ($imprimir ? '&imprimir=1' : '');
+}
+
 // Quem recebe as confirmações de uma inscrição: o utilizador do cliente que a fez ou, no site, o contacto indicado
 function contacto_inscricao(array $i): ?array
 {
@@ -211,7 +217,7 @@ function emails_nova_inscricao(int $id): void
     $publica = $i['origem'] === 'site';
     $quando = horario($i) . ' · ' . (MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ' · ' . $i['local'] : '');
     $a = $i['respostas'] ? avaliar_diagnostico((array) json_decode((string) $i['respostas'], true)) : null;
-    $recomendacao = $a && eh_ai_essentials($i) ? $a['recomendacao'] : '';
+    $recomendacao = $a ? recomendacao_de($i) : '';
     $link_area = $site . '/clientes/' . url('inscricao', ['id' => $id]);
     $contacto = contacto_inscricao($i);
     $linhas = [
@@ -372,7 +378,7 @@ function pagina_inscricao(): void
         <div><span class="texto-suave">Pontuação</span><span><strong>' . (int) $i['pontuacao'] . '</strong> em 24</span></div>
         <div><span class="texto-suave">Uso responsável</span><span><strong>' . (int) $i['responsavel'] . '</strong> em 9</span></div>
       </div>
-      ' . (eh_ai_essentials($i) ? '<p><strong>Recomendação:</strong> ' . h(recomendacao_de($i)) . '</p>' : '') . '
+      ' . (($rec = recomendacao_de($i)) ? '<p><strong>Recomendação:</strong> ' . h($rec) . '</p>' : '') . '
       <div class="conteudo tabela-rolante">' . tabela_diagnostico($i) . '</div>' : '') . '
       ' . ($i['ferramentas'] ? '<p><strong>Ferramentas usadas:</strong> ' . h($i['ferramentas']) . '</p>' : '') . '
       ' . ($i['expectativas'] ? '<p><strong>Expectativas:</strong> ' . nl2br(h($i['expectativas'])) . '</p>' : '') . '

@@ -87,10 +87,19 @@ function avaliar_diagnostico(array $respostas): array
     return ['pontuacao' => $total, 'responsavel' => $responsavel, 'nivel' => $nivel['nome'], 'recomendacao' => $recomendacao];
 }
 
+// Recomendação a mostrar numa inscrição: a de módulos só no AI Essentials (cita os seus módulos);
+// nos outros cursos com diagnóstico, apenas o alerta de uso responsável, quando a pontuação é baixa
 function recomendacao_de(array $inscricao): string
 {
     $r = json_decode((string) ($inscricao['respostas'] ?? ''), true);
-    return is_array($r) ? avaliar_diagnostico($r)['recomendacao'] : '';
+    if (!is_array($r) || !$r) {
+        return '';
+    }
+    $a = avaliar_diagnostico($r);
+    if (eh_ai_essentials($inscricao)) {
+        return $a['recomendacao'];
+    }
+    return $a['responsavel'] <= 4 ? 'Atenção ao uso responsável: pontuação baixa nas práticas de regras de utilização, dados pessoais e verificação de resultados. Convém reforçar estes pontos nos casos práticos.' : '';
 }
 
 // Campos do diagnóstico para o formulário de inscrição

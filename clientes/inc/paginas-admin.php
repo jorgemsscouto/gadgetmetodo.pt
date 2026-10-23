@@ -218,17 +218,36 @@ function seletor_curso_modulo(string $selecionado, int $curso_atual): string
 
 function admin_cursos(): void
 {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['acao'] ?? '') === 'repor_catalogo') {
+        if (empty($_POST['confirmo'])) {
+            aviso('Para repor o catálogo, confirme que aceita apagar a agenda, as inscrições e os cursos.', 'erro');
+        } else {
+            $n = repor_catalogo(bd());
+            aviso('Agenda e cursos limpos. Catálogo carregado com ' . $n . ' cursos.');
+        }
+        redirecionar('cursos');
+    }
     $lista = consulta("SELECT c.*, (SELECT COUNT(*) FROM modulos m WHERE m.curso_id = c.id) AS n_modulos,
         (SELECT COUNT(*) FROM formacoes f WHERE f.curso_id = c.id AND f.inicio >= ? AND f.estado != 'cancelada') AS n_sessoes
         FROM cursos c ORDER BY c.ativo DESC, c.nome", [date('Y-m-d 00:00:00')]);
     $linhas = '';
     foreach ($lista as $c) {
-        $linhas .= '<tr><td><a href="' . h(url('curso', ['id' => $c['id']])) . '">' . h($c['nome']) . '</a></td><td>' . h($c['tipologia']) . '</td><td>' . (int) $c['n_modulos'] . '</td><td>' . (int) $c['n_sessoes'] . '</td><td>' . ($c['diagnostico'] ? 'Sim' : 'Não') . '</td><td>' . ($c['ativo'] ? etiqueta('Ativo', 'ok') : etiqueta('Inativo')) . '</td></tr>';
+        $linhas .= '<tr><td><a href="' . h(url('curso', ['id' => $c['id']])) . '">' . h($c['nome']) . '</a>' . ($c['percurso'] ? '<br><span class="texto-suave">' . h($c['percurso']) . '</span>' : '') . '</td><td>' . h($c['tipologia']) . '</td><td>' . (int) $c['n_modulos'] . '</td><td>' . (int) $c['n_sessoes'] . '</td><td>' . ($c['diagnostico'] ? 'Sim' : 'Não') . '</td><td>' . ($c['ativo'] ? etiqueta('Ativo', 'ok') : etiqueta('Inativo')) . '</td>'
+            . '<td>' . ($c['ativo'] ? '<a href="' . h(link_ficha($c, true)) . '" target="_blank" rel="noopener">Ficha em PDF</a>' : '') . '</td></tr>';
     }
-    pagina_area('cursos', 'Cursos', '
-      <p class="texto-suave">Cada curso tem tipologia, descrição, destinatários e módulos com os temas a abordar. As sessões do calendário são de um curso completo ou de um módulo. O diagnóstico de utilização de IA pode ser ativado em cada curso.</p>
+    $versao = (string) (catalogo()['versao'] ?? '');
+    pagina_area('cursos', 'Cursos', ($versao !== '' && catalogo_pendente() ? '<div class="aviso aviso-info">Há um catálogo de cursos novo por carregar ("' . h((string) (catalogo()['comum']['percurso'] ?? $versao)) . '"). Não foi carregado automaticamente porque já existem inscrições. Use "Repor o catálogo", no fim desta página, quando quiser substituir a agenda e os cursos.</div>' : '') . '
+      <p class="texto-suave">Cada curso tem tipologia, descrição, destinatários, objetivo, pré-requisitos, resultado esperado, avaliação, requisitos e módulos (ou sessões) com os temas e o caso prático. As sessões do calendário são de um curso completo ou de um módulo. O diagnóstico de utilização de IA pode ser ativado em cada curso. Cada curso tem uma ficha para exportar em PDF.</p>
       <div class="acoes" style="margin-top:0"><a class="botao" href="' . h(url('curso')) . '">Novo curso</a></div>
-      ' . ($linhas ? '<div class="conteudo tabela-rolante espaco-topo-curto"><table><thead><tr><th>Curso</th><th>Tipologia</th><th>Módulos</th><th>Sessões agendadas</th><th>Diagnóstico de IA</th><th>Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há cursos.</p>'), 'Formação');
+      ' . ($linhas ? '<div class="conteudo tabela-rolante espaco-topo-curto"><table><thead><tr><th>Curso</th><th>Tipologia</th><th>Módulos ou sessões</th><th>Sessões agendadas</th><th>Diagnóstico de IA</th><th>Estado</th><th>Ficha</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há cursos.</p>') . '
+      <div class="zona-perigo espaco-topo">
+        <h2 class="mt-0">Repor o catálogo</h2>
+        <p>Apaga <strong>todas</strong> as sessões do calendário, as respetivas inscrições e todos os cursos, e carrega o catálogo do ficheiro de dados (' . h((string) (catalogo()['comum']['percurso'] ?? 'catálogo')) . ', ' . count(catalogo()['cursos'] ?? []) . ' cursos). Os clientes, os utilizadores e os pedidos do site não são afetados. Esta ação não pode ser desfeita: exporte antes as inscrições para Excel, se precisar delas.</p>
+        <form method="post" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="repor_catalogo">
+          <label class="opcao consentimento"><input type="checkbox" name="confirmo" value="1" required> <span>Confirmo que quero apagar a agenda, as inscrições e os cursos e carregar o catálogo.</span></label>
+          <div><button class="botao botao-perigo" type="submit">Limpar agenda e cursos e carregar o catálogo</button></div>
+        </form>
+      </div>', 'Formação');
 }
 
 function admin_curso(): void
@@ -246,28 +265,30 @@ function admin_curso(): void
                 aviso('Indique o nome do curso.', 'erro');
                 redirecionar('curso', $id ? ['id' => $id] : []);
             }
-            $valores = [$nome, texto('tipologia', 80), texto('descricao', 4000, true), texto('publico', 400), texto('duracao', 80), isset($_POST['diagnostico']) ? 1 : 0, isset($_POST['ativo']) ? 1 : 0];
+            $valores = [$nome, texto('tipologia', 80), texto('descricao', 4000, true), texto('publico', 400), texto('duracao', 80), isset($_POST['diagnostico']) ? 1 : 0, isset($_POST['ativo']) ? 1 : 0,
+                texto('percurso', 200), ($_POST['unidade'] ?? '') === 'Sessão' ? 'Sessão' : 'Módulo', texto('objetivo', 2000, true), texto('prerequisitos', 1000, true), texto('resultado', 2000, true),
+                texto('estrutura', 2000, true), texto('avaliacao', 2000, true), texto('requisitos', 3000, true), texto('enquadramento', 3000, true), texto('investimento', 400, true)];
             if ($c) {
-                executar('UPDATE cursos SET nome = ?, tipologia = ?, descricao = ?, publico = ?, duracao = ?, diagnostico = ?, ativo = ? WHERE id = ?', array_merge($valores, [$id]));
+                executar('UPDATE cursos SET nome = ?, tipologia = ?, descricao = ?, publico = ?, duracao = ?, diagnostico = ?, ativo = ?, percurso = ?, unidade = ?, objetivo = ?, prerequisitos = ?, resultado = ?, estrutura = ?, avaliacao = ?, requisitos = ?, enquadramento = ?, investimento = ? WHERE id = ?', array_merge($valores, [$id]));
                 // As sessões guardam o nome do curso: acompanham a mudança de nome
                 executar('UPDATE formacoes SET titulo = ? WHERE curso_id = ?', [$nome, $id]);
                 aviso('Curso atualizado.');
             } else {
-                $id = executar('INSERT INTO cursos (nome, tipologia, descricao, publico, duracao, diagnostico, ativo, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', array_merge($valores, [agora()]));
+                $id = executar('INSERT INTO cursos (nome, tipologia, descricao, publico, duracao, diagnostico, ativo, percurso, unidade, objetivo, prerequisitos, resultado, estrutura, avaliacao, requisitos, enquadramento, investimento, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_merge($valores, [agora()]));
                 aviso('Curso criado. Acrescente agora os módulos e os temas a abordar.');
             }
         } elseif ($acao === 'modulo' && $c) {
             $mid = (int) ($_POST['modulo_id'] ?? 0);
             $nome = texto('nome', 160);
             $horas = str_replace(',', '.', texto('horas', 6));
-            $valores = [$nome, max(1, min(99, (int) ($_POST['ordem'] ?? 1))), texto('descricao', 2000, true), texto('temas', 4000, true), is_numeric($horas) && (float) $horas > 0 ? min(999, (float) $horas) : null];
+            $valores = [$nome, max(1, min(99, (int) ($_POST['ordem'] ?? 1))), texto('descricao', 2000, true), texto('temas', 4000, true), is_numeric($horas) && (float) $horas > 0 ? min(999, (float) $horas) : null, texto('caso_pratico', 1000, true)];
             if ($nome === '') {
                 aviso('Indique o nome do módulo.', 'erro');
             } elseif ($mid) {
-                executar('UPDATE modulos SET nome = ?, ordem = ?, descricao = ?, temas = ?, horas = ? WHERE id = ? AND curso_id = ?', array_merge($valores, [$mid, $id]));
+                executar('UPDATE modulos SET nome = ?, ordem = ?, descricao = ?, temas = ?, horas = ?, caso_pratico = ? WHERE id = ? AND curso_id = ?', array_merge($valores, [$mid, $id]));
                 aviso('Módulo guardado.');
             } else {
-                executar('INSERT INTO modulos (nome, ordem, descricao, temas, horas, curso_id) VALUES (?, ?, ?, ?, ?, ?)', array_merge($valores, [$id]));
+                executar('INSERT INTO modulos (nome, ordem, descricao, temas, horas, caso_pratico, curso_id) VALUES (?, ?, ?, ?, ?, ?, ?)', array_merge($valores, [$id]));
                 aviso('Módulo acrescentado.');
             }
         } elseif ($acao === 'apagar_modulo' && $c) {
@@ -306,7 +327,7 @@ function admin_curso(): void
         }
         redirecionar('curso', ['id' => $id]);
     }
-    $v = $c ?: ['nome' => '', 'tipologia' => '', 'descricao' => '', 'publico' => '', 'duracao' => '', 'diagnostico' => 0, 'ativo' => 1];
+    $v = ($c ?: []) + array_fill_keys(['nome', 'tipologia', 'descricao', 'publico', 'duracao', 'percurso', 'unidade', 'objetivo', 'prerequisitos', 'resultado', 'estrutura', 'avaliacao', 'requisitos', 'enquadramento', 'investimento'], '') + ['diagnostico' => 0, 'ativo' => 1];
     $tipologias = array_unique(array_merge(TIPOLOGIAS, array_column(consulta("SELECT DISTINCT tipologia FROM cursos WHERE tipologia != ''"), 'tipologia')));
     $html = '<form method="post" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="curso">
         <div class="campos-2">
@@ -317,21 +338,38 @@ function admin_curso(): void
         </div>
         <datalist id="tipologias">' . implode('', array_map(function ($t) { return '<option value="' . h($t) . '"></option>'; }, $tipologias)) . '</datalist>
         ' . campo('descricao', 'Descrição', (string) $v['descricao'], 'textarea', 'maxlength="4000"') . '
+        <h3 class="mb-0">Ficha do curso</h3>
+        <p class="texto-suave mb-0">Estes campos aparecem na página pública do curso e na ficha em PDF. Os que ficarem vazios não são mostrados.</p>
+        <div class="campos-2">
+          ' . campo('percurso', 'Percurso (se o curso fizer parte de um)', (string) $v['percurso'], 'text', 'maxlength="200"') . '
+          ' . campo_select('unidade', 'Cada parte do curso chama-se', ['Módulo' => 'Módulo', 'Sessão' => 'Sessão'], $v['unidade'] ?: 'Módulo') . '
+        </div>
+        ' . campo('objetivo', 'Objetivo', (string) $v['objetivo'], 'textarea', 'maxlength="2000" rows="2"') . '
+        ' . campo('prerequisitos', 'Pré-requisitos', (string) $v['prerequisitos'], 'textarea', 'maxlength="1000" rows="2"') . '
+        ' . campo('resultado', 'Resultado esperado', (string) $v['resultado'], 'textarea', 'maxlength="2000" rows="2"') . '
+        <div class="campos-2">
+          ' . campo('estrutura', 'Estrutura-tipo da sessão (uma linha por bloco: "Bloco: minutos")', (string) $v['estrutura'], 'textarea', 'maxlength="2000" rows="5"') . '
+          ' . campo('avaliacao', 'Avaliação (uma linha por componente: "Componente: peso")', (string) $v['avaliacao'], 'textarea', 'maxlength="2000" rows="5"') . '
+        </div>
+        ' . campo('requisitos', 'Requisitos técnicos e condições (um por linha)', (string) $v['requisitos'], 'textarea', 'maxlength="3000" rows="4"') . '
+        ' . campo('enquadramento', 'Enquadramento legal', (string) $v['enquadramento'], 'textarea', 'maxlength="3000" rows="3"') . '
+        ' . campo('investimento', 'Investimento e condições (vazio: não aparece)', (string) $v['investimento'], 'textarea', 'maxlength="400" rows="2"') . '
         <label class="opcao consentimento"><input type="checkbox" name="diagnostico" value="1"' . ($v['diagnostico'] ? ' checked' : '') . '> <span>Incluir o diagnóstico de utilização de IA na inscrição (recomendado nos cursos de inteligência artificial)</span></label>
         <label class="opcao consentimento"><input type="checkbox" name="ativo" value="1"' . ($v['ativo'] ? ' checked' : '') . '> <span>Curso ativo (disponível para agendar sessões)</span></label>
         <div><button class="botao" type="submit">' . ($c ? 'Guardar curso' : 'Criar curso') . '</button></div>
       </form>';
     if ($c) {
         $mods = modulos_curso($id);
-        $html .= '<h2 class="espaco-topo">Módulos e temas a abordar</h2>
-          <p class="texto-suave">Os temas aparecem no calendário e no formulário de inscrição, em "Programa e temas". Escreva um tema por linha. A ordem define a numeração dos módulos.</p>';
+        $u = unidade($c);
+        $html .= '<h2 class="espaco-topo">' . ($u === 'Sessão' ? 'Sessões' : 'Módulos') . ', temas e casos práticos</h2>
+          <p class="texto-suave">Os temas aparecem no calendário, no formulário de inscrição, na página pública e na ficha em PDF. Escreva um tema por linha. A ordem define a numeração.</p>';
         foreach ($mods as $n => $m) {
-            $html .= form_modulo($m, $n + 1);
+            $html .= form_modulo($m, $n + 1, $u);
         }
-        $html .= '<h3 class="espaco-topo-curto">Acrescentar módulo</h3>' . form_modulo(['id' => 0, 'ordem' => count($mods) + 1, 'nome' => '', 'descricao' => '', 'temas' => '', 'horas' => null], 0);
+        $html .= '<h3 class="espaco-topo-curto">Acrescentar ' . strtolower($u) . '</h3>' . form_modulo(['id' => 0, 'ordem' => count($mods) + 1, 'nome' => '', 'descricao' => '', 'temas' => '', 'horas' => null, 'caso_pratico' => ''], 0, $u);
         if ($c['ativo']) {
             $html .= partilha_e_convite(endereco_site() . link_curso_publico($c), 'Página pública do curso',
-                'Mostra a descrição, os módulos, os temas e as próximas sessões com inscrição. Pode colocá-la no site, nas redes sociais ou enviá-la a um candidato.');
+                'Mostra a descrição, o programa, os temas e as próximas sessões com inscrição. Pode colocá-la no site, nas redes sociais ou enviá-la a um candidato. A ficha em PDF tem o mesmo conteúdo, num documento para enviar ou imprimir.', link_ficha($c, true));
         }
         $sessoes = consulta('SELECT * FROM formacoes WHERE curso_id = ? AND inicio >= ? ORDER BY inicio', [$id, date('Y-m-d 00:00:00')]);
         $html .= '<h2 class="espaco-topo">Sessões agendadas</h2>'
@@ -344,23 +382,24 @@ function admin_curso(): void
     pagina_area('cursos', $c ? $c['nome'] : 'Novo curso', $html, 'Cursos');
 }
 
-function form_modulo(array $m, int $numero): string
+function form_modulo(array $m, int $numero, string $unidade = 'Módulo'): string
 {
     $novo = !$m['id'];
     $p = 'm' . (int) $m['id'] . '-';
     return '<div class="cartao-modulo">
       <form method="post" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="modulo"><input type="hidden" name="modulo_id" value="' . (int) $m['id'] . '">
-        ' . ($novo ? '' : '<span class="sobretitulo mb-0">Módulo ' . $numero . '</span>') . '
+        ' . ($novo ? '' : '<span class="sobretitulo mb-0">' . h($unidade) . ' ' . $numero . '</span>') . '
         <div class="campos-modulo">
-          ' . campo('nome', 'Nome do módulo *', (string) $m['nome'], 'text', 'required maxlength="160"', $p . 'nome') . '
+          ' . campo('nome', 'Nome ou tema *', (string) $m['nome'], 'text', 'required maxlength="160"', $p . 'nome') . '
           ' . campo('ordem', 'Ordem', (string) $m['ordem'], 'number', 'min="1" max="99"', $p . 'ordem') . '
           ' . campo('horas', 'Horas', $m['horas'] ? rtrim(rtrim(number_format((float) $m['horas'], 1, ',', ''), '0'), ',') : '', 'text', 'maxlength="6" inputmode="decimal"', $p . 'horas') . '
         </div>
         ' . campo('descricao', 'Descrição', (string) $m['descricao'], 'textarea', 'maxlength="2000" rows="2"', $p . 'descricao') . '
         ' . campo('temas', 'Temas a abordar (um por linha)', (string) $m['temas'], 'textarea', 'maxlength="4000"', $p . 'temas') . '
-        <div class="acoes-modulo"><button class="botao' . ($novo ? '' : ' botao-secundario') . '" type="submit">' . ($novo ? 'Acrescentar módulo' : 'Guardar módulo') . '</button></div>
+        ' . campo('caso_pratico', 'Caso prático', (string) ($m['caso_pratico'] ?? ''), 'textarea', 'maxlength="1000" rows="2"', $p . 'caso') . '
+        <div class="acoes-modulo"><button class="botao' . ($novo ? '' : ' botao-secundario') . '" type="submit">' . ($novo ? 'Acrescentar' : 'Guardar') . ' ' . strtolower($unidade) . '</button></div>
       </form>
-      ' . ($novo ? '' : '<form method="post" class="apagar-modulo">' . campo_csrf() . '<input type="hidden" name="acao" value="apagar_modulo"><input type="hidden" name="modulo_id" value="' . (int) $m['id'] . '"><button class="botao-texto" type="submit">Apagar módulo</button></form>') . '
+      ' . ($novo ? '' : '<form method="post" class="apagar-modulo">' . campo_csrf() . '<input type="hidden" name="acao" value="apagar_modulo"><input type="hidden" name="modulo_id" value="' . (int) $m['id'] . '"><button class="botao-texto" type="submit">Apagar ' . strtolower($unidade) . '</button></form>') . '
     </div>';
 }
 
@@ -613,12 +652,13 @@ function ler_convite()
     return $c;
 }
 
-function partilha_e_convite(string $link, string $titulo, string $ajuda): string
+function partilha_e_convite(string $link, string $titulo, string $ajuda, string $pdf = ''): string
 {
     return '<div class="partilha espaco-topo">
       <h2 class="mt-0">' . h($titulo) . '</h2>
       <p class="texto-suave">' . h($ajuda) . '</p>
-      <div class="partilha-ligacao"><label class="visualmente-oculto" for="ligacao-publica">' . h($titulo) . '</label><input id="ligacao-publica" type="text" readonly value="' . h($link) . '"><a class="botao botao-secundario" href="' . h($link) . '" target="_blank" rel="noopener">Abrir</a></div>
+      <div class="partilha-ligacao"><label class="visualmente-oculto" for="ligacao-publica">' . h($titulo) . '</label><input id="ligacao-publica" type="text" readonly value="' . h($link) . '"><button class="botao botao-secundario" type="button" data-copiar="' . h($link) . '">Copiar ligação</button><a class="botao botao-secundario" href="' . h($link) . '" target="_blank" rel="noopener">Abrir</a>' . ($pdf ? '<a class="botao" href="' . h($pdf) . '" target="_blank" rel="noopener">Exportar PDF</a>' : '') . '</div>
+      <p class="estado-copia" role="status" aria-live="polite"></p>
       <h3>Enviar a um candidato</h3>
       <form method="post" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="convite">
         <div class="campos-2">

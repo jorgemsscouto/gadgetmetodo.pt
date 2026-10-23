@@ -42,17 +42,20 @@ function bd(): ?PDO
             senha TEXT NOT NULL, papel TEXT NOT NULL CHECK (papel IN ('admin', 'cliente')),
             cliente_id INTEGER REFERENCES clientes(id), ativo INTEGER NOT NULL DEFAULT 1,
             criado TEXT NOT NULL, ultimo_acesso TEXT)");
-        $cursos_novos = !$pdo->query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'cursos'")->fetchColumn();
+        $pdo->exec('CREATE TABLE IF NOT EXISTS definicoes (chave TEXT PRIMARY KEY, valor TEXT)');
+        // Campos da ficha do curso: percurso, unidade (Módulo ou Sessão), objetivo, pré-requisitos, resultado esperado,
+        // estrutura-tipo da sessão e avaliação (linhas "rótulo: valor"), requisitos, enquadramento legal e investimento
         $pdo->exec('CREATE TABLE IF NOT EXISTS cursos (
             id INTEGER PRIMARY KEY AUTOINCREMENT, chave TEXT UNIQUE, nome TEXT NOT NULL, tipologia TEXT, descricao TEXT,
-            publico TEXT, duracao TEXT, diagnostico INTEGER NOT NULL DEFAULT 1, ativo INTEGER NOT NULL DEFAULT 1, criado TEXT NOT NULL)');
+            publico TEXT, duracao TEXT, diagnostico INTEGER NOT NULL DEFAULT 1, ativo INTEGER NOT NULL DEFAULT 1, criado TEXT NOT NULL,
+            percurso TEXT, unidade TEXT, objetivo TEXT, prerequisitos TEXT, resultado TEXT, estrutura TEXT, avaliacao TEXT,
+            requisitos TEXT, enquadramento TEXT, investimento TEXT)');
+        acrescentar_colunas($pdo, 'cursos', array_fill_keys(['percurso', 'unidade', 'objetivo', 'prerequisitos', 'resultado', 'estrutura', 'avaliacao', 'requisitos', 'enquadramento', 'investimento'], 'TEXT'));
         $pdo->exec('CREATE TABLE IF NOT EXISTS modulos (
             id INTEGER PRIMARY KEY AUTOINCREMENT, curso_id INTEGER NOT NULL REFERENCES cursos(id), ordem INTEGER NOT NULL DEFAULT 1,
-            nome TEXT NOT NULL, descricao TEXT, temas TEXT, horas REAL)');
+            nome TEXT NOT NULL, descricao TEXT, temas TEXT, horas REAL, caso_pratico TEXT)');
+        acrescentar_colunas($pdo, 'modulos', ['caso_pratico' => 'TEXT']);
         $pdo->exec('CREATE INDEX IF NOT EXISTS modulos_curso ON modulos (curso_id, ordem)');
-        if ($cursos_novos) {
-            semear_cursos($pdo);
-        }
         // "titulo" guarda o nome do curso (atualizado quando o curso muda de nome); "reuniao" é a ligação da sessão online
         $pdo->exec("CREATE TABLE IF NOT EXISTS formacoes (
             id INTEGER PRIMARY KEY AUTOINCREMENT, titulo TEXT NOT NULL, modulo TEXT, inicio TEXT NOT NULL, fim TEXT,
@@ -71,6 +74,7 @@ function bd(): ?PDO
         migrar_inscricoes($pdo, $tabela_inscricoes);
         $pdo->exec('CREATE INDEX IF NOT EXISTS inscricoes_formacao ON inscricoes (formacao_id)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS inscricoes_cliente ON inscricoes (cliente_id)');
+        aplicar_catalogo($pdo);
         // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação
         $pdo->prepare('DELETE FROM inscricoes WHERE formacao_id IN (SELECT id FROM formacoes WHERE inicio < ?)')
             ->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);

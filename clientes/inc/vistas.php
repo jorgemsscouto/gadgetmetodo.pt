@@ -38,6 +38,7 @@ function documento(string $titulo, string $corpo): void
 <body class="area">
 ' . $corpo . '
   <footer class="area-rodape"><div class="contentor">© 2026 Gadgetmetodo, Lda. · <a href="/">Website</a> · <a href="/privacidade/">Política de privacidade</a></div></footer>
+  <script src="' . h(versao_ficheiro('/assets/js/copiar.js')) . '" defer></script>
 </body>
 </html>
 ';
