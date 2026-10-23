@@ -56,7 +56,7 @@ if ($post) {
 $comuns = ['inscrever' => 'pagina_inscrever', 'inscricao' => 'pagina_inscricao', 'conta' => 'pagina_conta'];
 $rotas = eh_admin()
     ? ['painel' => 'admin_painel', 'calendario' => 'admin_calendario', 'formacao' => 'admin_formacao', 'cursos' => 'admin_cursos', 'curso' => 'admin_curso', 'inscricoes' => 'admin_inscricoes',
-       'clientes' => 'admin_clientes', 'cliente' => 'admin_cliente', 'utilizadores' => 'admin_utilizadores', 'utilizador' => 'admin_utilizador',
+       'preinscricao' => 'admin_preinscricao', 'clientes' => 'admin_clientes', 'cliente' => 'admin_cliente', 'utilizadores' => 'admin_utilizadores', 'utilizador' => 'admin_utilizador',
        'pedidos' => 'admin_pedidos'] + $comuns
     : ['painel' => 'cliente_painel', 'calendario' => 'cliente_formacoes', 'inscricoes' => 'cliente_inscricoes'] + $comuns;
 

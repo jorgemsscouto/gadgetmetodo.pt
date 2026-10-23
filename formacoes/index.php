@@ -29,7 +29,7 @@
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/site.css?v=6e07631c08">
-  <link rel="stylesheet" href="/assets/css/area.css?v=5b7ce940fe">
+  <link rel="stylesheet" href="/assets/css/area.css?v=9059f99b34">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -291,9 +291,10 @@
             <h2 id="como-inscrever" style="font-size:1.3rem">Como se inscrever</h2>
             <ol class="etapas etapas-compactas">
               <li><h3>Escolha o curso</h3><p>Veja o programa, os temas, os casos práticos e a ficha em PDF.</p></li>
-              <li><h3>Inscreva-se ou faça a pré-inscrição</h3><p>Com datas agendadas, inscreve-se numa sessão. Sem datas, a pré-inscrição garante que recebe o convite quando forem marcadas.</p></li>
+              <li><h3>Inscreva-se ou faça a pré-inscrição</h3><p>Com datas agendadas, inscreve-se numa sessão. Sem datas, a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a> garante que recebe o convite quando forem marcadas.</p></li>
               <li><h3>Receba a confirmação</h3><p>Recebe um email logo a seguir e a confirmação da Gadgetmetodo nos dias úteis seguintes.</p></li>
             </ol>
+            <p class="espaco-topo-curto mb-0"><a class="botao" href="/formacoes/pre-inscricao.php"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/> <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/> <path d="M12 11h4"/> <path d="M12 16h4"/> <path d="M8 11h.01"/> <path d="M8 16h.01"/> </svg> Fazer pré-inscrição</a></p>
           </div>
         </div>
       </div>

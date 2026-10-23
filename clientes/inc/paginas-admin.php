@@ -18,7 +18,7 @@ function admin_painel(): void
         <div><strong>' . $n("SELECT COUNT(*) AS n FROM inscricoes WHERE estado != 'cancelada'") . '</strong>inscrições ativas</div>
         <div><strong>' . $n('SELECT COUNT(*) AS n FROM clientes') . '</strong>clientes</div>
         <div><a href="' . h(url('inscricoes', ['origem' => 'por_associar'])) . '"><strong>' . $n("SELECT COUNT(*) AS n FROM inscricoes WHERE cliente_id IS NULL AND estado != 'cancelada'") . '</strong>inscrições do site por associar</a></div>
-        <div><a href="' . h(url('cursos')) . '"><strong>' . $n("SELECT COUNT(*) AS n FROM preinscricoes WHERE estado = 'nova'") . '</strong>pré-inscrições por tratar</a></div>
+        <div><a href="' . h(url('inscricoes', ['estado' => 'preinscricao'])) . '"><strong>' . $n("SELECT COUNT(*) AS n FROM preinscricoes WHERE estado = 'nova'") . '</strong>pré-inscrições por tratar</a></div>
         <div><strong>' . $n('SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1') . '</strong>utilizadores ativos</div>
       </div>
       <div class="acoes mb-0" style="margin-top:0"><a class="botao" href="' . h(url('formacao')) . '">Nova formação</a><a class="botao botao-secundario" href="' . h(url('utilizadores')) . '">Novo utilizador</a></div>
@@ -95,41 +95,10 @@ function admin_formacao(): void
         redirecionar('formacao', ['id' => $id]);
     }
     if ($post && $acao === '') {
-        $d = [
-            'curso_modulo' => (string) ($_POST['curso_modulo'] ?? ''),
-            'data' => texto('data', 10), 'hora_inicio' => texto('hora_inicio', 5), 'hora_fim' => texto('hora_fim', 5),
-            'modalidade' => isset(MODALIDADES[$_POST['modalidade'] ?? '']) ? $_POST['modalidade'] : 'presencial',
-            'local' => texto('local', 160), 'vagas' => max(1, min(500, (int) ($_POST['vagas'] ?? 12))),
-            'estado' => isset(ESTADOS_FORMACAO[$_POST['estado'] ?? '']) ? $_POST['estado'] : 'aberta',
-            'notas' => texto('notas', 2000, true), 'reuniao' => texto('reuniao', 300),
-        ];
-        [$curso_id, $modulo_id] = curso_e_modulo($d['curso_modulo']);
-        if (!$curso_id) {
-            $erros[] = 'Escolha o curso e o módulo.';
-        }
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d['data']) || !strtotime($d['data'])) {
-            $erros[] = 'Indique a data.';
-        }
-        if (!preg_match('/^\d{2}:\d{2}$/', $d['hora_inicio'])) {
-            $erros[] = 'Indique a hora de início.';
-        }
-        if ($d['hora_fim'] !== '' && (!preg_match('/^\d{2}:\d{2}$/', $d['hora_fim']) || $d['hora_fim'] <= $d['hora_inicio'])) {
-            $erros[] = 'A hora de fim tem de ser posterior à de início.';
-        }
-        if ($d['reuniao'] !== '' && (!filter_var($d['reuniao'], FILTER_VALIDATE_URL) || stripos($d['reuniao'], 'https://') !== 0)) {
-            $erros[] = 'A ligação da reunião tem de ser um endereço completo começado por https:// (por exemplo, https://meet.google.com/abc-defg-hij).';
-        }
+        [$d, $curso_id, $modulo_id, $erros] = ler_sessao();
         if (!$erros) {
-            $inicio = $d['data'] . ' ' . $d['hora_inicio'] . ':00';
-            $fim = $d['hora_fim'] !== '' ? $d['data'] . ' ' . $d['hora_fim'] . ':00' : null;
-            $valores = [curso($curso_id)['nome'], $curso_id, $modulo_id, $inicio, $fim, $d['modalidade'], $d['local'], $d['vagas'], $d['estado'], $d['notas'], $d['reuniao'] ?: null];
-            if ($f) {
-                executar('UPDATE formacoes SET titulo = ?, curso_id = ?, modulo_id = ?, inicio = ?, fim = ?, modalidade = ?, local = ?, vagas = ?, estado = ?, notas = ?, reuniao = ? WHERE id = ?', array_merge($valores, [$id]));
-                aviso('Formação atualizada.');
-            } else {
-                $id = executar('INSERT INTO formacoes (titulo, curso_id, modulo_id, inicio, fim, modalidade, local, vagas, estado, notas, reuniao, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_merge($valores, [agora()]));
-                aviso('Formação criada e visível para os clientes e na área de formação do site.');
-            }
+            $id = gravar_sessao($d, $curso_id, $modulo_id, $f ? $id : 0);
+            aviso($f ? 'Formação atualizada.' : 'Formação criada e visível para os clientes e na área de formação do site.');
             redirecionar('formacao', ['id' => $id]);
         }
         $f = ['id' => $id ?: null, 'titulo' => '', 'curso_id' => $curso_id, 'modulo_id' => $modulo_id, 'inicio' => $d['data'] . ' ' . $d['hora_inicio'], 'fim' => $d['hora_fim'] ? $d['data'] . ' ' . $d['hora_fim'] : '', 'modalidade' => $d['modalidade'], 'local' => $d['local'], 'vagas' => $d['vagas'], 'estado' => $d['estado'], 'notas' => $d['notas'], 'reuniao' => $d['reuniao']];
@@ -183,6 +152,50 @@ function admin_formacao(): void
         }
     }
     pagina_area('calendario', $id ? 'Editar formação' : 'Nova formação', $form . $inscritos, 'Calendário');
+}
+
+// Lê e valida os campos de uma sessão (formulário da sessão ou "Nova sessão" na pré-inscrição)
+function ler_sessao(): array
+{
+    $d = [
+        'curso_modulo' => (string) ($_POST['curso_modulo'] ?? ''),
+        'data' => texto('data', 10), 'hora_inicio' => texto('hora_inicio', 5), 'hora_fim' => texto('hora_fim', 5),
+        'modalidade' => isset(MODALIDADES[$_POST['modalidade'] ?? '']) ? $_POST['modalidade'] : 'presencial',
+        'local' => texto('local', 160), 'vagas' => max(1, min(500, (int) ($_POST['vagas'] ?? 12))),
+        'estado' => isset(ESTADOS_FORMACAO[$_POST['estado'] ?? '']) ? $_POST['estado'] : 'aberta',
+        'notas' => texto('notas', 2000, true), 'reuniao' => texto('reuniao', 300),
+    ];
+    $erros = [];
+    [$curso_id, $modulo_id] = curso_e_modulo($d['curso_modulo']);
+    if (!$curso_id) {
+        $erros[] = 'Escolha o curso e o módulo.';
+    }
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d['data']) || !strtotime($d['data'])) {
+        $erros[] = 'Indique a data.';
+    }
+    if (!preg_match('/^\d{2}:\d{2}$/', $d['hora_inicio'])) {
+        $erros[] = 'Indique a hora de início.';
+    }
+    if ($d['hora_fim'] !== '' && (!preg_match('/^\d{2}:\d{2}$/', $d['hora_fim']) || $d['hora_fim'] <= $d['hora_inicio'])) {
+        $erros[] = 'A hora de fim tem de ser posterior à de início.';
+    }
+    if ($d['reuniao'] !== '' && (!filter_var($d['reuniao'], FILTER_VALIDATE_URL) || stripos($d['reuniao'], 'https://') !== 0)) {
+        $erros[] = 'A ligação da reunião tem de ser um endereço completo começado por https:// (por exemplo, https://meet.google.com/abc-defg-hij).';
+    }
+    return [$d, $curso_id, $modulo_id, $erros];
+}
+
+// Cria (sem $id) ou atualiza uma sessão; devolve o id
+function gravar_sessao(array $d, int $curso_id, ?int $modulo_id, int $id = 0): int
+{
+    $inicio = $d['data'] . ' ' . $d['hora_inicio'] . ':00';
+    $fim = $d['hora_fim'] !== '' ? $d['data'] . ' ' . $d['hora_fim'] . ':00' : null;
+    $valores = [curso($curso_id)['nome'], $curso_id, $modulo_id, $inicio, $fim, $d['modalidade'], $d['local'], $d['vagas'], $d['estado'], $d['notas'], $d['reuniao'] ?: null];
+    if ($id) {
+        executar('UPDATE formacoes SET titulo = ?, curso_id = ?, modulo_id = ?, inicio = ?, fim = ?, modalidade = ?, local = ?, vagas = ?, estado = ?, notas = ?, reuniao = ? WHERE id = ?', array_merge($valores, [$id]));
+        return $id;
+    }
+    return executar('INSERT INTO formacoes (titulo, curso_id, modulo_id, inicio, fim, modalidade, local, vagas, estado, notas, reuniao, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_merge($valores, [agora()]));
 }
 
 // Valor do seletor "Curso e módulo": c:ID (curso completo) ou m:ID (um módulo)
@@ -325,7 +338,7 @@ function admin_curso(): void
             }
         } elseif ($acao === 'pre_estado' && $c) {
             $estado = (string) ($_POST['estado'] ?? '');
-            if (isset(ESTADOS_PREINSCRICAO[$estado])) {
+            if (isset(estados_preinscricao_manuais()[$estado])) {
                 executar('UPDATE preinscricoes SET estado = ? WHERE id = ? AND curso_id = ?', [$estado, (int) ($_POST['pre_id'] ?? 0), $id]);
                 aviso('Estado da pré-inscrição atualizado.');
             }
@@ -415,13 +428,14 @@ function lista_preinscricoes(array $c): string
             return '<form method="post" class="form-linha">' . campo_csrf() . '<input type="hidden" name="acao" value="' . $acao . '"><input type="hidden" name="pre_id" value="' . (int) $p['id'] . '">' . $conteudo . '</form>';
         };
         $linhas .= '<tr><td>' . h(data_hora($p['criado'])) . '</td>'
-            . '<td><strong>' . h($p['nome']) . '</strong>' . ($p['empresa'] ? '<br>' . h($p['empresa']) : '') . '</td>'
+            . '<td><a href="' . h(url('preinscricao', ['id' => $p['id']])) . '"><strong>' . h($p['nome']) . '</strong></a>' . ($p['empresa'] ? '<br>' . h($p['empresa']) : '')
+            . ($p['estado'] === 'inscrita' && $p['inscricao_id'] ? '<br><a href="' . h(url('inscricao', ['id' => $p['inscricao_id']])) . '">Ver a inscrição</a>' : '') . '</td>'
             . '<td><a href="mailto:' . h($p['email']) . '">' . h($p['email']) . '</a>' . ($p['telefone'] ? '<br>' . h($p['telefone']) : '') . '</td>'
             . '<td>' . (int) $p['formandos'] . '</td>'
             . '<td>' . diagnostico_preinscricao($p, $c) . '</td>'
             . '<td>' . h(trim((MODALIDADES[$p['modalidade']] ?? 'Indiferente') . ($p['preferencias'] ? '. ' . $p['preferencias'] : ''))) . '</td>'
-            . '<td>' . $form('pre_estado', '<label class="visualmente-oculto" for="pre-estado-' . (int) $p['id'] . '">Estado</label><select id="pre-estado-' . (int) $p['id'] . '" name="estado">' . opcoes_select(ESTADOS_PREINSCRICAO, $p['estado']) . '</select><button class="botao botao-secundario botao-pequeno" type="submit">Guardar</button>') . '</td>'
-            . '<td class="acoes-celula">' . ($com_datas ? $form('pre_convidar', '<button class="botao botao-pequeno" type="submit">' . ($p['estado'] === 'convidada' ? 'Reenviar convite' : 'Enviar convite') . '</button>') : '')
+            . '<td>' . $form('pre_estado', '<label class="visualmente-oculto" for="pre-estado-' . (int) $p['id'] . '">Estado</label><select id="pre-estado-' . (int) $p['id'] . '" name="estado">' . opcoes_select(estados_preinscricao_manuais($p['estado']), $p['estado']) . '</select><button class="botao botao-secundario botao-pequeno" type="submit">Guardar</button>') . '</td>'
+            . '<td class="acoes-celula">' . ($p['estado'] !== 'inscrita' ? '<a class="botao botao-pequeno" href="' . h(url('preinscricao', ['id' => $p['id']])) . '#inscrever">Inscrever</a>' : '') . ($com_datas ? $form('pre_convidar', '<button class="botao botao-pequeno" type="submit">' . ($p['estado'] === 'convidada' ? 'Reenviar convite' : 'Enviar convite') . '</button>') : '')
             . $form('pre_apagar', '<button class="botao botao-secundario botao-pequeno" type="submit">Apagar</button>') . '</td></tr>';
     }
     return '<h2 class="espaco-topo" id="preinscricoes">Pré-inscrições</h2>
@@ -429,6 +443,158 @@ function lista_preinscricoes(array $c): string
         . ($lista ? ($com_datas && $novas > 1 ? '<form method="post" class="espaco-topo-curto">' . campo_csrf() . '<input type="hidden" name="acao" value="pre_convidar_todas"><button class="botao" type="submit">Enviar convite às ' . $novas . ' pré-inscrições novas</button></form>' : '')
             . '<div class="conteudo tabela-rolante espaco-topo-curto"><table><thead><tr><th>Data</th><th>Nome e empresa</th><th>Contactos</th><th>Formandos</th><th>Diagnóstico</th><th>Modalidade e preferências</th><th>Estado</th><th>Ações</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>'
             : '<p class="texto-suave">Ainda não há pré-inscrições neste curso.</p>');
+}
+
+/* Pré-inscrição: ficha, estado e inscrição numa sessão já agendada ou numa sessão nova (definir datas) */
+
+// Estados que se escolhem à mão; "Inscrita" só resulta de inscrever o candidato numa sessão
+function estados_preinscricao_manuais(string $atual = ''): array
+{
+    return $atual === 'inscrita' ? ESTADOS_PREINSCRICAO : array_diff_key(ESTADOS_PREINSCRICAO, ['inscrita' => true]);
+}
+
+function admin_preinscricao(): void
+{
+    $id = (int) ($_GET['id'] ?? 0);
+    $p = linha_bd('SELECT * FROM preinscricoes WHERE id = ?', [$id]);
+    $c = $p ? curso((int) $p['curso_id']) : null;
+    if (!$p || !$c) {
+        pagina_erro('Pré-inscrição não encontrada', 'A pré-inscrição pedida não existe ou já foi apagada.');
+    }
+    $respostas = json_decode((string) $p['respostas'], true);
+    $respostas = is_array($respostas) ? $respostas : [];
+    $erros = [];
+    $acao = (string) ($_POST['acao'] ?? '');
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+        if ($acao === 'estado' && isset(estados_preinscricao_manuais()[$_POST['estado'] ?? ''])) {
+            executar('UPDATE preinscricoes SET estado = ? WHERE id = ?', [$_POST['estado'], $id]);
+            aviso('Estado da pré-inscrição atualizado.');
+            redirecionar('preinscricao', ['id' => $id]);
+        }
+        if ($acao === 'apagar') {
+            executar('DELETE FROM preinscricoes WHERE id = ?', [$id]);
+            aviso('Pré-inscrição apagada.');
+            redirecionar('inscricoes', ['estado' => 'preinscricao']);
+        }
+        if ($acao === 'inscrever') {
+            $formando = texto('formando', 120) ?: (string) $p['nome'];
+            $email = texto('email_formando', 160);
+            $estado = ($_POST['estado_inscricao'] ?? '') === 'pendente' ? 'pendente' : 'confirmada';
+            if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $erros[] = 'O email do formando não é válido.';
+            }
+            $f = null;
+            $nova = null;
+            if (($_POST['sessao'] ?? '') === 'nova') {
+                [$d, $curso_id, $modulo_id, $e] = ler_sessao();
+                if (!$e && strtotime($d['data']) < strtotime('today')) {
+                    $e[] = 'A data da sessão já passou.';
+                }
+                $erros = array_merge($erros, $e);
+                $nova = [$d, $curso_id, $modulo_id];
+            } elseif (!($f = linha_bd("SELECT * FROM formacoes WHERE id = ? AND estado != 'cancelada'", [(int) ($_POST['sessao'] ?? 0)]))) {
+                $erros[] = 'Escolha a sessão ou "Nova sessão".';
+            }
+            if (!$erros) {
+                if ($nova) {
+                    $f = linha_bd('SELECT * FROM formacoes WHERE id = ?', [gravar_sessao(...$nova)]);
+                }
+                $r = gravar_inscricao($f, ['cliente_id' => null, 'utilizador_id' => utilizador()['id'], 'origem' => 'site', 'empresa' => $p['empresa'], 'nif' => null,
+                    'contacto_nome' => $p['nome'], 'contacto_email' => $p['email'], 'contacto_telefone' => $p['telefone'],
+                    'formando' => $formando, 'email' => $email, 'funcao' => '', 'ferramentas' => [], 'expectativas' => ''], $respostas, true);
+                if ($r['erro']) {
+                    $erros[] = $r['erro'];
+                } else {
+                    executar('UPDATE inscricoes SET estado = ? WHERE id = ?', [$estado, $r['id']]);
+                    executar("UPDATE preinscricoes SET estado = 'inscrita', inscricao_id = ? WHERE id = ?", [$r['id'], $id]);
+                    $i = linha_bd(SQL_INSCRICAO, [$r['id']]);
+                    $avisado = $estado === 'confirmada' && !empty($_POST['avisar']) && ($contacto = contacto_inscricao($i));
+                    if ($avisado) {
+                        avisar_estado_inscricao($i, 'confirmada', $contacto);
+                    }
+                    aviso('Inscrição de ' . h($formando) . ' registada em ' . h(horario($f)) . ($nova ? ' (sessão nova criada no calendário)' : '') . '.'
+                        . ($avisado ? ' Confirmação enviada por email para ' . h((string) $p['email']) . '.' : ''));
+                    redirecionar('inscricao', ['id' => $r['id']]);
+                }
+            }
+        }
+    }
+
+    // Sessões futuras dos cursos do mesmo percurso (ou do próprio curso), para escolher; ou uma sessão nova
+    $cursos = array_column(cursos_do_percurso($c) ?: [$c], 'nome', 'id');
+    $sessoes = consulta('SELECT * FROM formacoes WHERE curso_id IN (' . implode(',', array_map('intval', array_keys($cursos))) . ") AND inicio >= ? AND estado != 'cancelada' ORDER BY inicio", [date('Y-m-d 00:00:00')]);
+    $escolha = (string) ($_POST['sessao'] ?? '');
+    if ($escolha === '') {
+        $propria = array_values(array_filter($sessoes, function ($f) use ($c) { return (int) $f['curso_id'] === (int) $c['id']; }));
+        $escolha = $propria ? (string) $propria[0]['id'] : 'nova';
+    }
+    $opcoes = '';
+    foreach ($sessoes as $f) {
+        $livres = (int) $f['vagas'] - inscritos((int) $f['id']);
+        $opcoes .= '<label class="opcao"><input type="radio" name="sessao" value="' . (int) $f['id'] . '"' . ($escolha === (string) $f['id'] ? ' checked' : '') . '> <span><strong>' . h($f['titulo']) . '</strong> · ' . h(nome_modulo($f)) . '<br>'
+            . h(horario($f)) . ' · ' . h(MODALIDADES[$f['modalidade']] ?? '') . ' · ' . ($livres > 0 ? $livres . ' vaga(s) livre(s)' : 'sem vagas livres') . ($f['estado'] !== 'aberta' ? ' · ' . h(ESTADOS_FORMACAO[$f['estado']]) : '') . '</span></label>';
+    }
+    $opcoes .= '<label class="opcao"><input type="radio" name="sessao" value="nova"' . ($escolha === 'nova' ? ' checked' : '') . '> <span><strong>Nova sessão</strong>: definir agora a data e o horário (fica também no calendário e no site)</span></label>';
+    $v = $_POST + ['curso_modulo' => 'c:' . $c['id'], 'data' => '', 'hora_inicio' => '09:30', 'hora_fim' => '10:30', 'modalidade' => $p['modalidade'] ?: 'presencial', 'local' => '', 'vagas' => '12', 'reuniao' => '', 'formando' => $p['nome'], 'email_formando' => $p['email'], 'estado_inscricao' => 'confirmada'];
+    $a = $respostas ? avaliar_diagnostico($respostas) : null;
+    $rec = $respostas ? recomendacao_de(['respostas' => json_encode($respostas), 'curso_id' => $c['id']]) : '';
+    $dados = array_filter([
+        'Curso' => '<a href="' . h(url('curso', ['id' => $c['id']])) . '">' . h($c['nome']) . '</a>',
+        'Pedido em' => h(data_hora($p['criado'])),
+        'Empresa' => h($p['empresa']),
+        'Contactos' => '<a href="mailto:' . h($p['email']) . '">' . h($p['email']) . '</a>' . ($p['telefone'] ? ' · ' . h($p['telefone']) : ''),
+        'Formandos previstos' => (string) (int) $p['formandos'],
+        'Modalidade preferida' => h(MODALIDADES[$p['modalidade']] ?? 'Indiferente'),
+        'Preferências de datas' => nl2br(h($p['preferencias'])),
+        'Estado' => etiqueta('Pré-inscrição', 'pre') . ' ' . h(ESTADOS_PREINSCRICAO[$p['estado']] ?? $p['estado'])
+            . ($p['estado'] === 'inscrita' && $p['inscricao_id'] ? ' · <a href="' . h(url('inscricao', ['id' => $p['inscricao_id']])) . '">Ver a inscrição</a>' : ''),
+    ], function ($x) { return $x !== ''; });
+    $tabela = '';
+    foreach ($dados as $k => $val) {
+        $tabela .= '<tr><th scope="row">' . h($k) . '</th><td>' . $val . '</td></tr>';
+    }
+    $html = ($erros ? '<div class="aviso aviso-erro" role="alert">' . h(implode(' ', $erros)) . '</div>' : '')
+        . ($p['estado'] === 'inscrita' ? '<div class="aviso aviso-ok">Esta pré-inscrição já deu origem a uma inscrição.' . ($p['inscricao_id'] ? ' <a href="' . h(url('inscricao', ['id' => $p['inscricao_id']])) . '">Ver a inscrição</a>.' : '') . '</div>' : '')
+        . '<div class="conteudo"><table class="tabela-ficha"><tbody>' . $tabela . '</tbody></table></div>
+        <form method="post" class="formulario linha-form">' . campo_csrf() . '<input type="hidden" name="acao" value="estado">
+          ' . campo_select('estado', 'Estado da pré-inscrição', estados_preinscricao_manuais($p['estado']), $p['estado']) . '
+          <div></div><div><button class="botao botao-secundario" type="submit">Guardar estado</button></div></form>'
+        . ($a ? '<h2 class="espaco-topo">Diagnóstico</h2>
+        <div class="diagnostico-resultado">
+          <div><span class="texto-suave">Nível</span>' . nivel_etiqueta($a['nivel']) . '</div>
+          <div><span class="texto-suave">Pontuação</span><span><strong>' . (int) $a['pontuacao'] . '</strong> em 24</span></div>
+          <div><span class="texto-suave">Uso responsável</span><span><strong>' . (int) $a['responsavel'] . '</strong> em 9</span></div>
+        </div>
+        ' . ($rec ? '<p><strong>Recomendação:</strong> ' . h($rec) . '</p>' : '') . '
+        <details class="programa"><summary>Ver as respostas</summary><div class="programa-corpo conteudo tabela-rolante">' . tabela_diagnostico(['respostas' => json_encode($respostas)]) . '</div></details>' : '');
+    if ($p['estado'] !== 'inscrita') {
+        $html .= '<h2 class="espaco-topo" id="inscrever">Inscrever e definir datas</h2>
+        <p class="texto-suave">Escolha uma sessão já agendada ou crie uma sessão nova com a data e o horário. A pré-inscrição passa a "Inscrita" e a inscrição aparece em Inscrições, com os contactos e o diagnóstico.' . ((int) $p['formandos'] > 1 ? ' Esta pré-inscrição prevê ' . (int) $p['formandos'] . ' formandos: os restantes inscrevem-se depois, a partir da sessão.' : '') . '</p>
+        <form method="post" class="formulario" action="' . h(url('preinscricao', ['id' => $id])) . '#inscrever">' . campo_csrf() . '<input type="hidden" name="acao" value="inscrever">
+          <fieldset class="campo-grupo"><legend>Sessão *</legend><div class="opcoes">' . $opcoes . '</div></fieldset>
+          <fieldset class="campo-grupo nova-sessao"><legend>Nova sessão (preencher só se escolheu "Nova sessão")</legend>
+            <div class="campos-2">
+              ' . seletor_curso_modulo((string) $v['curso_modulo'], (int) $c['id']) . '
+              ' . campo('data', 'Data', (string) $v['data'], 'date') . '
+              <div class="campos-2">' . campo('hora_inicio', 'Início', (string) $v['hora_inicio'], 'time') . campo('hora_fim', 'Fim', (string) $v['hora_fim'], 'time') . '</div>
+              ' . campo_select('modalidade', 'Modalidade', MODALIDADES, (string) $v['modalidade']) . '
+              ' . campo('local', 'Local', (string) $v['local'], 'text', 'maxlength="160" placeholder="Morada, nas sessões presenciais ou mistas"') . '
+              ' . campo('vagas', 'Vagas', (string) $v['vagas'], 'number', 'min="1" max="500"') . '
+            </div>
+            ' . campo('reuniao', 'Ligação da reunião online (Google Meet)', (string) $v['reuniao'], 'url', 'maxlength="300" placeholder="https://meet.google.com/abc-defg-hij"') . '
+          </fieldset>
+          <div class="campos-2">
+            ' . campo('formando', 'Nome do formando', (string) $v['formando'], 'text', 'maxlength="120"') . '
+            ' . campo('email_formando', 'Email do formando', (string) $v['email_formando'], 'email', 'maxlength="160"') . '
+            ' . campo_select('estado_inscricao', 'Estado da inscrição', ['confirmada' => 'Confirmada', 'pendente' => 'Pendente'], (string) $v['estado_inscricao']) . '
+          </div>
+          <label class="opcao consentimento"><input type="checkbox" name="avisar" value="1" checked> <span>Enviar a confirmação por email ao candidato, com a data, o local e a ligação da sessão online (só quando o estado é Confirmada)</span></label>
+          <div><button class="botao" type="submit">Inscrever</button></div>
+        </form>';
+    }
+    $html .= '<form method="post" class="espaco-topo">' . campo_csrf() . '<input type="hidden" name="acao" value="apagar"><button class="botao botao-secundario" type="submit">Apagar esta pré-inscrição</button></form>
+      <p class="espaco-topo"><a href="' . h(url('inscricoes', ['estado' => 'preinscricao'])) . '">Voltar às pré-inscrições</a></p>';
+    pagina_area('inscricoes', (string) $p['nome'], $html, 'Pré-inscrição');
 }
 
 // Nível e curso indicado pelo diagnóstico de uma pré-inscrição, com aviso quando difere do curso escolhido
@@ -482,20 +648,28 @@ function form_modulo(array $m, int $numero, string $unidade = 'Módulo'): string
 
 /* Inscrições */
 
+// Lista de inscrições; as pré-inscrições ainda sem inscrição aparecem no topo com o estado "Pré-inscrição"
 function admin_inscricoes(): void
 {
     $origens = ['site' => 'Site', 'por_associar' => 'Site, por associar a cliente', 'area' => 'Área de clientes'];
-    $filtros = ['formacao' => (int) ($_GET['formacao'] ?? 0), 'cliente' => (int) ($_GET['cliente'] ?? 0), 'estado' => isset(ESTADOS_INSCRICAO[$_GET['estado'] ?? '']) ? $_GET['estado'] : '', 'origem' => isset($origens[$_GET['origem'] ?? '']) ? $_GET['origem'] : ''];
-    $sql = 'SELECT i.*, ' . SQL_CLIENTE . ', f.titulo, f.inicio FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id WHERE 1 = 1';
+    $estados = ['preinscricao' => 'Pré-inscrição'] + ESTADOS_INSCRICAO;
+    $filtros = ['formacao' => (int) ($_GET['formacao'] ?? 0), 'cliente' => (int) ($_GET['cliente'] ?? 0), 'estado' => isset($estados[$_GET['estado'] ?? '']) ? $_GET['estado'] : '', 'origem' => isset($origens[$_GET['origem'] ?? '']) ? $_GET['origem'] : ''];
+    $com_pre = !$filtros['formacao'] && !$filtros['cliente'] && in_array($filtros['estado'], ['', 'preinscricao'], true) && in_array($filtros['origem'], ['', 'site', 'por_associar'], true);
+    $pre = $com_pre ? consulta("SELECT p.*, c.nome AS curso FROM preinscricoes p JOIN cursos c ON c.id = p.curso_id WHERE p.estado != 'inscrita' ORDER BY p.estado = 'nova' DESC, p.criado DESC") : [];
+    $sql = 'SELECT i.*, ' . SQL_CLIENTE . ', f.titulo, f.inicio FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id WHERE ' . ($filtros['estado'] === 'preinscricao' ? '0 = 1' : '1 = 1');
     $par = [];
     if ($filtros['formacao']) { $sql .= ' AND i.formacao_id = ?'; $par[] = $filtros['formacao']; }
     if ($filtros['cliente']) { $sql .= ' AND i.cliente_id = ?'; $par[] = $filtros['cliente']; }
-    if ($filtros['estado']) { $sql .= ' AND i.estado = ?'; $par[] = $filtros['estado']; }
+    if ($filtros['estado'] && $filtros['estado'] !== 'preinscricao') { $sql .= ' AND i.estado = ?'; $par[] = $filtros['estado']; }
     if ($filtros['origem'] === 'por_associar') { $sql .= ' AND i.cliente_id IS NULL'; }
     elseif ($filtros['origem']) { $sql .= ' AND i.origem = ?'; $par[] = $filtros['origem']; }
     $lista = consulta($sql . ' ORDER BY f.inicio DESC, i.criado', $par);
     if (!empty($_GET['exportar'])) {
         $linhas = [];
+        foreach ($pre as $p) {
+            $a = ($r = json_decode((string) $p['respostas'], true)) ? avaliar_diagnostico($r) : ['nivel' => '', 'pontuacao' => '', 'responsavel' => ''];
+            $linhas[] = [$p['curso'], '', $p['empresa'], 'Site (pré-inscrição)', $p['nome'], $p['email'], $p['telefone'], $p['nome'], $p['email'], '', 'Pré-inscrição: ' . (ESTADOS_PREINSCRICAO[$p['estado']] ?? $p['estado']), $a['nivel'], $a['pontuacao'], $a['responsavel'], '', $p['preferencias'], data_hora($p['criado'])];
+        }
         foreach ($lista as $i) {
             $linhas[] = [$i['titulo'], data_hora($i['inicio']), $i['cliente'], ORIGENS[$i['origem']] ?? $i['origem'], $i['contacto_nome'], $i['contacto_email'], $i['contacto_telefone'], $i['formando'], $i['email'], $i['funcao'], ESTADOS_INSCRICAO[$i['estado']] ?? $i['estado'], $i['nivel'], $i['pontuacao'], $i['responsavel'], $i['ferramentas'], $i['expectativas'], data_hora($i['criado'])];
         }
@@ -507,13 +681,20 @@ function admin_inscricoes(): void
     }
     $clientes = array_column(consulta('SELECT id, nome FROM clientes ORDER BY nome'), 'nome', 'id');
     $linhas = '';
+    foreach ($pre as $p) {
+        $r = json_decode((string) $p['respostas'], true);
+        $linhas .= '<tr class="linha-pre"><td><a href="' . h(url('preinscricao', ['id' => $p['id']])) . '">' . h($p['nome']) . '</a>' . ((int) $p['formandos'] > 1 ? '<br><span class="texto-suave">' . (int) $p['formandos'] . ' formandos previstos</span>' : '') . '</td>'
+            . '<td>' . h($p['empresa']) . ' ' . etiqueta('Site') . '</td><td>' . h($p['curso']) . '<br><span class="texto-suave">Sem data definida</span></td>'
+            . '<td>' . (is_array($r) && $r ? nivel_etiqueta(avaliar_diagnostico($r)['nivel']) : '') . '</td>'
+            . '<td>' . etiqueta('Pré-inscrição', 'pre') . ($p['estado'] !== 'nova' ? '<br><span class="texto-suave">' . h(ESTADOS_PREINSCRICAO[$p['estado']] ?? $p['estado']) . '</span>' : '') . '</td><td>' . h(data_hora($p['criado'])) . '</td></tr>';
+    }
     foreach ($lista as $i) {
         $linhas .= '<tr><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . h($i['cliente']) . etiqueta_origem($i) . '</td><td>' . h($i['titulo']) . '<br><span class="texto-suave">' . h(data_hora($i['inicio'])) . '</span></td><td>' . nivel_etiqueta($i['nivel']) . '</td><td>' . estado_etiqueta($i['estado'], ESTADOS_INSCRICAO) . '</td><td>' . h(data_hora($i['criado'])) . '</td></tr>';
     }
     pagina_area('inscricoes', 'Inscrições', '
       <form method="get" class="filtros">
         <input type="hidden" name="p" value="inscricoes">
-        ' . campo_select('formacao', 'Formação', $formacoes, $filtros['formacao'], 'Todas') . campo_select('cliente', 'Cliente', $clientes, $filtros['cliente'], 'Todos') . campo_select('estado', 'Estado', ESTADOS_INSCRICAO, $filtros['estado'], 'Todos') . campo_select('origem', 'Origem', $origens, $filtros['origem'], 'Todas') . '
+        ' . campo_select('formacao', 'Formação', $formacoes, $filtros['formacao'], 'Todas') . campo_select('cliente', 'Cliente', $clientes, $filtros['cliente'], 'Todos') . campo_select('estado', 'Estado', $estados, $filtros['estado'], 'Todos') . campo_select('origem', 'Origem', $origens, $filtros['origem'], 'Todas') . '
         <div class="filtros-acoes"><button class="botao" type="submit">Filtrar</button><a class="botao botao-secundario" href="' . h(url('inscricoes', array_filter($filtros) + ['exportar' => 1])) . '">Exportar para Excel</a></div>
       </form>
       ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Formando</th><th>Cliente</th><th>Formação</th><th>Nível de IA</th><th>Estado</th><th>Inscrito em</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Sem inscrições para os filtros escolhidos.</p>'), 'Formações');

@@ -176,7 +176,7 @@ function link_ficha(array $curso): string
 
 function link_pre_inscricao(int $curso_id): string
 {
-    return $curso_id ? '/formacoes/pre-inscricao.php?c=' . $curso_id : '/contactos/#formulario';
+    return '/formacoes/pre-inscricao.php' . ($curso_id ? '?c=' . $curso_id : '');
 }
 
 // Sessões abertas, futuras e com vagas de um curso
@@ -326,15 +326,7 @@ function pagina_inscricao(): void
             $novo = $_POST['estado'];
             executar('UPDATE inscricoes SET estado = ? WHERE id = ?', [$novo, $id]);
             if (!empty($_POST['avisar']) && $novo !== $i['estado'] && $contacto) {
-                $frase = $novo === 'confirmada'
-                    ? 'A inscrição de ' . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . horario($i) . ', está confirmada.'
-                    : 'A inscrição de ' . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . horario($i) . ', passou ao estado: ' . strtolower(ESTADOS_INSCRICAO[$novo]) . '.';
-                $local = $novo === 'confirmada' ? (MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ': ' . $i['local'] : '') : '';
-                [$reuniao_html, $reuniao_texto] = $novo === 'confirmada' ? bloco_reuniao($i) : ['', ''];
-                enviar_aviso($contacto['email'], ($novo === 'confirmada' ? 'Inscrição confirmada: ' : 'Inscrição atualizada: ') . $i['formando'] . ', ' . data_hora($i['inicio'], false), $novo === 'confirmada' ? 'Inscrição confirmada' : 'Inscrição atualizada',
-                    '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 14px;">' . h($frase) . '</p>' . ($local ? '<p style="margin:0 0 14px;"><strong>Local:</strong> ' . h($local) . '</p>' : '') . $reuniao_html . '<p style="margin:0;">Para qualquer questão, basta responder a este email.</p>',
-                    nome_curto($contacto['nome']) . ",\n\n" . $frase . ($local ? "\n\nLocal: " . $local : '') . $reuniao_texto . "\n\nPara qualquer questão, basta responder a este email.",
-                    (string) (cfg()['destinatario'] ?? 'info@gadgetmetodo.pt'), '', $novo === 'confirmada' ? (string) $i['email'] : '');
+                avisar_estado_inscricao($i, $novo, $contacto);
                 aviso('Estado atualizado e aviso enviado por email para ' . h($contacto['email']) . '.');
             } else {
                 aviso('Estado atualizado.');
@@ -383,7 +375,8 @@ function pagina_inscricao(): void
         'Sessão online' => $i['modalidade'] === 'presencial' || !$i['reuniao'] ? '' : ($admin || $i['estado'] === 'confirmada'
             ? '<a href="' . h($i['reuniao']) . '" target="_blank" rel="noopener">Entrar na reunião</a><br><span class="texto-suave">' . h($i['reuniao']) . '</span>'
             : '<span class="texto-suave">A ligação para a reunião é enviada com a confirmação da inscrição.</span>'),
-        'Origem' => h(ORIGENS[$i['origem']] ?? $i['origem']),
+        'Origem' => h(ORIGENS[$i['origem']] ?? $i['origem']) . (($pre = $admin ? linha_bd('SELECT id, criado, formandos FROM preinscricoes WHERE inscricao_id = ?', [$id]) : null)
+            ? '<br><a href="' . h(url('preinscricao', ['id' => $pre['id']])) . '">Pré-inscrição de ' . h(data_hora($pre['criado'], false)) . '</a>' . ((int) $pre['formandos'] > 1 ? ' <span class="texto-suave">(' . (int) $pre['formandos'] . ' formandos previstos)</span>' : '') : ''),
         'Inscrito por' => $publica
             ? h($i['contacto_nome']) . ', ' . h(data_hora($i['criado'])) . '<br><span class="texto-suave"><a href="mailto:' . h($i['contacto_email']) . '">' . h($i['contacto_email']) . '</a>' . ($i['contacto_telefone'] ? ' · ' . h($i['contacto_telefone']) : '') . '</span>'
             : h($i['autor']) . ', ' . h(data_hora($i['criado'])),
@@ -448,6 +441,20 @@ function pagina_conta(): void
         ' . campo('repetir', 'Repetir a nova palavra-passe', '', 'password', 'required minlength="10" autocomplete="new-password"') . '
         <div><button class="botao" type="submit">Alterar palavra-passe</button></div>
       </form>', 'Conta');
+}
+
+// Email a quem fez a inscrição com o novo estado; na confirmação, com o local e a ligação da sessão online (cópia ao formando)
+function avisar_estado_inscricao(array $i, string $novo, array $contacto): void
+{
+    $frase = $novo === 'confirmada'
+        ? 'A inscrição de ' . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . horario($i) . ', está confirmada.'
+        : 'A inscrição de ' . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . horario($i) . ', passou ao estado: ' . strtolower(ESTADOS_INSCRICAO[$novo]) . '.';
+    $local = $novo === 'confirmada' ? (MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ': ' . $i['local'] : '') : '';
+    [$reuniao_html, $reuniao_texto] = $novo === 'confirmada' ? bloco_reuniao($i) : ['', ''];
+    enviar_aviso($contacto['email'], ($novo === 'confirmada' ? 'Inscrição confirmada: ' : 'Inscrição atualizada: ') . $i['formando'] . ', ' . data_hora($i['inicio'], false), $novo === 'confirmada' ? 'Inscrição confirmada' : 'Inscrição atualizada',
+        '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 14px;">' . h($frase) . '</p>' . ($local ? '<p style="margin:0 0 14px;"><strong>Local:</strong> ' . h($local) . '</p>' : '') . $reuniao_html . '<p style="margin:0;">Para qualquer questão, basta responder a este email.</p>',
+        nome_curto($contacto['nome']) . ",\n\n" . $frase . ($local ? "\n\nLocal: " . $local : '') . $reuniao_texto . "\n\nPara qualquer questão, basta responder a este email.",
+        (string) (cfg()['destinatario'] ?? 'info@gadgetmetodo.pt'), '', $novo === 'confirmada' ? (string) $i['email'] : '');
 }
 
 /* Ligação da reunião online e convites a candidatos */

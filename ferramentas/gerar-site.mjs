@@ -1495,9 +1495,10 @@ pagina({
             <h2 id="como-inscrever" style="font-size:1.3rem">Como se inscrever</h2>
             <ol class="etapas etapas-compactas">
               <li><h3>Escolha o curso</h3><p>Veja o programa, os temas, os casos práticos e a ficha em PDF.</p></li>
-              <li><h3>Inscreva-se ou faça a pré-inscrição</h3><p>Com datas agendadas, inscreve-se numa sessão. Sem datas, a pré-inscrição garante que recebe o convite quando forem marcadas.</p></li>
+              <li><h3>Inscreva-se ou faça a pré-inscrição</h3><p>Com datas agendadas, inscreve-se numa sessão. Sem datas, a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a> garante que recebe o convite quando forem marcadas.</p></li>
               <li><h3>Receba a confirmação</h3><p>Recebe um email logo a seguir e a confirmação da Gadgetmetodo nos dias úteis seguintes.</p></li>
             </ol>
+            <p class="espaco-topo-curto mb-0"><a class="botao" href="/formacoes/pre-inscricao.php">${icone('clipboard-list')} Fazer pré-inscrição</a></p>
           </div>
         </div>
       </div>
@@ -1532,7 +1533,7 @@ pagina({
   descricao: 'Pré-inscrição num curso da Gadgetmetodo, Lda.: receba o convite para a inscrição quando forem marcadas as datas.',
   trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/pre-inscricao.php', 'Pré-inscrição']],
   corpo: `
-    ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/pre-inscricao.php', 'Pré-inscrição']], h1: 'Pré-inscrição', lead: 'Deixe os seus dados e enviamos-lhe o convite para a inscrição assim que houver datas para este curso. Não fica obrigado a inscrever-se.', atualizado: false })}
+    ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/pre-inscricao.php', 'Pré-inscrição']], h1: 'Pré-inscrição', lead: 'Indique o curso que pretende e deixe os seus dados: enviamos-lhe o convite para a inscrição assim que houver datas. Não fica obrigado a inscrever-se.', atualizado: false })}
 
     <?= $pagina['conteudo'] ?>
   `,

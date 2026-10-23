@@ -188,6 +188,21 @@
   background: var(--petroleo-tinta);
 }
 
+.etiqueta-pre {
+  color: #7a4a00;
+  background: #fff1d6;
+}
+
+.linha-pre td {
+  background: #fffaf0;
+}
+
+.nova-sessao {
+  padding: 16px 18px;
+  background: var(--nevoa);
+  border-radius: var(--raio-pequeno);
+}
+
 .etiqueta-erro {
   color: #8f1d14;
   background: #fbe2df;

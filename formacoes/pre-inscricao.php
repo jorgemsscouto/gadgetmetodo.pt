@@ -29,7 +29,7 @@
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/site.css?v=6e07631c08">
-  <link rel="stylesheet" href="/assets/css/area.css?v=5b7ce940fe">
+  <link rel="stylesheet" href="/assets/css/area.css?v=9059f99b34">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -246,7 +246,7 @@
       <div class="contentor">
         <nav class="migalhas" aria-label="Localização"><ol><li><a href="/">Início</a></li><li><a href="/formacoes/">Formação</a></li><li aria-current="page">Pré-inscrição</li></ol></nav>
         <h1>Pré-inscrição</h1>
-        <p class="lead">Deixe os seus dados e enviamos-lhe o convite para a inscrição assim que houver datas para este curso. Não fica obrigado a inscrever-se.</p>
+        <p class="lead">Indique o curso que pretende e deixe os seus dados: enviamos-lhe o convite para a inscrição assim que houver datas. Não fica obrigado a inscrever-se.</p>
         
       </div>
     </section>
