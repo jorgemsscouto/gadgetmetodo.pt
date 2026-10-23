@@ -58,6 +58,7 @@ function limpar_agenda_e_cursos(PDO $pdo): void
 {
     $pdo->exec('DELETE FROM inscricoes');
     $pdo->exec('DELETE FROM preinscricoes');
+    $pdo->exec('DELETE FROM sessoes');
     $pdo->exec('DELETE FROM formacoes');
     $pdo->exec('DELETE FROM modulos');
     $pdo->exec('DELETE FROM cursos');

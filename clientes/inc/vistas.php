@@ -39,6 +39,7 @@ function documento(string $titulo, string $corpo): void
 ' . $corpo . '
   <footer class="area-rodape"><div class="contentor">© 2026 Gadgetmetodo, Lda. · <a href="/">Website</a> · <a href="/privacidade/">Política de privacidade</a></div></footer>
   <script src="' . h(versao_ficheiro('/assets/js/copiar.js')) . '" defer></script>
+  <script src="' . h(versao_ficheiro('/assets/js/area.js')) . '" defer></script>
 </body>
 </html>
 ';
@@ -154,8 +155,8 @@ function calendario(array $formacoes, callable $acoes, bool $publico = false): s
           <div class="evento-info">
             <h3>' . ($publico && !empty($f['curso_id']) ? '<a href="' . h(link_curso_publico(['id' => $f['curso_id']])) . '">' . h($f['titulo']) . '</a>' : h($f['titulo'])) . (formacao_nova($f) && $f['estado'] === 'aberta' ? ' ' . etiqueta('Nova', 'nova') : '') . '</h3>
             <p class="mb-0">' . h(nome_modulo($f)) . '</p>
-            <p class="evento-meta mb-0">' . h(date('H:i', $t) . (!empty($f['fim']) ? ' às ' . date('H:i', strtotime($f['fim'])) : '')) . ($local ? ' · ' . h($local) : '') . h($vagas) . '</p>
-            ' . programa_html($f) . '
+            <p class="evento-meta mb-0">' . h(count(sessoes_formacao((int) $f['id'])) > 1 ? horario($f) : hora_sessao($f)) . ($local ? ' · ' . h($local) : '') . h($vagas) . '</p>
+            ' . sessoes_html($f) . programa_html($f) . '
           </div>
           <div class="evento-acoes">' . ($publico && $f['estado'] === 'aberta' ? '' : estado_etiqueta($f['estado'], ESTADOS_FORMACAO)) . $acoes($f, $restantes) . '</div>
         </article>';

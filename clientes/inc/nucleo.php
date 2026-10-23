@@ -64,6 +64,12 @@ function bd(): ?PDO
             modalidade TEXT, local TEXT, vagas INTEGER NOT NULL DEFAULT 12, estado TEXT NOT NULL DEFAULT 'aberta',
             notas TEXT, criado TEXT NOT NULL, curso_id INTEGER REFERENCES cursos(id), modulo_id INTEGER REFERENCES modulos(id), reuniao TEXT)");
         acrescentar_colunas($pdo, 'formacoes', ['curso_id' => 'INTEGER REFERENCES cursos(id)', 'modulo_id' => 'INTEGER REFERENCES modulos(id)', 'reuniao' => 'TEXT']);
+        // Edições do curso completo: uma linha por sessão, com data e horário próprios (formacoes.inicio é o da 1.ª
+        // sessão e formacoes.fim o fim da última); sem linhas, a formação decorre numa só data
+        $pdo->exec('CREATE TABLE IF NOT EXISTS sessoes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, formacao_id INTEGER NOT NULL REFERENCES formacoes(id), ordem INTEGER NOT NULL,
+            modulo_id INTEGER REFERENCES modulos(id), inicio TEXT NOT NULL, fim TEXT)');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS sessoes_formacao ON sessoes (formacao_id, inicio)');
         migrar_sessoes_para_cursos($pdo);
         // As inscrições feitas no site público ficam sem cliente até a Gadgetmetodo as associar
         $tabela_inscricoes = "CREATE TABLE IF NOT EXISTS inscricoes (
@@ -371,10 +377,62 @@ function etiqueta(string $texto, string $tipo = ''): string
     return '<span class="etiqueta' . ($tipo ? ' etiqueta-' . h($tipo) : '') . '">' . h($texto) . '</span>';
 }
 
+// Datas de uma formação: numa só data, ou "6 sessões, de 3 a 24 de novembro de 2026, 18:30 às 19:30" nas edições com várias sessões
 function horario(array $f): string
 {
-    $fim = !empty($f['fim']) ? ' às ' . date('H:i', strtotime($f['fim'])) : '';
-    return data_extensa($f['inicio']) . ', ' . date('H:i', strtotime($f['inicio'])) . $fim;
+    $s = sessoes_formacao((int) ($f['formacao_id'] ?? $f['id'] ?? 0));
+    if (count($s) > 1) {
+        $horas = array_values(array_unique(array_map('hora_sessao', $s)));
+        return count($s) . ' sessões, ' . periodo($s[0]['inicio'], $s[count($s) - 1]['inicio']) . (count($horas) === 1 ? ', ' . $horas[0] : '');
+    }
+    return data_extensa($f['inicio']) . ', ' . hora_sessao($f);
+}
+
+function hora_sessao(array $s): string
+{
+    return date('H:i', strtotime($s['inicio'])) . (!empty($s['fim']) ? ' às ' . date('H:i', strtotime($s['fim'])) : '');
+}
+
+// "de 3 a 24 de novembro de 2026", "de 3 de novembro a 8 de dezembro de 2026" ou com os dois anos
+function periodo(string $de, string $ate): string
+{
+    $a = strtotime($de);
+    $z = strtotime($ate);
+    $meses = ['', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    $inicio = date('j', $a) . (date('Y-m', $a) === date('Y-m', $z) ? '' : ' de ' . $meses[(int) date('n', $a)] . (date('Y', $a) === date('Y', $z) ? '' : ' de ' . date('Y', $a)));
+    return 'de ' . $inicio . ' a ' . data_extensa($ate);
+}
+
+// Sessões com data de uma edição (vazio quando a formação decorre numa só data); memória por pedido
+function sessoes_formacao(int $formacao_id, bool $renovar = false): array
+{
+    static $cache = [];
+    if (!$formacao_id) {
+        return [];
+    }
+    if ($renovar || !isset($cache[$formacao_id])) {
+        $cache[$formacao_id] = consulta('SELECT * FROM sessoes WHERE formacao_id = ? ORDER BY inicio, ordem', [$formacao_id]);
+    }
+    return $cache[$formacao_id];
+}
+
+// Uma linha por sessão: "Sessão 1: Nome · terça, 3 de novembro de 2026, 18:30 às 19:30"
+function linhas_sessoes(array $f): array
+{
+    $dias = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+    $r = [];
+    foreach (sessoes_formacao((int) ($f['formacao_id'] ?? $f['id'] ?? 0)) as $n => $s) {
+        $m = $s['modulo_id'] ? linha_bd('SELECT * FROM modulos WHERE id = ?', [$s['modulo_id']]) : null;
+        $r[] = ($m ? rotulo_modulo($m) : 'Sessão ' . ($n + 1)) . ' · ' . $dias[(int) date('w', strtotime($s['inicio']))] . ', ' . data_extensa($s['inicio']) . ', ' . hora_sessao($s);
+    }
+    return count($r) > 1 ? $r : [];
+}
+
+function sessoes_html(array $f, bool $aberto = false): string
+{
+    $l = linhas_sessoes($f);
+    return $l ? '<details class="programa sessoes-datas"' . ($aberto ? ' open' : '') . '><summary>Datas das ' . count($l) . ' sessões</summary><div class="programa-corpo"><ol>'
+        . implode('', array_map(function ($x) { return '<li>' . h($x) . '</li>'; }, $l)) . '</ol></div></details>' : '';
 }
 
 /* Exportação para Excel (separador ; e UTF-8 com BOM) */

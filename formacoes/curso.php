@@ -29,7 +29,7 @@
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/site.css?v=239f9b98b7">
-  <link rel="stylesheet" href="/assets/css/area.css?v=8abc7ffe2c">
+  <link rel="stylesheet" href="/assets/css/area.css?v=4457f5c266">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {

@@ -1105,3 +1105,59 @@ h2.calendario-mes {
   background: #8f1d14;
   border-color: #8f1d14;
 }
+
+/* Datas das sessões de uma edição do curso completo */
+
+.sessoes-curso {
+  padding: 16px 18px;
+  background: var(--nevoa);
+  border: 1px solid var(--cinzento-claro);
+  border-radius: var(--raio-pequeno);
+}
+
+.sessoes-curso legend {
+  padding: 0 6px;
+}
+
+.tabela-sessoes {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+}
+
+.tabela-sessoes th,
+.tabela-sessoes td {
+  padding: 6px 8px 6px 0;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.tabela-sessoes th {
+  color: var(--cinzento);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.tabela-sessoes td.n {
+  width: 28px;
+  color: var(--petroleo);
+  font-weight: 700;
+}
+
+.tabela-sessoes select,
+.tabela-sessoes input {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.tabela-sessoes tr:not([data-linha-curso]) td {
+  opacity: 0.85;
+}
+
+.lista-datas li + li,
+.sessoes-datas li + li {
+  margin-top: 4px;
+}

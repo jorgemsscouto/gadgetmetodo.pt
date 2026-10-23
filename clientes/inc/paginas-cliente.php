@@ -140,7 +140,7 @@ function resumo_sessao(array $f, int $restantes, bool $publico): string
     $vagas = $publico ? ($restantes <= 3 ? 'Últimas vagas' : $restantes . ' vagas disponíveis') : $restantes . ' vaga(s) disponível(eis)';
     $curso = curso((int) ($f['curso_id'] ?? 0));
     return '<div class="resumo-formacao"><strong>' . h($f['titulo']) . '</strong> · ' . h(nome_modulo($f)) . '<br>' . h(horario($f)) . ' · ' . h(MODALIDADES[$f['modalidade']] ?? '') . ($f['local'] ? ' · ' . h($f['local']) : '') . '<br><span class="texto-suave">' . h($vagas) . '</span>'
-        . ($publico && $curso ? ' · <a href="' . h(link_curso_publico($curso)) . '">Ver a página do curso</a>' : '') . programa_html($f, $publico) . '</div>';
+        . ($publico && $curso ? ' · <a href="' . h(link_curso_publico($curso)) . '">Ver a página do curso</a>' : '') . sessoes_html($f, true) . programa_html($f, $publico) . '</div>';
 }
 
 // Perguntas do diagnóstico de IA e ferramentas usadas, só nos cursos que o têm ativo
@@ -279,14 +279,15 @@ function emails_nova_inscricao(int $id): void
 
     // Confirmação de receção para quem fez a inscrição
     if ($contacto) {
+        [$datas_html, $datas_texto] = datas_email($i);
         $ver = $contacto['area'] ? $botao($link_area, 'Ver inscrição na área reservada') : ($i['curso_id'] ? $botao($site . link_curso_publico(['id' => $i['curso_id']]), 'Ver a página do curso') : $botao($site . '/formacoes/', 'Ver a área de formação'));
         $alterar = $contacto['area'] ? 'Para alterar ou cancelar a inscrição, use a área reservada ou responda a este email.' : 'Para alterar ou cancelar a inscrição, basta responder a este email.';
         enviar_aviso($contacto['email'], 'Inscrição recebida: ' . $i['formando'] . ', ' . $i['titulo'] . ' de ' . data_hora($i['inicio'], false), 'Inscrição recebida',
-            '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 16px;">Recebemos a inscrição de <strong>' . h($i['formando']) . '</strong> na formação ' . h($i['titulo']) . ', em ' . h($quando) . '. A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.</p>'
+            '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 16px;">Recebemos a inscrição de <strong>' . h($i['formando']) . '</strong> na formação ' . h($i['titulo']) . ', em ' . h($quando) . '. A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.</p>' . $datas_html
             . ($i['nivel'] ? '<p style="margin:0 0 16px;">O diagnóstico indica o nível <strong>' . h($i['nivel']) . '</strong> de utilização de IA. Vamos usá-lo para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>' : '')
             . ($indicacao ? '<p style="margin:0 0 16px;">' . h($indicacao) . '</p>' : '') . $ver
             . '<p style="margin:22px 0 0;color:#687280;font-size:13px;">' . h($alterar) . '</p>',
-            nome_curto($contacto['nome']) . ",\n\nRecebemos a inscrição de " . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . $quando . ". A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.\n\n" . ($i['nivel'] ? 'Nível de utilização de IA indicado pelo diagnóstico: ' . $i['nivel'] . ".\n\n" : '') . ($indicacao ? $indicacao . "\n\n" : '') . $alterar,
+            nome_curto($contacto['nome']) . ",\n\nRecebemos a inscrição de " . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . $quando . ". A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis." . $datas_texto . "\n\n" . ($i['nivel'] ? 'Nível de utilização de IA indicado pelo diagnóstico: ' . $i['nivel'] . ".\n\n" : '') . ($indicacao ? $indicacao . "\n\n" : '') . $alterar,
             $destino);
     }
 }
@@ -451,10 +452,22 @@ function avisar_estado_inscricao(array $i, string $novo, array $contacto): void
         : 'A inscrição de ' . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . horario($i) . ', passou ao estado: ' . strtolower(ESTADOS_INSCRICAO[$novo]) . '.';
     $local = $novo === 'confirmada' ? (MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ': ' . $i['local'] : '') : '';
     [$reuniao_html, $reuniao_texto] = $novo === 'confirmada' ? bloco_reuniao($i) : ['', ''];
+    [$datas_html, $datas_texto] = datas_email($i);
     enviar_aviso($contacto['email'], ($novo === 'confirmada' ? 'Inscrição confirmada: ' : 'Inscrição atualizada: ') . $i['formando'] . ', ' . data_hora($i['inicio'], false), $novo === 'confirmada' ? 'Inscrição confirmada' : 'Inscrição atualizada',
-        '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 14px;">' . h($frase) . '</p>' . ($local ? '<p style="margin:0 0 14px;"><strong>Local:</strong> ' . h($local) . '</p>' : '') . $reuniao_html . '<p style="margin:0;">Para qualquer questão, basta responder a este email.</p>',
-        nome_curto($contacto['nome']) . ",\n\n" . $frase . ($local ? "\n\nLocal: " . $local : '') . $reuniao_texto . "\n\nPara qualquer questão, basta responder a este email.",
+        '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 14px;">' . h($frase) . '</p>' . $datas_html . ($local ? '<p style="margin:0 0 14px;"><strong>Local:</strong> ' . h($local) . '</p>' : '') . $reuniao_html . '<p style="margin:0;">Para qualquer questão, basta responder a este email.</p>',
+        nome_curto($contacto['nome']) . ",\n\n" . $frase . $datas_texto . ($local ? "\n\nLocal: " . $local : '') . $reuniao_texto . "\n\nPara qualquer questão, basta responder a este email.",
         (string) (cfg()['destinatario'] ?? 'info@gadgetmetodo.pt'), '', $novo === 'confirmada' ? (string) $i['email'] : '');
+}
+
+// Datas de cada sessão, para os emails (HTML e texto); vazio quando a formação decorre numa só data
+function datas_email(array $f): array
+{
+    $l = linhas_sessoes($f);
+    if (!$l) {
+        return ['', ''];
+    }
+    return ['<p style="margin:0 0 4px;"><strong>Datas das sessões</strong></p><ol style="margin:0 0 14px;padding-left:20px;">' . implode('', array_map(function ($x) { return '<li>' . h($x) . '</li>'; }, $l)) . '</ol>',
+        "\n\nDatas das sessões:\n- " . implode("\n- ", $l)];
 }
 
 /* Ligação da reunião online e convites a candidatos */

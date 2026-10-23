@@ -41,7 +41,8 @@ function opcao_inscricao(array $c, bool $na_pagina_do_curso = false): array
     return [
         'href' => count($sessoes) === 1 ? '/formacoes/inscricao.php?f=' . (int) $proxima['id'] : ($na_pagina_do_curso ? '' : link_curso_publico($c)) . '#sessoes',
         'rotulo' => 'Inscrever-me', 'sessoes' => $sessoes,
-        'nota' => 'Próxima sessão: ' . data_extensa($proxima['inicio']) . (count($sessoes) > 1 ? ' (' . count($sessoes) . ' datas disponíveis)' : '') . '.',
+        'nota' => (($edicao = count(sessoes_formacao((int) $proxima['id'])) > 1) ? 'Próxima edição: ' . horario($proxima) : 'Próxima sessão: ' . data_extensa($proxima['inicio']))
+            . (count($sessoes) > 1 ? ' (' . count($sessoes) . ($edicao ? ' edições' : ' datas') . ' disponíveis)' : '') . '.',
     ];
 }
 
@@ -80,6 +81,17 @@ function jsonld_formacoes(array $formacoes, array $cursos = []): string
         ];
         if (!empty($f['fim'])) {
             $evento['endDate'] = date('c', strtotime($f['fim']));
+        }
+        // Edição com várias sessões: cada sessão com a sua data
+        $datas = sessoes_formacao((int) $f['id']);
+        if (count($datas) > 1) {
+            $evento['subEvent'] = array_map(function ($s, $texto) use ($f) {
+                $e = ['@type' => 'EducationEvent', 'name' => $f['titulo'] . ': ' . explode(' · ', $texto)[0], 'startDate' => date('c', strtotime($s['inicio']))];
+                if ($s['fim']) {
+                    $e['endDate'] = date('c', strtotime($s['fim']));
+                }
+                return $e;
+            }, $datas, linhas_sessoes($f));
         }
         $eventos[] = $evento;
     }
