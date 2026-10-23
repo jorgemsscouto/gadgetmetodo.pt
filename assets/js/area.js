@@ -13,7 +13,8 @@
     return document.querySelector('.sessoes-curso:not([hidden])');
   }
 
-  function mostrar() {
+  // Ao abrir a página não se propõe nada (uma edição gravada só com parte das datas fica como está até se mexer nas datas)
+  function mostrar(propostas) {
     var id = seletor.value;
     document.querySelectorAll('.sessoes-curso').forEach(function (bloco) {
       var visivel = bloco.getAttribute('data-curso') === id;
@@ -21,7 +22,9 @@
       bloco.disabled = !visivel;
     });
     marcar();
-    propor(false);
+    if (propostas) {
+      propor(false);
+    }
   }
 
   function texto(d) {
@@ -68,7 +71,7 @@
     });
   }
 
-  seletor.addEventListener('change', mostrar);
+  seletor.addEventListener('change', function () { mostrar(true); });
   [data, inicio, fim].forEach(function (campo) {
     if (campo) {
       campo.addEventListener('change', function () { propor(false); });
@@ -84,5 +87,5 @@
       propor(true);
     }
   });
-  mostrar();
+  mostrar(false);
 })();

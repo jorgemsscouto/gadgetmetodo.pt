@@ -564,8 +564,7 @@ function ficha_pdf(array $c, array $d): void
     // Próximas edições e inscrições, com contactos
     $esq = [];
     foreach ($d['sessoes'] as $f) {
-        $mod = MODALIDADES[$f['modalidade']] ?? '';
-        $esq[] = ['t' => horario($f) . ' · ' . nome_modulo($f) . ' · ' . $mod . ($f['local'] && strcasecmp(trim($f['local']), $mod) !== 0 ? ' · ' . $f['local'] : ''), 'f' => ['inter', '', 8.8], 'c' => 'texto', 'lh' => 4.5, 'marca' => true, 'antes' => 1];
+        $esq[] = ['t' => horario($f) . ' · ' . nome_modulo($f) . ' · ' . modalidade_e_local($f), 'f' => ['inter', '', 8.8], 'c' => 'texto', 'lh' => 4.5, 'marca' => true, 'antes' => 1];
     }
     if (!$esq) {
         $esq[] = ['t' => 'Ainda não há datas agendadas. Na página do curso pode fazer a pré-inscrição e receber o convite quando forem marcadas.', 'f' => ['inter', '', 8.8], 'c' => 'texto', 'lh' => 4.5];

@@ -305,7 +305,7 @@ function inscricao_publica(): array
     $f = $id ? linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]) : null;
     if (!$f || $f['estado'] !== 'aberta' || strtotime($f['inicio']) < strtotime('today')) {
         http_response_code($f ? 410 : 404);
-        return ['conteudo' => '<section class="secao"><div class="contentor estreito"><div class="aviso aviso-info">Esta edição não existe ou já não aceita inscrições.</div><div class="acoes"><a class="botao" href="/formacoes/">Ver as próximas sessões</a></div></div></section>'];
+        return ['conteudo' => '<section class="secao"><div class="contentor estreito"><div class="aviso aviso-info">Esta edição não existe ou já não aceita inscrições.</div><div class="acoes"><a class="botao" href="/formacoes/">Ver as próximas edições</a></div></div></section>'];
     }
     $restantes = max(0, (int) $f['vagas'] - inscritos((int) $f['id']));
     if ($restantes === 0) {

@@ -113,6 +113,58 @@ function migrar_sessoes_para_cursos(PDO $pdo): void
     $pdo->prepare('UPDATE formacoes SET curso_id = ? WHERE curso_id IS NULL')->execute([$curso]);
 }
 
+// Formações agendadas sessão a sessão (uma formação por módulo, antes de a inscrição passar a ser sempre no curso
+// completo): as de cada curso que ainda não terminaram juntam-se numa edição, com a data de cada sessão. As inscrições
+// passam para a edição; quem estava inscrito em várias sessões fica com uma só inscrição (a confirmada ou, não havendo,
+// a mais antiga) e as restantes ficam canceladas. As edições que já terminaram ficam como estavam.
+function juntar_formacoes_por_sessao(PDO $pdo): void
+{
+    $st = $pdo->prepare("SELECT f.*, m.ordem FROM formacoes f JOIN modulos m ON m.id = f.modulo_id
+        WHERE f.estado != 'cancelada' AND f.inicio >= ? ORDER BY f.curso_id, f.inicio");
+    $st->execute([date('Y-m-d 00:00:00', strtotime('-120 days'))]);
+    $lista = $st->fetchAll(PDO::FETCH_ASSOC);
+    // Uma edição por grupo: muda quando muda o curso, quando a sessão do curso se repete ou recua, ou após 60 dias sem sessões
+    $grupos = [];
+    foreach ($lista as $f) {
+        $n = count($grupos) - 1;
+        $ultima = $n >= 0 ? $grupos[$n][count($grupos[$n]) - 1] : null;
+        if (!$ultima || $ultima['curso_id'] !== $f['curso_id'] || (int) $f['ordem'] <= (int) $ultima['ordem']
+            || strtotime($f['inicio']) - strtotime($ultima['inicio']) > 60 * 86400) {
+            $grupos[] = [$f];
+        } else {
+            $grupos[$n][] = $f;
+        }
+    }
+    $grupos = array_filter($grupos, function ($g) { $u = $g[count($g) - 1]; return ($u['fim'] ?: $u['inicio']) >= date('Y-m-d 00:00:00'); });
+    if (!$grupos) {
+        return;
+    }
+    $pdo->beginTransaction();
+    $sessao = $pdo->prepare('INSERT INTO sessoes (formacao_id, ordem, modulo_id, inicio, fim) VALUES (?, ?, ?, ?, ?)');
+    foreach ($grupos as $g) {
+        $id = (int) $g[0]['id'];
+        $ultima = $g[count($g) - 1];
+        $primeiro = function (string $campo) use ($g) { return array_values(array_filter(array_column($g, $campo)))[0] ?? null; };
+        $pdo->prepare('UPDATE formacoes SET modulo_id = NULL, fim = ?, local = ?, reuniao = ? WHERE id = ?')
+            ->execute([$ultima['fim'] ?: null, (string) $primeiro('local'), $primeiro('reuniao'), $id]);
+        $pdo->prepare('DELETE FROM sessoes WHERE formacao_id = ?')->execute([$id]);
+        foreach ($g as $n => $f) {
+            $sessao->execute([$id, $n + 1, $f['modulo_id'], $f['inicio'], $f['fim'] ?: null]);
+        }
+        $outras = implode(',', array_map('intval', array_column(array_slice($g, 1), 'id')));
+        if ($outras !== '') {
+            $pdo->exec("UPDATE inscricoes SET formacao_id = $id WHERE formacao_id IN ($outras)");
+            $pdo->exec("DELETE FROM sessoes WHERE formacao_id IN ($outras)");
+            $pdo->exec("DELETE FROM formacoes WHERE id IN ($outras)");
+        }
+        $pessoa = function (string $t) { return "COALESCE(NULLIF(lower($t.email), ''), lower($t.formando))"; };
+        $pdo->exec("UPDATE inscricoes SET estado = 'cancelada' WHERE formacao_id = $id AND estado != 'cancelada'
+            AND id != (SELECT i2.id FROM inscricoes i2 WHERE i2.formacao_id = $id AND i2.estado != 'cancelada' AND " . $pessoa('i2') . ' = ' . $pessoa('inscricoes') . "
+                ORDER BY i2.estado = 'confirmada' DESC, i2.id LIMIT 1)");
+    }
+    $pdo->commit();
+}
+
 /* Consulta (com memória por pedido) */
 
 function curso(?int $id): ?array

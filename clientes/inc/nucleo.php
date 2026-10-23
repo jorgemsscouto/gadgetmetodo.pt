@@ -96,6 +96,7 @@ function bd(): ?PDO
             tipo_cliente TEXT, ferramentas TEXT)");
         acrescentar_colunas($pdo, 'preinscricoes', ['respostas' => 'TEXT', 'inscricao_id' => 'INTEGER', 'tipo_cliente' => 'TEXT', 'ferramentas' => 'TEXT']);
         $pdo->exec('CREATE INDEX IF NOT EXISTS preinscricoes_curso ON preinscricoes (curso_id)');
+        juntar_formacoes_por_sessao($pdo);
         // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação; as pré-inscrições, 12 meses depois do registo
         $pdo->prepare('DELETE FROM inscricoes WHERE formacao_id IN (SELECT id FROM formacoes WHERE inicio < ?)')
             ->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
@@ -401,6 +402,15 @@ function campo_tipo_cliente(string $selecionado, string $legenda): string
         $op .= '<label class="opcao"><input type="radio" name="tipo_cliente" value="' . $valor . '"' . ($selecionado === $valor ? ' checked' : '') . ' required> ' . h($rotulo) . '</label>';
     }
     return '<fieldset class="campo-grupo" data-tipo-cliente><legend>' . h($legenda) . ' *</legend><div class="opcoes opcoes-linha">' . $op . '</div></fieldset>';
+}
+
+// Modalidade e local, sem repetir o local quando só diz a modalidade (por exemplo "On-line" numa formação Online)
+function modalidade_e_local(array $f, string $separador = ' · '): string
+{
+    $modalidade = MODALIDADES[$f['modalidade'] ?? ''] ?? '';
+    $local = trim((string) ($f['local'] ?? ''));
+    $simples = function (string $x) { return preg_replace('/[^a-z]/', '', strtolower($x)); };
+    return $local !== '' && $simples($local) !== $simples($modalidade) ? ($modalidade !== '' ? $modalidade . $separador : '') . $local : $modalidade;
 }
 
 function etiqueta(string $texto, string $tipo = ''): string

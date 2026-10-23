@@ -159,7 +159,7 @@ function resumo_sessao(array $f, int $restantes, bool $publico): string
 {
     $vagas = $publico ? ($restantes <= 3 ? 'Últimas vagas' : $restantes . ' vagas disponíveis') : $restantes . ' vaga(s) disponível(eis)';
     $curso = curso((int) ($f['curso_id'] ?? 0));
-    return '<div class="resumo-formacao"><strong>' . h($f['titulo']) . '</strong> · ' . h(nome_modulo($f)) . '<br>' . h(horario($f)) . ' · ' . h(MODALIDADES[$f['modalidade']] ?? '') . ($f['local'] ? ' · ' . h($f['local']) : '') . '<br><span class="texto-suave">' . h($vagas) . '</span>'
+    return '<div class="resumo-formacao"><strong>' . h($f['titulo']) . '</strong> · ' . h(nome_modulo($f)) . '<br>' . h(horario($f)) . ' · ' . h(modalidade_e_local($f)) . '<br><span class="texto-suave">' . h($vagas) . '</span>'
         . ($publico && $curso ? ' · <a href="' . h(link_curso_publico($curso)) . '">Ver a página do curso</a>' : '') . sessoes_html($f, true) . programa_html($f, $publico) . '</div>';
 }
 
@@ -263,7 +263,7 @@ function emails_nova_inscricao(int $id): void
     $cfg = cfg();
     $site = rtrim((string) ($cfg['site'] ?? 'https://www.gadgetmetodo.pt'), '/');
     $publica = $i['origem'] === 'site';
-    $quando = horario($i) . ' · ' . (MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ' · ' . $i['local'] : '');
+    $quando = horario($i) . ' · ' . modalidade_e_local($i);
     $a = $i['respostas'] ? avaliar_diagnostico((array) json_decode((string) $i['respostas'], true)) : null;
     $recomendacao = $a ? recomendacao_de($i) : '';
     $ind = $a ? curso_indicado((array) json_decode((string) $i['respostas'], true), curso((int) $i['curso_id'])) : null;
@@ -395,7 +395,7 @@ function pagina_inscricao(): void
     $publica = $i['origem'] === 'site';
     $dados = [
         'Formação' => h($i['titulo']) . '<br><span class="texto-suave">' . h(nome_modulo($i)) . '</span>',
-        'Data e local' => h(horario($i)) . '<br><span class="texto-suave">' . h(MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ' · ' . h($i['local']) : '') . '</span>',
+        'Data e local' => h(horario($i)) . '<br><span class="texto-suave">' . h(modalidade_e_local($i)) . '</span>',
         'Cliente' => cliente_html($i) . ($i['nif'] ? ' <span class="texto-suave">· NIF ' . h($i['nif']) . '</span>' : ''),
         'Formando' => h($i['formando']), 'Email' => h($i['email']), 'Função' => h($i['funcao']),
         'Estado' => estado_etiqueta($i['estado'], ESTADOS_INSCRICAO),
@@ -476,7 +476,7 @@ function avisar_estado_inscricao(array $i, string $novo, array $contacto): void
     $frase = $novo === 'confirmada'
         ? 'A inscrição de ' . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . horario($i) . ', está confirmada.'
         : 'A inscrição de ' . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . horario($i) . ', passou ao estado: ' . strtolower(ESTADOS_INSCRICAO[$novo]) . '.';
-    $local = $novo === 'confirmada' ? (MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ': ' . $i['local'] : '') : '';
+    $local = $novo === 'confirmada' ? modalidade_e_local($i, ': ') : '';
     [$reuniao_html, $reuniao_texto] = $novo === 'confirmada' ? bloco_reuniao($i) : ['', ''];
     [$datas_html, $datas_texto] = datas_email($i);
     enviar_aviso($contacto['email'], ($novo === 'confirmada' ? 'Inscrição confirmada: ' : 'Inscrição atualizada: ') . $i['formando'] . ', ' . data_hora($i['inicio'], false), $novo === 'confirmada' ? 'Inscrição confirmada' : 'Inscrição atualizada',

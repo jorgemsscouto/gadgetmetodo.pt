@@ -1486,7 +1486,7 @@ pagina({
           ], 'Que formação oferece a Gadgetmetodo?')}
           <nav class="atalhos-formacao" aria-label="Nesta página">
             <a href="#percurso">${icone('route')}<span><strong>Cursos abertos</strong>Percurso IA Generativa no Trabalho</span></a>
-            <a href="#calendario">${icone('calendar-days')}<span><strong>Calendário</strong>Próximas sessões e inscrições</span></a>
+            <a href="#calendario">${icone('calendar-days')}<span><strong>Calendário</strong>Próximas edições e inscrições</span></a>
             <a href="#a-medida">${icone('building-2')}<span><strong>Formação à medida</strong>AI Essentials para administrações e equipas</span></a>
           </nav>
         </div>
@@ -1581,7 +1581,7 @@ pagina({
   estilos: [CSS_AREA],
   scripts: [JS_COPIAR],
   titulo: 'Curso de formação',
-  descricao: 'Programa, módulos, temas e próximas sessões de um curso da Gadgetmetodo, Lda.',
+  descricao: 'Programa, módulos, temas e próximas edições de um curso da Gadgetmetodo, Lda.',
   corpo: `
     <?= $pagina['conteudo'] ?>
 

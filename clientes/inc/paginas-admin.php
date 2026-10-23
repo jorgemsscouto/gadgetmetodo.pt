@@ -82,7 +82,7 @@ function admin_formacao(): void
         if (is_string($convite)) {
             aviso(h($convite), 'erro');
         } else {
-            $quando = horario($f) . ' · ' . (MODALIDADES[$f['modalidade']] ?? '') . ($f['local'] ? ' · ' . $f['local'] : '');
+            $quando = horario($f) . ' · ' . modalidade_e_local($f);
             enviar_convite($convite['nome'], $convite['email'], $convite['mensagem'], 'Convite: ' . $f['titulo'] . ', ' . data_hora($f['inicio'], false),
                 '<p style="margin:0 0 4px;"><strong>' . h($f['titulo']) . '</strong> · ' . h(nome_modulo($f)) . '</p><p style="margin:0;color:#687280;">' . h($quando) . '</p>',
                 $f['titulo'] . ' · ' . nome_modulo($f) . "\n" . $quando, endereco_site() . '/formacoes/inscricao.php?f=' . $id, 'Inscrever-me nesta edição');
@@ -115,7 +115,11 @@ function admin_formacao(): void
     // Formações antigas criadas só para um módulo: ao guardar passam a ser uma edição do curso completo
     $antiga = !empty($v['modulo_id']) && ($m = linha_bd('SELECT * FROM modulos WHERE id = ?', [(int) $v['modulo_id']]))
         ? '<div class="aviso aviso-info">Esta formação foi criada só para "' . h(rotulo_modulo($m)) . '". As inscrições são agora sempre no curso completo, com todas as sessões: ao guardar, a formação passa a ter as datas de todas as sessões indicadas abaixo.</div>' : '';
-    $form = ($erros ? '<div class="aviso aviso-erro">' . h(implode(' ', $erros)) . '</div>' : '') . $antiga . '
+    // Edição com datas só para parte das sessões do curso (por exemplo, juntada a partir de formações agendadas sessão a sessão)
+    $n_mods = count(modulos_curso((int) ($v['curso_id'] ?? 0)));
+    $incompleta = $id && !$antiga && $n_mods > 1 && max(1, count($datas)) < $n_mods
+        ? '<div class="aviso aviso-info">Esta edição tem data para ' . max(1, count($datas)) . ' das ' . $n_mods . ' sessões do curso. Indique as datas das restantes na lista abaixo e guarde.</div>' : '';
+    $form = ($erros ? '<div class="aviso aviso-erro">' . h(implode(' ', $erros)) . '</div>' : '') . $antiga . $incompleta . '
       <form method="post" class="formulario">' . campo_csrf() . '
         <div class="campos-2">
           ' . seletor_curso($selecionado) . '
@@ -140,7 +144,7 @@ function admin_formacao(): void
               <p class="ajuda">Envia a cada formando (ou, sem email do formando, a quem o inscreveu) uma mensagem com a data, a hora e a ligação. Útil quando a ligação é criada ou alterada depois das confirmações, ou como lembrete.</p></form>';
         }
         $programa = programa_html($v, true);
-        if ($datas) {
+        if (count($datas) > 1) {
             $linhas_datas = '';
             foreach (linhas_sessoes($v) as $n => $texto) {
                 $s = $datas[$n];
@@ -268,7 +272,14 @@ function campos_sessoes_curso(int $escolhido, array $atuais = []): string
             continue;
         }
         $ativo = (int) $c['id'] === $escolhido;
-        $linhas = $ativo && $atuais ? $atuais : array_map(function ($m) { return ['modulo_id' => (int) $m['id'], 'inicio' => '', 'fim' => '']; }, $mods);
+        // As linhas gravadas (ou enviadas) e, a seguir, as sessões do curso que ainda não têm linha, pela ordem do curso
+        $linhas = $ativo ? $atuais : [];
+        $com_linha = array_map('intval', array_column($linhas, 'modulo_id'));
+        foreach ($mods as $m) {
+            if (!in_array((int) $m['id'], $com_linha, true)) {
+                $linhas[] = ['modulo_id' => (int) $m['id'], 'inicio' => '', 'fim' => ''];
+            }
+        }
         $linhas = array_merge($linhas, array_fill(0, 2, ['modulo_id' => 0, 'inicio' => '', 'fim' => '', 'extra' => true]));
         $u = strtolower(unidade($c));
         $corpo = '';
@@ -501,7 +512,7 @@ function admin_curso(): void
         $html .= '<h3 class="espaco-topo-curto">Acrescentar ' . strtolower($u) . '</h3>' . form_modulo(['id' => 0, 'ordem' => count($mods) + 1, 'nome' => '', 'descricao' => '', 'temas' => '', 'horas' => null, 'caso_pratico' => ''], 0, $u);
         if ($c['ativo']) {
             $html .= partilha_e_convite(endereco_site() . link_curso_publico($c), 'Página pública do curso',
-                'Mostra a descrição, o programa, os temas e as próximas sessões com inscrição. Pode colocá-la no site, nas redes sociais ou enviá-la a um candidato. A ficha em PDF tem o mesmo conteúdo, num documento para enviar ou imprimir.', link_ficha($c));
+                'Mostra a descrição, o programa, os temas e as próximas edições com inscrição. Pode colocá-la no site, nas redes sociais ou enviá-la a um candidato. A ficha em PDF tem o mesmo conteúdo, num documento para enviar ou imprimir.', link_ficha($c));
         }
         $sessoes = consulta('SELECT * FROM formacoes WHERE curso_id = ? AND inicio >= ? ORDER BY inicio', [$id, date('Y-m-d 00:00:00')]);
         $html .= '<h2 class="espaco-topo">Sessões agendadas</h2>'
@@ -713,7 +724,7 @@ function diagnostico_preinscricao(array $p, array $c): string
         . ($a['responsavel'] <= 4 ? '<br><span class="texto-suave">Uso responsável baixo (' . (int) $a['responsavel'] . ' em 9)</span>' : '');
 }
 
-// Convite por email para a página de um curso, com as próximas sessões abertas
+// Convite por email para a página de um curso, com as próximas edições abertas
 function convite_curso(array $c, string $nome, string $email, string $mensagem): void
 {
     $sessoes = consulta("SELECT * FROM formacoes WHERE curso_id = ? AND inicio >= ? AND estado = 'aberta' ORDER BY inicio LIMIT 6", [$c['id'], date('Y-m-d 00:00:00')]);
@@ -722,8 +733,8 @@ function convite_curso(array $c, string $nome, string $email, string $mensagem):
     enviar_convite($nome, $email, $mensagem, 'Convite: ' . $c['nome'],
         '<p style="margin:0 0 4px;"><strong>' . h($c['nome']) . '</strong>' . ($detalhe ? ' · ' . h(implode(' · ', $detalhe)) : '') . '</p>'
         . ($c['descricao'] ? '<p style="margin:0 0 10px;color:#687280;">' . h($c['descricao']) . '</p>' : '')
-        . ($datas ? '<p style="margin:0 0 4px;"><strong>Próximas sessões</strong></p><ul style="margin:0;padding-left:18px;">' . implode('', array_map(function ($d) { return '<li>' . h($d) . '</li>'; }, $datas)) . '</ul>' : ''),
-        $c['nome'] . ($detalhe ? ' · ' . implode(' · ', $detalhe) : '') . ($datas ? "\n\nPróximas sessões:\n- " . implode("\n- ", $datas) : ''),
+        . ($datas ? '<p style="margin:0 0 4px;"><strong>Próximas edições</strong></p><ul style="margin:0;padding-left:18px;">' . implode('', array_map(function ($d) { return '<li>' . h($d) . '</li>'; }, $datas)) . '</ul>' : ''),
+        $c['nome'] . ($detalhe ? ' · ' . implode(' · ', $detalhe) : '') . ($datas ? "\n\nPróximas edições:\n- " . implode("\n- ", $datas) : ''),
         endereco_site() . link_curso_publico($c), 'Ver o curso e inscrever-me');
 }
 

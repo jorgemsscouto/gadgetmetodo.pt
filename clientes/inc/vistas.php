@@ -146,7 +146,7 @@ function calendario(array $formacoes, callable $acoes, bool $publico = false): s
         }
         $n = inscritos((int) $f['id']);
         $restantes = max(0, (int) $f['vagas'] - $n);
-        $local = trim((MODALIDADES[$f['modalidade']] ?? '') . ($f['local'] && strcasecmp(trim($f['local']), MODALIDADES[$f['modalidade']] ?? '') !== 0 ? ' · ' . $f['local'] : ''));
+        $local = modalidade_e_local($f);
         $vagas = $publico
             ? ($f['estado'] !== 'aberta' ? '' : ($restantes === 0 ? ' · Esgotada' : ($restantes <= 3 ? ' · Últimas vagas' : ' · ' . $restantes . ' vagas disponíveis')))
             : ' · ' . $n . ' inscrito(s), ' . $restantes . ' vaga(s)';
