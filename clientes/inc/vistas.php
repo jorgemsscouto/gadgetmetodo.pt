@@ -6,7 +6,7 @@ declare(strict_types=1);
 function menu_area(string $atual): string
 {
     $itens = eh_admin()
-        ? ['painel' => 'Painel', 'calendario' => 'Calendário', 'inscricoes' => 'Inscrições', 'clientes' => 'Clientes', 'utilizadores' => 'Utilizadores', 'pedidos' => 'Pedidos do site', 'conta' => 'A minha conta']
+        ? ['painel' => 'Painel', 'calendario' => 'Calendário', 'cursos' => 'Cursos', 'inscricoes' => 'Inscrições', 'clientes' => 'Clientes', 'utilizadores' => 'Utilizadores', 'pedidos' => 'Pedidos do site', 'conta' => 'A minha conta']
         : ['painel' => 'Painel', 'calendario' => 'Formações', 'inscricoes' => 'Inscrições', 'conta' => 'A minha conta'];
     $html = '';
     foreach ($itens as $p => $nome) {
@@ -97,11 +97,11 @@ function opcoes_select(array $opcoes, $selecionado, string $vazio = ''): string
     return $html;
 }
 
-function campo(string $nome, string $rotulo, string $valor = '', string $tipo = 'text', string $extra = ''): string
+function campo(string $nome, string $rotulo, string $valor = '', string $tipo = 'text', string $extra = '', string $id = ''): string
 {
-    $id = 'c-' . $nome;
+    $id = $id ?: 'c-' . $nome;
     if ($tipo === 'textarea') {
-        return '<div class="campo"><label for="' . $id . '">' . $rotulo . '</label><textarea id="' . $id . '" name="' . h($nome) . '" rows="4" ' . $extra . '>' . h($valor) . '</textarea></div>';
+        return '<div class="campo"><label for="' . $id . '">' . $rotulo . '</label><textarea id="' . $id . '" name="' . h($nome) . '" ' . (strpos($extra, 'rows=') === false ? 'rows="4" ' : '') . $extra . '>' . h($valor) . '</textarea></div>';
     }
     return '<div class="campo"><label for="' . $id . '">' . $rotulo . '</label><input id="' . $id . '" name="' . h($nome) . '" type="' . $tipo . '" value="' . h($valor) . '" ' . $extra . '></div>';
 }
@@ -144,16 +144,17 @@ function calendario(array $formacoes, callable $acoes, bool $publico = false): s
         }
         $n = inscritos((int) $f['id']);
         $restantes = max(0, (int) $f['vagas'] - $n);
-        $local = trim((MODALIDADES[$f['modalidade']] ?? '') . ($f['local'] ? ' · ' . $f['local'] : ''));
+        $local = trim((MODALIDADES[$f['modalidade']] ?? '') . ($f['local'] && strcasecmp(trim($f['local']), MODALIDADES[$f['modalidade']] ?? '') !== 0 ? ' · ' . $f['local'] : ''));
         $vagas = $publico
             ? ($f['estado'] !== 'aberta' ? '' : ($restantes === 0 ? ' · Esgotada' : ($restantes <= 3 ? ' · Últimas vagas' : ' · ' . $restantes . ' vagas disponíveis')))
             : ' · ' . $n . ' inscrito(s), ' . $restantes . ' vaga(s)';
         $html .= '<article class="evento">
           <div class="evento-data"><strong>' . date('j', $t) . '</strong><span>' . $abrev[(int) date('n', $t)] . '</span><small>' . $dias[(int) date('w', $t)] . '</small></div>
           <div class="evento-info">
-            <h3>' . h($f['titulo']) . (formacao_nova($f) && $f['estado'] === 'aberta' ? ' ' . etiqueta('Nova', 'nova') : '') . '</h3>
-            <p class="mb-0">' . h(MODULOS[$f['modulo']] ?? (string) $f['modulo']) . '</p>
+            <h3>' . ($publico && !empty($f['curso_id']) ? '<a href="' . h(link_curso_publico(['id' => $f['curso_id']])) . '">' . h($f['titulo']) . '</a>' : h($f['titulo'])) . (formacao_nova($f) && $f['estado'] === 'aberta' ? ' ' . etiqueta('Nova', 'nova') : '') . '</h3>
+            <p class="mb-0">' . h(nome_modulo($f)) . '</p>
             <p class="evento-meta mb-0">' . h(date('H:i', $t) . (!empty($f['fim']) ? ' às ' . date('H:i', strtotime($f['fim'])) : '')) . ($local ? ' · ' . h($local) : '') . h($vagas) . '</p>
+            ' . programa_html($f) . '
           </div>
           <div class="evento-acoes">' . ($publico && $f['estado'] === 'aberta' ? '' : estado_etiqueta($f['estado'], ESTADOS_FORMACAO)) . $acoes($f, $restantes) . '</div>
         </article>';

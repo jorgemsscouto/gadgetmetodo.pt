@@ -254,7 +254,8 @@ function cartaoServico(s) {
 const paginas = [];
 // Páginas com conteúdo dinâmico (formações) são geradas como PHP: "php" é o código inicial,
 // "jsonldExtra" acrescenta dados estruturados calculados no servidor e "estilos" folhas de estilo adicionais.
-function pagina({ url, titulo, descricao, h1Schema, tipo = 'WebPage', trilho, corpo, schemaExtra = [], prioridade = '0.7', llms, indexar = true, scripts = [], ficheiro = 'index.html', php = '', jsonldExtra = '', estilos = [] }) {
+// "cabecaPhp" ({ titulo, descricao, canonical }) substitui esses campos por código PHP, em páginas cujo conteúdo depende da base de dados.
+function pagina({ url, titulo, descricao, h1Schema, tipo = 'WebPage', trilho, corpo, schemaExtra = [], prioridade = '0.7', llms, indexar = true, scripts = [], ficheiro = 'index.html', php = '', jsonldExtra = '', estilos = [], cabecaPhp = null }) {
   const canonical = URL_BASE + url;
   const webpage = {
     '@type': tipo,
@@ -268,7 +269,7 @@ function pagina({ url, titulo, descricao, h1Schema, tipo = 'WebPage', trilho, co
     dateModified: HOJE,
     primaryImageOfPage: { '@type': 'ImageObject', url: URL_BASE + '/assets/img/partilha.png' },
   };
-  const grafo = [ORG, WEBSITE, webpage];
+  const grafo = cabecaPhp ? [ORG, WEBSITE] : [ORG, WEBSITE, webpage];
   if (trilho) {
     grafo.push(migalhas(trilho));
     webpage.breadcrumb = { '@id': canonical + '#migalhas' };
@@ -284,23 +285,24 @@ function pagina({ url, titulo, descricao, h1Schema, tipo = 'WebPage', trilho, co
   if (tipo === 'FAQPage') webpage.mainEntity = schemaExtra.__faq;
   const jsonld = JSON.stringify({ '@context': 'https://schema.org', '@graph': grafo }, null, 2).replace(/</g, '\\u003c');
   const tituloCompleto = url === '/' ? titulo : `${titulo} | Gadgetmetodo, Lda.`;
+  const cabeca = cabecaPhp || { titulo: esc(tituloCompleto), descricao: esc(descricao), canonical };
   const html = `${php}<!doctype html>
 <html lang="pt-PT">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${esc(tituloCompleto)}</title>
-  <meta name="description" content="${esc(descricao)}">
+  <title>${cabeca.titulo}</title>
+  <meta name="description" content="${cabeca.descricao}">
   <meta name="robots" content="${url === '/404.html' || !indexar ? 'noindex, follow' : 'index, follow, max-snippet:-1, max-image-preview:large'}">
-  ${url === '/404.html' ? '' : `<link rel="canonical" href="${canonical}">`}
+  ${url === '/404.html' ? '' : `<link rel="canonical" href="${cabeca.canonical}">`}
   <meta name="theme-color" content="#0A0F26">
   <meta name="author" content="Gadgetmetodo, Lda.">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="pt_PT">
   <meta property="og:site_name" content="Gadgetmetodo, Lda.">
-  <meta property="og:title" content="${esc(tituloCompleto)}">
-  <meta property="og:description" content="${esc(descricao)}">
-  <meta property="og:url" content="${canonical}">
+  <meta property="og:title" content="${cabeca.titulo}">
+  <meta property="og:description" content="${cabeca.descricao}">
+  <meta property="og:url" content="${cabeca.canonical}">
   <meta property="og:image" content="${URL_BASE}/assets/img/partilha.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -333,7 +335,8 @@ ${scripts.map(s => `  <script src="${s}" defer></script>\n`).join('')}</body>
   const destino = url === '/404.html' ? path.join(OUT, '404.html') : url.endsWith('.php') ? path.join(OUT, url) : path.join(OUT, url, ficheiro);
   fs.mkdirSync(path.dirname(destino), { recursive: true });
   fs.writeFileSync(destino, html);
-  if (url !== '/404.html' && indexar) paginas.push({ url, titulo, descricao, prioridade, llms });
+  // As páginas com cabeçalho dinâmico (uma por curso) não têm endereço fixo para o sitemap
+  if (url !== '/404.html' && indexar && !cabecaPhp) paginas.push({ url, titulo, descricao, prioridade, llms });
 }
 
 /* ------------------------------------------------------------------ */
@@ -1402,13 +1405,13 @@ pagina({
   jsonldExtra: '<?= $pagina[\'jsonld\'] ?>',
   estilos: [CSS_AREA],
   tipo: 'CollectionPage',
-  titulo: 'Calendário de formações AI Essentials',
-  descricao: 'Próximas sessões da formação AI Essentials da Gadgetmetodo, Lda.: datas, modalidade, vagas e inscrição online com diagnóstico de utilização de IA.',
+  titulo: 'Calendário de formações',
+  descricao: 'Próximas sessões das formações da Gadgetmetodo, Lda., incluindo o programa AI Essentials: cursos, programa e temas, datas, modalidade, vagas e inscrição online.',
   prioridade: '0.8',
-  llms: 'Calendário das próximas sessões de formação AI Essentials, com inscrição online.',
+  llms: 'Calendário das próximas sessões de formação e lista de cursos, com programa, temas e inscrição online.',
   trilho: [['/', 'Início'], ['/servicos/formacao-ai-essentials/', 'Formação AI Essentials'], ['/formacoes/', 'Calendário']],
   corpo: `
-    ${topoPagina({ trilho: [['/', 'Início'], ['/servicos/formacao-ai-essentials/', 'Formação AI Essentials'], ['/formacoes/', 'Calendário']], h1: 'Calendário de formações', lead: 'Próximas sessões da formação AI Essentials, abertas a empresas e profissionais, com inscrição online.', atualizado: false })}
+    ${topoPagina({ trilho: [['/', 'Início'], ['/servicos/formacao-ai-essentials/', 'Formação AI Essentials'], ['/formacoes/', 'Calendário']], h1: 'Calendário de formações', lead: 'Próximas sessões das formações da Gadgetmetodo, incluindo o programa AI Essentials, abertas a empresas e profissionais, com inscrição online.', atualizado: false })}
 
     <?= $pagina['conteudo'] ?>
 
@@ -1417,7 +1420,7 @@ pagina({
         <div class="duas-colunas">
           <div>
             ${resumo([
-              'A Gadgetmetodo, Lda. organiza sessões abertas da <a href="/servicos/formacao-ai-essentials/">formação AI Essentials</a>, sobre inteligência artificial (IA) aplicada à gestão, ministradas por formador com Certificado de Competências Pedagógicas (CCP).',
+              'A Gadgetmetodo, Lda. organiza sessões abertas dos seus cursos, como o programa <a href="/servicos/formacao-ai-essentials/">AI Essentials</a>, sobre inteligência artificial (IA) aplicada à gestão, ministradas por formador com Certificado de Competências Pedagógicas (CCP). Cada curso tem uma página com o programa, os temas de cada módulo e as próximas sessões.',
               'Qualquer empresa pode inscrever formandos nesta página. Os clientes com acesso à área reservada podem também inscrever e acompanhar as inscrições da sua equipa.',
             ], 'Como funcionam as sessões abertas?')}
           </div>
@@ -1425,7 +1428,7 @@ pagina({
             <h2 id="como-inscrever" style="font-size:1.3rem">Como se inscrever</h2>
             <ol class="etapas etapas-compactas">
               <li><h3>Escolha a sessão</h3><p>Veja a data, a modalidade e as vagas disponíveis.</p></li>
-              <li><h3>Preencha a inscrição</h3><p>Dados da empresa, do formando e um diagnóstico de oito perguntas sobre a utilização de IA.</p></li>
+              <li><h3>Preencha a inscrição</h3><p>Dados da empresa e do formando e, nos cursos de IA, um diagnóstico de oito perguntas sobre a utilização de IA.</p></li>
               <li><h3>Receba a confirmação</h3><p>A inscrição fica pendente e é confirmada por email pela Gadgetmetodo.</p></li>
             </ol>
           </div>
@@ -1443,12 +1446,27 @@ pagina({
   estilos: [CSS_AREA],
   indexar: false,
   titulo: 'Inscrição em formação',
-  descricao: 'Inscrição numa sessão da formação AI Essentials da Gadgetmetodo, Lda., com diagnóstico de utilização de inteligência artificial.',
+  descricao: 'Inscrição numa sessão de formação da Gadgetmetodo, Lda., com o programa e os temas da sessão.',
   trilho: [['/', 'Início'], ['/formacoes/', 'Calendário de formações'], ['/formacoes/inscricao.php', 'Inscrição']],
   corpo: `
-    ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Calendário de formações'], ['/formacoes/inscricao.php', 'Inscrição']], h1: 'Inscrição em formação', lead: 'Preencha os dados da empresa e do formando e responda ao diagnóstico de utilização de inteligência artificial.', atualizado: false })}
+    ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Calendário de formações'], ['/formacoes/inscricao.php', 'Inscrição']], h1: 'Inscrição em formação', lead: 'Preencha os dados da empresa e do formando. Nos cursos de inteligência artificial, responda também ao diagnóstico de utilização de IA.', atualizado: false })}
 
     <?= $pagina['conteudo'] ?>
+  `,
+});
+
+pagina({
+  url: '/formacoes/curso.php',
+  php: `<?php require __DIR__ . '/../clientes/inc/publico.php'; $pagina = curso_publico(); ?>\n`,
+  cabecaPhp: { titulo: "<?= h($pagina['titulo']) ?>", descricao: "<?= h($pagina['descricao']) ?>", canonical: "<?= h($pagina['canonical']) ?>" },
+  jsonldExtra: '<?= $pagina[\'jsonld\'] ?>',
+  estilos: [CSS_AREA],
+  titulo: 'Curso de formação',
+  descricao: 'Programa, módulos, temas e próximas sessões de um curso da Gadgetmetodo, Lda.',
+  corpo: `
+    <?= $pagina['conteudo'] ?>
+
+    ${chamada({ titulo: 'Quer este curso para a sua equipa?', texto: 'Organizamos qualquer curso na sua empresa, com datas, duração e exemplos ajustados ao setor e às funções do grupo.' })}
   `,
 });
 
@@ -1499,13 +1517,13 @@ pagina({
         <p>O ditado é opcional e só é ativado quando carrega no botão "Ditar". Usa o serviço de reconhecimento de voz do seu navegador: o áudio é tratado pelo fornecedor do navegador (por exemplo, a Google no Chrome ou a Apple no Safari), de acordo com as condições desse fornecedor. Este site recebe apenas o texto que decidir enviar e não grava nem guarda áudio.</p>
 
         <h2>5. Área de clientes e diagnóstico de utilização de IA</h2>
-        <p>A área de clientes é reservada a pessoas autorizadas. Cada entidade cliente vê apenas as formações disponíveis e as inscrições dos seus próprios formandos; a Gadgetmetodo vê todas. As inscrições feitas no <a href="/formacoes/">calendário público</a> ficam visíveis apenas para a Gadgetmetodo até serem associadas à entidade cliente correspondente. O diagnóstico de utilização de IA é uma autoavaliação curta, usada apenas para ajustar os exemplos e os exercícios ao ponto de partida do grupo; não se destina a avaliar o desempenho profissional do formando. Quem inscreve outra pessoa deve informá-la deste tratamento.</p>
+        <p>A área de clientes é reservada a pessoas autorizadas. Cada entidade cliente vê apenas as formações disponíveis e as inscrições dos seus próprios formandos; a Gadgetmetodo vê todas. As inscrições feitas no <a href="/formacoes/">calendário público</a> ficam visíveis apenas para a Gadgetmetodo até serem associadas à entidade cliente correspondente. O diagnóstico de utilização de IA é uma autoavaliação curta, usada apenas para ajustar os exemplos e os exercícios ao ponto de partida do grupo; não se destina a avaliar o desempenho profissional do formando. Quem inscreve outra pessoa deve informá-la deste tratamento. Quando a Gadgetmetodo envia a um candidato o convite para uma formação, o nome e o email são usados apenas para esse envio.</p>
 
         <h2>6. Cookies e tecnologias semelhantes</h2>
         <p>Este site não utiliza cookies, ferramentas de análise de tráfego ou de publicidade, nem incorpora conteúdos de terceiros, como mapas ou vídeos. As fontes tipográficas são alojadas no próprio site. A área de clientes e a área reservada da empresa, usadas apenas por pessoas autorizadas, utilizam um cookie de sessão estritamente necessário, que expira ao fechar o navegador.</p>
 
         <h2>7. Destinatários</h2>
-        <p>Os dados podem ser tratados por prestadores de serviços de alojamento e de correio eletrónico, que atuam como subcontratantes. Quando algum destes prestadores trate dados fora do Espaço Económico Europeu, a transferência baseia-se nas garantias previstas no RGPD, como decisões de adequação ou cláusulas contratuais-tipo. Os dados não são vendidos nem cedidos para fins de marketing de terceiros.</p>
+        <p>Os dados podem ser tratados por prestadores de serviços de alojamento e de correio eletrónico, que atuam como subcontratantes. As sessões de formação online decorrem no Google Meet: ao participar, os dados de ligação e de imagem e som são tratados pela Google, de acordo com as condições desse serviço. Quando algum destes prestadores trate dados fora do Espaço Económico Europeu, a transferência baseia-se nas garantias previstas no RGPD, como decisões de adequação ou cláusulas contratuais-tipo. Os dados não são vendidos nem cedidos para fins de marketing de terceiros.</p>
 
         <h2>8. Conservação</h2>
         <p>Os pedidos de contacto que não deem origem a uma relação contratual são conservados até 12 meses após o último contacto. Os registos de pedidos e de acessos ao catálogo guardados no site são apagados automaticamente 12 meses após o pedido. Os dados das inscrições em formações, incluindo as respostas ao diagnóstico, são apagados automaticamente 2 anos após a data da formação. As contas de acesso à área de clientes são mantidas enquanto durar a relação com o cliente. Os dados de clientes são conservados durante a relação contratual e, depois dela, pelos prazos exigidos por lei.</p>

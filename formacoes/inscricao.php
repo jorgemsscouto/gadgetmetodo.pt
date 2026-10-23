@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Inscrição em formação | Gadgetmetodo, Lda.</title>
-  <meta name="description" content="Inscrição numa sessão da formação AI Essentials da Gadgetmetodo, Lda., com diagnóstico de utilização de inteligência artificial.">
+  <meta name="description" content="Inscrição numa sessão de formação da Gadgetmetodo, Lda., com o programa e os temas da sessão.">
   <meta name="robots" content="noindex, follow">
   <link rel="canonical" href="https://www.gadgetmetodo.pt/formacoes/inscricao.php">
   <meta name="theme-color" content="#0A0F26">
@@ -14,7 +14,7 @@
   <meta property="og:locale" content="pt_PT">
   <meta property="og:site_name" content="Gadgetmetodo, Lda.">
   <meta property="og:title" content="Inscrição em formação | Gadgetmetodo, Lda.">
-  <meta property="og:description" content="Inscrição numa sessão da formação AI Essentials da Gadgetmetodo, Lda., com diagnóstico de utilização de inteligência artificial.">
+  <meta property="og:description" content="Inscrição numa sessão de formação da Gadgetmetodo, Lda., com o programa e os temas da sessão.">
   <meta property="og:url" content="https://www.gadgetmetodo.pt/formacoes/inscricao.php">
   <meta property="og:image" content="https://www.gadgetmetodo.pt/assets/img/partilha.png">
   <meta property="og:image:width" content="1200">
@@ -29,7 +29,7 @@
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/site.css?v=df7de41f10">
-  <link rel="stylesheet" href="/assets/css/area.css?v=a8c6d4cb13">
+  <link rel="stylesheet" href="/assets/css/area.css?v=a0621f1cfe">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -162,7 +162,7 @@
       "@id": "https://www.gadgetmetodo.pt/formacoes/inscricao.php#pagina",
       "url": "https://www.gadgetmetodo.pt/formacoes/inscricao.php",
       "name": "Inscrição em formação",
-      "description": "Inscrição numa sessão da formação AI Essentials da Gadgetmetodo, Lda., com diagnóstico de utilização de inteligência artificial.",
+      "description": "Inscrição numa sessão de formação da Gadgetmetodo, Lda., com o programa e os temas da sessão.",
       "inLanguage": "pt-PT",
       "isPartOf": {
         "@id": "https://www.gadgetmetodo.pt/#website"
@@ -237,7 +237,7 @@
       <div class="contentor">
         <nav class="migalhas" aria-label="Localização"><ol><li><a href="/">Início</a></li><li><a href="/formacoes/">Calendário de formações</a></li><li aria-current="page">Inscrição</li></ol></nav>
         <h1>Inscrição em formação</h1>
-        <p class="lead">Preencha os dados da empresa e do formando e responda ao diagnóstico de utilização de inteligência artificial.</p>
+        <p class="lead">Preencha os dados da empresa e do formando. Nos cursos de inteligência artificial, responda também ao diagnóstico de utilização de IA.</p>
         
       </div>
     </section>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../formulario/dados.php';
 require_once __DIR__ . '/../../formulario/email.php';
+require_once __DIR__ . '/cursos.php';
 
 date_default_timezone_set('Europe/Lisbon');
 
@@ -12,15 +13,6 @@ const PAPEIS = ['admin' => 'Gadgetmetodo', 'cliente' => 'Cliente'];
 const ESTADOS_FORMACAO = ['aberta' => 'Inscrições abertas', 'fechada' => 'Inscrições fechadas', 'cancelada' => 'Cancelada'];
 const ESTADOS_INSCRICAO = ['pendente' => 'Pendente', 'confirmada' => 'Confirmada', 'cancelada' => 'Cancelada'];
 const MODALIDADES = ['presencial' => 'Presencial', 'online' => 'Online', 'misto' => 'Misto'];
-const MODULOS = [
-    'completo' => 'Programa completo (5 módulos)',
-    'm1' => 'Módulo 1: Fundamentos de IA para a administração',
-    'm2' => 'Módulo 2: Casos de uso e integração em sistemas',
-    'm3' => 'Módulo 3: Governação e ética da IA',
-    'm4' => 'Módulo 4: RGPD, privacidade e IA',
-    'm5' => 'Módulo 5: NIS2 e segurança da informação',
-    'medida' => 'Programa à medida',
-];
 const SESSAO_MAXIMA = 7200; // segundos de inatividade
 const DIAS_INSCRICOES = 730; // conservação das inscrições após a data da formação
 const DIAS_NOVA = 30; // formações agendadas há menos de 30 dias aparecem como novas
@@ -50,10 +42,24 @@ function bd(): ?PDO
             senha TEXT NOT NULL, papel TEXT NOT NULL CHECK (papel IN ('admin', 'cliente')),
             cliente_id INTEGER REFERENCES clientes(id), ativo INTEGER NOT NULL DEFAULT 1,
             criado TEXT NOT NULL, ultimo_acesso TEXT)");
+        $cursos_novos = !$pdo->query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'cursos'")->fetchColumn();
+        $pdo->exec('CREATE TABLE IF NOT EXISTS cursos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, chave TEXT UNIQUE, nome TEXT NOT NULL, tipologia TEXT, descricao TEXT,
+            publico TEXT, duracao TEXT, diagnostico INTEGER NOT NULL DEFAULT 1, ativo INTEGER NOT NULL DEFAULT 1, criado TEXT NOT NULL)');
+        $pdo->exec('CREATE TABLE IF NOT EXISTS modulos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, curso_id INTEGER NOT NULL REFERENCES cursos(id), ordem INTEGER NOT NULL DEFAULT 1,
+            nome TEXT NOT NULL, descricao TEXT, temas TEXT, horas REAL)');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS modulos_curso ON modulos (curso_id, ordem)');
+        if ($cursos_novos) {
+            semear_cursos($pdo);
+        }
+        // "titulo" guarda o nome do curso (atualizado quando o curso muda de nome); "reuniao" é a ligação da sessão online
         $pdo->exec("CREATE TABLE IF NOT EXISTS formacoes (
             id INTEGER PRIMARY KEY AUTOINCREMENT, titulo TEXT NOT NULL, modulo TEXT, inicio TEXT NOT NULL, fim TEXT,
             modalidade TEXT, local TEXT, vagas INTEGER NOT NULL DEFAULT 12, estado TEXT NOT NULL DEFAULT 'aberta',
-            notas TEXT, criado TEXT NOT NULL)");
+            notas TEXT, criado TEXT NOT NULL, curso_id INTEGER REFERENCES cursos(id), modulo_id INTEGER REFERENCES modulos(id), reuniao TEXT)");
+        acrescentar_colunas($pdo, 'formacoes', ['curso_id' => 'INTEGER REFERENCES cursos(id)', 'modulo_id' => 'INTEGER REFERENCES modulos(id)', 'reuniao' => 'TEXT']);
+        migrar_sessoes_para_cursos($pdo);
         // As inscrições feitas no site público ficam sem cliente até a Gadgetmetodo as associar
         $tabela_inscricoes = "CREATE TABLE IF NOT EXISTS inscricoes (
             id INTEGER PRIMARY KEY AUTOINCREMENT, formacao_id INTEGER NOT NULL REFERENCES formacoes(id),
@@ -71,6 +77,17 @@ function bd(): ?PDO
         $pronta = true;
     }
     return $pdo;
+}
+
+// Acrescenta as colunas em falta a uma tabela criada por uma versão anterior
+function acrescentar_colunas(PDO $pdo, string $tabela, array $colunas): void
+{
+    $existentes = array_column($pdo->query('PRAGMA table_info(' . $tabela . ')')->fetchAll(PDO::FETCH_ASSOC), 'name');
+    foreach ($colunas as $nome => $tipo) {
+        if (!in_array($nome, $existentes, true)) {
+            $pdo->exec('ALTER TABLE ' . $tabela . ' ADD COLUMN ' . $nome . ' ' . $tipo);
+        }
+    }
 }
 
 // Bases criadas pela primeira versão da área: cliente obrigatório e sem campos de origem
@@ -364,7 +381,7 @@ function exportar_csv(string $nome, array $cabecalho, array $linhas): void
 
 /* Emails da área */
 
-function enviar_aviso(string $para, string $assunto, string $titulo, string $corpo_html, string $corpo_texto, string $responder_a = '', string $bcc = ''): void
+function enviar_aviso(string $para, string $assunto, string $titulo, string $corpo_html, string $corpo_texto, string $responder_a = '', string $bcc = '', string $cc = ''): void
 {
     $cfg = cfg();
     if (empty($cfg['remetente_email'])) {
@@ -376,6 +393,9 @@ function enviar_aviso(string $para, string $assunto, string $titulo, string $cor
         $m->addAddress($para);
         if ($responder_a !== '') {
             $m->addReplyTo($responder_a);
+        }
+        if ($cc !== '' && strcasecmp($cc, $para) !== 0) {
+            $m->addCC($cc);
         }
         if ($bcc !== '' && strcasecmp($bcc, $para) !== 0) {
             $m->addBCC($bcc);

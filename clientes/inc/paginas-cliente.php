@@ -39,9 +39,9 @@ function cliente_painel(): void
 function cliente_formacoes(): void
 {
     pagina_area('calendario', 'Calendário de formações', '
-      <p class="lead">Formações AI Essentials agendadas. Cada inscrição inclui um diagnóstico curto do uso de inteligência artificial pelo formando, que permite ajustar os exemplos e os exercícios ao nível do grupo.</p>
+      <p class="lead">Sessões agendadas dos cursos da Gadgetmetodo. Em cada sessão, abra "Programa e temas" para ver o conteúdo. Nos cursos de inteligência artificial, a inscrição inclui um diagnóstico curto do uso de IA pelo formando, para ajustar os exemplos e os exercícios ao nível do grupo.</p>
       ' . calendario(proximas_formacoes(), 'botao_inscrever') . '
-      <p class="texto-suave espaco-topo">Precisa de uma data ou de um programa à medida para a sua equipa? Escreva para <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</p>', 'AI Essentials');
+      <p class="texto-suave espaco-topo">Precisa de uma data ou de um programa à medida para a sua equipa? Escreva para <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</p>', 'Formações');
 }
 
 function cliente_inscricoes(): void
@@ -74,6 +74,7 @@ function pagina_inscrever(): void
     if (!$f || $f['estado'] === 'cancelada' || (!$admin && ($f['estado'] !== 'aberta' || strtotime($f['inicio']) < strtotime('today')))) {
         pagina_erro('Inscrições indisponíveis', 'Esta formação não existe ou já não aceita inscrições.');
     }
+    $diag = com_diagnostico($f);
     $clientes = $admin ? array_column(consulta('SELECT id, nome FROM clientes ORDER BY nome'), 'nome', 'id') : [];
     $erros = [];
     $v = ['formando' => '', 'email' => '', 'funcao' => '', 'expectativas' => '', 'ferramentas' => [], 'diag' => [], 'cliente_id' => 0];
@@ -81,11 +82,11 @@ function pagina_inscrever(): void
         $v = [
             'formando' => texto('formando', 120), 'email' => texto('email', 160), 'funcao' => texto('funcao', 120),
             'expectativas' => texto('expectativas', 1500, true),
-            'ferramentas' => array_values(array_intersect(FERRAMENTAS_IA, array_filter((array) ($_POST['ferramentas'] ?? []), 'is_string'))),
+            'ferramentas' => $diag ? array_values(array_intersect(FERRAMENTAS_IA, array_filter((array) ($_POST['ferramentas'] ?? []), 'is_string'))) : [],
             'diag' => array_filter(array_intersect_key((array) ($_POST['diag'] ?? []), DIAGNOSTICO), 'is_string'),
             'cliente_id' => $admin ? (int) ($_POST['cliente_id'] ?? 0) : (int) $u['cliente_id'],
         ];
-        $respostas = respostas_diagnostico();
+        $respostas = $diag ? respostas_diagnostico() : [];
         if ($v['formando'] === '') {
             $erros[] = 'Indique o nome do formando.';
         }
@@ -108,18 +109,13 @@ function pagina_inscrever(): void
                 $erros[] = $r['erro'];
             } else {
                 emails_nova_inscricao($r['id']);
-                aviso('Inscrição de ' . h($v['formando']) . ' registada. Resultado do diagnóstico: <strong>' . h($r['nivel']) . '</strong> (' . $r['pontuacao'] . ' em 24). Recebe a confirmação por email.');
+                aviso('Inscrição de ' . h($v['formando']) . ' registada.' . ($r['nivel'] ? ' Resultado do diagnóstico: <strong>' . h($r['nivel']) . '</strong> (' . $r['pontuacao'] . ' em 24).' : '') . ' Recebe a confirmação por email.');
                 redirecionar('inscricao', ['id' => $r['id']]);
             }
         }
     }
     $restantes = max(0, (int) $f['vagas'] - inscritos((int) $f['id']));
-    $ferramentas = '';
-    foreach (FERRAMENTAS_IA as $nome) {
-        $ferramentas .= '<label class="opcao"><input type="checkbox" name="ferramentas[]" value="' . h($nome) . '"' . (in_array($nome, $v['ferramentas'], true) ? ' checked' : '') . '> ' . h($nome) . '</label>';
-    }
-    pagina_area('calendario', 'Inscrever formando', '
-      <div class="resumo-formacao"><strong>' . h($f['titulo']) . '</strong> · ' . h(MODULOS[$f['modulo']] ?? '') . '<br>' . h(horario($f)) . ' · ' . h(MODALIDADES[$f['modalidade']] ?? '') . ($f['local'] ? ' · ' . h($f['local']) : '') . '<br><span class="texto-suave">' . $restantes . ' vaga(s) disponível(eis)</span></div>
+    pagina_area('calendario', 'Inscrever formando', resumo_sessao($f, $restantes, false) . '
       ' . ($erros ? '<div class="aviso aviso-erro">' . h(implode(' ', $erros)) . '</div>' : '') . '
       <form method="post" class="formulario">' . campo_csrf() . '
         <h2 class="mb-0">1. Dados do formando</h2>
@@ -129,14 +125,41 @@ function pagina_inscrever(): void
           ' . campo('email', 'Email profissional', $v['email'], 'email', 'maxlength="160" autocomplete="off"') . '
           ' . campo('funcao', 'Função ou departamento', $v['funcao'], 'text', 'maxlength="120"') . '
         </div>
-        <h2 class="mb-0 espaco-topo">2. Diagnóstico de utilização de IA</h2>
-        <p class="texto-suave mb-0">Oito perguntas, cerca de dois minutos. Devem ser respondidas pelo formando ou com base no que ele indicar. Não há respostas certas: o objetivo é ajustar a formação ao ponto de partida de cada pessoa.</p>
-        ' . campos_diagnostico($v['diag']) . '
-        <fieldset class="campo-grupo"><legend>Que ferramentas de IA usa atualmente?</legend><div class="opcoes opcoes-linha">' . $ferramentas . '</div></fieldset>
+        ' . bloco_diagnostico_form($f, $v, 2, 'Devem ser respondidas pelo formando ou com base no que ele indicar.') . '
         ' . campo('expectativas', 'O que espera da formação? Há algum caso concreto do seu trabalho que gostaria de ver tratado?', $v['expectativas'], 'textarea', 'maxlength="1500"') . '
         <label class="opcao consentimento"><input type="checkbox" name="consentimento" value="1" required> <span>Confirmo que o formando foi informado de que estes dados são tratados pela Gadgetmetodo, Lda. para organizar a formação e adaptar os conteúdos, nos termos da <a href="/privacidade/" target="_blank" rel="noopener">Política de privacidade</a>. *</span></label>
         <div><button class="botao" type="submit">Enviar inscrição</button></div>
-      </form>', 'AI Essentials');
+      </form>', 'Formações');
+}
+
+// Resumo da sessão no topo dos formulários de inscrição, com o programa e os temas
+function resumo_sessao(array $f, int $restantes, bool $publico): string
+{
+    $vagas = $publico ? ($restantes <= 3 ? 'Últimas vagas' : $restantes . ' vagas disponíveis') : $restantes . ' vaga(s) disponível(eis)';
+    $curso = curso((int) ($f['curso_id'] ?? 0));
+    return '<div class="resumo-formacao"><strong>' . h($f['titulo']) . '</strong> · ' . h(nome_modulo($f)) . '<br>' . h(horario($f)) . ' · ' . h(MODALIDADES[$f['modalidade']] ?? '') . ($f['local'] ? ' · ' . h($f['local']) : '') . '<br><span class="texto-suave">' . h($vagas) . '</span>'
+        . ($publico && $curso ? ' · <a href="' . h(link_curso_publico($curso)) . '">Ver a página do curso</a>' : '') . programa_html($f, $publico) . '</div>';
+}
+
+// Perguntas do diagnóstico de IA e ferramentas usadas, só nos cursos que o têm ativo
+function bloco_diagnostico_form(array $f, array $v, int $numero, string $quem): string
+{
+    if (!com_diagnostico($f)) {
+        return '';
+    }
+    $ferramentas = '';
+    foreach (FERRAMENTAS_IA as $nome) {
+        $ferramentas .= '<label class="opcao"><input type="checkbox" name="ferramentas[]" value="' . h($nome) . '"' . (in_array($nome, $v['ferramentas'], true) ? ' checked' : '') . '> ' . h($nome) . '</label>';
+    }
+    return '<h2 class="mb-0 espaco-topo">' . $numero . '. Diagnóstico de utilização de IA</h2>
+        <p class="texto-suave mb-0">Oito perguntas, cerca de dois minutos. ' . h($quem) . ' Não há respostas certas: servem para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>
+        ' . campos_diagnostico($v['diag']) . '
+        <fieldset class="campo-grupo"><legend>Que ferramentas de IA usa atualmente?</legend><div class="opcoes opcoes-linha">' . $ferramentas . '</div></fieldset>';
+}
+
+function link_curso_publico(array $curso): string
+{
+    return '/formacoes/curso.php?c=' . (int) $curso['id'];
 }
 
 // Quem recebe as confirmações de uma inscrição: o utilizador do cliente que a fez ou, no site, o contacto indicado
@@ -151,7 +174,7 @@ function contacto_inscricao(array $i): ?array
     return null;
 }
 
-const SQL_INSCRICAO = 'SELECT i.*, ' . SQL_CLIENTE . ', f.titulo, f.modulo, f.inicio, f.fim, f.modalidade, f.local, f.estado AS estado_formacao, u.nome AS autor, u.email AS autor_email, u.papel AS autor_papel FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id LEFT JOIN utilizadores u ON u.id = i.utilizador_id WHERE i.id = ?';
+const SQL_INSCRICAO = 'SELECT i.*, ' . SQL_CLIENTE . ', f.titulo, f.modulo, f.curso_id, f.modulo_id, f.reuniao, f.inicio, f.fim, f.modalidade, f.local, f.estado AS estado_formacao, u.nome AS autor, u.email AS autor_email, u.papel AS autor_papel FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id LEFT JOIN utilizadores u ON u.id = i.utilizador_id WHERE i.id = ?';
 
 // Grava uma inscrição numa transação, para que duas inscrições em simultâneo não ultrapassem as vagas.
 // Devolve o identificador e o resultado do diagnóstico, ou a mensagem de erro.
@@ -169,10 +192,10 @@ function gravar_inscricao(array $f, array $v, array $respostas, bool $sem_limite
         $pdo->exec('ROLLBACK');
         return ['erro' => $erro];
     }
-    $a = avaliar_diagnostico($respostas);
+    $a = $respostas ? avaliar_diagnostico($respostas) : ['pontuacao' => null, 'responsavel' => null, 'nivel' => null, 'recomendacao' => ''];
     $id = executar('INSERT INTO inscricoes (formacao_id, cliente_id, utilizador_id, origem, empresa, nif, contacto_nome, contacto_email, contacto_telefone, formando, email, funcao, respostas, pontuacao, responsavel, nivel, ferramentas, expectativas, estado, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [$f['id'], $v['cliente_id'] ?: null, $v['utilizador_id'] ?? null, $v['origem'], $v['empresa'] ?? null, $v['nif'] ?? null, $v['contacto_nome'] ?? null, $v['contacto_email'] ?? null, $v['contacto_telefone'] ?? null,
-         $v['formando'], $v['email'], $v['funcao'], json_encode($respostas), $a['pontuacao'], $a['responsavel'], $a['nivel'], implode(', ', $v['ferramentas']), $v['expectativas'], 'pendente', agora()]);
+         $v['formando'], $v['email'], $v['funcao'], $respostas ? json_encode($respostas) : null, $a['pontuacao'], $a['responsavel'], $a['nivel'], implode(', ', $v['ferramentas']), $v['expectativas'], 'pendente', agora()]);
     $pdo->exec('COMMIT');
     return ['erro' => '', 'id' => $id] + $a;
 }
@@ -187,16 +210,17 @@ function emails_nova_inscricao(int $id): void
     $site = rtrim((string) ($cfg['site'] ?? 'https://www.gadgetmetodo.pt'), '/');
     $publica = $i['origem'] === 'site';
     $quando = horario($i) . ' · ' . (MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ' · ' . $i['local'] : '');
-    $a = avaliar_diagnostico((array) json_decode((string) $i['respostas'], true));
+    $a = $i['respostas'] ? avaliar_diagnostico((array) json_decode((string) $i['respostas'], true)) : null;
+    $recomendacao = $a && eh_ai_essentials($i) ? $a['recomendacao'] : '';
     $link_area = $site . '/clientes/' . url('inscricao', ['id' => $id]);
     $contacto = contacto_inscricao($i);
     $linhas = [
-        'Formação' => $i['titulo'] . ' (' . (MODULOS[$i['modulo']] ?? '') . ')', 'Data' => $quando,
+        'Formação' => $i['titulo'] . ' (' . nome_modulo($i) . ')', 'Data' => $quando,
         'Origem' => $publica ? 'Inscrição pública no site, por associar a um cliente' : ORIGENS['area'],
         $publica ? 'Empresa' : 'Cliente' => $i['cliente'] . ($i['nif'] ? ' (NIF ' . $i['nif'] . ')' : ''),
         'Contacto' => $publica ? trim($i['contacto_nome'] . ' · ' . $i['contacto_email'] . ($i['contacto_telefone'] ? ' · ' . $i['contacto_telefone'] : '')) : '',
         'Formando' => $i['formando'], 'Email' => $i['email'], 'Função' => $i['funcao'],
-        'Diagnóstico' => $i['nivel'] . ' (' . $i['pontuacao'] . ' em 24; uso responsável ' . $i['responsavel'] . ' em 9)',
+        'Diagnóstico' => $i['nivel'] ? $i['nivel'] . ' (' . $i['pontuacao'] . ' em 24; uso responsável ' . $i['responsavel'] . ' em 9)' : '',
         'Ferramentas' => $i['ferramentas'], 'Expectativas' => $i['expectativas'],
         'Inscrito por' => $i['autor'] ? $i['autor'] . ' (' . $i['autor_email'] . ')' : '',
     ];
@@ -218,8 +242,8 @@ function emails_nova_inscricao(int $id): void
     $destino = (string) ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt');
     enviar_aviso($destino, ($publica ? 'Nova inscrição pelo site: ' : 'Nova inscrição: ') . $i['formando'] . ' (' . $i['cliente'] . '), ' . data_hora($i['inicio'], false), 'Nova inscrição em formação',
         '<p style="margin:0 0 16px;">Foi registada uma nova inscrição, pendente de confirmação.' . ($publica ? ' Veio do site público: associe-a a um cliente na área de clientes.' : '') . '</p>' . $tabela
-        . '<p style="margin:16px 0 0;"><strong>Recomendação:</strong> ' . h($a['recomendacao']) . '</p>' . $botao($link_area, 'Ver inscrição na área de clientes'),
-        "Foi registada uma nova inscrição, pendente de confirmação.\n\n" . $texto . "\nRecomendação: " . $a['recomendacao'] . "\n\n" . $link_area,
+        . ($recomendacao ? '<p style="margin:16px 0 0;"><strong>Recomendação:</strong> ' . h($recomendacao) . '</p>' : '') . $botao($link_area, 'Ver inscrição na área de clientes'),
+        "Foi registada uma nova inscrição, pendente de confirmação.\n\n" . $texto . ($recomendacao ? "\nRecomendação: " . $recomendacao : '') . "\n\n" . $link_area,
         $contacto['email'] ?? '', (string) ($cfg['bcc'] ?? ''));
 
     // Confirmação de receção para quem fez a inscrição
@@ -228,9 +252,9 @@ function emails_nova_inscricao(int $id): void
         $alterar = $contacto['area'] ? 'Para alterar ou cancelar a inscrição, use a área de clientes ou responda a este email.' : 'Para alterar ou cancelar a inscrição, basta responder a este email.';
         enviar_aviso($contacto['email'], 'Inscrição recebida: ' . $i['formando'] . ', ' . $i['titulo'] . ' de ' . data_hora($i['inicio'], false), 'Inscrição recebida',
             '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 16px;">Recebemos a inscrição de <strong>' . h($i['formando']) . '</strong> na formação ' . h($i['titulo']) . ', em ' . h($quando) . '. A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.</p>'
-            . '<p style="margin:0 0 16px;">O diagnóstico indica o nível <strong>' . h($i['nivel']) . '</strong> de utilização de IA. Vamos usá-lo para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>' . $ver
+            . ($i['nivel'] ? '<p style="margin:0 0 16px;">O diagnóstico indica o nível <strong>' . h($i['nivel']) . '</strong> de utilização de IA. Vamos usá-lo para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>' : '') . $ver
             . '<p style="margin:22px 0 0;color:#687280;font-size:13px;">' . h($alterar) . '</p>',
-            nome_curto($contacto['nome']) . ",\n\nRecebemos a inscrição de " . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . $quando . ". A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.\n\nNível de utilização de IA indicado pelo diagnóstico: " . $i['nivel'] . ".\n\n" . $alterar,
+            nome_curto($contacto['nome']) . ",\n\nRecebemos a inscrição de " . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . $quando . ". A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.\n\n" . ($i['nivel'] ? 'Nível de utilização de IA indicado pelo diagnóstico: ' . $i['nivel'] . ".\n\n" : '') . $alterar,
             $destino);
     }
 }
@@ -274,10 +298,11 @@ function pagina_inscricao(): void
                     ? 'A inscrição de ' . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . horario($i) . ', está confirmada.'
                     : 'A inscrição de ' . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . horario($i) . ', passou ao estado: ' . strtolower(ESTADOS_INSCRICAO[$novo]) . '.';
                 $local = $novo === 'confirmada' ? (MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ': ' . $i['local'] : '') : '';
+                [$reuniao_html, $reuniao_texto] = $novo === 'confirmada' ? bloco_reuniao($i) : ['', ''];
                 enviar_aviso($contacto['email'], ($novo === 'confirmada' ? 'Inscrição confirmada: ' : 'Inscrição atualizada: ') . $i['formando'] . ', ' . data_hora($i['inicio'], false), $novo === 'confirmada' ? 'Inscrição confirmada' : 'Inscrição atualizada',
-                    '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 14px;">' . h($frase) . '</p>' . ($local ? '<p style="margin:0 0 14px;"><strong>Local:</strong> ' . h($local) . '</p>' : '') . '<p style="margin:0;">Para qualquer questão, basta responder a este email.</p>',
-                    nome_curto($contacto['nome']) . ",\n\n" . $frase . ($local ? "\n\nLocal: " . $local : '') . "\n\nPara qualquer questão, basta responder a este email.",
-                    (string) (cfg()['destinatario'] ?? 'info@gadgetmetodo.pt'));
+                    '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 14px;">' . h($frase) . '</p>' . ($local ? '<p style="margin:0 0 14px;"><strong>Local:</strong> ' . h($local) . '</p>' : '') . $reuniao_html . '<p style="margin:0;">Para qualquer questão, basta responder a este email.</p>',
+                    nome_curto($contacto['nome']) . ",\n\n" . $frase . ($local ? "\n\nLocal: " . $local : '') . $reuniao_texto . "\n\nPara qualquer questão, basta responder a este email.",
+                    (string) (cfg()['destinatario'] ?? 'info@gadgetmetodo.pt'), '', $novo === 'confirmada' ? (string) $i['email'] : '');
                 aviso('Estado atualizado e aviso enviado por email para ' . h($contacto['email']) . '.');
             } else {
                 aviso('Estado atualizado.');
@@ -318,11 +343,14 @@ function pagina_inscricao(): void
     }
     $publica = $i['origem'] === 'site';
     $dados = [
-        'Formação' => h($i['titulo']) . '<br><span class="texto-suave">' . h(MODULOS[$i['modulo']] ?? '') . '</span>',
+        'Formação' => h($i['titulo']) . '<br><span class="texto-suave">' . h(nome_modulo($i)) . '</span>',
         'Data e local' => h(horario($i)) . '<br><span class="texto-suave">' . h(MODALIDADES[$i['modalidade']] ?? '') . ($i['local'] ? ' · ' . h($i['local']) : '') . '</span>',
         $publica && $i['cliente_id'] === null ? 'Empresa' : 'Cliente' => h($i['cliente']) . ($i['nif'] ? ' <span class="texto-suave">· NIF ' . h($i['nif']) . '</span>' : ''),
         'Formando' => h($i['formando']), 'Email' => h($i['email']), 'Função' => h($i['funcao']),
         'Estado' => estado_etiqueta($i['estado'], ESTADOS_INSCRICAO),
+        'Sessão online' => $i['modalidade'] === 'presencial' || !$i['reuniao'] ? '' : ($admin || $i['estado'] === 'confirmada'
+            ? '<a href="' . h($i['reuniao']) . '" target="_blank" rel="noopener">Entrar na reunião</a><br><span class="texto-suave">' . h($i['reuniao']) . '</span>'
+            : '<span class="texto-suave">A ligação para a reunião é enviada com a confirmação da inscrição.</span>'),
         'Origem' => h(ORIGENS[$i['origem']] ?? $i['origem']),
         'Inscrito por' => $publica
             ? h($i['contacto_nome']) . ', ' . h(data_hora($i['criado'])) . '<br><span class="texto-suave"><a href="mailto:' . h($i['contacto_email']) . '">' . h($i['contacto_email']) . '</a>' . ($i['contacto_telefone'] ? ' · ' . h($i['contacto_telefone']) : '') . '</span>'
@@ -331,20 +359,21 @@ function pagina_inscricao(): void
     if (!$admin) {
         unset($dados['Origem']);
     }
+    $dados = array_filter($dados, function ($x) { return $x !== ''; });
     $tabela = '';
     foreach ($dados as $k => $val) {
         $tabela .= '<tr><th scope="row">' . h($k) . '</th><td>' . $val . '</td></tr>';
     }
     pagina_area('inscricoes', $i['formando'], ($admin ? $acoes : '') . '
       <div class="conteudo"><table class="tabela-ficha"><tbody>' . $tabela . '</tbody></table></div>
-      <h2 class="espaco-topo">Diagnóstico de utilização de IA</h2>
+      ' . ($i['respostas'] ? '<h2 class="espaco-topo">Diagnóstico de utilização de IA</h2>
       <div class="diagnostico-resultado">
         <div><span class="texto-suave">Nível</span>' . nivel_etiqueta($i['nivel']) . '</div>
         <div><span class="texto-suave">Pontuação</span><span><strong>' . (int) $i['pontuacao'] . '</strong> em 24</span></div>
         <div><span class="texto-suave">Uso responsável</span><span><strong>' . (int) $i['responsavel'] . '</strong> em 9</span></div>
       </div>
-      <p><strong>Recomendação:</strong> ' . h(recomendacao_de($i)) . '</p>
-      <div class="conteudo tabela-rolante">' . tabela_diagnostico($i) . '</div>
+      ' . (eh_ai_essentials($i) ? '<p><strong>Recomendação:</strong> ' . h(recomendacao_de($i)) . '</p>' : '') . '
+      <div class="conteudo tabela-rolante">' . tabela_diagnostico($i) . '</div>' : '') . '
       ' . ($i['ferramentas'] ? '<p><strong>Ferramentas usadas:</strong> ' . h($i['ferramentas']) . '</p>' : '') . '
       ' . ($i['expectativas'] ? '<p><strong>Expectativas:</strong> ' . nl2br(h($i['expectativas'])) . '</p>' : '') . '
       ' . (!$admin ? $acoes : '') . '
@@ -387,4 +416,59 @@ function pagina_conta(): void
         ' . campo('repetir', 'Repetir a nova palavra-passe', '', 'password', 'required minlength="10" autocomplete="new-password"') . '
         <div><button class="botao" type="submit">Alterar palavra-passe</button></div>
       </form>', 'Conta');
+}
+
+/* Ligação da reunião online e convites a candidatos */
+
+// Bloco com a ligação da sessão online, para os emails de confirmação e de envio da ligação
+function bloco_reuniao(array $i): array
+{
+    if (($i['modalidade'] ?? '') === 'presencial' || empty($i['reuniao'])) {
+        return ['', ''];
+    }
+    $nome = stripos((string) $i['reuniao'], 'meet.google.com') !== false ? 'Google Meet' : 'reunião online';
+    return [
+        '<p style="margin:0 0 6px;"><strong>Sessão online (' . h($nome) . '):</strong> <a href="' . h($i['reuniao']) . '" style="color:#00636A;">' . h($i['reuniao']) . '</a></p>'
+        . '<p style="margin:0 0 18px;"><a href="' . h($i['reuniao']) . '" style="display:inline-block;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">Entrar na sessão</a></p>',
+        "\n\nSessão online (" . $nome . '): ' . $i['reuniao'],
+    ];
+}
+
+// Envia a ligação da reunião a cada inscrição confirmada: ao formando e, com cópia, a quem o inscreveu
+function enviar_reuniao_confirmados(array $f): int
+{
+    $enviados = 0;
+    foreach (consulta("SELECT id FROM inscricoes WHERE formacao_id = ? AND estado = 'confirmada'", [$f['id']]) as $linha) {
+        $i = linha_bd(SQL_INSCRICAO, [$linha['id']]);
+        $contacto = contacto_inscricao($i);
+        $para = $i['email'] ?: ($contacto['email'] ?? '');
+        if ($para === '') {
+            continue;
+        }
+        [$html, $texto] = bloco_reuniao($i);
+        $nome = $i['email'] ? $i['formando'] : ($contacto['nome'] ?? $i['formando']);
+        $frase = 'Segue a ligação para a sessão de ' . $i['titulo'] . ' (' . nome_modulo($i) . '), em ' . horario($i) . ', em que ' . ($i['email'] ? 'está inscrito(a)' : $i['formando'] . ' está inscrito(a)') . '.';
+        enviar_aviso($para, 'Ligação para a sessão: ' . $i['titulo'] . ', ' . data_hora($i['inicio']), 'Ligação para a sessão online',
+            '<p style="margin:0 0 14px;">' . h(nome_curto($nome)) . ',</p><p style="margin:0 0 16px;">' . h($frase) . '</p>' . $html . '<p style="margin:0;">Recomendamos entrar alguns minutos antes da hora de início. Para qualquer questão, basta responder a este email.</p>',
+            nome_curto($nome) . ",\n\n" . $frase . $texto . "\n\nRecomendamos entrar alguns minutos antes da hora de início.",
+            (string) (cfg()['destinatario'] ?? 'info@gadgetmetodo.pt'), '', $i['email'] ? ($contacto['email'] ?? '') : '');
+        $enviados++;
+    }
+    return $enviados;
+}
+
+// Convite por email a um candidato, com a ligação para a página do curso ou para a inscrição numa sessão
+function enviar_convite(string $nome, string $email, string $mensagem, string $assunto, string $resumo_html, string $resumo_texto, string $link, string $botao): void
+{
+    $cfg = cfg();
+    $u = utilizador();
+    enviar_aviso($email, $assunto, 'Convite para formação',
+        '<p style="margin:0 0 14px;">' . h(nome_curto($nome)) . ',</p>'
+        . ($mensagem !== '' ? '<p style="margin:0 0 16px;">' . nl2br(h($mensagem)) . '</p>' : '<p style="margin:0 0 16px;">Temos o gosto de o(a) convidar para a formação abaixo. Na página indicada encontra o programa, os temas de cada módulo e as datas disponíveis, e pode fazer a inscrição diretamente.</p>')
+        . $resumo_html
+        . '<p style="margin:22px 0 0;"><a href="' . h($link) . '" style="display:inline-block;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">' . h($botao) . '</a></p>'
+        . '<p style="margin:18px 0 0;color:#687280;font-size:13px;">Se o botão não funcionar, copie este endereço para o navegador: ' . h($link) . '</p>'
+        . '<p style="margin:18px 0 0;">Com os melhores cumprimentos,<br>' . h((string) ($u['nome'] ?? 'Gadgetmetodo')) . '<br>Gadgetmetodo, Lda.</p>',
+        nome_curto($nome) . ",\n\n" . ($mensagem !== '' ? $mensagem : 'Temos o gosto de o(a) convidar para a formação abaixo. Na página indicada encontra o programa, os temas e as datas disponíveis, e pode fazer a inscrição diretamente.') . "\n\n" . $resumo_texto . "\n\n" . $botao . ': ' . $link . "\n\nCom os melhores cumprimentos,\n" . ($u['nome'] ?? 'Gadgetmetodo') . "\nGadgetmetodo, Lda.",
+        (string) ($u['email'] ?? ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt')), (string) ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt'));
 }

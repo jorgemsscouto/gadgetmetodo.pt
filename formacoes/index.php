@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Calendário de formações AI Essentials | Gadgetmetodo, Lda.</title>
-  <meta name="description" content="Próximas sessões da formação AI Essentials da Gadgetmetodo, Lda.: datas, modalidade, vagas e inscrição online com diagnóstico de utilização de IA.">
+  <title>Calendário de formações | Gadgetmetodo, Lda.</title>
+  <meta name="description" content="Próximas sessões das formações da Gadgetmetodo, Lda., incluindo o programa AI Essentials: cursos, programa e temas, datas, modalidade, vagas e inscrição online.">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
   <link rel="canonical" href="https://www.gadgetmetodo.pt/formacoes/">
   <meta name="theme-color" content="#0A0F26">
@@ -13,8 +13,8 @@
   <meta property="og:type" content="website">
   <meta property="og:locale" content="pt_PT">
   <meta property="og:site_name" content="Gadgetmetodo, Lda.">
-  <meta property="og:title" content="Calendário de formações AI Essentials | Gadgetmetodo, Lda.">
-  <meta property="og:description" content="Próximas sessões da formação AI Essentials da Gadgetmetodo, Lda.: datas, modalidade, vagas e inscrição online com diagnóstico de utilização de IA.">
+  <meta property="og:title" content="Calendário de formações | Gadgetmetodo, Lda.">
+  <meta property="og:description" content="Próximas sessões das formações da Gadgetmetodo, Lda., incluindo o programa AI Essentials: cursos, programa e temas, datas, modalidade, vagas e inscrição online.">
   <meta property="og:url" content="https://www.gadgetmetodo.pt/formacoes/">
   <meta property="og:image" content="https://www.gadgetmetodo.pt/assets/img/partilha.png">
   <meta property="og:image:width" content="1200">
@@ -29,7 +29,7 @@
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/site.css?v=df7de41f10">
-  <link rel="stylesheet" href="/assets/css/area.css?v=a8c6d4cb13">
+  <link rel="stylesheet" href="/assets/css/area.css?v=a0621f1cfe">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -161,8 +161,8 @@
       "@type": "CollectionPage",
       "@id": "https://www.gadgetmetodo.pt/formacoes/#pagina",
       "url": "https://www.gadgetmetodo.pt/formacoes/",
-      "name": "Calendário de formações AI Essentials",
-      "description": "Próximas sessões da formação AI Essentials da Gadgetmetodo, Lda.: datas, modalidade, vagas e inscrição online com diagnóstico de utilização de IA.",
+      "name": "Calendário de formações",
+      "description": "Próximas sessões das formações da Gadgetmetodo, Lda., incluindo o programa AI Essentials: cursos, programa e temas, datas, modalidade, vagas e inscrição online.",
       "inLanguage": "pt-PT",
       "isPartOf": {
         "@id": "https://www.gadgetmetodo.pt/#website"
@@ -237,7 +237,7 @@
       <div class="contentor">
         <nav class="migalhas" aria-label="Localização"><ol><li><a href="/">Início</a></li><li><a href="/servicos/formacao-ai-essentials/">Formação AI Essentials</a></li><li aria-current="page">Calendário</li></ol></nav>
         <h1>Calendário de formações</h1>
-        <p class="lead">Próximas sessões da formação AI Essentials, abertas a empresas e profissionais, com inscrição online.</p>
+        <p class="lead">Próximas sessões das formações da Gadgetmetodo, incluindo o programa AI Essentials, abertas a empresas e profissionais, com inscrição online.</p>
         
       </div>
     </section>
@@ -250,7 +250,7 @@
           <div>
             <div class="resumo">
           <h2>Como funcionam as sessões abertas?</h2>
-          <p>A Gadgetmetodo, Lda. organiza sessões abertas da <a href="/servicos/formacao-ai-essentials/">formação AI Essentials</a>, sobre inteligência artificial (IA) aplicada à gestão, ministradas por formador com Certificado de Competências Pedagógicas (CCP).</p>
+          <p>A Gadgetmetodo, Lda. organiza sessões abertas dos seus cursos, como o programa <a href="/servicos/formacao-ai-essentials/">AI Essentials</a>, sobre inteligência artificial (IA) aplicada à gestão, ministradas por formador com Certificado de Competências Pedagógicas (CCP). Cada curso tem uma página com o programa, os temas de cada módulo e as próximas sessões.</p>
           <p>Qualquer empresa pode inscrever formandos nesta página. Os clientes com acesso à área reservada podem também inscrever e acompanhar as inscrições da sua equipa.</p>
         </div>
           </div>
@@ -258,7 +258,7 @@
             <h2 id="como-inscrever" style="font-size:1.3rem">Como se inscrever</h2>
             <ol class="etapas etapas-compactas">
               <li><h3>Escolha a sessão</h3><p>Veja a data, a modalidade e as vagas disponíveis.</p></li>
-              <li><h3>Preencha a inscrição</h3><p>Dados da empresa, do formando e um diagnóstico de oito perguntas sobre a utilização de IA.</p></li>
+              <li><h3>Preencha a inscrição</h3><p>Dados da empresa e do formando e, nos cursos de IA, um diagnóstico de oito perguntas sobre a utilização de IA.</p></li>
               <li><h3>Receba a confirmação</h3><p>A inscrição fica pendente e é confirmada por email pela Gadgetmetodo.</p></li>
             </ol>
           </div>

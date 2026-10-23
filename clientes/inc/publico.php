@@ -37,14 +37,14 @@ function jsonld_formacoes(array $formacoes): string
         $evento = [
             '@type' => 'EducationEvent',
             '@id' => SITE_CANONICO . '/formacoes/#formacao-' . (int) $f['id'],
-            'name' => $f['titulo'] . (isset(MODULOS[$f['modulo']]) && $f['modulo'] !== 'completo' ? ': ' . MODULOS[$f['modulo']] : ''),
-            'description' => (MODULOS[$f['modulo']] ?? $f['titulo']) . '. Formação em inteligência artificial aplicada à gestão, com diagnóstico prévio do nível de utilização de IA de cada formando.',
+            'name' => $f['titulo'] . (!empty($f['modulo_id']) ? ': ' . nome_modulo($f) : ''),
+            'description' => descricao_sessao($f),
             'startDate' => date('c', strtotime($f['inicio'])),
             'eventStatus' => 'https://schema.org/' . ($f['estado'] === 'cancelada' ? 'EventCancelled' : 'EventScheduled'),
             'eventAttendanceMode' => 'https://schema.org/' . (MODOS_EVENTO[$f['modalidade']] ?? 'OfflineEventAttendanceMode'),
             'inLanguage' => 'pt-PT',
             'organizer' => ['@id' => SITE_CANONICO . '/#organizacao'],
-            'url' => SITE_CANONICO . '/formacoes/',
+            'url' => SITE_CANONICO . '/formacoes/curso.php?c=' . (int) $f['curso_id'],
             'location' => $online
                 ? ['@type' => 'VirtualLocation', 'url' => SITE_CANONICO . '/formacoes/']
                 : ['@type' => 'Place', 'name' => $f['local'] ?: 'Porto', 'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Porto', 'addressCountry' => 'PT']],
@@ -60,6 +60,14 @@ function jsonld_formacoes(array $formacoes): string
     }
     $json = json_encode(['@context' => 'https://schema.org', '@graph' => $eventos], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_PRETTY_PRINT);
     return "  <script type=\"application/ld+json\">\n" . $json . "\n  </script>\n";
+}
+
+function descricao_sessao(array $f): string
+{
+    $m = modulo_da_sessao($f);
+    $c = curso((int) ($f['curso_id'] ?? 0));
+    $texto = trim((string) ($m['descricao'] ?? '') ?: (string) ($c['descricao'] ?? ''));
+    return $texto !== '' ? $texto : nome_modulo($f) . '. Formação da Gadgetmetodo, Lda.';
 }
 
 // Página /formacoes/: novas formações e calendário
@@ -80,6 +88,17 @@ function formacoes_publico(): array
     $html .= $formacoes
         ? calendario($formacoes, 'botao_inscrever_publico', true)
         : '<div class="aviso aviso-info">Não há sessões agendadas neste momento. Para receber as próximas datas ou organizar uma formação para a sua equipa, <a href="/contactos/#formulario">contacte-nos</a>.</div>';
+    $cursos = consulta('SELECT * FROM cursos WHERE ativo = 1 ORDER BY nome');
+    if ($cursos) {
+        $html .= '<div class="cabeca-secao espaco-topo"><span class="sobretitulo">Cursos</span><h2 id="cursos">Os nossos cursos</h2><p>Programa, módulos e temas de cada curso, com as próximas sessões e a inscrição.</p></div><div class="lista-cursos">';
+        foreach ($cursos as $c) {
+            $n = count(modulos_curso((int) $c['id']));
+            $html .= '<a class="cartao-curso" href="' . h(link_curso_publico($c)) . '"><span class="sobretitulo">' . h($c['tipologia'] ?: 'Curso') . '</span><h3>' . h($c['nome']) . '</h3>'
+                . ($c['descricao'] ? '<p>' . h(resumir((string) $c['descricao'], 170)) . '</p>' : '')
+                . '<span class="texto-suave">' . h(implode(' · ', array_filter([$n ? $n . ($n === 1 ? ' módulo' : ' módulos') : '', (string) $c['duracao']]))) . '</span><span class="mais">Ver o curso</span></a>';
+        }
+        $html .= '</div>';
+    }
     $html .= '</div></section>';
     return ['conteudo' => $html, 'jsonld' => jsonld_formacoes($formacoes)];
 }
@@ -149,14 +168,14 @@ function inscricao_publica(): array
             'eu' => !empty($_POST['eu']),
             'formando' => texto('formando', 120), 'email' => texto('email', 160), 'funcao' => texto('funcao', 120),
             'expectativas' => texto('expectativas', 1500, true),
-            'ferramentas' => array_values(array_intersect(FERRAMENTAS_IA, array_filter((array) ($_POST['ferramentas'] ?? []), 'is_string'))),
+            'ferramentas' => com_diagnostico($f) ? array_values(array_intersect(FERRAMENTAS_IA, array_filter((array) ($_POST['ferramentas'] ?? []), 'is_string'))) : [],
             'diag' => array_filter(array_intersect_key((array) ($_POST['diag'] ?? []), DIAGNOSTICO), 'is_string'),
         ];
         if ($v['eu']) {
             $v['formando'] = $v['formando'] ?: $v['contacto_nome'];
             $v['email'] = $v['email'] ?: $v['contacto_email'];
         }
-        $respostas = respostas_diagnostico();
+        $respostas = com_diagnostico($f) ? respostas_diagnostico() : [];
         if (!token_valido(is_string($_POST['t'] ?? null) ? $_POST['t'] : '')) {
             $erros[] = 'O formulário expirou ou foi enviado demasiado depressa. Confirme os dados e envie de novo.';
         }
@@ -197,12 +216,8 @@ function inscricao_publica(): array
         }
     }
 
-    $ferramentas = '';
-    foreach (FERRAMENTAS_IA as $nome) {
-        $ferramentas .= '<label class="opcao"><input type="checkbox" name="ferramentas[]" value="' . h($nome) . '"' . (in_array($nome, $v['ferramentas'], true) ? ' checked' : '') . '> ' . h($nome) . '</label>';
-    }
     $html = '<section class="secao"><div class="contentor estreito">
-      <div class="resumo-formacao"><strong>' . h($f['titulo']) . '</strong> · ' . h(MODULOS[$f['modulo']] ?? '') . '<br>' . h(horario($f)) . ' · ' . h(MODALIDADES[$f['modalidade']] ?? '') . ($f['local'] ? ' · ' . h($f['local']) : '') . '<br><span class="texto-suave">' . ($restantes <= 3 ? 'Últimas vagas' : $restantes . ' vagas disponíveis') . '</span></div>
+      ' . resumo_sessao($f, $restantes, true) . '
       ' . ($erros ? '<div class="aviso aviso-erro" role="alert">' . h(implode(' ', $erros)) . '</div>' : '') . '
       <form method="post" action="/formacoes/inscricao.php?f=' . (int) $f['id'] . '" class="formulario formulario-inscricao">
         <input type="hidden" name="t" value="' . h(token_formulario()) . '">
@@ -222,14 +237,104 @@ function inscricao_publica(): array
           ' . campo('email', 'Email profissional do formando', $v['email'], 'email', 'maxlength="160"') . '
           ' . campo('funcao', 'Função ou departamento', $v['funcao'], 'text', 'maxlength="120"') . '
         </div>
-        <h2 class="mb-0 espaco-topo">3. Diagnóstico de utilização de IA</h2>
-        <p class="texto-suave mb-0">Oito perguntas, cerca de dois minutos, respondidas pelo formando ou com base no que ele indicar. Não há respostas certas: servem para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>
-        ' . campos_diagnostico($v['diag']) . '
-        <fieldset class="campo-grupo"><legend>Que ferramentas de IA usa atualmente?</legend><div class="opcoes opcoes-linha">' . $ferramentas . '</div></fieldset>
+        ' . bloco_diagnostico_form($f, $v, 3, 'Respondidas pelo formando ou com base no que ele indicar.') . '
         ' . campo('expectativas', 'O que espera da formação? Há algum caso concreto do seu trabalho que gostaria de ver tratado?', $v['expectativas'], 'textarea', 'maxlength="1500"') . '
         <label class="opcao consentimento"><input type="checkbox" name="consentimento" value="1" required> <span>Li a <a href="/privacidade/" target="_blank" rel="noopener">Política de privacidade</a> e autorizo o tratamento destes dados pela Gadgetmetodo, Lda. para organizar a formação e adaptar os conteúdos. Se inscrevo outra pessoa, confirmo que a informei. *</span></label>
         <div><button class="botao" type="submit">Enviar inscrição</button></div>
       </form>
     </div></section>';
     return ['conteudo' => $html];
+}
+
+// Encurta um texto no fim de uma palavra (sem depender da extensão mbstring)
+function resumir(string $texto, int $maximo): string
+{
+    $texto = trim((string) preg_replace('/\s+/u', ' ', $texto));
+    if (preg_match('/^(.{1,' . $maximo . '})(?:\s|$)/u', $texto, $r) && $r[1] !== $texto) {
+        return rtrim($r[1], ' ,.;:') . '…';
+    }
+    return $texto;
+}
+
+/* Página pública de um curso: /formacoes/curso.php?c=ID */
+
+function curso_publico(): array
+{
+    header('Cache-Control: no-cache');
+    $nao_encontrado = ['titulo' => 'Curso não encontrado | Gadgetmetodo, Lda.', 'descricao' => 'Este curso não existe ou já não está disponível.', 'canonical' => SITE_CANONICO . '/formacoes/', 'jsonld' => '',
+        'conteudo' => '<section class="topo-pagina"><div class="contentor"><h1>Curso não encontrado</h1><p class="lead">Este curso não existe ou já não está disponível.</p></div></section><section class="secao"><div class="contentor"><div class="acoes"><a class="botao" href="/formacoes/">Ver o calendário de formações</a></div></div></section>'];
+    if (!bd()) {
+        return ['conteudo' => indisponivel_publico()] + $nao_encontrado;
+    }
+    $c = linha_bd('SELECT * FROM cursos WHERE id = ? AND ativo = 1', [(int) ($_GET['c'] ?? 0)]);
+    if (!$c) {
+        http_response_code(404);
+        header('X-Robots-Tag: noindex');
+        return $nao_encontrado;
+    }
+    $mods = modulos_curso((int) $c['id']);
+    $sessoes = consulta("SELECT * FROM formacoes WHERE curso_id = ? AND inicio >= ? AND estado != 'cancelada' ORDER BY inicio", [$c['id'], date('Y-m-d 00:00:00')]);
+    $total_horas = array_sum(array_map(function ($m) { return (float) $m['horas']; }, $mods));
+    $factos = array_filter([
+        'Tipologia' => (string) $c['tipologia'],
+        'Duração' => (string) ($c['duracao'] ?: horas($total_horas ? (string) $total_horas : null)),
+        'Módulos' => $mods ? (string) count($mods) : '',
+        'Destinatários' => (string) $c['publico'],
+    ]);
+    $modulos = '';
+    foreach ($mods as $n => $m) {
+        $modulos .= '<li class="modulo-publico"><h3><span>Módulo ' . ($n + 1) . '</span> ' . h($m['nome']) . ($m['horas'] ? ' <small>' . h(horas((string) $m['horas'])) . '</small>' : '') . '</h3>'
+            . ($m['descricao'] ? '<p>' . h($m['descricao']) . '</p>' : '')
+            . (($t = temas($m['temas'])) ? '<ul>' . implode('', array_map(function ($x) { return '<li>' . h($x) . '</li>'; }, $t)) . '</ul>' : '') . '</li>';
+    }
+    $html = '<section class="topo-pagina"><div class="contentor">
+        <nav class="migalhas" aria-label="Localização"><ol><li><a href="/">Início</a></li><li><a href="/formacoes/">Calendário de formações</a></li><li aria-current="page">' . h($c['nome']) . '</li></ol></nav>
+        <h1>' . h($c['nome']) . '</h1>
+        ' . ($c['tipologia'] ? '<p class="lead">' . h($c['tipologia']) . ($c['duracao'] ? ' · ' . h($c['duracao']) : '') . '</p>' : '') . '
+      </div></section>
+      <section class="secao"><div class="contentor">
+        <div class="duas-colunas texto-largo">
+          <div>
+            ' . ($c['descricao'] ? '<div class="resumo"><h2>Sobre o curso</h2><p>' . nl2br(h($c['descricao'])) . '</p></div>' : '') . '
+            ' . ($modulos ? '<h2 class="espaco-topo">Programa e temas</h2><ol class="modulos-publicos">' . $modulos . '</ol>' : '') . '
+          </div>
+          <aside class="ficha-curso">
+            ' . ($factos ? '<dl>' . implode('', array_map(function ($k, $x) { return '<dt>' . h($k) . '</dt><dd>' . h($x) . '</dd>'; }, array_keys($factos), $factos)) . '</dl>' : '') . '
+            ' . ($c['diagnostico'] ? '<p class="texto-suave">A inscrição inclui um diagnóstico curto de utilização de inteligência artificial, para ajustar a formação ao ponto de partida de cada formando.</p>' : '') . '
+            <a class="botao" href="#sessoes">Ver datas e inscrever</a>
+          </aside>
+        </div>
+        <div class="cabeca-secao espaco-topo"><span class="sobretitulo">Calendário</span><h2 id="sessoes">Próximas sessões</h2></div>
+        ' . ($sessoes ? calendario($sessoes, 'botao_inscrever_publico', true)
+            : '<div class="aviso aviso-info">Não há sessões agendadas deste curso neste momento. Para saber as próximas datas ou organizar uma sessão para a sua equipa, <a href="/contactos/#formulario">contacte-nos</a>.</div>') . '
+      </div></section>';
+    $curso_ld = [
+        '@context' => 'https://schema.org', '@type' => 'Course', '@id' => SITE_CANONICO . link_curso_publico($c) . '#curso',
+        'name' => $c['nome'], 'description' => (string) ($c['descricao'] ?: $c['nome']), 'inLanguage' => 'pt-PT',
+        'url' => SITE_CANONICO . link_curso_publico($c), 'provider' => ['@id' => SITE_CANONICO . '/#organizacao'],
+    ];
+    if ($mods) {
+        $curso_ld['syllabusSections'] = array_map(function ($m) { return ['@type' => 'Syllabus', 'name' => $m['nome'], 'description' => implode('; ', temas($m['temas'])) ?: (string) $m['descricao']]; }, $mods);
+    }
+    if ($sessoes) {
+        $curso_ld['hasCourseInstance'] = array_map(function ($f) {
+            $i = ['@type' => 'CourseInstance', 'name' => $f['titulo'] . ' · ' . nome_modulo($f), 'startDate' => date('c', strtotime($f['inicio'])),
+                'courseMode' => ['presencial' => 'Onsite', 'online' => 'Online', 'misto' => 'Blended'][$f['modalidade']] ?? 'Onsite'];
+            if (!empty($f['fim'])) {
+                $i['endDate'] = date('c', strtotime($f['fim']));
+            }
+            if ($f['modalidade'] !== 'online' && $f['local']) {
+                $i['location'] = ['@type' => 'Place', 'name' => $f['local']];
+            }
+            return $i;
+        }, $sessoes);
+    }
+    $json = json_encode($curso_ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_PRETTY_PRINT);
+    return [
+        'titulo' => $c['nome'] . ' | Formação | Gadgetmetodo, Lda.',
+        'descricao' => resumir((string) ($c['descricao'] ?: $c['nome'] . ': programa, módulos, temas e próximas sessões.'), 155),
+        'canonical' => SITE_CANONICO . link_curso_publico($c),
+        'jsonld' => "  <script type=\"application/ld+json\">\n" . $json . "\n  </script>\n",
+        'conteudo' => $html,
+    ];
 }
