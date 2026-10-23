@@ -666,6 +666,200 @@ h2.calendario-mes {
   font-weight: 600;
 }
 
+.secao-percurso .lista-cursos {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+}
+
+.cartao-curso h3 a {
+  color: var(--marinho);
+  text-decoration: none;
+}
+
+.cartao-curso h3 a:hover {
+  color: var(--petroleo);
+  text-decoration: underline;
+}
+
+.cartao-curso-meta {
+  margin: 4px 0 0;
+  padding: 0;
+  color: var(--cinzento);
+  font-size: 0.9rem;
+  list-style: none;
+}
+
+.cartao-curso-meta li + li {
+  margin-top: 2px;
+}
+
+.cartao-curso-datas {
+  margin: 6px 0 0;
+  padding: 8px 12px;
+  color: var(--antracite);
+  font-size: 0.9rem;
+  background: var(--nevoa);
+  border-radius: var(--raio-pequeno);
+}
+
+.cartao-curso-datas.com-datas {
+  color: var(--profundo);
+  background: var(--petroleo-tinta);
+  font-weight: 600;
+}
+
+.ficha-curso .cartao-curso-datas {
+  margin: 0 0 12px;
+  background: var(--branco);
+}
+
+.cartao-curso-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.cartao-curso-acoes .botao {
+  min-height: 44px;
+  padding: 10px 18px;
+}
+
+.ligacao-pdf {
+  color: var(--petroleo);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+/* Área de formação: atalhos, percurso e comparação dos cursos */
+
+.atalhos-formacao {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.atalhos-formacao a {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  color: var(--antracite);
+  text-decoration: none;
+  background: var(--branco);
+  border: 1px solid var(--cinzento-claro);
+  border-radius: var(--raio-pequeno);
+  transition: border-color 0.2s ease;
+}
+
+.atalhos-formacao a:hover {
+  border-color: var(--petroleo);
+}
+
+.atalhos-formacao svg {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  color: var(--petroleo);
+}
+
+.atalhos-formacao strong {
+  display: block;
+  color: var(--marinho);
+  font-family: var(--fonte-titulos);
+}
+
+.lead-secao {
+  color: var(--marinho);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.tabela-comparar {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.tabela-comparar th,
+.tabela-comparar td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--cinzento-claro);
+}
+
+.tabela-comparar thead th {
+  color: var(--branco);
+  background: var(--profundo);
+  font-family: var(--fonte-titulos);
+  font-size: 0.88rem;
+}
+
+.tabela-comparar td {
+  text-align: center;
+}
+
+.tabela-comparar tbody th {
+  min-width: 150px;
+  font-weight: 500;
+}
+
+.tabela-comparar tr.grupo th {
+  padding-top: 18px;
+  color: var(--petroleo);
+  font-family: var(--fonte-titulos);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+}
+
+.tabela-comparar tr.destaque th,
+.tabela-comparar tr.destaque td {
+  color: var(--profundo);
+  background: var(--petroleo-tinta);
+  font-weight: 700;
+}
+
+.secao-percurso .tabela-rolante {
+  background: var(--branco);
+}
+
+.nota-legal h3 {
+  font-size: 1.05rem;
+}
+
+/* Pré-inscrições na administração */
+
+.form-linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin: 0;
+}
+
+.form-linha select {
+  min-height: 36px;
+  padding: 4px 8px;
+}
+
+.acoes-celula {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+
+.botao.botao-pequeno {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
 .ficha-curso {
   padding: 24px;
   background: var(--nevoa);

@@ -17,6 +17,8 @@ const SESSAO_MAXIMA = 7200; // segundos de inatividade
 const DIAS_INSCRICOES = 730; // conservação das inscrições após a data da formação
 const DIAS_NOVA = 30; // formações agendadas há menos de 30 dias aparecem como novas
 const ORIGENS = ['area' => 'Área de clientes', 'site' => 'Site'];
+const ESTADOS_PREINSCRICAO = ['nova' => 'Nova', 'convidada' => 'Convite enviado', 'inscrita' => 'Inscrita', 'arquivada' => 'Arquivada'];
+const DIAS_PREINSCRICOES = 365; // conservação das pré-inscrições após o registo
 
 function cfg(): array
 {
@@ -74,10 +76,17 @@ function bd(): ?PDO
         migrar_inscricoes($pdo, $tabela_inscricoes);
         $pdo->exec('CREATE INDEX IF NOT EXISTS inscricoes_formacao ON inscricoes (formacao_id)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS inscricoes_cliente ON inscricoes (cliente_id)');
-        aplicar_catalogo($pdo);
-        // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação
+        // Pré-inscrições em cursos sem datas: o candidato recebe o convite quando houver sessões
+        $pdo->exec("CREATE TABLE IF NOT EXISTS preinscricoes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, curso_id INTEGER NOT NULL REFERENCES cursos(id), nome TEXT NOT NULL,
+            empresa TEXT, email TEXT NOT NULL, telefone TEXT, formandos INTEGER NOT NULL DEFAULT 1, modalidade TEXT,
+            preferencias TEXT, estado TEXT NOT NULL DEFAULT 'nova', criado TEXT NOT NULL)");
+        $pdo->exec('CREATE INDEX IF NOT EXISTS preinscricoes_curso ON preinscricoes (curso_id)');
+        // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação; as pré-inscrições, 12 meses depois do registo
         $pdo->prepare('DELETE FROM inscricoes WHERE formacao_id IN (SELECT id FROM formacoes WHERE inicio < ?)')
             ->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
+        $pdo->prepare('DELETE FROM preinscricoes WHERE criado < ?')->execute([date('Y-m-d H:i:s', time() - DIAS_PREINSCRICOES * 86400)]);
+        aplicar_catalogo($pdo);
         $pronta = true;
     }
     return $pdo;
@@ -410,7 +419,7 @@ function enviar_aviso(string $para, string $assunto, string $titulo, string $cor
         $m->Body = '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"></head><body style="margin:0;background:#F5F7F8;">'
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 16px;">'
             . '<table role="presentation" width="620" cellpadding="0" cellspacing="0" style="width:100%;max-width:620px;background:#FFFFFF;border:1px solid #E5E7EB;">'
-            . '<tr><td style="padding:22px 32px;background:#0A0F26;"><p style="margin:0 0 4px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8FC3C6;font-weight:700;">Área de clientes · Gadgetmetodo</p>'
+            . '<tr><td style="padding:22px 32px;background:#0A0F26;"><p style="margin:0 0 4px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8FC3C6;font-weight:700;">Formação · Gadgetmetodo</p>'
             . '<p style="margin:0;font-family:' . $f . ';font-size:19px;color:#FFFFFF;font-weight:700;">' . h($titulo) . '</p></td></tr>'
             . '<tr><td style="padding:24px 32px 28px;font-family:' . $f . ';font-size:14px;line-height:1.6;color:#333333;">' . $corpo_html . '</td></tr>'
             . '<tr><td style="padding:18px 32px;border-top:1px solid #E5E7EB;font-family:' . $f . ';font-size:12px;color:#687280;">Gadgetmetodo, Lda. · Rua das Cruzes, 625 · 4100-195 Porto · info@gadgetmetodo.pt · www.gadgetmetodo.pt</td></tr>'

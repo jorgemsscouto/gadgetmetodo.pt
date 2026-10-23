@@ -1,6 +1,6 @@
 # Gadgetmetodo, Lda.
 
-> Consultora portuguesa com sede no Porto, especializada em organização e métodos (O&M), inteligência artificial (IA) aplicada à gestão, proteção de dados e conformidade (RGPD, NIS2, funções de Encarregado de Proteção de Dados) e apoio estratégico a administrações. Desenvolve o programa de formação AI Essentials. Trabalha do diagnóstico à implementação, por projeto ou em acompanhamento continuado.
+> Consultora portuguesa com sede no Porto, especializada em organização e métodos (O&M), inteligência artificial (IA) aplicada à gestão, proteção de dados e conformidade (RGPD, NIS2, funções de Encarregado de Proteção de Dados) e apoio estratégico a administrações. Dá formação em IA: o percurso IA Generativa no Trabalho (quatro cursos abertos com inscrição online) e o programa AI Essentials, à medida. Trabalha do diagnóstico à implementação, por projeto ou em acompanhamento continuado.
 
 Factos essenciais:
 
@@ -25,8 +25,8 @@ Factos essenciais:
 - [Inteligência artificial e transformação digital](https://www.gadgetmetodo.pt/servicos/inteligencia-artificial/): estratégia de IA, casos de uso, arquitetura de sistemas e integrações, automação de marketing, painéis de indicadores
 - [Proteção de dados e conformidade](https://www.gadgetmetodo.pt/servicos/protecao-de-dados-e-conformidade/): DPO externo, RGPD, Diretiva NIS2, contratos com subcontratantes e governação da IA
 - [Estratégia e gestão](https://www.gadgetmetodo.pt/servicos/estrategia-e-gestao/): alinhamento estratégico, objetivos e indicadores (KPI), modelos de incentivos e conselho à administração
-- [Formação AI Essentials](https://www.gadgetmetodo.pt/servicos/formacao-ai-essentials/): cinco módulos sobre IA para administrações e equipas
-- [Calendário de formações](https://www.gadgetmetodo.pt/formacoes/): próximas sessões abertas e lista de cursos (incluindo AI Essentials), cada um com página própria de programa, temas por módulo e inscrição online
+- [Formação](https://www.gadgetmetodo.pt/formacoes/): área de formação com o percurso IA Generativa no Trabalho (quatro cursos de seis horas, da iniciação à liderança da implementação), calendário de sessões, inscrição e pré-inscrição online; cada curso tem página própria com programa, temas e casos práticos por sessão e ficha em PDF
+- [AI Essentials para empresas](https://www.gadgetmetodo.pt/formacoes/ai-essentials/): programa à medida em cinco módulos sobre IA para administrações e equipas
 
 ## Empresa
 

@@ -28,8 +28,8 @@
   <link rel="alternate" type="text/plain" href="/llms.txt" title="Resumo do site para modelos de linguagem">
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/css/site.css?v=df7de41f10">
-  <link rel="stylesheet" href="/assets/css/area.css?v=1bd55e19bd">
+  <link rel="stylesheet" href="/assets/css/site.css?v=6e07631c08">
+  <link rel="stylesheet" href="/assets/css/area.css?v=5b7ce940fe">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -139,9 +139,17 @@
           {
             "@type": "Offer",
             "itemOffered": {
+              "@type": "Service",
+              "@id": "https://www.gadgetmetodo.pt/formacoes/#servico",
+              "name": "Formação"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
               "@type": "Course",
-              "@id": "https://www.gadgetmetodo.pt/servicos/formacao-ai-essentials/#curso",
-              "name": "Formação AI Essentials"
+              "@id": "https://www.gadgetmetodo.pt/formacoes/ai-essentials/#curso",
+              "name": "AI Essentials"
             }
           }
         ]
@@ -176,6 +184,7 @@
       <nav id="navegacao" class="navegacao" aria-label="Principal">
         <ul>
           <li><a href="/servicos/">Serviços</a></li>
+          <li><a href="/formacoes/" aria-current="page">Formação</a></li>
           <li><a href="/abordagem/">Abordagem</a></li>
           <li><a href="/experiencia/">Experiência</a></li>
           <li><a href="/sobre/">Sobre</a></li>
@@ -217,7 +226,7 @@
             <li><a href="/servicos/inteligencia-artificial/">Inteligência artificial e transformação digital</a></li>
             <li><a href="/servicos/protecao-de-dados-e-conformidade/">Proteção de dados e conformidade</a></li>
             <li><a href="/servicos/estrategia-e-gestao/">Estratégia e gestão</a></li>
-            <li><a href="/servicos/formacao-ai-essentials/">Formação AI Essentials</a></li>
+            <li><a href="/formacoes/">Formação</a></li>
           </ul>
         </div>
         <div>
@@ -227,7 +236,6 @@
             <li><a href="/experiencia/">Experiência</a></li>
             <li><a href="/sobre/">Sobre nós</a></li>
             <li><a href="/catalogo/">Catálogo de serviços</a></li>
-            <li><a href="/formacoes/">Calendário de formações</a></li>
             <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
             <li><a href="/contactos/">Contactos</a></li>
             <li><a href="/clientes/">Área de clientes</a></li>
@@ -253,7 +261,7 @@
       </div>
     </div>
   </footer>
-  <script src="/assets/js/site.js?v=ba30991197" defer></script>
+  <script src="/assets/js/site.js?v=ca79bedc66" defer></script>
   <script src="/assets/js/copiar.js?v=a837c3c200" defer></script>
 </body>
 </html>

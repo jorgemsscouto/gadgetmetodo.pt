@@ -36,6 +36,7 @@ const semTags = s => s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&
 // Navegação
 const NAV = [
   ['/servicos/', 'Serviços'],
+  ['/formacoes/', 'Formação'],
   ['/abordagem/', 'Abordagem'],
   ['/experiencia/', 'Experiência'],
   ['/sobre/', 'Sobre'],
@@ -47,8 +48,11 @@ const SERVICOS = [
   { url: '/servicos/inteligencia-artificial/', nome: 'Inteligência artificial e transformação digital', icone: 'sparkles', curto: 'Estratégia de IA, casos de uso com retorno, arquitetura de sistemas e integrações, automação e painéis de indicadores.' },
   { url: '/servicos/protecao-de-dados-e-conformidade/', nome: 'Proteção de dados e conformidade', icone: 'shield-check', curto: 'Funções de Encarregado de Proteção de Dados, RGPD, NIS2 e governação da IA, com equilíbrio entre conformidade e operação.' },
   { url: '/servicos/estrategia-e-gestao/', nome: 'Estratégia e gestão', icone: 'compass', curto: 'Alinhamento estratégico, objetivos e indicadores, modelos de incentivos e apoio à administração em inovação e tecnologia.' },
-  { url: '/servicos/formacao-ai-essentials/', nome: 'Formação AI Essentials', icone: 'graduation-cap', curto: 'Programa em cinco módulos para administrações e equipas: fundamentos, casos de uso, governação, privacidade e segurança.' },
+  { url: '/formacoes/', chave: 'formacao', nome: 'Formação', icone: 'graduation-cap', curto: 'Percurso IA Generativa no Trabalho, com cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.' },
 ];
+
+// Programa à medida para empresas, dentro da área de formação
+const AI_ESSENTIALS = { url: '/formacoes/ai-essentials/', nome: 'AI Essentials para empresas', icone: 'graduation-cap' };
 
 // Dados estruturados comuns
 const ORG_ID = URL_BASE + '/#organizacao';
@@ -77,7 +81,10 @@ const ORG = {
   hasOfferCatalog: {
     '@type': 'OfferCatalog',
     name: 'Serviços da Gadgetmetodo, Lda.',
-    itemListElement: SERVICOS.map(s => ({ '@type': 'Offer', itemOffered: { '@type': s.url.includes('formacao') ? 'Course' : 'Service', '@id': URL_BASE + s.url + '#' + (s.url.includes('formacao') ? 'curso' : 'servico'), name: s.nome } })),
+    itemListElement: [
+      ...SERVICOS.map(s => ({ '@type': 'Offer', itemOffered: { '@type': 'Service', '@id': URL_BASE + s.url + '#servico', name: s.nome } })),
+      { '@type': 'Offer', itemOffered: { '@type': 'Course', '@id': URL_BASE + AI_ESSENTIALS.url + '#curso', name: 'AI Essentials' } },
+    ],
   },
 };
 const WEBSITE = { '@type': 'WebSite', '@id': SITE_ID, url: URL_BASE + '/', name: 'Gadgetmetodo, Lda.', inLanguage: 'pt-PT', publisher: { '@id': ORG_ID } };
@@ -150,7 +157,6 @@ function rodape() {
             <li><a href="/experiencia/">Experiência</a></li>
             <li><a href="/sobre/">Sobre nós</a></li>
             <li><a href="/catalogo/">Catálogo de serviços</a></li>
-            <li><a href="/formacoes/">Calendário de formações</a></li>
             <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
             <li><a href="/contactos/">Contactos</a></li>
             <li><a href="/clientes/">Área de clientes</a></li>
@@ -354,7 +360,7 @@ const FAQ_SERVICOS = [
   ['Como pode a inteligência artificial ajudar a minha empresa?', 'A IA é útil em processos com volume, repetição ou decisões apoiadas em dados: personalização da comunicação com clientes, automação de tarefas e fluxos, análise de dados para decisão e apoio ao desenvolvimento de produto. A Gadgetmetodo começa por <a href="/servicos/inteligencia-artificial/">identificar e priorizar os casos de uso</a> pelo retorno esperado e pelo esforço de implementação, antes de qualquer investimento em ferramentas.'],
   ['A Gadgetmetodo pode assumir as funções de DPO da minha empresa?', 'Sim. A Gadgetmetodo assegura <a href="/servicos/protecao-de-dados-e-conformidade/">funções de Encarregado de Proteção de Dados (DPO, Data Protection Officer)</a> em regime externo, incluindo o registo das atividades de tratamento, a revisão de contratos com clientes e subcontratantes, a avaliação de transferências internacionais de dados e o apoio na relação com a Comissão Nacional de Proteção de Dados (CNPD).'],
   ['Que apoio prestam na Diretiva NIS2?', 'Apoio na análise do enquadramento da empresa face à Diretiva (UE) 2022/2555 (NIS2), na identificação dos <a href="/servicos/protecao-de-dados-e-conformidade/">requisitos de segurança da informação aplicáveis</a>, incluindo os exigidos contratualmente por clientes abrangidos, e no alinhamento desses requisitos com a governação da IA e a proteção de dados.'],
-  ['Em que consiste a formação AI Essentials?', 'É um <a href="/servicos/formacao-ai-essentials/">programa em cinco módulos</a>: fundamentos de IA para a administração; casos de uso e integração de IA em sistemas; governação e ética da IA; RGPD, privacidade e IA; NIS2 e segurança da informação. Os conteúdos são adaptados ao setor e ao público, e a formação é ministrada por formador com Certificado de Competências Pedagógicas (CCP).'],
+  ['Em que consiste a formação AI Essentials?', 'É um <a href="/formacoes/ai-essentials/">programa em cinco módulos</a>: fundamentos de IA para a administração; casos de uso e integração de IA em sistemas; governação e ética da IA; RGPD, privacidade e IA; NIS2 e segurança da informação. Os conteúdos são adaptados ao setor e ao público, e a formação é ministrada por formador com Certificado de Competências Pedagógicas (CCP).'],
 ];
 const FAQ_FUNCIONAMENTO = [
   ['Como decorre um projeto?', '<a href="/abordagem/">Em quatro fases</a>: diagnóstico da situação atual, desenho da solução e do plano de ação, implementação com as equipas e acompanhamento com indicadores. O âmbito, os entregáveis e o calendário ficam definidos na proposta.'],
@@ -431,6 +437,19 @@ pagina({
           </a>
         </div>
         <p class="espaco-topo mb-0"><a class="botao botao-secundario" href="/catalogo/">${icone('file-text')} Descarregar o catálogo de serviços</a></p>
+      </div>
+    </section>
+
+    <section class="secao secao-curta" aria-labelledby="formacao-inicio">
+      <div class="contentor">
+        <div class="destaque-formacoes">
+          <div>
+            <span class="sobretitulo">Formação</span>
+            <h2 id="formacao-inicio">IA Generativa no Trabalho: do primeiro uso à liderança da implementação</h2>
+            <p class="mb-0">Quatro cursos sequenciais de seis horas, com casos práticos em todas as sessões, inscrição ou pré-inscrição online e ficha de cada curso em PDF. Também organizamos o programa AI Essentials à medida, na sua empresa.</p>
+          </div>
+          <a class="botao" href="/formacoes/">${icone('graduation-cap')} Ver a área de formação</a>
+        </div>
       </div>
     </section>
 
@@ -519,7 +538,7 @@ pagina({
 pagina({
   url: '/servicos/',
   titulo: 'Serviços de consultoria',
-  descricao: 'Organização e métodos, inteligência artificial e transformação digital, proteção de dados e conformidade, estratégia e gestão, e formação AI Essentials.',
+  descricao: 'Organização e métodos, inteligência artificial e transformação digital, proteção de dados e conformidade, estratégia e gestão, e formação em inteligência artificial.',
   tipo: 'CollectionPage',
   prioridade: '0.9',
   llms: 'Visão geral das cinco áreas de serviço.',
@@ -537,7 +556,7 @@ pagina({
     <section class="secao">
       <div class="contentor">
         ${resumo([
-          'A Gadgetmetodo, Lda. presta serviços em cinco áreas: Organização e Métodos (O&amp;M); inteligência artificial (IA) e transformação digital; proteção de dados e conformidade (RGPD, NIS2 e governação da IA); estratégia e gestão; e formação AI Essentials. As áreas podem ser contratadas isoladamente ou combinadas num único projeto, com uma equipa e um plano de ação comuns.',
+          'A Gadgetmetodo, Lda. presta serviços em cinco áreas: Organização e Métodos (O&amp;M); inteligência artificial (IA) e transformação digital; proteção de dados e conformidade (RGPD, NIS2 e governação da IA); estratégia e gestão; e formação, com cursos abertos de IA generativa e o programa AI Essentials à medida. As áreas podem ser contratadas isoladamente ou combinadas num único projeto, com uma equipa e um plano de ação comuns.',
         ], 'Que serviços presta a Gadgetmetodo?')}
         <div class="grelha grelha-3 espaco-topo">
           ${SERVICOS.map(cartaoServico).join('\n          ')}
@@ -571,8 +590,8 @@ pagina({
 });
 
 /* Serviço: Organização e Métodos */
-function paginaServico({ s, titulo, descricao, h1, lead, pergunta, resumoTxt, inclui, quando, entregaveis, faq, extra = '', llms, schemaServico }) {
-  const trilho = [['/', 'Início'], ['/servicos/', 'Serviços'], [s.url, s.nome]];
+function paginaServico({ s, titulo, descricao, h1, lead, pergunta, resumoTxt, inclui, quando, entregaveis, faq, extra = '', llms, schemaServico, trilho: trilhoProprio }) {
+  const trilho = trilhoProprio || [['/', 'Início'], ['/servicos/', 'Serviços'], [s.url, s.nome]];
   const no = schemaServico || {
     '@type': 'Service',
     '@id': URL_BASE + s.url + '#servico',
@@ -846,12 +865,13 @@ paginaServico({
 });
 
 paginaServico({
-  s: SERVICOS[4],
+  s: AI_ESSENTIALS,
+  trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], [AI_ESSENTIALS.url, 'AI Essentials para empresas']],
   pergunta: 'O que é a formação AI Essentials?',
   titulo: 'Formação AI Essentials em IA',
   descricao: 'Formação AI Essentials: cinco módulos sobre IA para administrações e equipas, incluindo casos de uso, governação, RGPD e NIS2. Formador com CCP.',
   h1: 'Formação AI Essentials: inteligência artificial para administrações e equipas',
-  lead: 'Cinco módulos para decidir, utilizar e governar a inteligência artificial com conhecimento de causa.',
+  lead: 'Programa à medida, na sua empresa, em cinco módulos para decidir, utilizar e governar a inteligência artificial com conhecimento de causa.',
   llms: 'Programa de formação AI Essentials em cinco módulos.',
   resumoTxt: [
     'AI Essentials é o programa de formação da Gadgetmetodo, Lda. sobre inteligência artificial (IA) aplicada à gestão. Organiza-se em cinco módulos, dos fundamentos à segurança da informação, e é adaptado ao setor e ao nível de cada grupo, da administração às equipas operacionais.',
@@ -859,12 +879,12 @@ paginaServico({
   ],
   schemaServico: {
     '@type': 'Course',
-    '@id': URL_BASE + SERVICOS[4].url + '#curso',
+    '@id': URL_BASE + AI_ESSENTIALS.url + '#curso',
     name: 'AI Essentials',
     description: 'Programa de formação em inteligência artificial aplicada à gestão, em cinco módulos, para administrações e equipas.',
     provider: { '@id': ORG_ID },
     inLanguage: 'pt-PT',
-    url: URL_BASE + SERVICOS[4].url,
+    url: URL_BASE + AI_ESSENTIALS.url,
     teaches: ['Fundamentos de IA para a administração', 'Casos de uso e integração de IA em sistemas', 'Governação e ética da IA', 'RGPD, privacidade e IA', 'NIS2 e segurança da informação'],
   },
   inclui: [
@@ -884,11 +904,11 @@ paginaServico({
       <div class="contentor">
         <div class="destaque-formacoes">
           <div>
-            <span class="sobretitulo">Calendário</span>
-            <h2 id="proximas-sessoes">Próximas sessões e inscrições</h2>
-            <p class="mb-0">Consulte as datas das próximas sessões abertas e inscreva-se online. A inscrição inclui um diagnóstico curto de utilização de IA, para ajustar a formação ao ponto de partida de cada formando.</p>
+            <span class="sobretitulo">Cursos abertos</span>
+            <h2 id="proximas-sessoes">Prefere um curso aberto, com inscrição individual?</h2>
+            <p class="mb-0">O percurso IA Generativa no Trabalho tem quatro cursos sequenciais, da iniciação à liderança da implementação, com inscrição online e um diagnóstico curto de utilização de IA.</p>
           </div>
-          <a class="botao" href="/formacoes/">${icone('calendar-days')} Ver calendário e inscrever</a>
+          <a class="botao" href="/formacoes/">${icone('calendar-days')} Ver a área de formação</a>
         </div>
       </div>
     </section>
@@ -927,6 +947,23 @@ paginaServico({
     ['A formação pode ser integrada num projeto de IA?', 'Sim. É frequente combinar a formação com um projeto de estratégia ou implementação de IA, para que as equipas aprendam com os casos de uso reais da empresa.'],
   ],
 });
+
+// Endereço antigo da página AI Essentials: encaminha para a nova (o .htaccess faz o mesmo com um 301)
+fs.mkdirSync(path.join(OUT, 'servicos/formacao-ai-essentials'), { recursive: true });
+fs.writeFileSync(path.join(OUT, 'servicos/formacao-ai-essentials/index.html'), `<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <title>AI Essentials para empresas | Gadgetmetodo, Lda.</title>
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="${URL_BASE}${AI_ESSENTIALS.url}">
+  <meta http-equiv="refresh" content="0; url=${AI_ESSENTIALS.url}">
+</head>
+<body>
+  <p>Esta página mudou para <a href="${AI_ESSENTIALS.url}">${URL_BASE}${AI_ESSENTIALS.url}</a>.</p>
+</body>
+</html>
+`);
 
 const FASES_ABORDAGEM = [
   ['Diagnóstico', 'Levantamento da situação atual: processos, sistemas, equipas, dados e riscos. Identificação das prioridades e oportunidades com maior retorno, com base em informação da própria empresa e, quando útil, em dados públicos do setor.'],
@@ -986,7 +1023,7 @@ pagina({
         <div class="grelha grelha-3">
           <div class="cartao"><span class="icone">${icone('target')}</span><h3>Projeto de âmbito fechado</h3><p>Diagnóstico, implementação de uma solução ou <a href="/servicos/organizacao-e-metodos/">reorganização de uma área</a>, com entregáveis definidos e pagamento associado à conclusão ou a marcos do projeto.</p></div>
           <div class="cartao"><span class="icone">${icone('handshake')}</span><h3>Acompanhamento continuado</h3><p>Apoio regular à administração, por exemplo como <a href="/servicos/estrategia-e-gestao/">board advisor</a> ou <a href="/servicos/protecao-de-dados-e-conformidade/">DPO externo</a>, com prestações periódicas, como trimestrais, ao longo de um ou mais anos.</p></div>
-          <div class="cartao"><span class="icone">${icone('graduation-cap')}</span><h3>Formação</h3><p><a href="/servicos/formacao-ai-essentials/">Programa AI Essentials</a>, isolado ou integrado num projeto, adaptado ao setor e ao público.</p></div>
+          <div class="cartao"><span class="icone">${icone('graduation-cap')}</span><h3>Formação</h3><p><a href="/formacoes/">Cursos abertos de IA generativa</a> ou o <a href="/formacoes/ai-essentials/">programa AI Essentials</a> à medida, isolado ou integrado num projeto.</p></div>
         </div>
       </div>
     </section>
@@ -1119,12 +1156,12 @@ pagina({
         <div class="duas-colunas texto-largo">
           <div>
             ${resumo([
-              `A Gadgetmetodo, Lda. é uma sociedade por quotas portuguesa, com sede na ${MORADA.rua}, no Porto. Dedica-se à consultoria em Organização e Métodos (O&amp;M), à inteligência artificial aplicada à gestão, à proteção de dados e conformidade e ao apoio estratégico a administrações, e desenvolve o programa de formação AI Essentials.`,
+              `A Gadgetmetodo, Lda. é uma sociedade por quotas portuguesa, com sede na ${MORADA.rua}, no Porto. Dedica-se à consultoria em Organização e Métodos (O&amp;M), à inteligência artificial aplicada à gestão, à proteção de dados e conformidade e ao apoio estratégico a administrações, e desenvolve formação em inteligência artificial: o percurso IA Generativa no Trabalho e o programa AI Essentials.`,
             ], 'Quem é a Gadgetmetodo?')}
             <div class="conteudo espaco-topo">
               <h2>Quem somos</h2>
               <p>A Gadgetmetodo parte de uma convicção: a eficiência de uma empresa depende, antes de mais, da forma como está organizada. A tecnologia, e hoje em particular a inteligência artificial, acelera o que já funciona bem, mas raramente resolve o que está mal organizado.</p>
-              <p>Por isso, cada projeto junta três dimensões: <a href="/servicos/organizacao-e-metodos/">o método</a>, para simplificar e organizar; <a href="/servicos/inteligencia-artificial/">a tecnologia</a>, para automatizar e medir; e <a href="/servicos/protecao-de-dados-e-conformidade/">a conformidade</a>, para proteger clientes, parceiros e titulares dos dados. O <a href="/servicos/estrategia-e-gestao/">apoio à estratégia</a> e a <a href="/servicos/formacao-ai-essentials/">formação AI Essentials</a> completam a oferta.</p>
+              <p>Por isso, cada projeto junta três dimensões: <a href="/servicos/organizacao-e-metodos/">o método</a>, para simplificar e organizar; <a href="/servicos/inteligencia-artificial/">a tecnologia</a>, para automatizar e medir; e <a href="/servicos/protecao-de-dados-e-conformidade/">a conformidade</a>, para proteger clientes, parceiros e titulares dos dados. O <a href="/servicos/estrategia-e-gestao/">apoio à estratégia</a> e a <a href="/formacoes/ai-essentials/">formação AI Essentials</a> completam a oferta.</p>
               <h2>A nossa marca</h2>
               <p>O símbolo da Gadgetmetodo é formado por módulos geométricos que se interligam para formar uma solução. O azul-petróleo e o azul-marinho transmitem solidez e confiança. A assinatura <strong>Simplificar · Organizar · Fazer acontecer</strong> resume a forma como trabalhamos.</p>
             </div>
@@ -1212,7 +1249,7 @@ pagina({
 
 /* Contactos e formulário */
 const OPCOES_SERVICOS = [
-  ...SERVICOS.map(s => [s.url.split('/')[2], s.nome]),
+  ...SERVICOS.map(s => [s.chave || s.url.split('/')[2], s.nome]),
   ['outro', 'Outro assunto ou ainda não sei'],
 ];
 pagina({
@@ -1398,7 +1435,7 @@ pagina({
   `,
 });
 
-/* Formações: calendário público e inscrição (PHP, conteúdo lido da base de dados da área de clientes) */
+/* Formação: área de formação (PHP; cursos e sessões lidos da base de dados da área de clientes) */
 pagina({
   url: '/formacoes/',
   ficheiro: 'index.php',
@@ -1406,38 +1443,67 @@ pagina({
   jsonldExtra: '<?= $pagina[\'jsonld\'] ?>',
   estilos: [CSS_AREA],
   tipo: 'CollectionPage',
-  titulo: 'Calendário de formações',
-  descricao: 'Próximas sessões das formações da Gadgetmetodo, Lda., incluindo o programa AI Essentials: cursos, programa e temas, datas, modalidade, vagas e inscrição online.',
-  prioridade: '0.8',
-  llms: 'Calendário das próximas sessões de formação e lista de cursos, com programa, temas e inscrição online.',
-  trilho: [['/', 'Início'], ['/servicos/formacao-ai-essentials/', 'Formação AI Essentials'], ['/formacoes/', 'Calendário']],
+  titulo: 'Formação em inteligência artificial',
+  descricao: 'Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com quatro cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.',
+  prioridade: '0.9',
+  llms: 'Área de formação: percurso IA Generativa no Trabalho (4 cursos com página, ficha em PDF, inscrição e pré-inscrição online), calendário e programa AI Essentials à medida.',
+  trilho: [['/', 'Início'], ['/formacoes/', 'Formação']],
   corpo: `
-    ${topoPagina({ trilho: [['/', 'Início'], ['/servicos/formacao-ai-essentials/', 'Formação AI Essentials'], ['/formacoes/', 'Calendário']], h1: 'Calendário de formações', lead: 'Próximas sessões das formações da Gadgetmetodo, incluindo o programa AI Essentials, abertas a empresas e profissionais, com inscrição online.', atualizado: false })}
+    ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Formação']], h1: 'Formação', lead: 'Cursos abertos de inteligência artificial generativa, com inscrição online, e programas à medida para administrações e equipas.', atualizado: false })}
+
+    <section class="secao">
+      <div class="contentor">
+        <div class="duas-colunas texto-largo">
+          ${resumo([
+            'A Gadgetmetodo, Lda. dá formação em inteligência artificial (IA) a empresas e profissionais em dois formatos: cursos abertos, com inscrição individual, organizados no percurso IA Generativa no Trabalho (quatro cursos de seis horas, da iniciação à liderança da implementação); e programas à medida, como o <a href="/formacoes/ai-essentials/">AI Essentials</a>, para administrações e equipas.',
+            'Cada curso tem uma página com o programa, os temas e os casos práticos de cada sessão, uma ficha para descarregar em PDF e a inscrição online. Sem datas agendadas, a pré-inscrição garante o convite quando forem marcadas.',
+          ], 'Que formação oferece a Gadgetmetodo?')}
+          <nav class="atalhos-formacao" aria-label="Nesta página">
+            <a href="#percurso">${icone('route')}<span><strong>Cursos abertos</strong>Percurso IA Generativa no Trabalho</span></a>
+            <a href="#calendario">${icone('calendar-days')}<span><strong>Calendário</strong>Próximas sessões e inscrições</span></a>
+            <a href="#a-medida">${icone('building-2')}<span><strong>Formação à medida</strong>AI Essentials para administrações e equipas</span></a>
+          </nav>
+        </div>
+      </div>
+    </section>
 
     <?= $pagina['conteudo'] ?>
 
-    <section class="secao secao-nevoa" aria-labelledby="como-inscrever">
+    <section class="secao secao-nevoa" aria-labelledby="a-medida">
+      <div class="contentor">
+        <div class="destaque-formacoes">
+          <div>
+            <span class="sobretitulo">Formação à medida</span>
+            <h2 id="a-medida">AI Essentials: inteligência artificial para administrações e equipas</h2>
+            <p class="mb-0">Programa em cinco módulos, dos fundamentos à segurança da informação, organizado na sua empresa, com duração, modalidade e exemplos ajustados ao setor e a cada grupo. Ministrado por formador com Certificado de Competências Pedagógicas (CCP).</p>
+          </div>
+          <a class="botao" href="/formacoes/ai-essentials/">${icone('graduation-cap')} Conhecer o AI Essentials</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao" aria-labelledby="como-inscrever">
       <div class="contentor">
         <div class="duas-colunas">
           <div>
             ${resumo([
-              'A Gadgetmetodo, Lda. organiza sessões abertas dos seus cursos, como o programa <a href="/servicos/formacao-ai-essentials/">AI Essentials</a>, sobre inteligência artificial (IA) aplicada à gestão, ministradas por formador com Certificado de Competências Pedagógicas (CCP). Cada curso tem uma página com o programa, os temas de cada módulo e as próximas sessões.',
-              'Qualquer empresa pode inscrever formandos nesta página. Os clientes com acesso à área reservada podem também inscrever e acompanhar as inscrições da sua equipa.',
-            ], 'Como funcionam as sessões abertas?')}
+              'Qualquer empresa ou profissional pode inscrever-se nos cursos abertos nesta página, sem conta. A inscrição fica pendente até ser confirmada por email pela Gadgetmetodo.',
+              'Os clientes com acesso à área reservada podem também inscrever formandos e acompanhar as inscrições da sua equipa.',
+            ], 'Quem se pode inscrever?')}
           </div>
           <div>
             <h2 id="como-inscrever" style="font-size:1.3rem">Como se inscrever</h2>
             <ol class="etapas etapas-compactas">
-              <li><h3>Escolha a sessão</h3><p>Veja a data, a modalidade e as vagas disponíveis.</p></li>
-              <li><h3>Preencha a inscrição</h3><p>Dados da empresa e do formando e, nos cursos de IA, um diagnóstico de oito perguntas sobre a utilização de IA.</p></li>
-              <li><h3>Receba a confirmação</h3><p>A inscrição fica pendente e é confirmada por email pela Gadgetmetodo.</p></li>
+              <li><h3>Escolha o curso</h3><p>Veja o programa, os temas, os casos práticos e a ficha em PDF.</p></li>
+              <li><h3>Inscreva-se ou faça a pré-inscrição</h3><p>Com datas agendadas, inscreve-se numa sessão. Sem datas, a pré-inscrição garante que recebe o convite quando forem marcadas.</p></li>
+              <li><h3>Receba a confirmação</h3><p>Recebe um email logo a seguir e a confirmação da Gadgetmetodo nos dias úteis seguintes.</p></li>
             </ol>
           </div>
         </div>
       </div>
     </section>
 
-    ${chamada({ titulo: 'Prefere uma formação só para a sua equipa?', texto: 'Organizamos o AI Essentials na sua empresa, com datas, duração e exemplos ajustados ao setor e às funções do grupo.' })}
+    ${chamada({ titulo: 'Prefere uma formação só para a sua equipa?', texto: 'Organizamos qualquer curso, ou o programa AI Essentials, na sua empresa, com datas, duração e exemplos ajustados ao setor e às funções do grupo.' })}
   `,
 });
 
@@ -1448,9 +1514,25 @@ pagina({
   indexar: false,
   titulo: 'Inscrição em formação',
   descricao: 'Inscrição numa sessão de formação da Gadgetmetodo, Lda., com o programa e os temas da sessão.',
-  trilho: [['/', 'Início'], ['/formacoes/', 'Calendário de formações'], ['/formacoes/inscricao.php', 'Inscrição']],
+  trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/inscricao.php', 'Inscrição']],
   corpo: `
-    ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Calendário de formações'], ['/formacoes/inscricao.php', 'Inscrição']], h1: 'Inscrição em formação', lead: 'Preencha os dados da empresa e do formando. Nos cursos de inteligência artificial, responda também ao diagnóstico de utilização de IA.', atualizado: false })}
+    ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/inscricao.php', 'Inscrição']], h1: 'Inscrição em formação', lead: 'Preencha os dados da empresa e do formando. Nos cursos de inteligência artificial, responda também ao diagnóstico de utilização de IA.', atualizado: false })}
+
+    <?= $pagina['conteudo'] ?>
+  `,
+});
+
+pagina({
+  url: '/formacoes/pre-inscricao.php',
+  php: `<?php require __DIR__ . '/../clientes/inc/publico.php'; $pagina = pre_inscricao_publica(); ?>
+`,
+  estilos: [CSS_AREA],
+  indexar: false,
+  titulo: 'Pré-inscrição em curso',
+  descricao: 'Pré-inscrição num curso da Gadgetmetodo, Lda.: receba o convite para a inscrição quando forem marcadas as datas.',
+  trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/pre-inscricao.php', 'Pré-inscrição']],
+  corpo: `
+    ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/pre-inscricao.php', 'Pré-inscrição']], h1: 'Pré-inscrição', lead: 'Deixe os seus dados e enviamos-lhe o convite para a inscrição assim que houver datas para este curso. Não fica obrigado a inscrever-se.', atualizado: false })}
 
     <?= $pagina['conteudo'] ?>
   `,
@@ -1495,7 +1577,8 @@ pagina({
           <li><strong>Dados técnicos de acesso</strong> registados pelo serviço de alojamento do site, como o endereço IP, a data e hora do pedido, a página pedida e o tipo de navegador, para garantir o funcionamento e a segurança do site.</li>
           <li><strong>Acesso ao catálogo enviado por email:</strong> quando abre o catálogo através da ligação incluída na confirmação do pedido, registamos a data e hora do acesso e o tipo de navegador, associados à referência do pedido.</li>
           <li><strong>Área de clientes:</strong> nome, email profissional e entidade dos utilizadores com acesso, e data do último acesso.</li>
-          <li><strong>Inscrições em formações:</strong> nome, email profissional e função do formando, respostas ao diagnóstico de utilização de inteligência artificial, ferramentas usadas e expectativas sobre a formação. Nas inscrições feitas no calendário público, também o nome e o NIF da empresa e o nome, o email e o telefone de quem faz a inscrição.</li>
+          <li><strong>Inscrições em formações:</strong> nome, email profissional e função do formando, respostas ao diagnóstico de utilização de inteligência artificial, ferramentas usadas e expectativas sobre a formação. Nas inscrições feitas na área de formação do site, também o nome e o NIF da empresa e o nome, o email e o telefone de quem faz a inscrição.</li>
+          <li><strong>Pré-inscrições em cursos:</strong> nome, email, empresa e telefone, número previsto de formandos, modalidade preferida e preferências de datas e horários.</li>
           <li><strong>Prevenção de abusos do formulário:</strong> o servidor guarda, durante uma hora, um código derivado do endereço IP, que não revela o endereço, para limitar envios repetidos.</li>
         </ul>
 
@@ -1508,6 +1591,7 @@ pagina({
               <tr><td>Enviar a confirmação de receção do pedido</td><td>Diligências pré-contratuais a pedido do titular, artigo 6.º, n.º 1, alínea b)</td></tr>
               <tr><td>Acompanhamento comercial do pedido, incluindo o registo do acesso ao catálogo enviado por email</td><td>Interesse legítimo, artigo 6.º, n.º 1, alínea f)</td></tr>
               <tr><td>Organizar as formações, gerir as inscrições e adaptar os conteúdos ao nível dos formandos</td><td>Execução do contrato com a entidade cliente, artigo 6.º, n.º 1, alínea b), e interesse legítimo na adequação da formação, artigo 6.º, n.º 1, alínea f)</td></tr>
+              <tr><td>Registar pré-inscrições, confirmar a receção e enviar o convite para a inscrição quando houver datas</td><td>Diligências pré-contratuais a pedido do titular, artigo 6.º, n.º 1, alínea b)</td></tr>
               <tr><td>Gestão da relação contratual com clientes</td><td>Execução de contrato, artigo 6.º, n.º 1, alínea b)</td></tr>
               <tr><td>Cumprimento de obrigações legais, como as fiscais e contabilísticas</td><td>Obrigação jurídica, artigo 6.º, n.º 1, alínea c)</td></tr>
               <tr><td>Funcionamento e segurança do site e prevenção de abusos do formulário</td><td>Interesse legítimo, artigo 6.º, n.º 1, alínea f)</td></tr>
@@ -1519,7 +1603,7 @@ pagina({
         <p>O ditado é opcional e só é ativado quando carrega no botão "Ditar". Usa o serviço de reconhecimento de voz do seu navegador: o áudio é tratado pelo fornecedor do navegador (por exemplo, a Google no Chrome ou a Apple no Safari), de acordo com as condições desse fornecedor. Este site recebe apenas o texto que decidir enviar e não grava nem guarda áudio.</p>
 
         <h2>5. Área de clientes e diagnóstico de utilização de IA</h2>
-        <p>A área de clientes é reservada a pessoas autorizadas. Cada entidade cliente vê apenas as formações disponíveis e as inscrições dos seus próprios formandos; a Gadgetmetodo vê todas. As inscrições feitas no <a href="/formacoes/">calendário público</a> ficam visíveis apenas para a Gadgetmetodo até serem associadas à entidade cliente correspondente. O diagnóstico de utilização de IA é uma autoavaliação curta, usada apenas para ajustar os exemplos e os exercícios ao ponto de partida do grupo; não se destina a avaliar o desempenho profissional do formando. Quem inscreve outra pessoa deve informá-la deste tratamento. Quando a Gadgetmetodo envia a um candidato o convite para uma formação, o nome e o email são usados apenas para esse envio.</p>
+        <p>A área de clientes é reservada a pessoas autorizadas. Cada entidade cliente vê apenas as formações disponíveis e as inscrições dos seus próprios formandos; a Gadgetmetodo vê todas. As inscrições feitas na <a href="/formacoes/">área de formação</a> do site ficam visíveis apenas para a Gadgetmetodo até serem associadas à entidade cliente correspondente. O diagnóstico de utilização de IA é uma autoavaliação curta, usada apenas para ajustar os exemplos e os exercícios ao ponto de partida do grupo; não se destina a avaliar o desempenho profissional do formando. Quem inscreve outra pessoa deve informá-la deste tratamento. Quando a Gadgetmetodo envia a um candidato o convite para uma formação, o nome e o email são usados apenas para esse envio.</p>
 
         <h2>6. Cookies e tecnologias semelhantes</h2>
         <p>Este site não utiliza cookies, ferramentas de análise de tráfego ou de publicidade, nem incorpora conteúdos de terceiros, como mapas ou vídeos. As fontes tipográficas são alojadas no próprio site. A área de clientes e a área reservada da empresa, usadas apenas por pessoas autorizadas, utilizam um cookie de sessão estritamente necessário, que expira ao fechar o navegador.</p>
@@ -1528,7 +1612,7 @@ pagina({
         <p>Os dados podem ser tratados por prestadores de serviços de alojamento e de correio eletrónico, que atuam como subcontratantes. As sessões de formação online decorrem no Google Meet: ao participar, os dados de ligação e de imagem e som são tratados pela Google, de acordo com as condições desse serviço. Quando algum destes prestadores trate dados fora do Espaço Económico Europeu, a transferência baseia-se nas garantias previstas no RGPD, como decisões de adequação ou cláusulas contratuais-tipo. Os dados não são vendidos nem cedidos para fins de marketing de terceiros.</p>
 
         <h2>8. Conservação</h2>
-        <p>Os pedidos de contacto que não deem origem a uma relação contratual são conservados até 12 meses após o último contacto. Os registos de pedidos e de acessos ao catálogo guardados no site são apagados automaticamente 12 meses após o pedido. Os dados das inscrições em formações, incluindo as respostas ao diagnóstico, são apagados automaticamente 2 anos após a data da formação. As contas de acesso à área de clientes são mantidas enquanto durar a relação com o cliente. Os dados de clientes são conservados durante a relação contratual e, depois dela, pelos prazos exigidos por lei.</p>
+        <p>Os pedidos de contacto que não deem origem a uma relação contratual são conservados até 12 meses após o último contacto. Os registos de pedidos e de acessos ao catálogo guardados no site são apagados automaticamente 12 meses após o pedido. Os dados das inscrições em formações, incluindo as respostas ao diagnóstico, são apagados automaticamente 2 anos após a data da formação. As pré-inscrições são apagadas automaticamente 12 meses após o registo, ou antes, a pedido do titular. As contas de acesso à área de clientes são mantidas enquanto durar a relação com o cliente. Os dados de clientes são conservados durante a relação contratual e, depois dela, pelos prazos exigidos por lei.</p>
 
         <h2>9. Os seus direitos</h2>
         <p>Pode pedir o acesso, a retificação, o apagamento, a limitação do tratamento, a portabilidade dos seus dados e opor-se ao tratamento baseado em interesse legítimo, através de <a href="mailto:${EMAIL}">${EMAIL}</a>. Tem também o direito de apresentar reclamação à Comissão Nacional de Proteção de Dados (CNPD), em <a href="https://www.cnpd.pt" rel="noopener">www.cnpd.pt</a>.</p>

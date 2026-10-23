@@ -22,7 +22,7 @@ function ficha_curso(): void
     if (!$c) {
         http_response_code(404);
         echo '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Ficha não encontrada | Gadgetmetodo, Lda.</title><link rel="stylesheet" href="' . h(versao_ficheiro('/assets/css/ficha.css')) . '"></head>'
-            . '<body class="ficha-ecra"><main class="folha"><h1>Ficha não encontrada</h1><p>Este curso não existe ou já não está disponível.</p><p><a href="/formacoes/">Ver o calendário de formações</a></p></main></body></html>';
+            . '<body class="ficha-ecra"><main class="folha"><h1>Ficha não encontrada</h1><p>Este curso não existe ou já não está disponível.</p><p><a href="/formacoes/">Ver a área de formação</a></p></main></body></html>';
         return;
     }
     $mods = modulos_curso((int) $c['id']);
@@ -73,7 +73,7 @@ function ficha_curso(): void
     foreach ($sessoes as $f) {
         $datas .= '<li><strong>' . h(horario($f)) . '</strong> · ' . h(nome_modulo($f)) . ' · ' . h(MODALIDADES[$f['modalidade']] ?? '') . ($f['local'] && strcasecmp(trim($f['local']), MODALIDADES[$f['modalidade']] ?? '') !== 0 ? ' · ' . h($f['local']) : '') . '</li>';
     }
-    $inscricoes = '<div class="duas fecho"><div>' . ($datas ? '<ul class="datas">' . $datas . '</ul>' : '<p>As datas das próximas sessões são anunciadas na página do curso.</p>')
+    $inscricoes = '<div class="duas fecho"><div>' . ($datas ? '<ul class="datas">' . $datas . '</ul>' : '<p>Ainda não há datas agendadas. Na página do curso pode fazer a pré-inscrição e receber o convite quando forem marcadas.</p>')
         . '<p>Programa, datas e inscrição online:<br><a href="' . h($link) . '">' . h(preg_replace('#^https?://#', '', $link)) . '</a></p></div>'
         . '<div class="contactos"><p class="contactos-titulo">Informações e inscrições</p><p>Gadgetmetodo, Lda.<br>Rua das Cruzes, 625, 4100-195 Porto, Portugal<br>info@gadgetmetodo.pt<br>+351 915 416 112 (chamada para a rede móvel nacional)<br>www.gadgetmetodo.pt</p></div></div>';
 

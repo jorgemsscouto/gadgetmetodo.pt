@@ -3,6 +3,11 @@
 ErrorDocument 404 /404.html
 DirectoryIndex index.html index.php
 
+# Endereços antigos
+<IfModule mod_alias.c>
+  Redirect 301 /servicos/formacao-ai-essentials/ /formacoes/ai-essentials/
+</IfModule>
+
 # Redirecionar para https://www.gadgetmetodo.pt
 # Ativar só depois de o certificado SSL estar ativo e se o alojamento não fizer já este redirecionamento.
 # RewriteEngine On

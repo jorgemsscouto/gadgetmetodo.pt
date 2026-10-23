@@ -21,7 +21,8 @@ const SERVICOS = [
     'inteligencia-artificial'          => 'Inteligência artificial e transformação digital',
     'protecao-de-dados-e-conformidade' => 'Proteção de dados e conformidade',
     'estrategia-e-gestao'              => 'Estratégia e gestão',
-    'formacao-ai-essentials'           => 'Formação AI Essentials',
+    'formacao'                         => 'Formação',
+    'formacao-ai-essentials'           => 'Formação AI Essentials', // páginas antigas ainda em cache
     'outro'                            => 'Outro assunto ou ainda não sei',
 ];
 const LIMITE_POR_HORA = 5;

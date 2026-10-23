@@ -27,7 +27,7 @@
   <link rel="alternate" type="text/plain" href="/llms.txt" title="Resumo do site para modelos de linguagem">
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/css/site.css?v=df7de41f10">
+  <link rel="stylesheet" href="/assets/css/site.css?v=6e07631c08">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -137,9 +137,17 @@
           {
             "@type": "Offer",
             "itemOffered": {
+              "@type": "Service",
+              "@id": "https://www.gadgetmetodo.pt/formacoes/#servico",
+              "name": "Formação"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
               "@type": "Course",
-              "@id": "https://www.gadgetmetodo.pt/servicos/formacao-ai-essentials/#curso",
-              "name": "Formação AI Essentials"
+              "@id": "https://www.gadgetmetodo.pt/formacoes/ai-essentials/#curso",
+              "name": "AI Essentials"
             }
           }
         ]
@@ -214,6 +222,7 @@
       <nav id="navegacao" class="navegacao" aria-label="Principal">
         <ul>
           <li><a href="/servicos/">Serviços</a></li>
+          <li><a href="/formacoes/">Formação</a></li>
           <li><a href="/abordagem/">Abordagem</a></li>
           <li><a href="/experiencia/">Experiência</a></li>
           <li><a href="/sobre/">Sobre</a></li>
@@ -246,7 +255,8 @@
           <li><strong>Dados técnicos de acesso</strong> registados pelo serviço de alojamento do site, como o endereço IP, a data e hora do pedido, a página pedida e o tipo de navegador, para garantir o funcionamento e a segurança do site.</li>
           <li><strong>Acesso ao catálogo enviado por email:</strong> quando abre o catálogo através da ligação incluída na confirmação do pedido, registamos a data e hora do acesso e o tipo de navegador, associados à referência do pedido.</li>
           <li><strong>Área de clientes:</strong> nome, email profissional e entidade dos utilizadores com acesso, e data do último acesso.</li>
-          <li><strong>Inscrições em formações:</strong> nome, email profissional e função do formando, respostas ao diagnóstico de utilização de inteligência artificial, ferramentas usadas e expectativas sobre a formação. Nas inscrições feitas no calendário público, também o nome e o NIF da empresa e o nome, o email e o telefone de quem faz a inscrição.</li>
+          <li><strong>Inscrições em formações:</strong> nome, email profissional e função do formando, respostas ao diagnóstico de utilização de inteligência artificial, ferramentas usadas e expectativas sobre a formação. Nas inscrições feitas na área de formação do site, também o nome e o NIF da empresa e o nome, o email e o telefone de quem faz a inscrição.</li>
+          <li><strong>Pré-inscrições em cursos:</strong> nome, email, empresa e telefone, número previsto de formandos, modalidade preferida e preferências de datas e horários.</li>
           <li><strong>Prevenção de abusos do formulário:</strong> o servidor guarda, durante uma hora, um código derivado do endereço IP, que não revela o endereço, para limitar envios repetidos.</li>
         </ul>
 
@@ -259,6 +269,7 @@
               <tr><td>Enviar a confirmação de receção do pedido</td><td>Diligências pré-contratuais a pedido do titular, artigo 6.º, n.º 1, alínea b)</td></tr>
               <tr><td>Acompanhamento comercial do pedido, incluindo o registo do acesso ao catálogo enviado por email</td><td>Interesse legítimo, artigo 6.º, n.º 1, alínea f)</td></tr>
               <tr><td>Organizar as formações, gerir as inscrições e adaptar os conteúdos ao nível dos formandos</td><td>Execução do contrato com a entidade cliente, artigo 6.º, n.º 1, alínea b), e interesse legítimo na adequação da formação, artigo 6.º, n.º 1, alínea f)</td></tr>
+              <tr><td>Registar pré-inscrições, confirmar a receção e enviar o convite para a inscrição quando houver datas</td><td>Diligências pré-contratuais a pedido do titular, artigo 6.º, n.º 1, alínea b)</td></tr>
               <tr><td>Gestão da relação contratual com clientes</td><td>Execução de contrato, artigo 6.º, n.º 1, alínea b)</td></tr>
               <tr><td>Cumprimento de obrigações legais, como as fiscais e contabilísticas</td><td>Obrigação jurídica, artigo 6.º, n.º 1, alínea c)</td></tr>
               <tr><td>Funcionamento e segurança do site e prevenção de abusos do formulário</td><td>Interesse legítimo, artigo 6.º, n.º 1, alínea f)</td></tr>
@@ -270,7 +281,7 @@
         <p>O ditado é opcional e só é ativado quando carrega no botão "Ditar". Usa o serviço de reconhecimento de voz do seu navegador: o áudio é tratado pelo fornecedor do navegador (por exemplo, a Google no Chrome ou a Apple no Safari), de acordo com as condições desse fornecedor. Este site recebe apenas o texto que decidir enviar e não grava nem guarda áudio.</p>
 
         <h2>5. Área de clientes e diagnóstico de utilização de IA</h2>
-        <p>A área de clientes é reservada a pessoas autorizadas. Cada entidade cliente vê apenas as formações disponíveis e as inscrições dos seus próprios formandos; a Gadgetmetodo vê todas. As inscrições feitas no <a href="/formacoes/">calendário público</a> ficam visíveis apenas para a Gadgetmetodo até serem associadas à entidade cliente correspondente. O diagnóstico de utilização de IA é uma autoavaliação curta, usada apenas para ajustar os exemplos e os exercícios ao ponto de partida do grupo; não se destina a avaliar o desempenho profissional do formando. Quem inscreve outra pessoa deve informá-la deste tratamento. Quando a Gadgetmetodo envia a um candidato o convite para uma formação, o nome e o email são usados apenas para esse envio.</p>
+        <p>A área de clientes é reservada a pessoas autorizadas. Cada entidade cliente vê apenas as formações disponíveis e as inscrições dos seus próprios formandos; a Gadgetmetodo vê todas. As inscrições feitas na <a href="/formacoes/">área de formação</a> do site ficam visíveis apenas para a Gadgetmetodo até serem associadas à entidade cliente correspondente. O diagnóstico de utilização de IA é uma autoavaliação curta, usada apenas para ajustar os exemplos e os exercícios ao ponto de partida do grupo; não se destina a avaliar o desempenho profissional do formando. Quem inscreve outra pessoa deve informá-la deste tratamento. Quando a Gadgetmetodo envia a um candidato o convite para uma formação, o nome e o email são usados apenas para esse envio.</p>
 
         <h2>6. Cookies e tecnologias semelhantes</h2>
         <p>Este site não utiliza cookies, ferramentas de análise de tráfego ou de publicidade, nem incorpora conteúdos de terceiros, como mapas ou vídeos. As fontes tipográficas são alojadas no próprio site. A área de clientes e a área reservada da empresa, usadas apenas por pessoas autorizadas, utilizam um cookie de sessão estritamente necessário, que expira ao fechar o navegador.</p>
@@ -279,7 +290,7 @@
         <p>Os dados podem ser tratados por prestadores de serviços de alojamento e de correio eletrónico, que atuam como subcontratantes. As sessões de formação online decorrem no Google Meet: ao participar, os dados de ligação e de imagem e som são tratados pela Google, de acordo com as condições desse serviço. Quando algum destes prestadores trate dados fora do Espaço Económico Europeu, a transferência baseia-se nas garantias previstas no RGPD, como decisões de adequação ou cláusulas contratuais-tipo. Os dados não são vendidos nem cedidos para fins de marketing de terceiros.</p>
 
         <h2>8. Conservação</h2>
-        <p>Os pedidos de contacto que não deem origem a uma relação contratual são conservados até 12 meses após o último contacto. Os registos de pedidos e de acessos ao catálogo guardados no site são apagados automaticamente 12 meses após o pedido. Os dados das inscrições em formações, incluindo as respostas ao diagnóstico, são apagados automaticamente 2 anos após a data da formação. As contas de acesso à área de clientes são mantidas enquanto durar a relação com o cliente. Os dados de clientes são conservados durante a relação contratual e, depois dela, pelos prazos exigidos por lei.</p>
+        <p>Os pedidos de contacto que não deem origem a uma relação contratual são conservados até 12 meses após o último contacto. Os registos de pedidos e de acessos ao catálogo guardados no site são apagados automaticamente 12 meses após o pedido. Os dados das inscrições em formações, incluindo as respostas ao diagnóstico, são apagados automaticamente 2 anos após a data da formação. As pré-inscrições são apagadas automaticamente 12 meses após o registo, ou antes, a pedido do titular. As contas de acesso à área de clientes são mantidas enquanto durar a relação com o cliente. Os dados de clientes são conservados durante a relação contratual e, depois dela, pelos prazos exigidos por lei.</p>
 
         <h2>9. Os seus direitos</h2>
         <p>Pode pedir o acesso, a retificação, o apagamento, a limitação do tratamento, a portabilidade dos seus dados e opor-se ao tratamento baseado em interesse legítimo, através de <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>. Tem também o direito de apresentar reclamação à Comissão Nacional de Proteção de Dados (CNPD), em <a href="https://www.cnpd.pt" rel="noopener">www.cnpd.pt</a>.</p>
@@ -306,7 +317,7 @@
             <li><a href="/servicos/inteligencia-artificial/">Inteligência artificial e transformação digital</a></li>
             <li><a href="/servicos/protecao-de-dados-e-conformidade/">Proteção de dados e conformidade</a></li>
             <li><a href="/servicos/estrategia-e-gestao/">Estratégia e gestão</a></li>
-            <li><a href="/servicos/formacao-ai-essentials/">Formação AI Essentials</a></li>
+            <li><a href="/formacoes/">Formação</a></li>
           </ul>
         </div>
         <div>
@@ -316,7 +327,6 @@
             <li><a href="/experiencia/">Experiência</a></li>
             <li><a href="/sobre/">Sobre nós</a></li>
             <li><a href="/catalogo/">Catálogo de serviços</a></li>
-            <li><a href="/formacoes/">Calendário de formações</a></li>
             <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
             <li><a href="/contactos/">Contactos</a></li>
             <li><a href="/clientes/">Área de clientes</a></li>
@@ -342,6 +352,6 @@
       </div>
     </div>
   </footer>
-  <script src="/assets/js/site.js?v=ba30991197" defer></script>
+  <script src="/assets/js/site.js?v=ca79bedc66" defer></script>
 </body>
 </html>

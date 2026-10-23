@@ -168,6 +168,23 @@ function link_ficha(array $curso, bool $imprimir = false): string
     return '/formacoes/ficha.php?c=' . (int) $curso['id'] . ($imprimir ? '&imprimir=1' : '');
 }
 
+function link_pre_inscricao(int $curso_id): string
+{
+    return $curso_id ? '/formacoes/pre-inscricao.php?c=' . $curso_id : '/contactos/#formulario';
+}
+
+// Sessões abertas, futuras e com vagas de um curso
+function sessoes_com_vagas(int $curso_id): array
+{
+    $r = [];
+    foreach (consulta("SELECT * FROM formacoes WHERE curso_id = ? AND estado = 'aberta' AND inicio >= ? ORDER BY inicio", [$curso_id, date('Y-m-d 00:00:00')]) as $f) {
+        if ((int) $f['vagas'] - inscritos((int) $f['id']) > 0) {
+            $r[] = $f;
+        }
+    }
+    return $r;
+}
+
 // Quem recebe as confirmações de uma inscrição: o utilizador do cliente que a fez ou, no site, o contacto indicado
 function contacto_inscricao(array $i): ?array
 {
@@ -254,7 +271,7 @@ function emails_nova_inscricao(int $id): void
 
     // Confirmação de receção para quem fez a inscrição
     if ($contacto) {
-        $ver = $contacto['area'] ? $botao($link_area, 'Ver inscrição na área de clientes') : $botao($site . '/formacoes/', 'Ver o calendário de formações');
+        $ver = $contacto['area'] ? $botao($link_area, 'Ver inscrição na área de clientes') : ($i['curso_id'] ? $botao($site . link_curso_publico(['id' => $i['curso_id']]), 'Ver a página do curso') : $botao($site . '/formacoes/', 'Ver a área de formação'));
         $alterar = $contacto['area'] ? 'Para alterar ou cancelar a inscrição, use a área de clientes ou responda a este email.' : 'Para alterar ou cancelar a inscrição, basta responder a este email.';
         enviar_aviso($contacto['email'], 'Inscrição recebida: ' . $i['formando'] . ', ' . $i['titulo'] . ' de ' . data_hora($i['inicio'], false), 'Inscrição recebida',
             '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 16px;">Recebemos a inscrição de <strong>' . h($i['formando']) . '</strong> na formação ' . h($i['titulo']) . ', em ' . h($quando) . '. A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.</p>'

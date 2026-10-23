@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Calendário de formações | Gadgetmetodo, Lda.</title>
-  <meta name="description" content="Próximas sessões das formações da Gadgetmetodo, Lda., incluindo o programa AI Essentials: cursos, programa e temas, datas, modalidade, vagas e inscrição online.">
+  <title>Formação em inteligência artificial | Gadgetmetodo, Lda.</title>
+  <meta name="description" content="Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com quatro cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
   <link rel="canonical" href="https://www.gadgetmetodo.pt/formacoes/">
   <meta name="theme-color" content="#0A0F26">
@@ -13,8 +13,8 @@
   <meta property="og:type" content="website">
   <meta property="og:locale" content="pt_PT">
   <meta property="og:site_name" content="Gadgetmetodo, Lda.">
-  <meta property="og:title" content="Calendário de formações | Gadgetmetodo, Lda.">
-  <meta property="og:description" content="Próximas sessões das formações da Gadgetmetodo, Lda., incluindo o programa AI Essentials: cursos, programa e temas, datas, modalidade, vagas e inscrição online.">
+  <meta property="og:title" content="Formação em inteligência artificial | Gadgetmetodo, Lda.">
+  <meta property="og:description" content="Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com quatro cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.">
   <meta property="og:url" content="https://www.gadgetmetodo.pt/formacoes/">
   <meta property="og:image" content="https://www.gadgetmetodo.pt/assets/img/partilha.png">
   <meta property="og:image:width" content="1200">
@@ -28,8 +28,8 @@
   <link rel="alternate" type="text/plain" href="/llms.txt" title="Resumo do site para modelos de linguagem">
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/css/site.css?v=df7de41f10">
-  <link rel="stylesheet" href="/assets/css/area.css?v=1bd55e19bd">
+  <link rel="stylesheet" href="/assets/css/site.css?v=6e07631c08">
+  <link rel="stylesheet" href="/assets/css/area.css?v=5b7ce940fe">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -139,9 +139,17 @@
           {
             "@type": "Offer",
             "itemOffered": {
+              "@type": "Service",
+              "@id": "https://www.gadgetmetodo.pt/formacoes/#servico",
+              "name": "Formação"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
               "@type": "Course",
-              "@id": "https://www.gadgetmetodo.pt/servicos/formacao-ai-essentials/#curso",
-              "name": "Formação AI Essentials"
+              "@id": "https://www.gadgetmetodo.pt/formacoes/ai-essentials/#curso",
+              "name": "AI Essentials"
             }
           }
         ]
@@ -161,8 +169,8 @@
       "@type": "CollectionPage",
       "@id": "https://www.gadgetmetodo.pt/formacoes/#pagina",
       "url": "https://www.gadgetmetodo.pt/formacoes/",
-      "name": "Calendário de formações",
-      "description": "Próximas sessões das formações da Gadgetmetodo, Lda., incluindo o programa AI Essentials: cursos, programa e temas, datas, modalidade, vagas e inscrição online.",
+      "name": "Formação em inteligência artificial",
+      "description": "Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com quatro cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.",
       "inLanguage": "pt-PT",
       "isPartOf": {
         "@id": "https://www.gadgetmetodo.pt/#website"
@@ -191,13 +199,7 @@
         {
           "@type": "ListItem",
           "position": 2,
-          "name": "Formação AI Essentials",
-          "item": "https://www.gadgetmetodo.pt/servicos/formacao-ai-essentials/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "Calendário",
+          "name": "Formação",
           "item": "https://www.gadgetmetodo.pt/formacoes/"
         }
       ],
@@ -222,6 +224,7 @@
       <nav id="navegacao" class="navegacao" aria-label="Principal">
         <ul>
           <li><a href="/servicos/">Serviços</a></li>
+          <li><a href="/formacoes/" aria-current="page">Formação</a></li>
           <li><a href="/abordagem/">Abordagem</a></li>
           <li><a href="/experiencia/">Experiência</a></li>
           <li><a href="/sobre/">Sobre</a></li>
@@ -235,31 +238,61 @@
   <main id="conteudo">
     <section class="topo-pagina">
       <div class="contentor">
-        <nav class="migalhas" aria-label="Localização"><ol><li><a href="/">Início</a></li><li><a href="/servicos/formacao-ai-essentials/">Formação AI Essentials</a></li><li aria-current="page">Calendário</li></ol></nav>
-        <h1>Calendário de formações</h1>
-        <p class="lead">Próximas sessões das formações da Gadgetmetodo, incluindo o programa AI Essentials, abertas a empresas e profissionais, com inscrição online.</p>
+        <nav class="migalhas" aria-label="Localização"><ol><li><a href="/">Início</a></li><li aria-current="page">Formação</li></ol></nav>
+        <h1>Formação</h1>
+        <p class="lead">Cursos abertos de inteligência artificial generativa, com inscrição online, e programas à medida para administrações e equipas.</p>
         
+      </div>
+    </section>
+
+    <section class="secao">
+      <div class="contentor">
+        <div class="duas-colunas texto-largo">
+          <div class="resumo">
+          <h2>Que formação oferece a Gadgetmetodo?</h2>
+          <p>A Gadgetmetodo, Lda. dá formação em inteligência artificial (IA) a empresas e profissionais em dois formatos: cursos abertos, com inscrição individual, organizados no percurso IA Generativa no Trabalho (quatro cursos de seis horas, da iniciação à liderança da implementação); e programas à medida, como o <a href="/formacoes/ai-essentials/">AI Essentials</a>, para administrações e equipas.</p>
+          <p>Cada curso tem uma página com o programa, os temas e os casos práticos de cada sessão, uma ficha para descarregar em PDF e a inscrição online. Sem datas agendadas, a pré-inscrição garante o convite quando forem marcadas.</p>
+        </div>
+          <nav class="atalhos-formacao" aria-label="Nesta página">
+            <a href="#percurso"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="6" cy="19" r="3"/> <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/> <circle cx="18" cy="5" r="3"/> </svg><span><strong>Cursos abertos</strong>Percurso IA Generativa no Trabalho</span></a>
+            <a href="#calendario"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M8 2v3"/> <path d="M16 2v3"/> <rect x="3" y="3" width="18" height="18" rx="2"/> <path d="M3 9h18"/> <path d="M8 13h.01"/> <path d="M12 13h.01"/> <path d="M16 13h.01"/> <path d="M8 17h.01"/> <path d="M12 17h.01"/> <path d="M16 17h.01"/> </svg><span><strong>Calendário</strong>Próximas sessões e inscrições</span></a>
+            <a href="#a-medida"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M10 12h4"/> <path d="M10 8h4"/> <path d="M14 21v-3a2 2 0 0 0-4 0v3"/> <path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"/> <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/> </svg><span><strong>Formação à medida</strong>AI Essentials para administrações e equipas</span></a>
+          </nav>
+        </div>
       </div>
     </section>
 
     <?= $pagina['conteudo'] ?>
 
-    <section class="secao secao-nevoa" aria-labelledby="como-inscrever">
+    <section class="secao secao-nevoa" aria-labelledby="a-medida">
+      <div class="contentor">
+        <div class="destaque-formacoes">
+          <div>
+            <span class="sobretitulo">Formação à medida</span>
+            <h2 id="a-medida">AI Essentials: inteligência artificial para administrações e equipas</h2>
+            <p class="mb-0">Programa em cinco módulos, dos fundamentos à segurança da informação, organizado na sua empresa, com duração, modalidade e exemplos ajustados ao setor e a cada grupo. Ministrado por formador com Certificado de Competências Pedagógicas (CCP).</p>
+          </div>
+          <a class="botao" href="/formacoes/ai-essentials/"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/> <path d="M22 10v6"/> <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/> </svg> Conhecer o AI Essentials</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao" aria-labelledby="como-inscrever">
       <div class="contentor">
         <div class="duas-colunas">
           <div>
             <div class="resumo">
-          <h2>Como funcionam as sessões abertas?</h2>
-          <p>A Gadgetmetodo, Lda. organiza sessões abertas dos seus cursos, como o programa <a href="/servicos/formacao-ai-essentials/">AI Essentials</a>, sobre inteligência artificial (IA) aplicada à gestão, ministradas por formador com Certificado de Competências Pedagógicas (CCP). Cada curso tem uma página com o programa, os temas de cada módulo e as próximas sessões.</p>
-          <p>Qualquer empresa pode inscrever formandos nesta página. Os clientes com acesso à área reservada podem também inscrever e acompanhar as inscrições da sua equipa.</p>
+          <h2>Quem se pode inscrever?</h2>
+          <p>Qualquer empresa ou profissional pode inscrever-se nos cursos abertos nesta página, sem conta. A inscrição fica pendente até ser confirmada por email pela Gadgetmetodo.</p>
+          <p>Os clientes com acesso à área reservada podem também inscrever formandos e acompanhar as inscrições da sua equipa.</p>
         </div>
           </div>
           <div>
             <h2 id="como-inscrever" style="font-size:1.3rem">Como se inscrever</h2>
             <ol class="etapas etapas-compactas">
-              <li><h3>Escolha a sessão</h3><p>Veja a data, a modalidade e as vagas disponíveis.</p></li>
-              <li><h3>Preencha a inscrição</h3><p>Dados da empresa e do formando e, nos cursos de IA, um diagnóstico de oito perguntas sobre a utilização de IA.</p></li>
-              <li><h3>Receba a confirmação</h3><p>A inscrição fica pendente e é confirmada por email pela Gadgetmetodo.</p></li>
+              <li><h3>Escolha o curso</h3><p>Veja o programa, os temas, os casos práticos e a ficha em PDF.</p></li>
+              <li><h3>Inscreva-se ou faça a pré-inscrição</h3><p>Com datas agendadas, inscreve-se numa sessão. Sem datas, a pré-inscrição garante que recebe o convite quando forem marcadas.</p></li>
+              <li><h3>Receba a confirmação</h3><p>Recebe um email logo a seguir e a confirmação da Gadgetmetodo nos dias úteis seguintes.</p></li>
             </ol>
           </div>
         </div>
@@ -271,7 +304,7 @@
       <div class="contentor">
         <div>
           <h2 id="chamada-titulo">Prefere uma formação só para a sua equipa?</h2>
-          <p>Organizamos o AI Essentials na sua empresa, com datas, duração e exemplos ajustados ao setor e às funções do grupo.</p>
+          <p>Organizamos qualquer curso, ou o programa AI Essentials, na sua empresa, com datas, duração e exemplos ajustados ao setor e às funções do grupo.</p>
         </div>
         <div class="acoes">
           <a class="botao botao-claro" href="/contactos/#formulario">Pedir proposta <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M5 12h14"/> <path d="m12 5 7 7-7 7"/> </svg></a>
@@ -294,7 +327,7 @@
             <li><a href="/servicos/inteligencia-artificial/">Inteligência artificial e transformação digital</a></li>
             <li><a href="/servicos/protecao-de-dados-e-conformidade/">Proteção de dados e conformidade</a></li>
             <li><a href="/servicos/estrategia-e-gestao/">Estratégia e gestão</a></li>
-            <li><a href="/servicos/formacao-ai-essentials/">Formação AI Essentials</a></li>
+            <li><a href="/formacoes/">Formação</a></li>
           </ul>
         </div>
         <div>
@@ -304,7 +337,6 @@
             <li><a href="/experiencia/">Experiência</a></li>
             <li><a href="/sobre/">Sobre nós</a></li>
             <li><a href="/catalogo/">Catálogo de serviços</a></li>
-            <li><a href="/formacoes/">Calendário de formações</a></li>
             <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
             <li><a href="/contactos/">Contactos</a></li>
             <li><a href="/clientes/">Área de clientes</a></li>
@@ -330,6 +362,6 @@
       </div>
     </div>
   </footer>
-  <script src="/assets/js/site.js?v=ba30991197" defer></script>
+  <script src="/assets/js/site.js?v=ca79bedc66" defer></script>
 </body>
 </html>

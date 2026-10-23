@@ -192,8 +192,12 @@ strong {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
   min-height: 76px;
+}
+
+.marca {
+  flex: none;
 }
 
 .marca img {
@@ -204,7 +208,7 @@ strong {
 .navegacao ul {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -216,12 +220,13 @@ strong {
 
 .navegacao a {
   display: block;
-  padding: 10px 12px;
+  padding: 10px 8px;
   color: var(--marinho);
   font-family: var(--fonte-titulos);
   font-size: 0.92rem;
   font-weight: 500;
   text-decoration: none;
+  white-space: nowrap;
   border-radius: var(--raio-pequeno);
 }
 
@@ -248,7 +253,7 @@ strong {
 }
 
 /* Entre o menu compacto e os ecrãs largos, a ligação mostra só o ícone */
-@media (min-width: 1061px) and (max-width: 1229px) {
+@media (min-width: 1141px) and (max-width: 1259px) {
   .nav-clientes svg {
     width: 20px;
     height: 20px;
@@ -300,7 +305,7 @@ strong {
   display: none;
 }
 
-@media (max-width: 1060px) {
+@media (max-width: 1140px) {
   .js .menu-botao {
     display: inline-flex;
   }
@@ -442,6 +447,10 @@ strong {
 
 .secao-nevoa {
   background: var(--nevoa);
+}
+
+.secao-curta {
+  padding-block: clamp(40px, 6vw, 72px) 0;
 }
 
 .fundo-escuro {
