@@ -168,10 +168,10 @@ function link_curso_publico(array $curso): string
     return '/formacoes/curso.php?c=' . (int) $curso['id'];
 }
 
-// Ficha do curso: com $pdf, o PDF gerado no servidor; sem, a versão em HTML para ver no ecrã
-function link_ficha(array $curso, bool $pdf = false): string
+// Ficha do curso em PDF, gerada no servidor
+function link_ficha(array $curso): string
 {
-    return '/formacoes/ficha.php?c=' . (int) $curso['id'] . ($pdf ? '&pdf=1' : '');
+    return '/formacoes/ficha.php?c=' . (int) $curso['id'];
 }
 
 function link_pre_inscricao(int $curso_id): string

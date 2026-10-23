@@ -120,7 +120,7 @@ function cartao_curso(array $c): string
         <div class="cartao-curso-acoes">
           <a class="botao" href="' . h($op['href']) . '">' . h($op['rotulo']) . '<span class="visualmente-oculto">: ' . h($titulo) . '</span></a>
           <a class="botao botao-secundario" href="' . h(link_curso_publico($c)) . '">Ver o curso<span class="visualmente-oculto">: ' . h($titulo) . '</span></a>
-          <a class="ligacao-pdf" href="' . h(link_ficha($c, true)) . '" target="_blank" rel="noopener">Ficha em PDF<span class="visualmente-oculto"> (' . h($titulo) . ')</span></a>
+          <a class="ligacao-pdf" href="' . h(link_ficha($c)) . '" target="_blank" rel="noopener">Ficha em PDF<span class="visualmente-oculto"> (' . h($titulo) . ')</span></a>
         </div>
       </article>';
 }
@@ -493,7 +493,7 @@ function pre_inscricao_publica(): array
         <span class="sobretitulo">' . h($c['percurso'] ? $sobre . ' · ' . explode(':', (string) $c['percurso'])[0] : $sobre) . '</span>
         <h2 class="mt-0">' . h($titulo) . '</h2>
         <p class="texto-suave mb-0">' . h(implode(' · ', array_filter([(string) $c['tipologia'], (string) $c['duracao']]))) . '</p>
-        <p class="mb-0"><a href="' . h(link_curso_publico($c)) . '">Ver o programa do curso</a> · <a href="' . h(link_ficha($c, true)) . '" target="_blank" rel="noopener">Ficha em PDF</a></p>
+        <p class="mb-0"><a href="' . h(link_curso_publico($c)) . '">Ver o programa do curso</a> · <a href="' . h(link_ficha($c)) . '" target="_blank" rel="noopener">Ficha em PDF</a></p>
       </div>
       ' . ($op['sessoes'] ? '<div class="aviso aviso-info">Este curso já tem datas agendadas: ' . h(lcfirst($op['nota'])) . ' <a href="' . h($op['href']) . '">Inscreva-se já</a> ou deixe a pré-inscrição para outras datas.</div>' : '') . '
       ' . ($erros ? '<div class="aviso aviso-erro" role="alert">' . h(implode(' ', $erros)) . '</div>' : '') . '
@@ -533,7 +533,7 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
     $site = rtrim((string) ($cfg['site'] ?? SITE_CANONICO), '/');
     $c = ['id' => $p['curso_id']];
     $link_curso = $site . link_curso_publico($c);
-    $link_ficha = $site . link_ficha($c, true);
+    $link_ficha = $site . link_ficha($c);
     $link_area = $site . '/clientes/' . url('curso', ['id' => $p['curso_id']]) . '#preinscricoes';
     $destino = (string) ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt');
     $linhas = [
@@ -663,7 +663,7 @@ function curso_publico(): array
             <p class="cartao-curso-datas' . ($op['sessoes'] ? ' com-datas' : '') . '">' . h($op['nota']) . '</p>
             <div class="ficha-acoes">
               <a class="botao" href="' . h($op['href']) . '">' . h($op['rotulo']) . '</a>
-              <a class="botao botao-secundario" href="' . h(link_ficha($c, true)) . '" target="_blank" rel="noopener">Exportar PDF</a>
+              <a class="botao botao-secundario" href="' . h(link_ficha($c)) . '" target="_blank" rel="noopener">Exportar PDF</a>
               <button class="botao botao-secundario" type="button" data-copiar="' . h($link) . '">Copiar ligação</button>
               <p class="estado-copia" role="status" aria-live="polite"></p>
             </div>

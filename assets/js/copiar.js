@@ -1,5 +1,4 @@
-// Botões "Copiar ligação" ([data-copiar]) e "Guardar em PDF" ([data-imprimir]), usados na página do curso,
-// na ficha em PDF e na área de clientes. Na ficha, ?imprimir=1 abre logo a janela de impressão.
+// Botões "Copiar ligação" ([data-copiar]), usados na página do curso e na área de clientes.
 (function () {
   function copiarTexto(texto) {
     if (navigator.clipboard && window.isSecureContext) {
@@ -21,7 +20,7 @@
   }
 
   function mostrar(botao, texto) {
-    var zona = botao.closest('.partilha, .ficha-acoes, .barra-ficha') || document;
+    var zona = botao.closest('.partilha, .ficha-acoes') || document;
     var estado = zona.querySelector('.estado-copia');
     if (estado) { estado.textContent = texto; }
   }
@@ -36,13 +35,5 @@
         mostrar(copiar, 'Não foi possível copiar automaticamente. Copie esta ligação: ' + ligacao);
       });
     }
-    if (evento.target.closest('[data-imprimir]')) {
-      window.print();
-    }
   });
-
-  if (/[?&]imprimir=1/.test(window.location.search) && document.querySelector('.ficha')) {
-    var pronto = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
-    pronto.then(function () { setTimeout(function () { window.print(); }, 400); });
-  }
 })();

@@ -262,6 +262,6 @@
     </div>
   </footer>
   <script src="/assets/js/site.js?v=ca79bedc66" defer></script>
-  <script src="/assets/js/copiar.js?v=a837c3c200" defer></script>
+  <script src="/assets/js/copiar.js?v=ebe85aad80" defer></script>
 </body>
 </html>

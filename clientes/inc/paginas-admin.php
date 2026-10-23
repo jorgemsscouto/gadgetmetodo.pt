@@ -235,7 +235,7 @@ function admin_cursos(): void
     $linhas = '';
     foreach ($lista as $c) {
         $linhas .= '<tr><td><a href="' . h(url('curso', ['id' => $c['id']])) . '">' . h($c['nome']) . '</a>' . ($c['percurso'] ? '<br><span class="texto-suave">' . h($c['percurso']) . '</span>' : '') . '</td><td>' . h($c['tipologia']) . '</td><td>' . (int) $c['n_modulos'] . '</td><td>' . (int) $c['n_sessoes'] . '</td><td>' . ($c['n_pre'] ? '<a href="' . h(url('curso', ['id' => $c['id']])) . '#preinscricoes">' . (int) $c['n_pre'] . ' por tratar</a>' : '0') . '</td><td>' . ($c['diagnostico'] ? 'Sim' : 'Não') . '</td><td>' . ($c['ativo'] ? etiqueta('Ativo', 'ok') : etiqueta('Inativo')) . '</td>'
-            . '<td>' . ($c['ativo'] ? '<a href="' . h(link_ficha($c, true)) . '" target="_blank" rel="noopener">Ficha em PDF</a>' : '') . '</td></tr>';
+            . '<td>' . ($c['ativo'] ? '<a href="' . h(link_ficha($c)) . '" target="_blank" rel="noopener">Ficha em PDF</a>' : '') . '</td></tr>';
     }
     $versao = (string) (catalogo()['versao'] ?? '');
     pagina_area('cursos', 'Cursos', ($versao !== '' && catalogo_pendente() ? '<div class="aviso aviso-info">Há um catálogo de cursos novo por carregar ("' . h((string) (catalogo()['comum']['percurso'] ?? $versao)) . '"). Não foi carregado automaticamente porque já existem inscrições ou pré-inscrições. Use "Repor o catálogo", no fim desta página, quando quiser substituir a agenda e os cursos.</div>' : '') . '
@@ -388,7 +388,7 @@ function admin_curso(): void
         $html .= '<h3 class="espaco-topo-curto">Acrescentar ' . strtolower($u) . '</h3>' . form_modulo(['id' => 0, 'ordem' => count($mods) + 1, 'nome' => '', 'descricao' => '', 'temas' => '', 'horas' => null, 'caso_pratico' => ''], 0, $u);
         if ($c['ativo']) {
             $html .= partilha_e_convite(endereco_site() . link_curso_publico($c), 'Página pública do curso',
-                'Mostra a descrição, o programa, os temas e as próximas sessões com inscrição. Pode colocá-la no site, nas redes sociais ou enviá-la a um candidato. A ficha em PDF tem o mesmo conteúdo, num documento para enviar ou imprimir.', link_ficha($c, true));
+                'Mostra a descrição, o programa, os temas e as próximas sessões com inscrição. Pode colocá-la no site, nas redes sociais ou enviá-la a um candidato. A ficha em PDF tem o mesmo conteúdo, num documento para enviar ou imprimir.', link_ficha($c));
         }
         $sessoes = consulta('SELECT * FROM formacoes WHERE curso_id = ? AND inicio >= ? ORDER BY inicio', [$id, date('Y-m-d 00:00:00')]);
         $html .= '<h2 class="espaco-topo">Sessões agendadas</h2>'
