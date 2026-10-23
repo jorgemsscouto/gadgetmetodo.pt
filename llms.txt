@@ -1,6 +1,6 @@
 # Gadgetmetodo, Lda.
 
-> Consultora portuguesa com sede no Porto, especializada em organização e métodos (O&M), inteligência artificial (IA) aplicada à gestão, proteção de dados e conformidade (RGPD, NIS2, funções de Encarregado de Proteção de Dados) e apoio estratégico a administrações. Dá formação em IA: o percurso IA Generativa no Trabalho (quatro cursos abertos com inscrição online) e o programa AI Essentials, à medida. Trabalha do diagnóstico à implementação, por projeto ou em acompanhamento continuado.
+> Consultora portuguesa com sede no Porto, especializada em organização e métodos (O&M), inteligência artificial (IA) aplicada à gestão, proteção de dados e conformidade (RGPD, NIS2, DORA, funções de Encarregado de Proteção de Dados) e apoio estratégico a administrações. Dá formação em IA: o percurso IA Generativa no Trabalho (quatro cursos abertos com inscrição online) e o programa AI Essentials, à medida. Trabalha do diagnóstico à implementação, por projeto ou em acompanhamento continuado.
 
 Factos essenciais:
 
@@ -23,7 +23,7 @@ Factos essenciais:
 - [Visão geral dos serviços](https://www.gadgetmetodo.pt/servicos/): as cinco áreas e como se combinam
 - [Organização e Métodos](https://www.gadgetmetodo.pt/servicos/organizacao-e-metodos/): diagnóstico organizacional, redesenho de processos, normas e procedimentos, auditorias internas e planos de melhoria
 - [Inteligência artificial e transformação digital](https://www.gadgetmetodo.pt/servicos/inteligencia-artificial/): estratégia de IA, casos de uso, arquitetura de sistemas e integrações, automação de marketing, painéis de indicadores
-- [Proteção de dados e conformidade](https://www.gadgetmetodo.pt/servicos/protecao-de-dados-e-conformidade/): DPO externo, RGPD, Diretiva NIS2, contratos com subcontratantes e governação da IA
+- [Proteção de dados e conformidade](https://www.gadgetmetodo.pt/servicos/protecao-de-dados-e-conformidade/): DPO externo, RGPD, Diretiva NIS2, DORA (Regulamento (UE) 2022/2554, resiliência operacional digital do setor financeiro), contratos com subcontratantes e governação da IA
 - [Estratégia e gestão](https://www.gadgetmetodo.pt/servicos/estrategia-e-gestao/): alinhamento estratégico, objetivos e indicadores (KPI), modelos de incentivos e conselho à administração
 - [Formação](https://www.gadgetmetodo.pt/formacoes/): área de formação com o percurso IA Generativa no Trabalho (quatro cursos de seis horas, da iniciação à liderança da implementação), calendário de edições, inscrição no curso completo (todas as sessões) e pré-inscrição online; cada curso tem página própria com programa, temas e casos práticos por sessão e ficha em PDF
 - [AI Essentials para empresas](https://www.gadgetmetodo.pt/formacoes/ai-essentials/): programa à medida em cinco módulos sobre IA para administrações e equipas

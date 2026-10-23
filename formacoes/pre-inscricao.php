@@ -57,7 +57,7 @@
         "height": 512
       },
       "image": "https://www.gadgetmetodo.pt/assets/img/partilha.png",
-      "description": "Consultora sediada no Porto, especializada em organização e métodos (O&M), inteligência artificial aplicada à gestão, proteção de dados (RGPD, NIS2) e apoio estratégico a administrações.",
+      "description": "Consultora sediada no Porto, especializada em organização e métodos (O&M), inteligência artificial aplicada à gestão, proteção de dados e conformidade (RGPD, NIS2, DORA) e apoio estratégico a administrações.",
       "slogan": "Simplificar. Organizar. Fazer acontecer.",
       "address": {
         "@type": "PostalAddress",
@@ -95,6 +95,7 @@
         "RGPD",
         "Encarregado de Proteção de Dados",
         "Diretiva NIS2",
+        "Regulamento DORA (resiliência operacional digital do setor financeiro)",
         "Governação da inteligência artificial",
         "Planeamento estratégico",
         "Indicadores-chave de desempenho",

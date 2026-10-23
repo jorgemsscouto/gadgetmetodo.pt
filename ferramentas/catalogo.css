@@ -329,13 +329,15 @@ svg { display: block; }
 
 /* Referências de conformidade */
 
-.referencias { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2mm; }
+.referencias { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2mm; }
 .referencias div { padding: 3.5mm; background: var(--marinho); border-radius: 2mm; }
 .referencias div:nth-child(2) { background: var(--petroleo); }
 .referencias div:nth-child(3) { background: var(--profundo); }
+.referencias div:nth-child(4) { background: var(--petroleo); }
 .referencias strong { display: block; color: #fff; font-family: "Montserrat", Arial, sans-serif; font-size: 10pt; }
 .referencias span { display: block; color: #c9ced8; font-size: 7.6pt; }
 .referencias em { display: block; margin-top: 3mm; color: #8fc3c6; font-size: 7.6pt; font-style: normal; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.destaque-servico { margin: 3mm 0 0; padding: 2.6mm 3.4mm; background: var(--nevoa); border-left: 1mm solid var(--petroleo); border-radius: 0 2mm 2mm 0; color: var(--marinho); font-size: 7.9pt; line-height: 1.38; }
 .referencias-base { margin-top: 2mm; padding: 3mm; background: var(--tinta); color: var(--profundo); font-size: 8.4pt; font-weight: 600; text-align: center; border-radius: 2mm; }
 
 /* Abordagem */

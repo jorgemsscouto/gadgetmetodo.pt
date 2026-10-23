@@ -46,7 +46,7 @@ const NAV = [
 const SERVICOS = [
   { url: '/servicos/organizacao-e-metodos/', nome: 'Organização e Métodos', icone: 'workflow', curto: 'Diagnóstico organizacional, mapeamento e redesenho de processos, normas e procedimentos internos, auditorias e planos de melhoria.' },
   { url: '/servicos/inteligencia-artificial/', nome: 'Inteligência artificial e transformação digital', icone: 'sparkles', curto: 'Estratégia de IA, casos de uso com retorno, arquitetura de sistemas e integrações, automação e painéis de indicadores.' },
-  { url: '/servicos/protecao-de-dados-e-conformidade/', nome: 'Proteção de dados e conformidade', icone: 'shield-check', curto: 'Funções de Encarregado de Proteção de Dados, RGPD, NIS2 e governação da IA, com equilíbrio entre conformidade e operação.' },
+  { url: '/servicos/protecao-de-dados-e-conformidade/', nome: 'Proteção de dados e conformidade', icone: 'shield-check', curto: 'Funções de Encarregado de Proteção de Dados, RGPD, NIS2, resiliência operacional digital (DORA) e governação da IA, com equilíbrio entre conformidade e operação.' },
   { url: '/servicos/estrategia-e-gestao/', nome: 'Estratégia e gestão', icone: 'compass', curto: 'Alinhamento estratégico, objetivos e indicadores, modelos de incentivos e apoio à administração em inovação e tecnologia.' },
   { url: '/formacoes/', chave: 'formacao', nome: 'Formação', icone: 'graduation-cap', curto: 'Percurso IA Generativa no Trabalho, com cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.' },
 ];
@@ -70,14 +70,14 @@ const ORG = {
   url: URL_BASE + '/',
   logo: { '@type': 'ImageObject', url: URL_BASE + '/assets/marca/simbolo-512.png', width: 512, height: 512 },
   image: URL_BASE + '/assets/img/partilha.png',
-  description: 'Consultora sediada no Porto, especializada em organização e métodos (O&M), inteligência artificial aplicada à gestão, proteção de dados (RGPD, NIS2) e apoio estratégico a administrações.',
+  description: 'Consultora sediada no Porto, especializada em organização e métodos (O&M), inteligência artificial aplicada à gestão, proteção de dados e conformidade (RGPD, NIS2, DORA) e apoio estratégico a administrações.',
   slogan: 'Simplificar. Organizar. Fazer acontecer.',
   address: { '@type': 'PostalAddress', streetAddress: MORADA.rua, postalCode: MORADA.cp, addressLocality: MORADA.local, addressRegion: 'Porto', addressCountry: 'PT' },
   telephone: '+351915416112',
   email: EMAIL,
   contactPoint: { '@type': 'ContactPoint', contactType: 'sales', telephone: '+351915416112', email: EMAIL, availableLanguage: ['pt-PT'] },
   areaServed: { '@type': 'Country', name: 'Portugal' },
-  knowsAbout: ['Organização e métodos', 'Diagnóstico organizacional', 'Redesenho de processos', 'Normas e procedimentos internos', 'Auditorias internas de processos e sistemas de gestão', 'Estratégia de inteligência artificial', 'Arquitetura de sistemas e integrações', 'Automação de marketing', 'Análise de dados e painéis de indicadores', 'RGPD', 'Encarregado de Proteção de Dados', 'Diretiva NIS2', 'Governação da inteligência artificial', 'Planeamento estratégico', 'Indicadores-chave de desempenho', 'Formação em inteligência artificial', 'Inteligência artificial generativa no trabalho'],
+  knowsAbout: ['Organização e métodos', 'Diagnóstico organizacional', 'Redesenho de processos', 'Normas e procedimentos internos', 'Auditorias internas de processos e sistemas de gestão', 'Estratégia de inteligência artificial', 'Arquitetura de sistemas e integrações', 'Automação de marketing', 'Análise de dados e painéis de indicadores', 'RGPD', 'Encarregado de Proteção de Dados', 'Diretiva NIS2', 'Regulamento DORA (resiliência operacional digital do setor financeiro)', 'Governação da inteligência artificial', 'Planeamento estratégico', 'Indicadores-chave de desempenho', 'Formação em inteligência artificial', 'Inteligência artificial generativa no trabalho'],
   hasOfferCatalog: {
     '@type': 'OfferCatalog',
     name: 'Serviços da Gadgetmetodo, Lda.',
@@ -361,6 +361,7 @@ const FAQ_SERVICOS = [
   ['Como pode a inteligência artificial ajudar a minha empresa?', 'A IA é útil em processos com volume, repetição ou decisões apoiadas em dados: personalização da comunicação com clientes, automação de tarefas e fluxos, análise de dados para decisão e apoio ao desenvolvimento de produto. A Gadgetmetodo começa por <a href="/servicos/inteligencia-artificial/">identificar e priorizar os casos de uso</a> pelo retorno esperado e pelo esforço de implementação, antes de qualquer investimento em ferramentas.'],
   ['A Gadgetmetodo pode assumir as funções de DPO da minha empresa?', 'Sim. A Gadgetmetodo assegura <a href="/servicos/protecao-de-dados-e-conformidade/">funções de Encarregado de Proteção de Dados (DPO, Data Protection Officer)</a> em regime externo, incluindo o registo das atividades de tratamento, a revisão de contratos com clientes e subcontratantes, a avaliação de transferências internacionais de dados e o apoio na relação com a Comissão Nacional de Proteção de Dados (CNPD).'],
   ['Que apoio prestam na Diretiva NIS2?', 'Apoio na análise do enquadramento da empresa face à Diretiva (UE) 2022/2555 (NIS2), na identificação dos <a href="/servicos/protecao-de-dados-e-conformidade/">requisitos de segurança da informação aplicáveis</a>, incluindo os exigidos contratualmente por clientes abrangidos, e no alinhamento desses requisitos com a governação da IA e a proteção de dados.'],
+  ['Que apoio prestam no Regulamento DORA?', '<a href="/servicos/protecao-de-dados-e-conformidade/">Apoio à conformidade com o DORA</a> (Digital Operational Resilience Act, Regulamento (UE) 2022/2554), aplicável desde 17 de janeiro de 2025 às entidades financeiras e aos prestadores terceiros de serviços de tecnologias de informação e comunicação (TIC): diagnóstico do enquadramento, gestão do risco de TIC, gestão e notificação de incidentes, testes de resiliência operacional digital, gestão do risco de terceiros e registo de informações dos contratos de TIC, em articulação com o Regulamento Geral sobre a Proteção de Dados (RGPD).'],
 ];
 // Formação: respostas baseadas no catálogo de cursos (clientes/inc/catalogo/ia-generativa.json)
 const FAQ_FORMACAO = [
@@ -386,7 +387,7 @@ const FAQ_FUNCIONAMENTO = [
 pagina({
   url: '/',
   titulo: 'Gadgetmetodo, Lda. | Organização e Métodos e IA no Porto',
-  descricao: 'Consultora do Porto em organização e métodos, inteligência artificial aplicada, proteção de dados (RGPD, NIS2) e estratégia. Do diagnóstico à implementação.',
+  descricao: 'Consultora do Porto em organização e métodos, inteligência artificial aplicada, proteção de dados (RGPD, NIS2, DORA) e estratégia. Do diagnóstico à implementação.',
   prioridade: '1.0',
   llms: 'Página inicial: quem somos, serviços, formação, metodologia e contactos.',
   schemaExtra: [PESSOA],
@@ -569,7 +570,7 @@ pagina({
     <section class="secao">
       <div class="contentor">
         ${resumo([
-          'A Gadgetmetodo, Lda. presta serviços em cinco áreas: Organização e Métodos (O&amp;M); inteligência artificial (IA) e transformação digital; proteção de dados e conformidade (RGPD, NIS2 e governação da IA); estratégia e gestão; e formação, com cursos abertos de IA generativa e o programa AI Essentials à medida. As áreas podem ser contratadas isoladamente ou combinadas num único projeto, com uma equipa e um plano de ação comuns.',
+          'A Gadgetmetodo, Lda. presta serviços em cinco áreas: Organização e Métodos (O&amp;M); inteligência artificial (IA) e transformação digital; proteção de dados e conformidade (RGPD, NIS2, DORA e governação da IA); estratégia e gestão; e formação, com cursos abertos de IA generativa e o programa AI Essentials à medida. As áreas podem ser contratadas isoladamente ou combinadas num único projeto, com uma equipa e um plano de ação comuns.',
         ], 'Que serviços presta a Gadgetmetodo?')}
         <div class="grelha grelha-3 espaco-topo">
           ${SERVICOS.map(cartaoServico).join('\n          ')}
@@ -779,13 +780,13 @@ paginaServico({
 paginaServico({
   s: SERVICOS[2],
   pergunta: 'Que apoio presta a Gadgetmetodo em proteção de dados?',
-  titulo: 'Proteção de dados, RGPD, NIS2 e DPO externo',
-  descricao: 'Encarregado de Proteção de Dados (DPO) externo, RGPD, Diretiva NIS2, contratos com subcontratantes e governação da inteligência artificial.',
-  h1: 'Proteção de dados, RGPD, NIS2 e governação da IA',
+  titulo: 'Proteção de dados, RGPD, NIS2, DORA e DPO externo',
+  descricao: 'Encarregado de Proteção de Dados (DPO) externo, RGPD, Diretiva NIS2, DORA, contratos com subcontratantes e governação da inteligência artificial.',
+  h1: 'Proteção de dados, RGPD, NIS2, DORA e governação da IA',
   lead: 'Conformidade com bom senso: proteger clientes, parceiros e titulares dos dados sem bloquear a operação nem a inovação.',
-  llms: 'Funções de DPO externo, RGPD, NIS2, contratos de subcontratação e governação da IA.',
+  llms: 'Funções de DPO externo, RGPD, NIS2, DORA (resiliência operacional digital do setor financeiro), contratos de subcontratação e governação da IA.',
   resumoTxt: [
-    'A Gadgetmetodo, Lda. assegura funções de Encarregado de Proteção de Dados (DPO, Data Protection Officer) e apoia empresas na aplicação do Regulamento Geral sobre a Proteção de Dados (RGPD), da Diretiva NIS2 sobre segurança das redes e da informação e na governação da inteligência artificial.',
+    'A Gadgetmetodo, Lda. assegura funções de Encarregado de Proteção de Dados (DPO, Data Protection Officer) e apoia empresas na aplicação do Regulamento Geral sobre a Proteção de Dados (RGPD), da Diretiva NIS2 sobre segurança das redes e da informação, do Regulamento DORA (Digital Operational Resilience Act) sobre a resiliência operacional digital do setor financeiro e na governação da inteligência artificial.',
     'O objetivo é um quadro de conformidade sólido, proporcional ao risco e compatível com o crescimento do negócio.',
   ],
   inclui: [
@@ -795,6 +796,7 @@ paginaServico({
     'Avaliação de transferências internacionais de dados',
     'Avaliação do impacto da inteligência artificial no RGPD',
     'Requisitos da Diretiva NIS2 e segurança da informação',
+    'Apoio à conformidade com o DORA (Digital Operational Resilience Act, Regulamento (UE) 2022/2554), aplicável desde 17 de janeiro de 2025 às entidades financeiras e aos prestadores terceiros de serviços de tecnologias de informação e comunicação (TIC): diagnóstico do enquadramento, gestão do risco de TIC, gestão e notificação de incidentes, testes de resiliência operacional digital, gestão do risco de terceiros e registo de informações dos contratos de TIC, em articulação com o Regulamento Geral sobre a Proteção de Dados (RGPD).',
     'Governação e ética da IA: regras de utilização, responsabilidades e controlo',
     'Formação das equipas em privacidade e segurança',
   ],
@@ -804,19 +806,21 @@ paginaServico({
     'Clientes ou parceiros exigem garantias contratuais de proteção de dados e segurança',
     'Está a adotar ferramentas de IA que utilizam dados pessoais',
     'Precisa de designar um DPO ou de reforçar a função existente',
+    'É uma entidade financeira ou presta serviços de TIC a entidades financeiras',
   ],
   extra: `<section class="secao secao-nevoa" aria-labelledby="enquadramento">
       <div class="contentor">
         <div class="duas-colunas">
           <div>
             <span class="sobretitulo">Enquadramento</span>
-            <h2 id="enquadramento">Três referências que convergem</h2>
-            <p>O RGPD, a NIS2 e a governação da IA tratam riscos diferentes, mas pedem às empresas o mesmo tipo de disciplina: saber que dados e sistemas têm, quem é responsável e que controlos existem.</p>
+            <h2 id="enquadramento">Quatro referências que convergem</h2>
+            <p>O RGPD, a NIS2, o DORA e a governação da IA tratam riscos diferentes, mas pedem às empresas o mesmo tipo de disciplina: saber que dados e sistemas têm, quem é responsável e que controlos existem.</p>
             <p class="mb-0">A Gadgetmetodo trata estes temas em conjunto, com clareza estratégica, realismo operacional e governação com bom senso.</p>
           </div>
           <div class="grelha">
             <div class="cartao"><h3>RGPD</h3><p>Regulamento (UE) 2016/679, sobre a proteção das pessoas singulares no tratamento de dados pessoais.</p></div>
             <div class="cartao"><h3>NIS2</h3><p>Diretiva (UE) 2022/2555, sobre medidas para um elevado nível comum de cibersegurança na União.</p></div>
+            <div class="cartao"><h3>DORA</h3><p>Regulamento (UE) 2022/2554, relativo à resiliência operacional digital do setor financeiro, aplicável desde 17 de janeiro de 2025.</p></div>
             <div class="cartao"><h3>Governação da IA</h3><p>Regras internas sobre que ferramentas usar, com que dados, com que responsabilidades e com que controlo.</p></div>
           </div>
         </div>
@@ -828,10 +832,12 @@ paginaServico({
     'Análise das transferências internacionais de dados',
     'Política de utilização de IA e matriz de responsabilidades',
     'Plano de ação de segurança da informação alinhado com a NIS2',
+    'Diagnóstico do enquadramento no DORA e plano de ação: risco de TIC, incidentes, testes, terceiros e registo de informações',
   ],
   faq: [
     ['O que faz um Encarregado de Proteção de Dados (DPO)?', 'Informa e aconselha a organização sobre as obrigações do RGPD, controla a conformidade, coopera com a autoridade de controlo, que em Portugal é a Comissão Nacional de Proteção de Dados (CNPD), e é o ponto de contacto para os titulares dos dados.'],
     ['A NIS2 aplica-se à minha empresa?', 'Depende do setor, da dimensão e da posição na cadeia de fornecimento. Mesmo empresas fora do âmbito direto podem ter de cumprir requisitos de segurança impostos contratualmente por clientes abrangidos. Uma análise inicial esclarece o enquadramento de cada caso.'],
+    ['O DORA aplica-se à minha empresa?', 'Aplica-se às entidades financeiras e aos prestadores terceiros de serviços de TIC. Uma empresa que presta serviços de TIC a entidades financeiras pode ainda ter de cumprir requisitos que estas lhe impõem por contrato. Uma análise inicial esclarece o enquadramento de cada caso e a articulação com o RGPD e a NIS2.'],
     ['A conformidade tem de travar a operação?', 'Não deve. A Gadgetmetodo procura soluções proporcionais ao risco, que protegem clientes, parceiros e titulares dos dados e continuam a permitir que a empresa cresça e inove.'],
   ],
 });
@@ -1231,7 +1237,7 @@ faqExtra.__faq = faqSchema(TODAS_FAQ);
 pagina({
   url: '/perguntas-frequentes/',
   titulo: 'Perguntas frequentes',
-  descricao: 'Respostas sobre a Gadgetmetodo, Lda.: organização e métodos, inteligência artificial, DPO, RGPD, NIS2, cursos de IA e inscrições, propostas e funcionamento dos projetos.',
+  descricao: 'Respostas sobre a Gadgetmetodo, Lda.: organização e métodos, inteligência artificial, DPO, RGPD, NIS2, DORA, cursos de IA e inscrições, propostas e funcionamento dos projetos.',
   tipo: 'FAQPage',
   prioridade: '0.8',
   llms: 'Perguntas e respostas sobre a empresa, os serviços, a formação (cursos, nível, inscrição e pré-inscrição, requisitos, avaliação) e o funcionamento dos projetos.',

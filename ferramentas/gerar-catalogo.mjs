@@ -47,11 +47,12 @@ const SERVICOS = [
   {
     num: '03', nome: 'Proteção de dados e conformidade', icone: 'shield-check',
     titulo: 'Conformidade proporcional ao risco protege clientes e titulares sem travar a operação',
-    resumo: 'Asseguramos funções de Encarregado de Proteção de Dados (DPO, Data Protection Officer) e apoiamos a aplicação do RGPD, da Diretiva NIS2 sobre cibersegurança e da governação da IA, com clareza estratégica, realismo operacional e governação com bom senso.',
-    questoes: ['Cumprimos o RGPD de forma demonstrável?', 'A NIS2 aplica-se à empresa, direta ou indiretamente?', 'Que regras devem orientar o uso de IA com dados pessoais?', 'Os contratos com clientes e subcontratantes protegem-nos?'],
+    resumo: 'Asseguramos funções de Encarregado de Proteção de Dados (DPO, Data Protection Officer) e apoiamos a aplicação do RGPD, da Diretiva NIS2 sobre cibersegurança, do DORA sobre a resiliência operacional digital do setor financeiro e da governação da IA, com clareza estratégica, realismo operacional e governação com bom senso.',
+    questoes: ['Cumprimos o RGPD de forma demonstrável?', 'A NIS2 ou o DORA aplicam-se à empresa, direta ou indiretamente?', 'Que regras devem orientar o uso de IA com dados pessoais?', 'Os contratos com clientes e subcontratantes protegem-nos?'],
     inclui: ['Funções de DPO em regime externo', 'Registo das atividades de tratamento', 'Contratos com clientes e subcontratantes', 'Transferências internacionais de dados', 'Impacto da IA no RGPD', 'Requisitos da NIS2 e segurança da informação', 'Governação e ética da IA', 'Formação em privacidade e segurança'],
-    entregaveis: ['Registo das atividades de tratamento', 'Cláusulas e contratos revistos', 'Análise de transferências internacionais', 'Política de utilização de IA', 'Plano de ação de segurança da informação'],
+    entregaveis: ['Registo das atividades de tratamento', 'Cláusulas e contratos revistos', 'Análise de transferências internacionais', 'Política de utilização de IA', 'Plano de ação de segurança da informação', 'Diagnóstico e plano de ação DORA'],
     figura: 'referencias',
+    nota: 'Apoio à conformidade com o DORA (Digital Operational Resilience Act, Regulamento (UE) 2022/2554), aplicável desde 17 de janeiro de 2025 às entidades financeiras e aos prestadores terceiros de serviços de tecnologias de informação e comunicação (TIC): diagnóstico do enquadramento, gestão do risco de TIC, gestão e notificação de incidentes, testes de resiliência operacional digital, gestão do risco de terceiros e registo de informações dos contratos de TIC, em articulação com o Regulamento Geral sobre a Proteção de Dados (RGPD).',
   },
   {
     num: '04', nome: 'Estratégia e gestão', icone: 'compass',
@@ -87,10 +88,11 @@ const fig_matriz = `<figure class="figura">
 </figure>`;
 
 const fig_referencias = `<figure class="figura">
-  <figcaption><strong>Figura 3.</strong> Três referências que pedem a mesma disciplina</figcaption>
+  <figcaption><strong>Figura 3.</strong> Quatro referências que pedem a mesma disciplina</figcaption>
   <div class="referencias">
     <div><strong>RGPD</strong><span>Regulamento (UE) 2016/679</span><em>Dados pessoais</em></div>
     <div><strong>NIS2</strong><span>Diretiva (UE) 2022/2555</span><em>Cibersegurança</em></div>
+    <div><strong>DORA</strong><span>Regulamento (UE) 2022/2554</span><em>Resiliência digital</em></div>
     <div><strong>Governação da IA</strong><span>Regras internas</span><em>Uso de IA</em></div>
   </div>
   <div class="referencias-base">Inventário de dados e sistemas · Responsáveis definidos · Controlos e evidências</div>
@@ -158,7 +160,7 @@ function paginaServico(s) {
       <ol class="questoes">${s.questoes.map(q => `<li>${q}</li>`).join('')}</ol>
       ${s.figura ? `<h3 class="rotulo">Entregáveis habituais</h3>${check(s.entregaveis)}` : ''}
     </div>
-    <div class="col-dir">${direita}</div>
+    <div class="col-dir">${direita}${s.nota ? `<p class="destaque-servico">${s.nota}</p>` : ''}</div>
   </div>`,
   });
 }
@@ -249,7 +251,7 @@ paginas.push(pagina({
 
 /* 5. Mapa de serviços */
 const FORMATO = ['Projeto de âmbito fechado', 'Projeto por fases ou acompanhamento continuado', 'Encarregado de Proteção de Dados (DPO) externo ou projeto de conformidade', 'Projeto ou conselho continuado à administração', 'Cursos abertos com inscrição online ou programas à medida, presenciais ou à distância'];
-const PARA = ['Simplificar a estrutura e os processos, clarificar responsabilidades e preparar certificações', 'Escolher e implementar casos de uso de IA com retorno, integrados nos sistemas existentes', 'Cumprir o Regulamento Geral sobre a Proteção de Dados (RGPD) e a Diretiva NIS2 e governar o uso de IA com proporcionalidade', 'Transformar a estratégia em objetivos, indicadores e incentivos por equipa', 'Preparar pessoas, equipas e administração para usar, aplicar e liderar a IA com responsabilidade'];
+const PARA = ['Simplificar a estrutura e os processos, clarificar responsabilidades e preparar certificações', 'Escolher e implementar casos de uso de IA com retorno, integrados nos sistemas existentes', 'Cumprir o Regulamento Geral sobre a Proteção de Dados (RGPD), a Diretiva NIS2 e o DORA e governar o uso de IA com proporcionalidade', 'Transformar a estratégia em objetivos, indicadores e incentivos por equipa', 'Preparar pessoas, equipas e administração para usar, aplicar e liderar a IA com responsabilidade'];
 paginas.push(pagina({
   seccao: 'Mapa de serviços',
   corpo: `
