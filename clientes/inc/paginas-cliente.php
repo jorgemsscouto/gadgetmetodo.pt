@@ -272,15 +272,15 @@ function emails_nova_inscricao(int $id): void
     // Aviso interno para a Gadgetmetodo
     $destino = (string) ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt');
     enviar_aviso($destino, ($publica ? 'Nova inscrição pelo site: ' : 'Nova inscrição: ') . $i['formando'] . ' (' . $i['cliente'] . '), ' . data_hora($i['inicio'], false), 'Nova inscrição em formação',
-        '<p style="margin:0 0 16px;">Foi registada uma nova inscrição, pendente de confirmação.' . ($publica ? ' Veio do site público: associe-a a um cliente na área de clientes.' : '') . '</p>' . $tabela
-        . ($recomendacao ? '<p style="margin:16px 0 0;"><strong>Recomendação:</strong> ' . h($recomendacao) . '</p>' : '') . $botao($link_area, 'Ver inscrição na área de clientes'),
+        '<p style="margin:0 0 16px;">Foi registada uma nova inscrição, pendente de confirmação.' . ($publica ? ' Veio do site público: associe-a a um cliente na área reservada.' : '') . '</p>' . $tabela
+        . ($recomendacao ? '<p style="margin:16px 0 0;"><strong>Recomendação:</strong> ' . h($recomendacao) . '</p>' : '') . $botao($link_area, 'Ver inscrição na área reservada'),
         "Foi registada uma nova inscrição, pendente de confirmação.\n\n" . $texto . ($recomendacao ? "\nRecomendação: " . $recomendacao : '') . "\n\n" . $link_area,
         $contacto['email'] ?? '', (string) ($cfg['bcc'] ?? ''));
 
     // Confirmação de receção para quem fez a inscrição
     if ($contacto) {
-        $ver = $contacto['area'] ? $botao($link_area, 'Ver inscrição na área de clientes') : ($i['curso_id'] ? $botao($site . link_curso_publico(['id' => $i['curso_id']]), 'Ver a página do curso') : $botao($site . '/formacoes/', 'Ver a área de formação'));
-        $alterar = $contacto['area'] ? 'Para alterar ou cancelar a inscrição, use a área de clientes ou responda a este email.' : 'Para alterar ou cancelar a inscrição, basta responder a este email.';
+        $ver = $contacto['area'] ? $botao($link_area, 'Ver inscrição na área reservada') : ($i['curso_id'] ? $botao($site . link_curso_publico(['id' => $i['curso_id']]), 'Ver a página do curso') : $botao($site . '/formacoes/', 'Ver a área de formação'));
+        $alterar = $contacto['area'] ? 'Para alterar ou cancelar a inscrição, use a área reservada ou responda a este email.' : 'Para alterar ou cancelar a inscrição, basta responder a este email.';
         enviar_aviso($contacto['email'], 'Inscrição recebida: ' . $i['formando'] . ', ' . $i['titulo'] . ' de ' . data_hora($i['inicio'], false), 'Inscrição recebida',
             '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 16px;">Recebemos a inscrição de <strong>' . h($i['formando']) . '</strong> na formação ' . h($i['titulo']) . ', em ' . h($quando) . '. A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.</p>'
             . ($i['nivel'] ? '<p style="margin:0 0 16px;">O diagnóstico indica o nível <strong>' . h($i['nivel']) . '</strong> de utilização de IA. Vamos usá-lo para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>' : '')
@@ -342,7 +342,7 @@ function pagina_inscricao(): void
             }
             if ($cliente_id) {
                 executar('UPDATE inscricoes SET cliente_id = ? WHERE id = ?', [$cliente_id, $id]);
-                aviso('Inscrição associada ao cliente. Os utilizadores desse cliente passam a vê-la na área de clientes.');
+                aviso('Inscrição associada ao cliente. Os utilizadores desse cliente passam a vê-la na área reservada.');
             } else {
                 aviso('Escolha o cliente.', 'erro');
             }

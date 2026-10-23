@@ -10,7 +10,7 @@ Site estático em HTML e CSS, sem dependências nem passo de compilação. Funci
 |---|---|
 | `index.html` | Página inicial |
 | `servicos/` | Visão geral e uma página por área de serviço |
-| `abordagem/`, `experiencia/`, `sobre/` | Metodologia, exemplos de intervenção, empresa |
+| `abordagem/`, `experiencia/`, `sobre/` | A Metodologia (o endereço `/abordagem/` manteve-se para não partir ligações), exemplos de intervenção, empresa |
 | `perguntas-frequentes/`, `contactos/`, `privacidade/` | Perguntas frequentes, contactos, política de privacidade |
 | `404.html` | Página de erro |
 | `assets/css/site.css` | Estilos (paleta e tipografia do Manual Gráfico) |
@@ -20,9 +20,9 @@ Site estático em HTML e CSS, sem dependências nem passo de compilação. Funci
 | `robots.txt`, `sitemap.xml`, `llms.txt` | Indexação por motores de pesquisa e assistentes de IA |
 | `.htaccess` | Regras para alojamentos Apache ou LiteSpeed |
 | `formulario/` | Envio do formulário de contactos (PHP); a configuração `config.php` fica fora do Git |
-| `clientes/` | Área de clientes (PHP): calendário de formações, inscrições com diagnóstico de IA e gestão de acessos |
+| `clientes/` | Área reservada para clientes e administração (PHP): calendário de formações, inscrições com diagnóstico de IA e gestão de acessos |
 | `formacoes/` | Área de formação: cursos com inscrição e pré-inscrição, calendário, página e ficha de cada curso, inscrição sem conta (PHP, gerado com o cabeçalho e o rodapé do site) e página AI Essentials (`formacoes/ai-essentials/`) |
-| `assets/css/area.css` | Estilos próprios da área de clientes (só carregados nessas páginas) |
+| `assets/css/area.css` | Estilos próprios da área reservada (só carregados nessas páginas) |
 | `ferramentas/` | Geradores das páginas e do catálogo (não publicados) |
 | `documentos/` | Catálogo de serviços em PDF e respetiva fonte, e assinaturas de email em `assinatura-email/` (não publicados) |
 
@@ -82,7 +82,7 @@ Proteções incluídas: campo isca para robôs, tempo mínimo de preenchimento, 
 
 A pasta `documentos/` (catálogo e outros documentos) não é enviada para o site.
 
-### Área de clientes
+### Área reservada (clientes e administração)
 
 Endereço: `https://www.gadgetmetodo.pt/clientes/` (ligação no cabeçalho e no rodapé do site). Usa o mesmo `formulario/config.php` e a mesma base de dados SQLite dos registos de pedidos; não precisa de configuração adicional.
 
@@ -107,7 +107,7 @@ A área precisa de SQLite no alojamento. Se não existir, mostra "Área indispon
 
 ### Área de formação
 
-Endereço: `https://www.gadgetmetodo.pt/formacoes/`, ligado no menu principal ("Formação", a seguir a "Serviços"), na página inicial, na visão geral dos serviços, no `sitemap.xml` e no `llms.txt`. Lê os cursos e as sessões da base de dados da área de clientes e reúne toda a formação do site:
+Endereço: `https://www.gadgetmetodo.pt/formacoes/`, ligado no menu principal ("Formação", a seguir a "Serviços"), na página inicial, na visão geral dos serviços, no `sitemap.xml` e no `llms.txt`. Lê os cursos e as sessões da base de dados da área reservada e reúne toda a formação do site:
 
 - **Cursos abertos por percurso:** os cursos ativos agrupados pelo campo "percurso" (por exemplo, IA Generativa no Trabalho), com um resumo calculado a partir dos dados (número de cursos, horas totais, evolução do tempo de prática, destinatários), um cartão por curso (objetivo, duração, minutos de prática por sessão, pré-requisitos, próxima data), uma tabela que compara a sessão-tipo e a avaliação dos cursos, os requisitos (comuns e específicos de cada curso) e o enquadramento legal. Cursos sem percurso aparecem em "Outros cursos".
 - **Botão de inscrição em cada curso:** com uma sessão aberta com vagas, "Inscrever-me" leva diretamente à inscrição nessa sessão; com várias, leva às datas na página do curso; sem nenhuma, "Fazer pré-inscrição". Cada cartão tem também "Ver o curso" e "Ficha em PDF".
@@ -117,18 +117,18 @@ Endereço: `https://www.gadgetmetodo.pt/formacoes/`, ligado no menu principal ("
 - **Pré-inscrição** (`/formacoes/pre-inscricao.php?c=ID`, com o curso já escolhido quando vem da página ou do cartão do curso; sem `c`, por exemplo a partir do botão "Fazer pré-inscrição" da área de formação, o formulário pede o curso pretendido): curso, nome, email, empresa, telefone, número previsto de formandos, modalidade preferida, preferências de datas e consentimento. O candidato recebe logo um email "Pré-inscrição recebida" com os dados enviados e as ligações para a página e para a ficha do curso; a Gadgetmetodo recebe um aviso em `info@` (com cópia oculta e resposta direta ao candidato). Um novo envio com o mesmo email atualiza a pré-inscrição ainda por tratar (os campos deixados em branco mantêm o valor anterior). Tem as mesmas proteções da inscrição sem conta, com limite de 5 pré-inscrições por hora por origem.
 - **Página de cada curso:** `/formacoes/curso.php?c=ID`, com descrição, tipologia, duração, destinatários, módulos e temas, próximas sessões com inscrição e dados estruturados `Course`. É a ligação a partilhar no site, nas redes sociais ou por email. Cursos inativos ou inexistentes devolvem 404. Como dependem da base de dados, estas páginas não estão no `sitemap.xml`.
 
-- **Novas formações:** secção no topo com as sessões abertas agendadas nos últimos 30 dias (constante `DIAS_NOVA`), também assinaladas com a etiqueta "Nova" no calendário, na área de clientes e no painel dos clientes.
+- **Novas formações:** secção no topo com as sessões abertas agendadas nos últimos 30 dias (constante `DIAS_NOVA`), também assinaladas com a etiqueta "Nova" no calendário, na área reservada e no painel dos clientes.
 - **Inscrição sem conta** (`/formacoes/inscricao.php`): empresa e NIF, quem inscreve (com a opção "o formando sou eu"), formando, diagnóstico de IA e consentimento. Respeita as vagas; não mostra publicamente o número de inscritos, só as vagas disponíveis.
 - **Proteções:** campo isca, tempo mínimo de 4 segundos com código assinado, verificação da origem, limite de 6 inscrições por hora por origem, validação no servidor e página `noindex`.
-- **Depois da inscrição:** aviso para `info@gadgetmetodo.pt` (com cópia oculta) e confirmação de receção para quem inscreveu. Na área de clientes, a inscrição aparece com a etiqueta "Site, por associar" (há um contador no painel e um filtro em Inscrições); na ficha, a Gadgetmetodo associa-a a um cliente existente ou cria o cliente com os dados indicados. Só depois de associada fica visível para os utilizadores desse cliente. A confirmação do estado é enviada por email a quem fez a inscrição.
+- **Depois da inscrição:** aviso para `info@gadgetmetodo.pt` (com cópia oculta) e confirmação de receção para quem inscreveu. Na área reservada, a inscrição aparece com a etiqueta "Site, por associar" (há um contador no painel e um filtro em Inscrições); na ficha, a Gadgetmetodo associa-a a um cliente existente ou cria o cliente com os dados indicados. Só depois de associada fica visível para os utilizadores desse cliente. A confirmação do estado é enviada por email a quem fez a inscrição.
 - **Dados estruturados:** cada sessão é publicada como `EducationEvent` (schema.org), com data, modalidade, local e organizador, e a lista dos cursos como `ItemList` de `Course`.
-- **Base de dados existente:** se a área de clientes já tiver sido usada, a tabela de inscrições é atualizada automaticamente no primeiro acesso, sem perder dados.
+- **Base de dados existente:** se a área reservada já tiver sido usada, a tabela de inscrições é atualizada automaticamente no primeiro acesso, sem perder dados.
 
 A página `/formacoes/` é um `index.php`. O `.htaccess` declara `DirectoryIndex index.html index.php`; depois de publicar, confirmar que `curl -sI https://www.gadgetmetodo.pt/formacoes/` devolve `200`. Se devolver `403` ou `404`, o servidor não está a aplicar essa regra e as ligações devem passar a apontar para `/formacoes/index.php`.
 
 ## Catálogo de serviços
 
-O catálogo está publicado em `https://www.gadgetmetodo.pt/catalogo-servicos-2026.pdf` (ficheiro `catalogo-servicos-2026.pdf` na raiz) e tem uma página de download própria em `/catalogo/`, ligada no rodapé, na página inicial e na página de Serviços. A imagem da capa usada nessa página é `assets/img/catalogo-capa.jpg`. É uma cópia de `documentos/Gadgetmetodo-Catalogo-de-Servicos-2026.pdf` (16 páginas, A4 horizontal), gerado a partir de `documentos/catalogo/catalogo.html`, que usa as fontes e o logótipo de `assets/`. Para alterar o texto, editar o HTML e voltar a gerar o PDF no Chrome: Imprimir, Guardar como PDF, margens "Nenhuma" e "Gráficos de fundo" ativado. Depois, copiar o PDF para `catalogo-servicos-2026.pdf` na raiz e publicar.
+O catálogo está publicado em `https://www.gadgetmetodo.pt/catalogo-servicos-2026.pdf` (ficheiro `catalogo-servicos-2026.pdf` na raiz) e tem uma página de download própria em `/catalogo/`, ligada no rodapé, na página inicial e na página de Serviços. A imagem da capa usada nessa página é `assets/img/catalogo-capa.jpg`. É uma cópia de `documentos/Gadgetmetodo-Catalogo-de-Servicos-2026.pdf` (16 páginas, A4 horizontal), gerado a partir de `documentos/catalogo/catalogo.html`, que usa as fontes e o logótipo de `assets/`. Para alterar o texto, editar `ferramentas/gerar-catalogo.mjs`, gerar o HTML (`npm run catalogo`) e convertê-lo em PDF no Chrome: Imprimir, Guardar como PDF, margens "Nenhuma" e "Gráficos de fundo" ativado. Depois, copiar o PDF para `catalogo-servicos-2026.pdf` na raiz e publicar. A página da formação (página 10) lê os cursos do percurso de `clientes/inc/catalogo/ia-generativa.json`, o mesmo ficheiro que alimenta o site e a área reservada: ao mudar os cursos, gerar de novo o catálogo para os manter alinhados.
 
 Depois de publicar:
 
@@ -148,7 +148,7 @@ Depois de publicar:
 ## Manutenção
 
 - As páginas HTML, o `sitemap.xml` e os dados estruturados são gerados por `ferramentas/gerar-site.mjs`, que contém o texto de todas as páginas, o menu, o rodapé e os dados da empresa. Para alterar conteúdo: editar o gerador, atualizar as constantes `HOJE` e `HOJE_TXT` e correr `cd ferramentas && npm install && npm run site`. Editar diretamente os `index.html` funciona, mas a alteração perde-se na geração seguinte.
-- Os endereços de `site.css` e `site.js` nas páginas levam um código de versão (`?v=`) calculado pelo gerador a partir do conteúdo do ficheiro, para os navegadores não usarem cópias antigas (o `.htaccess` deixa guardar o CSS e o JS durante 7 dias). Depois de alterar o CSS ou o JS, voltar a gerar as páginas. A área de clientes usa a data de alteração do ficheiro e não precisa deste passo.
+- Os endereços de `site.css` e `site.js` nas páginas levam um código de versão (`?v=`) calculado pelo gerador a partir do conteúdo do ficheiro, para os navegadores não usarem cópias antigas (o `.htaccess` deixa guardar o CSS e o JS durante 7 dias). Depois de alterar o CSS ou o JS, voltar a gerar as páginas. A área reservada usa a data de alteração do ficheiro e não precisa deste passo.
 - O catálogo é gerado por `ferramentas/gerar-catalogo.mjs` (`npm run catalogo`), com os estilos em `ferramentas/catalogo.css`.
 - As respostas das perguntas frequentes alimentam ao mesmo tempo o texto visível e os dados estruturados, por isso ficam sempre iguais.
 - O `llms.txt` e o `robots.txt` são editados à mão.

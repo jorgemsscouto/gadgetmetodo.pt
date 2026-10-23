@@ -4,6 +4,8 @@ import fs from 'fs';
 import path from 'path';
 
 const OUT = process.argv[2];
+// Cursos do percurso de formação: o mesmo ficheiro de dados que alimenta o site e a área reservada
+const CURSOS = JSON.parse(fs.readFileSync(new URL('../clientes/inc/catalogo/ia-generativa.json', import.meta.url), 'utf8'));
 fs.mkdirSync(OUT, { recursive: true });
 const A = '../../assets';
 
@@ -60,18 +62,12 @@ const SERVICOS = [
     entregaveis: ['Plano estratégico com iniciativas e responsáveis', 'Análise de vendas e margens por canal', 'Sistema de objetivos e indicadores', 'Regulamento de incentivos', 'Relatórios para a administração'],
   },
   {
-    num: '05', nome: 'Formação AI Essentials', icone: 'graduation-cap',
-    titulo: 'Decidir e utilizar a inteligência artificial com conhecimento de causa começa pela formação',
-    resumo: 'AI Essentials é o nosso programa de formação em IA aplicada à gestão, em cinco módulos, adaptado ao setor e ao nível de cada grupo, da administração às equipas operacionais. É ministrado por formador com Certificado de Competências Pedagógicas (CCP) e pode ser integrado num projeto de IA.',
-    questoes: ['O que deve a administração saber para decidir sobre IA?', 'Que regras de utilização devem seguir as equipas?', 'Como usar IA sem expor dados pessoais ou informação confidencial?'],
-    modulos: [
-      ['Fundamentos de IA para a administração', 'O que a IA faz e não faz, tipos de ferramentas, impacto no negócio e critérios de decisão.'],
-      ['Casos de uso e integração em sistemas', 'Identificar oportunidades, priorizar pelo retorno e integrar a IA em processos e aplicações.'],
-      ['Governação e ética da IA', 'Regras de utilização, responsabilidades, riscos e controlo.'],
-      ['RGPD, privacidade e IA', 'Dados pessoais em ferramentas de IA, transferências internacionais e contratos.'],
-      ['NIS2 e segurança da informação', 'Requisitos de cibersegurança, boas práticas e o papel de cada pessoa.'],
-    ],
-    entregaveis: ['Sessões adaptadas ao setor e ao público', 'Materiais de apoio com exemplos práticos', 'Orientações de utilização responsável', 'Primeiros casos de uso identificados'],
+    num: '05', nome: 'Formação', icone: 'graduation-cap', formacao: true,
+    titulo: 'Formação em IA para quem usa, aplica e lidera: cursos abertos e programas à medida',
+    resumo: 'A formação da Gadgetmetodo tem dois formatos: o percurso IA Generativa no Trabalho, com quatro cursos abertos de seis horas, da iniciação à liderança da implementação, e programas à medida, como o AI Essentials, para administrações e equipas. Os cursos podem também ser organizados só para uma empresa.',
+    questoes: ['Por que curso deve começar cada pessoa, e até onde pode ir?', 'Como passar do uso individual da IA para os processos da equipa?', 'Que regras e cuidados são necessários com dados e resultados?'],
+    funciona: ['Inscrição online em cada curso; sem datas, pré-inscrição com convite quando forem marcadas', 'Diagnóstico de nível na inscrição, que indica o curso adequado a cada formando', 'Página e ficha em PDF de cada curso, com programa, casos práticos e avaliação', 'Evidência documentada da formação realizada'],
+    entregaveis: ['Percurso de quatro cursos com diagnóstico de nível', 'Ficha de cada curso com programa e avaliação', 'Programas à medida para administrações e equipas', 'Evidência documentada da formação realizada'],
   },
 ];
 
@@ -101,7 +97,42 @@ const fig_referencias = `<figure class="figura">
   <p class="fonte">Esquema ilustrativo.</p>
 </figure>`;
 
+// Formação: percurso de cursos abertos (do ficheiro de dados) e programa AI Essentials à medida
+function paginaFormacao(s) {
+  const cursos = CURSOS.cursos.map(c => {
+    const [, n, titulo] = /^Curso (\d+): (.+)$/.exec(c.nome) || [null, '', c.nome];
+    const lab = (/Laboratório de Casos Práticos: (\d+)/.exec(c.estrutura) || [])[1];
+    return `<tr><th><span class="num">${n}</span>${titulo}</th><td>${c.objetivo}</td><td class="lab">${lab} min</td></tr>`;
+  }).join('');
+  return pagina({
+    classe: 'denso formacao',
+    seccao: `Serviços&nbsp;&nbsp;·&nbsp;&nbsp;${s.num}`,
+    corpo: `
+  <h1 class="titulo-acao">${s.titulo}</h1>
+  <div class="grelha-servico">
+    <div class="col-esq">
+      <div class="servico-cab"><span class="icone">${icone(s.icone)}</span><span class="servico-nome">${s.nome}</span></div>
+      <p class="resumo">${s.resumo}</p>
+      <h3 class="rotulo">Questões a que ajudamos a responder</h3>
+      <ol class="questoes">${s.questoes.map(q => `<li>${q}</li>`).join('')}</ol>
+      <h3 class="rotulo">Como funciona</h3>${check(s.funciona)}
+    </div>
+    <div class="col-dir">
+      <h3 class="rotulo">Percurso ${CURSOS.comum.percurso.split(':')[0]}: 4 cursos de 6 sessões de 60 minutos</h3>
+      <table class="tabela tabela-cursos">
+        <thead><tr><th>Curso</th><th>Objetivo</th><th>Prática por sessão</th></tr></thead>
+        <tbody>${cursos}</tbody>
+      </table>
+      <h3 class="rotulo mt">AI Essentials: programa à medida em cinco módulos</h3>
+      <p class="pequeno">Fundamentos de IA para a administração · Casos de uso e integração em sistemas · Governação e ética da IA · RGPD, privacidade e IA · NIS2 e segurança da informação. Ministrado por formador com Certificado de Competências Pedagógicas (CCP).</p>
+    </div>
+  </div>
+  <p class="nota-pag">Ferramenta de referência nos cursos abertos: Claude (Anthropic); os conceitos são transferíveis para outros assistentes de IA generativa. Programa detalhado, datas e inscrição em www.gadgetmetodo.pt/formacoes.</p>`,
+  });
+}
+
 function paginaServico(s) {
+  if (s.formacao) return paginaFormacao(s);
   const direita = s.modulos
     ? `<h3 class="rotulo">Os cinco módulos</h3>
        <table class="tabela">
@@ -151,8 +182,8 @@ paginas.push(pagina({
 /* 2. Índice */
 const INDICE = [
   ['Síntese', 3], ['O nosso ponto de vista', 4], ['Mapa de serviços', 5],
-  ['Organização e Métodos', 6], ['Inteligência artificial e transformação digital', 7], ['Proteção de dados e conformidade', 8], ['Estratégia e gestão', 9], ['Formação AI Essentials', 10],
-  ['Abordagem', 11], ['Modelos de colaboração e princípios', 12], ['Experiência', 13], ['Equipa', 14], ['Como iniciar', 15],
+  ['Organização e Métodos', 6], ['Inteligência artificial e transformação digital', 7], ['Proteção de dados e conformidade', 8], ['Estratégia e gestão', 9], ['Formação', 10],
+  ['A Metodologia', 11], ['Modelos de colaboração e princípios', 12], ['Experiência', 13], ['Equipa', 14], ['Como iniciar', 15],
 ];
 paginas.push(pagina({
   seccao: 'Índice',
@@ -178,7 +209,7 @@ paginas.push(pagina({
   <h1 class="titulo-acao">Ajudamos empresas a simplificar processos, adotar a inteligência artificial com critério e proteger os dados, do diagnóstico à implementação</h1>
   <div class="tres">
     <div class="bloco"><span class="icone">${icone('building-2')}</span><h3>Quem somos</h3><p>Consultora com sede no Porto, especializada em Organização e Métodos (O&amp;M), inteligência artificial (IA) aplicada à gestão, proteção de dados e apoio estratégico a administrações.</p></div>
-    <div class="bloco"><span class="icone">${icone('layers')}</span><h3>O que fazemos</h3><p>Cinco áreas complementares: Organização e Métodos; IA e transformação digital; proteção de dados e conformidade; estratégia e gestão; formação AI Essentials.</p></div>
+    <div class="bloco"><span class="icone">${icone('layers')}</span><h3>O que fazemos</h3><p>Cinco áreas complementares: Organização e Métodos; IA e transformação digital; proteção de dados e conformidade; estratégia e gestão; formação, com cursos abertos de IA generativa e programas à medida.</p></div>
     <div class="bloco"><span class="icone">${icone('route')}</span><h3>Como trabalhamos</h3><p>Quatro fases (diagnóstico, desenho, implementação e acompanhamento), por projeto de âmbito fechado ou em acompanhamento continuado, com propostas à medida.</p></div>
   </div>
   <dl class="factos">
@@ -210,15 +241,15 @@ paginas.push(pagina({
         <div class="m m4"><span>04</span>Estratégia e gestão</div>
         <div class="m-centro">Resultados medidos pela administração</div>
       </div>
-      <div class="modelo-base"><span>05</span>Formação AI Essentials: pessoas preparadas para a mudança</div>
+      <div class="modelo-base"><span>05</span>Formação: pessoas preparadas para a mudança</div>
       <p class="fonte">Os módulos que se ligam para formar uma solução são também a ideia do símbolo da marca.</p>
     </figure>
   </div>`,
 }));
 
 /* 5. Mapa de serviços */
-const FORMATO = ['Projeto de âmbito fechado', 'Projeto por fases ou acompanhamento continuado', 'Encarregado de Proteção de Dados (DPO) externo ou projeto de conformidade', 'Projeto ou conselho continuado à administração', 'Sessões presenciais, remotas ou mistas'];
-const PARA = ['Simplificar a estrutura e os processos, clarificar responsabilidades e preparar certificações', 'Escolher e implementar casos de uso de IA com retorno, integrados nos sistemas existentes', 'Cumprir o Regulamento Geral sobre a Proteção de Dados (RGPD) e a Diretiva NIS2 e governar o uso de IA com proporcionalidade', 'Transformar a estratégia em objetivos, indicadores e incentivos por equipa', 'Preparar administração e equipas para decidir e usar IA com responsabilidade'];
+const FORMATO = ['Projeto de âmbito fechado', 'Projeto por fases ou acompanhamento continuado', 'Encarregado de Proteção de Dados (DPO) externo ou projeto de conformidade', 'Projeto ou conselho continuado à administração', 'Cursos abertos com inscrição online ou programas à medida, presenciais ou à distância'];
+const PARA = ['Simplificar a estrutura e os processos, clarificar responsabilidades e preparar certificações', 'Escolher e implementar casos de uso de IA com retorno, integrados nos sistemas existentes', 'Cumprir o Regulamento Geral sobre a Proteção de Dados (RGPD) e a Diretiva NIS2 e governar o uso de IA com proporcionalidade', 'Transformar a estratégia em objetivos, indicadores e incentivos por equipa', 'Preparar pessoas, equipas e administração para usar, aplicar e liderar a IA com responsabilidade'];
 paginas.push(pagina({
   seccao: 'Mapa de serviços',
   corpo: `
@@ -232,7 +263,7 @@ paginas.push(pagina({
 /* 6 a 10. Serviços */
 for (const s of SERVICOS) paginas.push(paginaServico(s));
 
-/* 11. Abordagem */
+/* 11. A Metodologia */
 const FASES = [
   ['Diagnóstico', 'Levantamento de processos, sistemas, equipas, dados e riscos. Prioridades com maior retorno.', ['Relatório de diagnóstico', 'Prioridades e oportunidades']],
   ['Desenho', 'Modelo organizacional, processos, arquitetura de sistemas e regras de governação.', ['Solução desenhada', 'Plano de ação com calendário']],
@@ -240,7 +271,7 @@ const FASES = [
   ['Acompanhamento', 'Medição de resultados, ajustes e apoio regular à administração.', ['Indicadores acompanhados', 'Relatórios para a administração']],
 ];
 paginas.push(pagina({
-  seccao: 'Abordagem',
+  seccao: 'A Metodologia',
   corpo: `
   <h1 class="titulo-acao">Um método em quatro fases, com entregáveis definidos em cada uma e decisões apoiadas em dados</h1>
   <figure class="figura">
@@ -259,7 +290,7 @@ paginas.push(pagina({
   <div class="tres">
     <div class="bloco"><span class="icone">${icone('target')}</span><h3>Projeto de âmbito fechado</h3><p>Diagnóstico, implementação de uma solução ou reorganização de uma área, com entregáveis definidos e pagamento associado à conclusão ou a marcos do projeto.</p></div>
     <div class="bloco"><span class="icone">${icone('handshake')}</span><h3>Acompanhamento continuado</h3><p>Apoio regular à administração, por exemplo como board advisor ou DPO externo, com prestações periódicas, como trimestrais, ao longo de um ou mais anos.</p></div>
-    <div class="bloco"><span class="icone">${icone('graduation-cap')}</span><h3>Formação</h3><p>Programa AI Essentials, isolado ou integrado num projeto, adaptado ao setor e ao público.</p></div>
+    <div class="bloco"><span class="icone">${icone('graduation-cap')}</span><h3>Formação</h3><p>Cursos abertos do percurso IA Generativa no Trabalho, com inscrição online, ou o programa AI Essentials à medida, isolados ou integrados num projeto.</p></div>
   </div>
   <h3 class="rotulo mt-g">Princípios que orientam as nossas decisões</h3>
   <dl class="principios">

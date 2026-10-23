@@ -28,8 +28,8 @@
   <link rel="alternate" type="text/plain" href="/llms.txt" title="Resumo do site para modelos de linguagem">
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/css/site.css?v=6e07631c08">
-  <link rel="stylesheet" href="/assets/css/area.css?v=9059f99b34">
+  <link rel="stylesheet" href="/assets/css/site.css?v=239f9b98b7">
+  <link rel="stylesheet" href="/assets/css/area.css?v=8abc7ffe2c">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -98,7 +98,8 @@
         "Governação da inteligência artificial",
         "Planeamento estratégico",
         "Indicadores-chave de desempenho",
-        "Formação em inteligência artificial"
+        "Formação em inteligência artificial",
+        "Inteligência artificial generativa no trabalho"
       ],
       "hasOfferCatalog": {
         "@type": "OfferCatalog",
@@ -142,6 +143,17 @@
               "@type": "Service",
               "@id": "https://www.gadgetmetodo.pt/formacoes/#servico",
               "name": "Formação"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "EducationalOccupationalProgram",
+              "@id": "https://www.gadgetmetodo.pt/formacoes/#percurso",
+              "name": "IA Generativa no Trabalho: do primeiro uso à liderança da implementação",
+              "url": "https://www.gadgetmetodo.pt/formacoes/",
+              "description": "Percurso de quatro cursos abertos de seis horas sobre inteligência artificial generativa no trabalho, com inscrição online.",
+              "timeToComplete": "PT24H"
             }
           },
           {
@@ -231,7 +243,7 @@
         <ul>
           <li><a href="/servicos/">Serviços</a></li>
           <li><a href="/formacoes/" aria-current="page">Formação</a></li>
-          <li><a href="/abordagem/">Abordagem</a></li>
+          <li><a href="/abordagem/">A Metodologia</a></li>
           <li><a href="/experiencia/">Experiência</a></li>
           <li><a href="/sobre/">Sobre</a></li>
           <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
@@ -258,7 +270,7 @@
       <div class="rodape-grelha">
         <div class="rodape-marca">
           <img src="/assets/marca/logotipo-negativo.svg" alt="Gadgetmetodo, Lda." width="260" height="47">
-          <p>Consultoria em organização e métodos, inteligência artificial aplicada, proteção de dados e apoio à gestão. Porto, Portugal.</p>
+          <p>Consultoria em organização e métodos, inteligência artificial aplicada, proteção de dados e apoio à gestão, e formação em inteligência artificial. Porto, Portugal.</p>
         </div>
         <div>
           <h2>Serviços</h2>
@@ -273,13 +285,13 @@
         <div>
           <h2>Empresa</h2>
           <ul>
-            <li><a href="/abordagem/">Abordagem</a></li>
+            <li><a href="/abordagem/">A Metodologia</a></li>
             <li><a href="/experiencia/">Experiência</a></li>
             <li><a href="/sobre/">Sobre nós</a></li>
             <li><a href="/catalogo/">Catálogo de serviços</a></li>
             <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
             <li><a href="/contactos/">Contactos</a></li>
-            <li><a href="/clientes/">Área de clientes</a></li>
+            <li><a href="/clientes/">Área reservada</a></li>
           </ul>
         </div>
         <div>
@@ -302,6 +314,6 @@
       </div>
     </div>
   </footer>
-  <script src="/assets/js/site.js?v=ca79bedc66" defer></script>
+  <script src="/assets/js/site.js?v=09b9cdd609" defer></script>
 </body>
 </html>

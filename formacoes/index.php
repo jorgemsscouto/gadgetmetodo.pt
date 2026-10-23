@@ -28,8 +28,8 @@
   <link rel="alternate" type="text/plain" href="/llms.txt" title="Resumo do site para modelos de linguagem">
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/css/site.css?v=6e07631c08">
-  <link rel="stylesheet" href="/assets/css/area.css?v=9059f99b34">
+  <link rel="stylesheet" href="/assets/css/site.css?v=239f9b98b7">
+  <link rel="stylesheet" href="/assets/css/area.css?v=8abc7ffe2c">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -98,7 +98,8 @@
         "Governação da inteligência artificial",
         "Planeamento estratégico",
         "Indicadores-chave de desempenho",
-        "Formação em inteligência artificial"
+        "Formação em inteligência artificial",
+        "Inteligência artificial generativa no trabalho"
       ],
       "hasOfferCatalog": {
         "@type": "OfferCatalog",
@@ -142,6 +143,17 @@
               "@type": "Service",
               "@id": "https://www.gadgetmetodo.pt/formacoes/#servico",
               "name": "Formação"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "EducationalOccupationalProgram",
+              "@id": "https://www.gadgetmetodo.pt/formacoes/#percurso",
+              "name": "IA Generativa no Trabalho: do primeiro uso à liderança da implementação",
+              "url": "https://www.gadgetmetodo.pt/formacoes/",
+              "description": "Percurso de quatro cursos abertos de seis horas sobre inteligência artificial generativa no trabalho, com inscrição online.",
+              "timeToComplete": "PT24H"
             }
           },
           {
@@ -225,7 +237,7 @@
         <ul>
           <li><a href="/servicos/">Serviços</a></li>
           <li><a href="/formacoes/" aria-current="page">Formação</a></li>
-          <li><a href="/abordagem/">Abordagem</a></li>
+          <li><a href="/abordagem/">A Metodologia</a></li>
           <li><a href="/experiencia/">Experiência</a></li>
           <li><a href="/sobre/">Sobre</a></li>
           <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
@@ -300,6 +312,43 @@
       </div>
     </section>
 
+    <section class="secao secao-nevoa" aria-labelledby="perguntas-formacao">
+      <div class="contentor estreito">
+        <div class="cabeca-secao"><span class="sobretitulo">Perguntas frequentes</span><h2 id="perguntas-formacao">Perguntas sobre a formação</h2></div>
+        <div class="faq">
+          <details>
+            <summary>Como está organizado o percurso IA Generativa no Trabalho?</summary>
+            <div class="resposta"><p>Tem quatro cursos sequenciais, cada um com seis sessões de 60 minutos (24 horas no total): Curso 1, Iniciação à IA Generativa no Trabalho; Curso 2, Produtividade com IA Generativa; Curso 3, IA nos Processos da Organização; Curso 4, Liderança e Implementação de IA. Todas as sessões terminam num Laboratório de Casos Práticos, que passa de 10 para 40 minutos por sessão ao longo do percurso. A ferramenta de referência é o Claude (Anthropic); os conceitos são transferíveis para outros assistentes de IA generativa.</p></div>
+          </details>
+          <details>
+            <summary>Por que curso devo começar?</summary>
+            <div class="resposta"><p>A inscrição e a pré-inscrição incluem um diagnóstico de nível, com 11 perguntas, que indica o curso mais adequado ao ponto de partida de cada formando. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital.</p></div>
+          </details>
+          <details>
+            <summary>Como me inscrevo e o que é a pré-inscrição?</summary>
+            <div class="resposta"><p>Na <a href="/formacoes/">área de formação</a>, cada curso tem um botão de inscrição. Se já houver datas, inscreve-se numa sessão, sem precisar de conta; a inscrição fica pendente até ser confirmada por email. Se ainda não houver datas, faz a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a>: recebe logo uma confirmação por email e, quando as datas forem marcadas, o convite para a inscrição. A pré-inscrição não obriga a inscrever-se.</p></div>
+          </details>
+          <details>
+            <summary>Que requisitos técnicos são necessários?</summary>
+            <div class="resposta"><p>Um computador por formando, com navegador atualizado, e conta própria no Claude. Nos Cursos 1 e 2, o plano gratuito é suficiente para a maioria dos exercícios; nos Cursos 3 e 4 é necessário um plano pago (Pro, Max, Team ou Enterprise), porque as sessões sobre conectores, tarefas agendadas e agentes usam funcionalidades que não estão disponíveis, ou estão limitadas, no plano gratuito. As turmas têm 8 a 14 formandos, em modalidade presencial ou à distância síncrona.</p></div>
+          </details>
+          <details>
+            <summary>Como é feita a avaliação?</summary>
+            <div class="resposta"><p>Combina avaliação prática, teste e participação, e o peso da prática cresce de curso para curso: 40% no Curso 1, 60% no Curso 2, 70% no Curso 3 e 85% no Curso 4, onde inclui um projeto final e não há teste. A aprovação exige 50% e presença em 5 das 6 sessões; no Curso 4, 50% e a entrega do projeto final.</p></div>
+          </details>
+          <details>
+            <summary>Que relação tem esta formação com o Regulamento da IA?</summary>
+            <div class="resposta"><p>O artigo 4.º do Regulamento (UE) 2024/1689 (Regulamento da IA), aplicável desde 2 de fevereiro de 2025 e reescrito pelo Regulamento (UE) 2026/1744, em vigor desde 27 de julho de 2026, exige que as organizações que fornecem ou utilizam sistemas de IA adotem medidas para apoiar o desenvolvimento da literacia em IA do seu pessoal. O percurso pode integrar essas medidas e produz evidência documentada da formação realizada. Não constitui, por si só, garantia de conformidade legal.</p></div>
+          </details>
+          <details>
+            <summary>Onde encontro o programa detalhado de cada curso?</summary>
+            <div class="resposta"><p>Cada curso tem uma página com o objetivo, o programa sessão a sessão, os temas, os casos práticos, a avaliação e as próximas datas, e uma ficha em PDF para descarregar, imprimir ou enviar. Estão todas na <a href="/formacoes/">área de formação</a>.</p></div>
+          </details>
+        </div>
+        <p class="espaco-topo mb-0"><a href="/perguntas-frequentes/#formacao">Ver todas as perguntas frequentes</a></p>
+      </div>
+    </section>
+
     <section class="secao fundo-escuro fundo-profundo chamada" aria-labelledby="chamada-titulo">
       <img class="chamada-simbolo" src="/assets/marca/simbolo-negativo.svg" alt="" width="340" height="273" loading="lazy">
       <div class="contentor">
@@ -319,7 +368,7 @@
       <div class="rodape-grelha">
         <div class="rodape-marca">
           <img src="/assets/marca/logotipo-negativo.svg" alt="Gadgetmetodo, Lda." width="260" height="47">
-          <p>Consultoria em organização e métodos, inteligência artificial aplicada, proteção de dados e apoio à gestão. Porto, Portugal.</p>
+          <p>Consultoria em organização e métodos, inteligência artificial aplicada, proteção de dados e apoio à gestão, e formação em inteligência artificial. Porto, Portugal.</p>
         </div>
         <div>
           <h2>Serviços</h2>
@@ -334,13 +383,13 @@
         <div>
           <h2>Empresa</h2>
           <ul>
-            <li><a href="/abordagem/">Abordagem</a></li>
+            <li><a href="/abordagem/">A Metodologia</a></li>
             <li><a href="/experiencia/">Experiência</a></li>
             <li><a href="/sobre/">Sobre nós</a></li>
             <li><a href="/catalogo/">Catálogo de serviços</a></li>
             <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
             <li><a href="/contactos/">Contactos</a></li>
-            <li><a href="/clientes/">Área de clientes</a></li>
+            <li><a href="/clientes/">Área reservada</a></li>
           </ul>
         </div>
         <div>
@@ -363,6 +412,6 @@
       </div>
     </div>
   </footer>
-  <script src="/assets/js/site.js?v=ca79bedc66" defer></script>
+  <script src="/assets/js/site.js?v=09b9cdd609" defer></script>
 </body>
 </html>

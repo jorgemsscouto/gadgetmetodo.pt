@@ -16,7 +16,7 @@ const MODALIDADES = ['presencial' => 'Presencial', 'online' => 'Online', 'misto'
 const SESSAO_MAXIMA = 7200; // segundos de inatividade
 const DIAS_INSCRICOES = 730; // conservação das inscrições após a data da formação
 const DIAS_NOVA = 30; // formações agendadas há menos de 30 dias aparecem como novas
-const ORIGENS = ['area' => 'Área de clientes', 'site' => 'Site'];
+const ORIGENS = ['area' => 'Área reservada', 'site' => 'Site'];
 const ESTADOS_PREINSCRICAO = ['nova' => 'Nova', 'convidada' => 'Convite enviado', 'inscrita' => 'Inscrita', 'arquivada' => 'Arquivada'];
 const DIAS_PREINSCRICOES = 365; // conservação das pré-inscrições após o registo
 

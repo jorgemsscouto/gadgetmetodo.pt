@@ -37,7 +37,7 @@ const semTags = s => s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&
 const NAV = [
   ['/servicos/', 'Serviços'],
   ['/formacoes/', 'Formação'],
-  ['/abordagem/', 'Abordagem'],
+  ['/abordagem/', 'A Metodologia'],
   ['/experiencia/', 'Experiência'],
   ['/sobre/', 'Sobre'],
   ['/perguntas-frequentes/', 'Perguntas frequentes'],
@@ -77,12 +77,13 @@ const ORG = {
   email: EMAIL,
   contactPoint: { '@type': 'ContactPoint', contactType: 'sales', telephone: '+351915416112', email: EMAIL, availableLanguage: ['pt-PT'] },
   areaServed: { '@type': 'Country', name: 'Portugal' },
-  knowsAbout: ['Organização e métodos', 'Diagnóstico organizacional', 'Redesenho de processos', 'Normas e procedimentos internos', 'Auditorias internas de processos e sistemas de gestão', 'Estratégia de inteligência artificial', 'Arquitetura de sistemas e integrações', 'Automação de marketing', 'Análise de dados e painéis de indicadores', 'RGPD', 'Encarregado de Proteção de Dados', 'Diretiva NIS2', 'Governação da inteligência artificial', 'Planeamento estratégico', 'Indicadores-chave de desempenho', 'Formação em inteligência artificial'],
+  knowsAbout: ['Organização e métodos', 'Diagnóstico organizacional', 'Redesenho de processos', 'Normas e procedimentos internos', 'Auditorias internas de processos e sistemas de gestão', 'Estratégia de inteligência artificial', 'Arquitetura de sistemas e integrações', 'Automação de marketing', 'Análise de dados e painéis de indicadores', 'RGPD', 'Encarregado de Proteção de Dados', 'Diretiva NIS2', 'Governação da inteligência artificial', 'Planeamento estratégico', 'Indicadores-chave de desempenho', 'Formação em inteligência artificial', 'Inteligência artificial generativa no trabalho'],
   hasOfferCatalog: {
     '@type': 'OfferCatalog',
     name: 'Serviços da Gadgetmetodo, Lda.',
     itemListElement: [
       ...SERVICOS.map(s => ({ '@type': 'Offer', itemOffered: { '@type': 'Service', '@id': URL_BASE + s.url + '#servico', name: s.nome } })),
+      { '@type': 'Offer', itemOffered: { '@type': 'EducationalOccupationalProgram', '@id': URL_BASE + '/formacoes/#percurso', name: 'IA Generativa no Trabalho: do primeiro uso à liderança da implementação', url: URL_BASE + '/formacoes/', description: 'Percurso de quatro cursos abertos de seis horas sobre inteligência artificial generativa no trabalho, com inscrição online.', timeToComplete: 'PT24H' } },
       { '@type': 'Offer', itemOffered: { '@type': 'Course', '@id': URL_BASE + AI_ESSENTIALS.url + '#curso', name: 'AI Essentials' } },
     ],
   },
@@ -142,7 +143,7 @@ function rodape() {
       <div class="rodape-grelha">
         <div class="rodape-marca">
           <img src="/assets/marca/logotipo-negativo.svg" alt="Gadgetmetodo, Lda." width="260" height="47">
-          <p>Consultoria em organização e métodos, inteligência artificial aplicada, proteção de dados e apoio à gestão. Porto, Portugal.</p>
+          <p>Consultoria em organização e métodos, inteligência artificial aplicada, proteção de dados e apoio à gestão, e formação em inteligência artificial. Porto, Portugal.</p>
         </div>
         <div>
           <h2>Serviços</h2>
@@ -153,13 +154,13 @@ function rodape() {
         <div>
           <h2>Empresa</h2>
           <ul>
-            <li><a href="/abordagem/">Abordagem</a></li>
+            <li><a href="/abordagem/">A Metodologia</a></li>
             <li><a href="/experiencia/">Experiência</a></li>
             <li><a href="/sobre/">Sobre nós</a></li>
             <li><a href="/catalogo/">Catálogo de serviços</a></li>
             <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
             <li><a href="/contactos/">Contactos</a></li>
-            <li><a href="/clientes/">Área de clientes</a></li>
+            <li><a href="/clientes/">Área reservada</a></li>
           </ul>
         </div>
         <div>
@@ -360,7 +361,19 @@ const FAQ_SERVICOS = [
   ['Como pode a inteligência artificial ajudar a minha empresa?', 'A IA é útil em processos com volume, repetição ou decisões apoiadas em dados: personalização da comunicação com clientes, automação de tarefas e fluxos, análise de dados para decisão e apoio ao desenvolvimento de produto. A Gadgetmetodo começa por <a href="/servicos/inteligencia-artificial/">identificar e priorizar os casos de uso</a> pelo retorno esperado e pelo esforço de implementação, antes de qualquer investimento em ferramentas.'],
   ['A Gadgetmetodo pode assumir as funções de DPO da minha empresa?', 'Sim. A Gadgetmetodo assegura <a href="/servicos/protecao-de-dados-e-conformidade/">funções de Encarregado de Proteção de Dados (DPO, Data Protection Officer)</a> em regime externo, incluindo o registo das atividades de tratamento, a revisão de contratos com clientes e subcontratantes, a avaliação de transferências internacionais de dados e o apoio na relação com a Comissão Nacional de Proteção de Dados (CNPD).'],
   ['Que apoio prestam na Diretiva NIS2?', 'Apoio na análise do enquadramento da empresa face à Diretiva (UE) 2022/2555 (NIS2), na identificação dos <a href="/servicos/protecao-de-dados-e-conformidade/">requisitos de segurança da informação aplicáveis</a>, incluindo os exigidos contratualmente por clientes abrangidos, e no alinhamento desses requisitos com a governação da IA e a proteção de dados.'],
-  ['Em que consiste a formação AI Essentials?', 'É um <a href="/formacoes/ai-essentials/">programa em cinco módulos</a>: fundamentos de IA para a administração; casos de uso e integração de IA em sistemas; governação e ética da IA; RGPD, privacidade e IA; NIS2 e segurança da informação. Os conteúdos são adaptados ao setor e ao público, e a formação é ministrada por formador com Certificado de Competências Pedagógicas (CCP).'],
+];
+// Formação: respostas baseadas no catálogo de cursos (clientes/inc/catalogo/ia-generativa.json)
+const FAQ_FORMACAO = [
+  ['Que formação oferece a Gadgetmetodo?', 'Dois formatos. <a href="/formacoes/">Cursos abertos</a>, com inscrição individual, organizados no percurso IA Generativa no Trabalho: quatro cursos de seis horas, da iniciação à liderança da implementação. E <a href="/formacoes/ai-essentials/">programas à medida</a>, como o AI Essentials, organizados na empresa para administrações e equipas.'],
+  ['Como está organizado o percurso IA Generativa no Trabalho?', 'Tem quatro cursos sequenciais, cada um com seis sessões de 60 minutos (24 horas no total): Curso 1, Iniciação à IA Generativa no Trabalho; Curso 2, Produtividade com IA Generativa; Curso 3, IA nos Processos da Organização; Curso 4, Liderança e Implementação de IA. Todas as sessões terminam num Laboratório de Casos Práticos, que passa de 10 para 40 minutos por sessão ao longo do percurso. A ferramenta de referência é o Claude (Anthropic); os conceitos são transferíveis para outros assistentes de IA generativa.'],
+  ['Por que curso devo começar?', 'A inscrição e a pré-inscrição incluem um diagnóstico de nível, com 11 perguntas, que indica o curso mais adequado ao ponto de partida de cada formando. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital.'],
+  ['Como me inscrevo e o que é a pré-inscrição?', 'Na <a href="/formacoes/">área de formação</a>, cada curso tem um botão de inscrição. Se já houver datas, inscreve-se numa sessão, sem precisar de conta; a inscrição fica pendente até ser confirmada por email. Se ainda não houver datas, faz a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a>: recebe logo uma confirmação por email e, quando as datas forem marcadas, o convite para a inscrição. A pré-inscrição não obriga a inscrever-se.'],
+  ['Que requisitos técnicos são necessários?', 'Um computador por formando, com navegador atualizado, e conta própria no Claude. Nos Cursos 1 e 2, o plano gratuito é suficiente para a maioria dos exercícios; nos Cursos 3 e 4 é necessário um plano pago (Pro, Max, Team ou Enterprise), porque as sessões sobre conectores, tarefas agendadas e agentes usam funcionalidades que não estão disponíveis, ou estão limitadas, no plano gratuito. As turmas têm 8 a 14 formandos, em modalidade presencial ou à distância síncrona.'],
+  ['Como é feita a avaliação?', 'Combina avaliação prática, teste e participação, e o peso da prática cresce de curso para curso: 40% no Curso 1, 60% no Curso 2, 70% no Curso 3 e 85% no Curso 4, onde inclui um projeto final e não há teste. A aprovação exige 50% e presença em 5 das 6 sessões; no Curso 4, 50% e a entrega do projeto final.'],
+  ['Que relação tem esta formação com o Regulamento da IA?', 'O artigo 4.º do Regulamento (UE) 2024/1689 (Regulamento da IA), aplicável desde 2 de fevereiro de 2025 e reescrito pelo Regulamento (UE) 2026/1744, em vigor desde 27 de julho de 2026, exige que as organizações que fornecem ou utilizam sistemas de IA adotem medidas para apoiar o desenvolvimento da literacia em IA do seu pessoal. O percurso pode integrar essas medidas e produz evidência documentada da formação realizada. Não constitui, por si só, garantia de conformidade legal.'],
+  ['Onde encontro o programa detalhado de cada curso?', 'Cada curso tem uma página com o objetivo, o programa sessão a sessão, os temas, os casos práticos, a avaliação e as próximas datas, e uma ficha em PDF para descarregar, imprimir ou enviar. Estão todas na <a href="/formacoes/">área de formação</a>.'],
+  ['É possível organizar a formação só para a minha empresa?', 'Sim. Qualquer curso do percurso, ou o programa AI Essentials, pode ser organizado na sua empresa, com datas, duração, modalidade e exemplos ajustados ao setor e às funções do grupo. <a href="/contactos/#formulario">Peça uma proposta</a>.'],
+  ['Em que consiste a formação AI Essentials?', 'É um <a href="/formacoes/ai-essentials/">programa à medida, em cinco módulos</a>: fundamentos de IA para a administração; casos de uso e integração de IA em sistemas; governação e ética da IA; RGPD, privacidade e IA; NIS2 e segurança da informação. Os conteúdos são adaptados ao setor e ao público, e a formação é ministrada por formador com Certificado de Competências Pedagógicas (CCP).'],
 ];
 const FAQ_FUNCIONAMENTO = [
   ['Como decorre um projeto?', '<a href="/abordagem/">Em quatro fases</a>: diagnóstico da situação atual, desenho da solução e do plano de ação, implementação com as equipas e acompanhamento com indicadores. O âmbito, os entregáveis e o calendário ficam definidos na proposta.'],
@@ -375,7 +388,7 @@ pagina({
   titulo: 'Gadgetmetodo, Lda. | Organização e Métodos e IA no Porto',
   descricao: 'Consultora do Porto em organização e métodos, inteligência artificial aplicada, proteção de dados (RGPD, NIS2) e estratégia. Do diagnóstico à implementação.',
   prioridade: '1.0',
-  llms: 'Página inicial: quem somos, serviços, abordagem e contactos.',
+  llms: 'Página inicial: quem somos, serviços, formação, metodologia e contactos.',
   schemaExtra: [PESSOA],
   corpo: `
     <section class="hero fundo-escuro" aria-labelledby="titulo-principal">
@@ -433,7 +446,7 @@ pagina({
             <span class="icone">${icone('search')}</span>
             <h3>Não sabe por onde começar?</h3>
             <p>Comece por um diagnóstico. Identificamos prioridades, riscos e oportunidades antes de qualquer investimento.</p>
-            <span class="mais">Ver a abordagem ${seta}</span>
+            <span class="mais">Ver a metodologia ${seta}</span>
           </a>
         </div>
         <p class="espaco-topo mb-0"><a class="botao botao-secundario" href="/catalogo/">${icone('file-text')} Descarregar o catálogo de serviços</a></p>
@@ -456,7 +469,7 @@ pagina({
     <section class="secao" aria-labelledby="como-trabalhamos">
       <div class="contentor">
         <div class="cabeca-secao">
-          <span class="sobretitulo">Abordagem</span>
+          <span class="sobretitulo">A Metodologia</span>
           <h2 id="como-trabalhamos">Como trabalhamos</h2>
           <p>Cada projeto segue um percurso claro, com entregáveis definidos e decisões apoiadas em dados.</p>
         </div>
@@ -466,7 +479,7 @@ pagina({
           <li><h3>Implementação</h3><p>Execução com as equipas: ferramentas, procedimentos, formação e gestão da mudança.</p></li>
           <li><h3>Acompanhamento</h3><p>Medição de resultados com indicadores, ajustes e apoio regular à administração.</p></li>
         </ol>
-        <p class="espaco-topo mb-0"><a class="botao botao-secundario" href="/abordagem/">Conhecer a abordagem ${seta}</a></p>
+        <p class="espaco-topo mb-0"><a class="botao botao-secundario" href="/abordagem/">Conhecer a metodologia ${seta}</a></p>
       </div>
     </section>
 
@@ -756,6 +769,7 @@ paginaServico({
     'Formação das equipas que vão utilizar as soluções',
   ],
   faq: [
+    ['A Gadgetmetodo também dá formação em IA às equipas?', 'Sim. Na <a href="/formacoes/">área de formação</a> estão os cursos abertos do percurso IA Generativa no Trabalho, da iniciação à liderança da implementação, com inscrição online e um diagnóstico que indica o curso adequado a cada pessoa. Para administrações e equipas, organizamos também o <a href="/formacoes/ai-essentials/">programa AI Essentials</a> à medida, que pode ser integrado num projeto de IA.'],
     ['Por onde deve uma PME começar a usar inteligência artificial?', 'Pelos processos onde há volume, repetição ou decisões apoiadas em dados. Um diagnóstico inicial identifica e prioriza os casos de uso pelo retorno esperado e pelo esforço de implementação, antes de qualquer investimento em ferramentas.'],
     ['Como é garantida a proteção de dados nos projetos de IA?', 'Cada projeto avalia o impacto no RGPD, incluindo transferências internacionais de dados e contratos com fornecedores, e alinha a solução com os requisitos de segurança da informação, como os da Diretiva NIS2. A governação da IA é definida desde o desenho.'],
     ['A Gadgetmetodo fornece as ferramentas ou só aconselha?', 'Pode fazer as duas coisas. Para além da estratégia e da arquitetura, a Gadgetmetodo fornece e implementa soluções digitais, incluindo licenciamento, instalação, parametrização, formação e acompanhamento.'],
@@ -972,13 +986,13 @@ const FASES_ABORDAGEM = [
   ['Acompanhamento', 'Medição de resultados com indicadores, ajustes ao plano e apoio regular à administração para consolidar a mudança.'],
 ];
 
-/* Abordagem */
+/* A Metodologia (endereço /abordagem/, mantido para não partir ligações) */
 pagina({
   url: '/abordagem/',
-  titulo: 'Abordagem e metodologia',
+  titulo: 'A Metodologia',
   descricao: 'Como a Gadgetmetodo trabalha: diagnóstico, desenho, implementação e acompanhamento, com propostas à medida e modelos de colaboração por projeto ou continuados.',
   llms: 'Metodologia em quatro fases, princípios e modelos de colaboração.',
-  trilho: [['/', 'Início'], ['/abordagem/', 'Abordagem']],
+  trilho: [['/', 'Início'], ['/abordagem/', 'A Metodologia']],
   schemaExtra: [{
     '@type': 'ItemList',
     '@id': URL_BASE + '/abordagem/#metodo',
@@ -990,7 +1004,7 @@ pagina({
     __mainEntity: true,
   }],
   corpo: `
-    ${topoPagina({ trilho: [['/', 'Início'], ['/abordagem/', 'Abordagem']], h1: 'A nossa abordagem: do diagnóstico aos resultados', lead: 'Um método claro, aplicado com proximidade às pessoas e à realidade de cada empresa.' })}
+    ${topoPagina({ trilho: [['/', 'Início'], ['/abordagem/', 'A Metodologia']], h1: 'A Metodologia: do diagnóstico aos resultados', lead: 'Um método claro, aplicado com proximidade às pessoas e à realidade de cada empresa.' })}
 
     <section class="secao">
       <div class="contentor">
@@ -1161,7 +1175,7 @@ pagina({
             <div class="conteudo espaco-topo">
               <h2>Quem somos</h2>
               <p>A Gadgetmetodo parte de uma convicção: a eficiência de uma empresa depende, antes de mais, da forma como está organizada. A tecnologia, e hoje em particular a inteligência artificial, acelera o que já funciona bem, mas raramente resolve o que está mal organizado.</p>
-              <p>Por isso, cada projeto junta três dimensões: <a href="/servicos/organizacao-e-metodos/">o método</a>, para simplificar e organizar; <a href="/servicos/inteligencia-artificial/">a tecnologia</a>, para automatizar e medir; e <a href="/servicos/protecao-de-dados-e-conformidade/">a conformidade</a>, para proteger clientes, parceiros e titulares dos dados. O <a href="/servicos/estrategia-e-gestao/">apoio à estratégia</a> e a <a href="/formacoes/ai-essentials/">formação AI Essentials</a> completam a oferta.</p>
+              <p>Por isso, cada projeto junta três dimensões: <a href="/servicos/organizacao-e-metodos/">o método</a>, para simplificar e organizar; <a href="/servicos/inteligencia-artificial/">a tecnologia</a>, para automatizar e medir; e <a href="/servicos/protecao-de-dados-e-conformidade/">a conformidade</a>, para proteger clientes, parceiros e titulares dos dados. O <a href="/servicos/estrategia-e-gestao/">apoio à estratégia</a> e a <a href="/formacoes/">formação</a>, com cursos abertos de IA generativa e o programa AI Essentials à medida, completam a oferta.</p>
               <h2>A nossa marca</h2>
               <p>O símbolo da Gadgetmetodo é formado por módulos geométricos que se interligam para formar uma solução. O azul-petróleo e o azul-marinho transmitem solidez e confiança. A assinatura <strong>Simplificar · Organizar · Fazer acontecer</strong> resume a forma como trabalhamos.</p>
             </div>
@@ -1211,20 +1225,20 @@ pagina({
 });
 
 /* Perguntas frequentes */
-const TODAS_FAQ = [...FAQ_EMPRESA, ...FAQ_SERVICOS, ...FAQ_FUNCIONAMENTO];
+const TODAS_FAQ = [...FAQ_EMPRESA, ...FAQ_SERVICOS, ...FAQ_FORMACAO, ...FAQ_FUNCIONAMENTO];
 const faqExtra = [];
 faqExtra.__faq = faqSchema(TODAS_FAQ);
 pagina({
   url: '/perguntas-frequentes/',
   titulo: 'Perguntas frequentes',
-  descricao: 'Respostas sobre a Gadgetmetodo, Lda.: organização e métodos, inteligência artificial, DPO, RGPD, NIS2, formação, propostas e funcionamento dos projetos.',
+  descricao: 'Respostas sobre a Gadgetmetodo, Lda.: organização e métodos, inteligência artificial, DPO, RGPD, NIS2, cursos de IA e inscrições, propostas e funcionamento dos projetos.',
   tipo: 'FAQPage',
   prioridade: '0.8',
-  llms: 'Perguntas e respostas sobre a empresa, os serviços e o funcionamento dos projetos.',
+  llms: 'Perguntas e respostas sobre a empresa, os serviços, a formação (cursos, nível, inscrição e pré-inscrição, requisitos, avaliação) e o funcionamento dos projetos.',
   trilho: [['/', 'Início'], ['/perguntas-frequentes/', 'Perguntas frequentes']],
   schemaExtra: faqExtra,
   corpo: `
-    ${topoPagina({ trilho: [['/', 'Início'], ['/perguntas-frequentes/', 'Perguntas frequentes']], h1: 'Perguntas frequentes', lead: 'Respostas diretas sobre a empresa, os serviços e a forma como trabalhamos.' })}
+    ${topoPagina({ trilho: [['/', 'Início'], ['/perguntas-frequentes/', 'Perguntas frequentes']], h1: 'Perguntas frequentes', lead: 'Respostas diretas sobre a empresa, os serviços, a formação e a forma como trabalhamos.' })}
 
     <section class="secao">
       <div class="contentor estreito">
@@ -1235,6 +1249,10 @@ pagina({
         <div class="faq-grupo">
           <h2>Serviços</h2>
           ${faqHtml(FAQ_SERVICOS)}
+        </div>
+        <div class="faq-grupo">
+          <h2 id="formacao">Formação</h2>
+          ${faqHtml(FAQ_FORMACAO)}
         </div>
         <div class="faq-grupo">
           <h2>Propostas e funcionamento</h2>
@@ -1382,7 +1400,7 @@ const CATALOGO_PDF = '/catalogo-servicos-2026.pdf';
 pagina({
   url: '/catalogo/',
   titulo: 'Catálogo de Serviços 2026 (PDF)',
-  descricao: 'Descarregue o Catálogo de Serviços 2026 da Gadgetmetodo, Lda.: áreas de serviço, abordagem, exemplos de intervenção e contactos, em 16 páginas (PDF).',
+  descricao: 'Descarregue o Catálogo de Serviços 2026 da Gadgetmetodo, Lda.: áreas de serviço, formação, metodologia, exemplos de intervenção e contactos, em 16 páginas (PDF).',
   prioridade: '0.7',
   llms: 'Página de download do Catálogo de Serviços 2026 em PDF.',
   trilho: [['/', 'Início'], ['/catalogo/', 'Catálogo de serviços']],
@@ -1390,7 +1408,7 @@ pagina({
     '@type': 'DigitalDocument',
     '@id': URL_BASE + '/catalogo/#catalogo',
     name: 'Catálogo de Serviços 2026',
-    description: 'Catálogo da Gadgetmetodo, Lda. com as cinco áreas de serviço, a abordagem em quatro fases, os modelos de colaboração, exemplos de intervenção e contactos.',
+    description: 'Catálogo da Gadgetmetodo, Lda. com as cinco áreas de serviço (incluindo a formação: percurso IA Generativa no Trabalho e programa AI Essentials à medida), a metodologia em quatro fases, os modelos de colaboração, exemplos de intervenção e contactos.',
     url: URL_BASE + CATALOGO_PDF,
     encodingFormat: 'application/pdf',
     inLanguage: 'pt-PT',
@@ -1407,8 +1425,8 @@ pagina({
         <div class="duas-colunas">
           <div>
             ${resumo([
-              'O Catálogo de Serviços 2026 da Gadgetmetodo, Lda. apresenta, em 16 páginas, as cinco áreas de serviço (Organização e Métodos, inteligência artificial e transformação digital, proteção de dados e conformidade, estratégia e gestão, e formação AI Essentials), as questões a que cada uma responde, o que inclui e os entregáveis habituais.',
-              'Inclui também a abordagem em quatro fases, os modelos de colaboração, exemplos de intervenção por setor e os contactos.',
+              'O Catálogo de Serviços 2026 da Gadgetmetodo, Lda. apresenta, em 16 páginas, as cinco áreas de serviço (Organização e Métodos, inteligência artificial e transformação digital, proteção de dados e conformidade, estratégia e gestão, e formação), as questões a que cada uma responde, o que inclui e os entregáveis habituais. Na formação, resume o percurso IA Generativa no Trabalho, com quatro cursos abertos, e o programa AI Essentials à medida.',
+              'Inclui também a metodologia em quatro fases, os modelos de colaboração, exemplos de intervenção por setor e os contactos.',
             ], 'O que contém o catálogo?')}
             <div class="acoes" style="margin-top:24px">
               <a class="botao" href="${CATALOGO_PDF}">${icone('file-text')} Descarregar o catálogo (PDF, 1,1 MB)</a>
@@ -1419,7 +1437,7 @@ pagina({
               'Síntese e ponto de vista sobre organização, tecnologia e conformidade',
               'Mapa das cinco áreas de serviço',
               'Uma página por área: questões, o que inclui e entregáveis',
-              'Abordagem em quatro fases e modelos de colaboração',
+              'A Metodologia em quatro fases e modelos de colaboração',
               'Exemplos de intervenção na indústria, tecnologia, turismo e retalho',
               'Equipa, como iniciar um projeto e contactos',
             ])}
@@ -1435,7 +1453,7 @@ pagina({
   `,
 });
 
-/* Formação: área de formação (PHP; cursos e sessões lidos da base de dados da área de clientes) */
+/* Formação: área de formação (PHP; cursos e sessões lidos da base de dados da área reservada) */
 pagina({
   url: '/formacoes/',
   ficheiro: 'index.php',
@@ -1501,6 +1519,14 @@ pagina({
             <p class="espaco-topo-curto mb-0"><a class="botao" href="/formacoes/pre-inscricao.php">${icone('clipboard-list')} Fazer pré-inscrição</a></p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="secao secao-nevoa" aria-labelledby="perguntas-formacao">
+      <div class="contentor estreito">
+        <div class="cabeca-secao"><span class="sobretitulo">Perguntas frequentes</span><h2 id="perguntas-formacao">Perguntas sobre a formação</h2></div>
+        ${faqHtml(FAQ_FORMACAO.slice(1, 8))}
+        <p class="espaco-topo mb-0"><a href="/perguntas-frequentes/#formacao">Ver todas as perguntas frequentes</a></p>
       </div>
     </section>
 
@@ -1577,7 +1603,7 @@ pagina({
           <li><strong>Dados que nos envia</strong> por email ou telefone: nome, contactos, empresa e o conteúdo da mensagem.</li>
           <li><strong>Dados técnicos de acesso</strong> registados pelo serviço de alojamento do site, como o endereço IP, a data e hora do pedido, a página pedida e o tipo de navegador, para garantir o funcionamento e a segurança do site.</li>
           <li><strong>Acesso ao catálogo enviado por email:</strong> quando abre o catálogo através da ligação incluída na confirmação do pedido, registamos a data e hora do acesso e o tipo de navegador, associados à referência do pedido.</li>
-          <li><strong>Área de clientes:</strong> nome, email profissional e entidade dos utilizadores com acesso, e data do último acesso.</li>
+          <li><strong>Área reservada:</strong> nome, email profissional e entidade dos utilizadores com acesso, e data do último acesso.</li>
           <li><strong>Inscrições em formações:</strong> nome, email profissional e função do formando, respostas ao diagnóstico de utilização de inteligência artificial, ferramentas usadas e expectativas sobre a formação. Nas inscrições feitas na área de formação do site, também o nome e o NIF da empresa e o nome, o email e o telefone de quem faz a inscrição.</li>
           <li><strong>Pré-inscrições em cursos:</strong> nome, email, empresa e telefone, número previsto de formandos, modalidade preferida, preferências de datas e horários e respostas ao diagnóstico de nível.</li>
           <li><strong>Prevenção de abusos do formulário:</strong> o servidor guarda, durante uma hora, um código derivado do endereço IP, que não revela o endereço, para limitar envios repetidos.</li>
@@ -1603,17 +1629,17 @@ pagina({
         <h2>4. Ditado por voz no formulário</h2>
         <p>O ditado é opcional e só é ativado quando carrega no botão "Ditar". Usa o serviço de reconhecimento de voz do seu navegador: o áudio é tratado pelo fornecedor do navegador (por exemplo, a Google no Chrome ou a Apple no Safari), de acordo com as condições desse fornecedor. Este site recebe apenas o texto que decidir enviar e não grava nem guarda áudio.</p>
 
-        <h2>5. Área de clientes e diagnóstico de utilização de IA</h2>
-        <p>A área de clientes é reservada a pessoas autorizadas. Cada entidade cliente vê apenas as formações disponíveis e as inscrições dos seus próprios formandos; a Gadgetmetodo vê todas. As inscrições feitas na <a href="/formacoes/">área de formação</a> do site ficam visíveis apenas para a Gadgetmetodo até serem associadas à entidade cliente correspondente. O diagnóstico de utilização de IA é uma autoavaliação curta, usada apenas para ajustar os exemplos e os exercícios ao ponto de partida do grupo e, nos cursos de um percurso, para indicar o curso mais adequado; não se destina a avaliar o desempenho profissional do formando. Quem inscreve outra pessoa deve informá-la deste tratamento. Quando a Gadgetmetodo envia a um candidato o convite para uma formação, o nome e o email são usados apenas para esse envio.</p>
+        <h2>5. Área reservada e diagnóstico de utilização de IA</h2>
+        <p>A área reservada destina-se apenas a pessoas autorizadas: utilizadores das entidades clientes e a Gadgetmetodo. Cada entidade cliente vê apenas as formações disponíveis e as inscrições dos seus próprios formandos; a Gadgetmetodo vê todas. As inscrições feitas na <a href="/formacoes/">área de formação</a> do site ficam visíveis apenas para a Gadgetmetodo até serem associadas à entidade cliente correspondente. O diagnóstico de utilização de IA é uma autoavaliação curta, usada apenas para ajustar os exemplos e os exercícios ao ponto de partida do grupo e, nos cursos de um percurso, para indicar o curso mais adequado; não se destina a avaliar o desempenho profissional do formando. Quem inscreve outra pessoa deve informá-la deste tratamento. Quando a Gadgetmetodo envia a um candidato o convite para uma formação, o nome e o email são usados apenas para esse envio.</p>
 
         <h2>6. Cookies e tecnologias semelhantes</h2>
-        <p>Este site não utiliza cookies, ferramentas de análise de tráfego ou de publicidade, nem incorpora conteúdos de terceiros, como mapas ou vídeos. As fontes tipográficas são alojadas no próprio site. A área de clientes e a área reservada da empresa, usadas apenas por pessoas autorizadas, utilizam um cookie de sessão estritamente necessário, que expira ao fechar o navegador.</p>
+        <p>Este site não utiliza cookies, ferramentas de análise de tráfego ou de publicidade, nem incorpora conteúdos de terceiros, como mapas ou vídeos. As fontes tipográficas são alojadas no próprio site. A área reservada e a página interna de registos da empresa, usadas apenas por pessoas autorizadas, utilizam um cookie de sessão estritamente necessário, que expira ao fechar o navegador.</p>
 
         <h2>7. Destinatários</h2>
         <p>Os dados podem ser tratados por prestadores de serviços de alojamento e de correio eletrónico, que atuam como subcontratantes. As sessões de formação online decorrem no Google Meet: ao participar, os dados de ligação e de imagem e som são tratados pela Google, de acordo com as condições desse serviço. Quando algum destes prestadores trate dados fora do Espaço Económico Europeu, a transferência baseia-se nas garantias previstas no RGPD, como decisões de adequação ou cláusulas contratuais-tipo. Os dados não são vendidos nem cedidos para fins de marketing de terceiros.</p>
 
         <h2>8. Conservação</h2>
-        <p>Os pedidos de contacto que não deem origem a uma relação contratual são conservados até 12 meses após o último contacto. Os registos de pedidos e de acessos ao catálogo guardados no site são apagados automaticamente 12 meses após o pedido. Os dados das inscrições em formações, incluindo as respostas ao diagnóstico, são apagados automaticamente 2 anos após a data da formação. As pré-inscrições são apagadas automaticamente 12 meses após o registo, ou antes, a pedido do titular. As contas de acesso à área de clientes são mantidas enquanto durar a relação com o cliente. Os dados de clientes são conservados durante a relação contratual e, depois dela, pelos prazos exigidos por lei.</p>
+        <p>Os pedidos de contacto que não deem origem a uma relação contratual são conservados até 12 meses após o último contacto. Os registos de pedidos e de acessos ao catálogo guardados no site são apagados automaticamente 12 meses após o pedido. Os dados das inscrições em formações, incluindo as respostas ao diagnóstico, são apagados automaticamente 2 anos após a data da formação. As pré-inscrições são apagadas automaticamente 12 meses após o registo, ou antes, a pedido do titular. As contas de acesso à área reservada são mantidas enquanto durar a relação com o cliente. Os dados de clientes são conservados durante a relação contratual e, depois dela, pelos prazos exigidos por lei.</p>
 
         <h2>9. Os seus direitos</h2>
         <p>Pode pedir o acesso, a retificação, o apagamento, a limitação do tratamento, a portabilidade dos seus dados e opor-se ao tratamento baseado em interesse legítimo, através de <a href="mailto:${EMAIL}">${EMAIL}</a>. Tem também o direito de apresentar reclamação à Comissão Nacional de Proteção de Dados (CNPD), em <a href="https://www.cnpd.pt" rel="noopener">www.cnpd.pt</a>.</p>

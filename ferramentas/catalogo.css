@@ -426,3 +426,13 @@ svg { display: block; }
 .denso .tabela td { font-size: 9.6pt; }
 .denso .duas.mt { margin-top: 4.5mm; }
 .denso .servico-cab { margin-bottom: 3mm; }
+
+/* Formação: percurso de cursos abertos */
+
+.tabela-cursos th, .tabela-cursos td { padding-top: 2mm; padding-bottom: 2mm; }
+.tabela-cursos tbody th { width: 31%; font-size: 9.2pt; }
+.tabela-cursos tbody th .num { background: var(--petroleo); }
+.tabela-cursos td { font-size: 8.9pt; }
+.tabela-cursos td.lab, .tabela-cursos thead th:last-child { width: 12%; padding-right: 0; text-align: right; white-space: nowrap; }
+.tabela-cursos td.lab { color: var(--petroleo); font-weight: 700; }
+.formacao .pequeno { margin: 0; line-height: 1.5; }

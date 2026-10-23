@@ -220,7 +220,7 @@ strong {
 
 .navegacao a {
   display: block;
-  padding: 10px 8px;
+  padding: 10px 7px;
   color: var(--marinho);
   font-family: var(--fonte-titulos);
   font-size: 0.92rem;
@@ -253,7 +253,7 @@ strong {
 }
 
 /* Entre o menu compacto e os ecrãs largos, a ligação mostra só o ícone */
-@media (min-width: 1141px) and (max-width: 1259px) {
+@media (min-width: 1151px) and (max-width: 1259px) {
   .nav-clientes svg {
     width: 20px;
     height: 20px;
@@ -305,7 +305,7 @@ strong {
   display: none;
 }
 
-@media (max-width: 1140px) {
+@media (max-width: 1150px) {
   .js .menu-botao {
     display: inline-flex;
   }

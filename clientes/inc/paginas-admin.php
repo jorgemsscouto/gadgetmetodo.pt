@@ -121,7 +121,7 @@ function admin_formacao(): void
           ' . campo_select('estado', 'Estado *', ESTADOS_FORMACAO, $v['estado']) . '
         </div>
         <div class="campo"><label for="c-reuniao">Ligação da reunião online (Google Meet)</label><input id="c-reuniao" name="reuniao" type="url" value="' . h((string) $v['reuniao']) . '" maxlength="300" placeholder="https://meet.google.com/abc-defg-hij" aria-describedby="ajuda-reuniao">
-          <p class="ajuda" id="ajuda-reuniao">Só é enviada às inscrições confirmadas (no email de confirmação e na área de clientes); nunca aparece na página pública. Para a criar: ' . $atalhos . '</p></div>
+          <p class="ajuda" id="ajuda-reuniao">Só é enviada às inscrições confirmadas (no email de confirmação e na área reservada); nunca aparece na página pública. Para a criar: ' . $atalhos . '</p></div>
         ' . campo('notas', 'Notas internas', (string) $v['notas'], 'textarea', 'maxlength="2000"') . '
         <div><button class="botao" type="submit">' . ($id ? 'Guardar alterações' : 'Criar formação') . '</button></div>
       </form>';
@@ -651,7 +651,7 @@ function form_modulo(array $m, int $numero, string $unidade = 'Módulo'): string
 // Lista de inscrições; as pré-inscrições ainda sem inscrição aparecem no topo com o estado "Pré-inscrição"
 function admin_inscricoes(): void
 {
-    $origens = ['site' => 'Site', 'por_associar' => 'Site, por associar a cliente', 'area' => 'Área de clientes'];
+    $origens = ['site' => 'Site', 'por_associar' => 'Site, por associar a cliente', 'area' => 'Área reservada'];
     $estados = ['preinscricao' => 'Pré-inscrição'] + ESTADOS_INSCRICAO;
     $filtros = ['formacao' => (int) ($_GET['formacao'] ?? 0), 'cliente' => (int) ($_GET['cliente'] ?? 0), 'estado' => isset($estados[$_GET['estado'] ?? '']) ? $_GET['estado'] : '', 'origem' => isset($origens[$_GET['origem'] ?? '']) ? $_GET['origem'] : ''];
     $com_pre = !$filtros['formacao'] && !$filtros['cliente'] && in_array($filtros['estado'], ['', 'preinscricao'], true) && in_array($filtros['origem'], ['', 'site', 'por_associar'], true);

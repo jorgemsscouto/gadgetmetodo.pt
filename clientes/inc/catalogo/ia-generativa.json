@@ -1,6 +1,6 @@
 {
   "versao": "ia-generativa-2026-10",
-  "_nota": "Catálogo carregado no separador Cursos da área de clientes. Depois de carregado, os cursos editam-se na administração; este ficheiro só volta a ser usado ao repor o catálogo.",
+  "_nota": "Catálogo carregado no separador Cursos da área reservada. Depois de carregado, os cursos editam-se na administração; este ficheiro só volta a ser usado ao repor o catálogo.",
   "comum": {
     "percurso": "IA Generativa no Trabalho: do primeiro uso à liderança da implementação",
     "tipologia": "Curso de curta duração",

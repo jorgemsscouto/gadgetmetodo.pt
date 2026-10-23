@@ -21,7 +21,7 @@ iniciar_sessao();
 
 if (!bd()) {
     http_response_code(503);
-    pagina_erro('Área indisponível', 'A área de clientes está temporariamente indisponível. Contacte info@gadgetmetodo.pt.');
+    pagina_erro('Área indisponível', 'A área reservada está temporariamente indisponível. Contacte info@gadgetmetodo.pt.');
 }
 
 $p = (string) ($_GET['p'] ?? 'painel');

@@ -30,7 +30,7 @@ Factos essenciais:
 
 ## Empresa
 
-- [Abordagem](https://www.gadgetmetodo.pt/abordagem/): metodologia em quatro fases, princípios e modelos de colaboração
+- [A Metodologia](https://www.gadgetmetodo.pt/abordagem/): metodologia em quatro fases, princípios e modelos de colaboração
 - [Experiência](https://www.gadgetmetodo.pt/experiencia/): exemplos de intervenção por setor, sem identificação de clientes
 - [Sobre](https://www.gadgetmetodo.pt/sobre/): quem somos, identidade e perfil do gestor de projeto
 - [Perguntas frequentes](https://www.gadgetmetodo.pt/perguntas-frequentes/): respostas sobre a empresa, os serviços e o funcionamento dos projetos
@@ -39,5 +39,5 @@ Factos essenciais:
 
 ## Optional
 
-- [Catálogo de Serviços 2026 (PDF)](https://www.gadgetmetodo.pt/catalogo-servicos-2026.pdf): as cinco áreas de serviço, abordagem, exemplos de intervenção e contactos, em 16 páginas
+- [Catálogo de Serviços 2026 (PDF)](https://www.gadgetmetodo.pt/catalogo-servicos-2026.pdf): as cinco áreas de serviço (incluindo a formação), metodologia, exemplos de intervenção e contactos, em 16 páginas
 - [Política de privacidade](https://www.gadgetmetodo.pt/privacidade/): tratamento de dados pessoais; o site não usa cookies nem ferramentas de análise

@@ -12,7 +12,7 @@ function menu_area(string $atual): string
     foreach ($itens as $p => $nome) {
         $html .= '<li><a href="' . h(url($p)) . '"' . ($p === $atual ? ' aria-current="page"' : '') . '>' . h($nome) . '</a></li>';
     }
-    return '<nav class="area-nav" aria-label="Área de clientes"><div class="contentor"><ul>' . $html . '</ul></div></nav>';
+    return '<nav class="area-nav" aria-label="Área reservada"><div class="contentor"><ul>' . $html . '</ul></div></nav>';
 }
 
 // Acrescenta ao endereço a data de alteração do ficheiro, para os navegadores não usarem cópias antigas
@@ -30,7 +30,7 @@ function documento(string $titulo, string $corpo): void
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>' . h($titulo) . ' | Área de clientes | Gadgetmetodo, Lda.</title>
+  <title>' . h($titulo) . ' | Área reservada | Gadgetmetodo, Lda.</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="' . h(versao_ficheiro('/assets/css/site.css')) . '">
   <link rel="stylesheet" href="' . h(versao_ficheiro('/assets/css/area.css')) . '">
@@ -68,7 +68,7 @@ function pagina_entrada(string $erro = ''): void
     documento('Entrar', '<header class="cabecalho"><div class="contentor"><a class="marca" href="/"><img src="/assets/marca/logotipo.svg" alt="Gadgetmetodo, Lda." width="234" height="42"></a></div></header>
   <main class="secao"><div class="contentor estreito">
     ' . avisos() . '
-    <span class="sobretitulo">Área de clientes</span>
+    <span class="sobretitulo">Área reservada</span>
     <h1>Entrar</h1>
     <p class="texto-suave">Acesso reservado a clientes e à equipa da Gadgetmetodo. Para obter acesso, contacte <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</p>
     ' . ($primeiro ? '<div class="aviso aviso-info">Primeiro acesso: entre com o email info@gadgetmetodo.pt e a palavra-passe da área reservada (<code>./configurar-formulario.sh --acesso</code>). Fica criada a conta de administração.</div>' : '') . '
@@ -84,7 +84,7 @@ function pagina_entrada(string $erro = ''): void
 function pagina_erro(string $titulo, string $texto): void
 {
     $voltar = utilizador() ? '<a class="botao" href="' . h(url('painel')) . '">Voltar ao painel</a>' : '<a class="botao" href="area.php">Entrar</a>';
-    documento($titulo, '<main class="secao"><div class="contentor estreito"><span class="sobretitulo">Área de clientes</span><h1>' . h($titulo) . '</h1><p class="lead">' . h($texto) . '</p><div class="acoes">' . $voltar . '</div></div></main>');
+    documento($titulo, '<main class="secao"><div class="contentor estreito"><span class="sobretitulo">Área reservada</span><h1>' . h($titulo) . '</h1><p class="lead">' . h($texto) . '</p><div class="acoes">' . $voltar . '</div></div></main>');
 }
 
 /* Componentes */
