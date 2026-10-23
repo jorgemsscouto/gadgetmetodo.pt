@@ -12,7 +12,7 @@ function semear_cursos(PDO $pdo): void
 {
     $cursos = [
         [
-            'chave' => CURSO_AI_ESSENTIALS, 'nome' => 'AI Essentials', 'tipologia' => 'Programa de formação', 'diagnostico' => 1,
+            'chave' => CURSO_AI_ESSENTIALS, 'nome' => 'AI Essentials', 'tipologia' => 'Programa de formação', 'diagnostico' => 1, 'ativo' => 1,
             'descricao' => 'Programa de formação em inteligência artificial aplicada à gestão, em cinco módulos, para decidir, utilizar e governar a IA com conhecimento de causa. Os exemplos e o nível técnico são ajustados ao setor e a cada grupo. Ministrado por formador com Certificado de Competências Pedagógicas (CCP).',
             'publico' => 'Administrações, direções e equipas que vão decidir sobre IA, utilizá-la no dia a dia ou garantir a sua conformidade.',
             'duracao' => '',
@@ -25,7 +25,8 @@ function semear_cursos(PDO $pdo): void
             ],
         ],
         [
-            'chave' => 'exemplo-processos', 'nome' => 'Mapeamento e melhoria de processos (exemplo)', 'tipologia' => 'Workshop', 'diagnostico' => 0,
+            // Fica inativo (não aparece no site nem pode ser agendado) até ser adaptado e ativado
+            'chave' => 'exemplo-processos', 'nome' => 'Mapeamento e melhoria de processos (exemplo)', 'tipologia' => 'Workshop', 'diagnostico' => 0, 'ativo' => 0,
             'descricao' => 'Exemplo de curso para adaptar ou apagar. Workshop prático para mapear um processo real da empresa, identificar desperdícios e preparar o plano de melhoria.',
             'publico' => 'Responsáveis de área, chefias intermédias e equipas de qualidade.',
             'duracao' => '7 horas',
@@ -38,8 +39,8 @@ function semear_cursos(PDO $pdo): void
     ];
     $agora = date('Y-m-d H:i:s');
     foreach ($cursos as $c) {
-        $pdo->prepare('INSERT INTO cursos (chave, nome, tipologia, descricao, publico, duracao, diagnostico, ativo, criado) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)')
-            ->execute([$c['chave'], $c['nome'], $c['tipologia'], $c['descricao'], $c['publico'], $c['duracao'], $c['diagnostico'], $agora]);
+        $pdo->prepare('INSERT INTO cursos (chave, nome, tipologia, descricao, publico, duracao, diagnostico, ativo, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            ->execute([$c['chave'], $c['nome'], $c['tipologia'], $c['descricao'], $c['publico'], $c['duracao'], $c['diagnostico'], $c['ativo'], $agora]);
         $curso_id = (int) $pdo->lastInsertId();
         foreach ($c['modulos'] as $n => $m) {
             $pdo->prepare('INSERT INTO modulos (curso_id, ordem, nome, descricao, temas, horas) VALUES (?, ?, ?, ?, ?, ?)')
