@@ -1,7 +1,7 @@
-// Área reservada: lista das sessões do curso completo no formulário da formação.
+// Área reservada: lista das sessões do curso no formulário da formação (cada formação é uma edição do curso completo).
 // Mostra só a lista do curso escolhido e propõe datas semanais a partir da data e do horário da 1.ª sessão.
 (function () {
-  var seletor = document.getElementById('c-curso_modulo');
+  var seletor = document.getElementById('c-curso');
   if (!seletor || !document.querySelector('.sessoes-curso')) {
     return;
   }
@@ -14,7 +14,7 @@
   }
 
   function mostrar() {
-    var id = seletor.value.indexOf('c:') === 0 ? seletor.value.slice(2) : '';
+    var id = seletor.value;
     document.querySelectorAll('.sessoes-curso').forEach(function (bloco) {
       var visivel = bloco.getAttribute('data-curso') === id;
       bloco.hidden = !visivel;

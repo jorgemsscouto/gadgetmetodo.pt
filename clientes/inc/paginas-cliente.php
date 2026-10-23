@@ -49,7 +49,7 @@ function cliente_painel(): void
     pagina_area('painel', 'Bem-vindo, ' . $u['nome'], '
       <p class="lead">Nesta área pode consultar o calendário das formações AI Essentials, inscrever formandos da ' . h($u['cliente_nome']) . ' e acompanhar o estado das inscrições.</p>
       <div class="acoes" style="margin-top:0"><a class="botao" href="' . h(url('calendario')) . '">Ver formações e inscrever</a><a class="botao botao-secundario" href="' . h(url('inscricoes')) . '">As nossas inscrições</a></div>
-      ' . (($novas = formacoes_novas()) ? '<h2 class="espaco-topo">Novas formações</h2><p class="texto-suave">Sessões agendadas nos últimos ' . DIAS_NOVA . ' dias.</p>' . calendario($novas, 'botao_inscrever') : '') . '
+      ' . (($novas = formacoes_novas()) ? '<h2 class="espaco-topo">Novas formações</h2><p class="texto-suave">Edições agendadas nos últimos ' . DIAS_NOVA . ' dias.</p>' . calendario($novas, 'botao_inscrever') : '') . '
       <h2 class="espaco-topo">Próximas formações com formandos inscritos</h2>
       ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Formando</th><th>Formação</th><th>Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há formandos inscritos em formações futuras.</p>'), $u['cliente_nome']);
 }
@@ -57,7 +57,7 @@ function cliente_painel(): void
 function cliente_formacoes(): void
 {
     pagina_area('calendario', 'Calendário de formações', '
-      <p class="lead">Sessões agendadas dos cursos da Gadgetmetodo. Em cada sessão, abra "Programa e temas" para ver o conteúdo. Nos cursos de inteligência artificial, a inscrição inclui um diagnóstico curto do uso de IA pelo formando, para ajustar os exemplos e os exercícios ao nível do grupo.</p>
+      <p class="lead">Edições agendadas dos cursos da Gadgetmetodo. Cada inscrição inclui todas as sessões do curso. Em cada edição, abra "Programa e temas" para ver o conteúdo. Nos cursos de inteligência artificial, a inscrição inclui um diagnóstico curto do uso de IA pelo formando, para ajustar os exemplos e os exercícios ao nível do grupo.</p>
       ' . calendario(proximas_formacoes(), 'botao_inscrever') . '
       <p class="texto-suave espaco-topo">Precisa de uma data ou de um programa à medida para a sua equipa? Escreva para <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</p>', 'Formações');
 }
@@ -399,7 +399,7 @@ function pagina_inscricao(): void
         'Cliente' => cliente_html($i) . ($i['nif'] ? ' <span class="texto-suave">· NIF ' . h($i['nif']) . '</span>' : ''),
         'Formando' => h($i['formando']), 'Email' => h($i['email']), 'Função' => h($i['funcao']),
         'Estado' => estado_etiqueta($i['estado'], ESTADOS_INSCRICAO),
-        'Sessão online' => $i['modalidade'] === 'presencial' || !$i['reuniao'] ? '' : ($admin || $i['estado'] === 'confirmada'
+        'Sessões online' => $i['modalidade'] === 'presencial' || !$i['reuniao'] ? '' : ($admin || $i['estado'] === 'confirmada'
             ? '<a href="' . h($i['reuniao']) . '" target="_blank" rel="noopener">Entrar na reunião</a><br><span class="texto-suave">' . h($i['reuniao']) . '</span>'
             : '<span class="texto-suave">A ligação para a reunião é enviada com a confirmação da inscrição.</span>'),
         'Origem' => h(ORIGENS[$i['origem']] ?? $i['origem']) . (($pre = $admin ? linha_bd('SELECT id, criado, formandos FROM preinscricoes WHERE inscricao_id = ?', [$id]) : null)
@@ -506,9 +506,9 @@ function bloco_reuniao(array $i): array
     }
     $nome = stripos((string) $i['reuniao'], 'meet.google.com') !== false ? 'Google Meet' : 'reunião online';
     return [
-        '<p style="margin:0 0 6px;"><strong>Sessão online (' . h($nome) . '):</strong> <a href="' . h($i['reuniao']) . '" style="color:#00636A;">' . h($i['reuniao']) . '</a></p>'
+        '<p style="margin:0 0 6px;"><strong>Sessões online (' . h($nome) . '):</strong> <a href="' . h($i['reuniao']) . '" style="color:#00636A;">' . h($i['reuniao']) . '</a></p>'
         . '<p style="margin:0 0 18px;"><a href="' . h($i['reuniao']) . '" style="display:inline-block;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">Entrar na sessão</a></p>',
-        "\n\nSessão online (" . $nome . '): ' . $i['reuniao'],
+        "\n\nSessões online (" . $nome . '): ' . $i['reuniao'],
     ];
 }
 
@@ -525,8 +525,8 @@ function enviar_reuniao_confirmados(array $f): int
         }
         [$html, $texto] = bloco_reuniao($i);
         $nome = $i['email'] ? $i['formando'] : ($contacto['nome'] ?? $i['formando']);
-        $frase = 'Segue a ligação para a sessão de ' . $i['titulo'] . ' (' . nome_modulo($i) . '), em ' . horario($i) . ', em que ' . ($i['email'] ? 'está inscrito(a)' : $i['formando'] . ' está inscrito(a)') . '.';
-        enviar_aviso($para, 'Ligação para a sessão: ' . $i['titulo'] . ', ' . data_hora($i['inicio']), 'Ligação para a sessão online',
+        $frase = 'Segue a ligação para as sessões online de ' . $i['titulo'] . ' (' . nome_modulo($i) . '), em ' . horario($i) . ', em que ' . ($i['email'] ? 'está inscrito(a)' : $i['formando'] . ' está inscrito(a)') . '.';
+        enviar_aviso($para, 'Ligação para as sessões online: ' . $i['titulo'] . ', ' . data_hora($i['inicio']), 'Ligação para as sessões online',
             '<p style="margin:0 0 14px;">' . h(nome_curto($nome)) . ',</p><p style="margin:0 0 16px;">' . h($frase) . '</p>' . $html . '<p style="margin:0;">Recomendamos entrar alguns minutos antes da hora de início. Para qualquer questão, basta responder a este email.</p>',
             nome_curto($nome) . ",\n\n" . $frase . $texto . "\n\nRecomendamos entrar alguns minutos antes da hora de início.",
             (string) (cfg()['destinatario'] ?? 'info@gadgetmetodo.pt'), '', $i['email'] ? ($contacto['email'] ?? '') : '');

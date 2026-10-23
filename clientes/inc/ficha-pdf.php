@@ -561,7 +561,7 @@ function ficha_pdf(array $c, array $d): void
         $pdf->SetY($y + $h + 9);
     }
 
-    // Próximas sessões e inscrições, com contactos
+    // Próximas edições e inscrições, com contactos
     $esq = [];
     foreach ($d['sessoes'] as $f) {
         $mod = MODALIDADES[$f['modalidade']] ?? '';
@@ -580,7 +580,7 @@ function ficha_pdf(array $c, array $d): void
     $nota = [['t' => 'Documento informativo gerado em ' . $d['hoje'] . ' a partir da página do curso, onde se encontra sempre a versão atualizada.', 'f' => ['inter', '', 7.4], 'c' => 'suave', 'lh' => 3.8]];
     $h_esq = $pdf->bloco($esq, 0, 0, $wl, false) + 6 + 6 + $pdf->bloco($nota, 0, 0, $wl, false);
     $h_dir = $pdf->bloco($contactos, 0, 0, $wr - 10, false) + 16;
-    $pdf->seccao(++$n, 'Próximas sessões e inscrições', max($h_esq, $h_dir) + 16);
+    $pdf->seccao(++$n, 'Próximas edições e inscrições', max($h_esq, $h_dir) + 16);
     $y = $pdf->GetY();
     $fim = $y + $pdf->bloco($esq, $L, $y, $wl);
     $pdf->fonte('inter', 'B', 8.8, 'petroleo');

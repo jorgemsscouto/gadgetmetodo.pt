@@ -25,7 +25,7 @@ Factos essenciais:
 - [Inteligência artificial e transformação digital](https://www.gadgetmetodo.pt/servicos/inteligencia-artificial/): estratégia de IA, casos de uso, arquitetura de sistemas e integrações, automação de marketing, painéis de indicadores
 - [Proteção de dados e conformidade](https://www.gadgetmetodo.pt/servicos/protecao-de-dados-e-conformidade/): DPO externo, RGPD, Diretiva NIS2, contratos com subcontratantes e governação da IA
 - [Estratégia e gestão](https://www.gadgetmetodo.pt/servicos/estrategia-e-gestao/): alinhamento estratégico, objetivos e indicadores (KPI), modelos de incentivos e conselho à administração
-- [Formação](https://www.gadgetmetodo.pt/formacoes/): área de formação com o percurso IA Generativa no Trabalho (quatro cursos de seis horas, da iniciação à liderança da implementação), calendário de sessões, inscrição e pré-inscrição online; cada curso tem página própria com programa, temas e casos práticos por sessão e ficha em PDF
+- [Formação](https://www.gadgetmetodo.pt/formacoes/): área de formação com o percurso IA Generativa no Trabalho (quatro cursos de seis horas, da iniciação à liderança da implementação), calendário de edições, inscrição no curso completo (todas as sessões) e pré-inscrição online; cada curso tem página própria com programa, temas e casos práticos por sessão e ficha em PDF
 - [AI Essentials para empresas](https://www.gadgetmetodo.pt/formacoes/ai-essentials/): programa à medida em cinco módulos sobre IA para administrações e equipas
 
 ## Empresa

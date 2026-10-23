@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Inscrição em formação | Gadgetmetodo, Lda.</title>
-  <meta name="description" content="Inscrição numa sessão de formação da Gadgetmetodo, Lda., com o programa e os temas da sessão.">
+  <meta name="description" content="Inscrição numa edição de um curso da Gadgetmetodo, Lda., com as datas de todas as sessões e o programa do curso.">
   <meta name="robots" content="noindex, follow">
   <link rel="canonical" href="https://www.gadgetmetodo.pt/formacoes/inscricao.php">
   <meta name="theme-color" content="#0A0F26">
@@ -14,7 +14,7 @@
   <meta property="og:locale" content="pt_PT">
   <meta property="og:site_name" content="Gadgetmetodo, Lda.">
   <meta property="og:title" content="Inscrição em formação | Gadgetmetodo, Lda.">
-  <meta property="og:description" content="Inscrição numa sessão de formação da Gadgetmetodo, Lda., com o programa e os temas da sessão.">
+  <meta property="og:description" content="Inscrição numa edição de um curso da Gadgetmetodo, Lda., com as datas de todas as sessões e o programa do curso.">
   <meta property="og:url" content="https://www.gadgetmetodo.pt/formacoes/inscricao.php">
   <meta property="og:image" content="https://www.gadgetmetodo.pt/assets/img/partilha.png">
   <meta property="og:image:width" content="1200">
@@ -182,7 +182,7 @@
       "@id": "https://www.gadgetmetodo.pt/formacoes/inscricao.php#pagina",
       "url": "https://www.gadgetmetodo.pt/formacoes/inscricao.php",
       "name": "Inscrição em formação",
-      "description": "Inscrição numa sessão de formação da Gadgetmetodo, Lda., com o programa e os temas da sessão.",
+      "description": "Inscrição numa edição de um curso da Gadgetmetodo, Lda., com as datas de todas as sessões e o programa do curso.",
       "inLanguage": "pt-PT",
       "isPartOf": {
         "@id": "https://www.gadgetmetodo.pt/#website"

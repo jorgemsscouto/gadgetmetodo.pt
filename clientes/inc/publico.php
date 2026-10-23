@@ -41,8 +41,7 @@ function opcao_inscricao(array $c, bool $na_pagina_do_curso = false): array
     return [
         'href' => count($sessoes) === 1 ? '/formacoes/inscricao.php?f=' . (int) $proxima['id'] : ($na_pagina_do_curso ? '' : link_curso_publico($c)) . '#sessoes',
         'rotulo' => 'Inscrever-me', 'sessoes' => $sessoes,
-        'nota' => (($edicao = count(sessoes_formacao((int) $proxima['id'])) > 1) ? 'Próxima edição: ' . horario($proxima) : 'Próxima sessão: ' . data_extensa($proxima['inicio']))
-            . (count($sessoes) > 1 ? ' (' . count($sessoes) . ($edicao ? ' edições' : ' datas') . ' disponíveis)' : '') . '.',
+        'nota' => 'Próxima edição: ' . horario($proxima) . (count($sessoes) > 1 ? ' (' . count($sessoes) . ' edições disponíveis)' : '') . '.',
     ];
 }
 
@@ -256,13 +255,13 @@ function formacoes_publico(): array
     $novas = formacoes_novas();
     $html .= '<section class="secao secao-calendario" aria-labelledby="calendario"><div class="contentor">';
     if ($novas) {
-        $html .= '<div class="cabeca-secao"><span class="sobretitulo">Novidades</span><h2 id="novas">Novas formações</h2><p>Sessões agendadas nos últimos ' . DIAS_NOVA . ' dias.</p></div>'
+        $html .= '<div class="cabeca-secao"><span class="sobretitulo">Novidades</span><h2 id="novas">Novas formações</h2><p>Edições agendadas nos últimos ' . DIAS_NOVA . ' dias.</p></div>'
             . calendario($novas, 'botao_inscrever_publico', true);
     }
-    $html .= '<div class="cabeca-secao' . ($novas ? ' espaco-topo' : '') . '"><span class="sobretitulo">Calendário</span><h2 id="calendario">Próximas sessões</h2><p>Escolha a sessão e inscreva um ou mais formandos. Cada inscrição fica pendente até ser confirmada pela Gadgetmetodo por email.</p></div>';
+    $html .= '<div class="cabeca-secao' . ($novas ? ' espaco-topo' : '') . '"><span class="sobretitulo">Calendário</span><h2 id="calendario">Próximas edições</h2><p>Escolha a edição e inscreva um ou mais formandos. Cada inscrição inclui todas as sessões do curso e fica pendente até ser confirmada pela Gadgetmetodo por email.</p></div>';
     $html .= $formacoes
         ? calendario($formacoes, 'botao_inscrever_publico', true)
-        : '<div class="aviso aviso-info">Ainda não há sessões agendadas. ' . ($cursos ? 'Faça a pré-inscrição no curso que lhe interessa: enviamos-lhe o convite quando as datas forem marcadas.' : 'Para receber as próximas datas, <a href="/contactos/#formulario">contacte-nos</a>.') . '</div>';
+        : '<div class="aviso aviso-info">Ainda não há edições agendadas. ' . ($cursos ? 'Faça a pré-inscrição no curso que lhe interessa: enviamos-lhe o convite quando as datas forem marcadas.' : 'Para receber as próximas datas, <a href="/contactos/#formulario">contacte-nos</a>.') . '</div>';
     $html .= '</div></section>';
     return ['conteudo' => $html, 'jsonld' => jsonld_formacoes($formacoes, $cursos)];
 }
@@ -306,11 +305,11 @@ function inscricao_publica(): array
     $f = $id ? linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]) : null;
     if (!$f || $f['estado'] !== 'aberta' || strtotime($f['inicio']) < strtotime('today')) {
         http_response_code($f ? 410 : 404);
-        return ['conteudo' => '<section class="secao"><div class="contentor estreito"><div class="aviso aviso-info">Esta sessão não existe ou já não aceita inscrições.</div><div class="acoes"><a class="botao" href="/formacoes/">Ver as próximas sessões</a></div></div></section>'];
+        return ['conteudo' => '<section class="secao"><div class="contentor estreito"><div class="aviso aviso-info">Esta edição não existe ou já não aceita inscrições.</div><div class="acoes"><a class="botao" href="/formacoes/">Ver as próximas sessões</a></div></div></section>'];
     }
     $restantes = max(0, (int) $f['vagas'] - inscritos((int) $f['id']));
     if ($restantes === 0) {
-        return ['conteudo' => '<section class="secao"><div class="contentor estreito"><div class="aviso aviso-info">Esta sessão está esgotada.</div><div class="acoes"><a class="botao" href="/formacoes/">Ver outras sessões</a><a class="botao botao-secundario" href="/contactos/#formulario">Pedir lista de espera</a></div></div></section>'];
+        return ['conteudo' => '<section class="secao"><div class="contentor estreito"><div class="aviso aviso-info">Esta edição está esgotada.</div><div class="acoes"><a class="botao" href="/formacoes/">Ver outras edições</a><a class="botao botao-secundario" href="/contactos/#formulario">Pedir lista de espera</a></div></div></section>'];
     }
 
     $cfg = cfg();
@@ -628,7 +627,7 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
     };
 
     enviar_aviso($destino, ($atualizada ? 'Pré-inscrição atualizada: ' : 'Nova pré-inscrição pelo site: ') . $p['nome'] . ($p['empresa'] ? ' (' . $p['empresa'] . ')' : '') . ', ' . $p['curso'], 'Nova pré-inscrição em curso',
-        '<p style="margin:0 0 16px;">' . ($atualizada ? 'Uma pré-inscrição por tratar foi atualizada pelo candidato.' : 'Foi registada uma pré-inscrição. Está em Inscrições, na área reservada, com o estado "Pré-inscrição": aí pode inscrever o candidato numa sessão ou definir as datas.') . '</p>' . $tabela
+        '<p style="margin:0 0 16px;">' . ($atualizada ? 'Uma pré-inscrição por tratar foi atualizada pelo candidato.' : 'Foi registada uma pré-inscrição. Está em Inscrições, na área reservada, com o estado "Pré-inscrição": aí pode inscrever o candidato numa edição já agendada ou numa edição nova, definindo as datas.') . '</p>' . $tabela
         . ($ind && (int) $ind['curso']['id'] !== (int) $p['curso_id'] ? '<p style="margin:16px 0 0;"><strong>Atenção:</strong> o diagnóstico indica ' . h(curso_com_artigo((string) $ind['curso']['nome'])) . ' (' . h($ind['motivo']) . '), e não o curso escolhido. Confirmar com o candidato.</p>' : '')
         . '<p style="margin:22px 0 0;">' . $botao($link_area, 'Ver a pré-inscrição na área reservada') . '</p>',
         "Foi registada uma pré-inscrição.\n\n" . $texto . "\n" . $link_area,
@@ -740,9 +739,9 @@ function curso_publico(): array
             </div>
           </aside>
         </div>
-        <div class="cabeca-secao espaco-topo"><span class="sobretitulo">Calendário</span><h2 id="sessoes">Próximas sessões</h2></div>
+        <div class="cabeca-secao espaco-topo"><span class="sobretitulo">Calendário</span><h2 id="sessoes">Próximas edições</h2></div>
         ' . ($sessoes ? calendario($sessoes, 'botao_inscrever_publico', true) . '<p class="espaco-topo-curto">Nenhuma data lhe convém? <a href="' . h(link_pre_inscricao((int) $c['id'])) . '">Faça a pré-inscrição</a> e enviamos-lhe o convite para as próximas.</p>'
-            : '<div class="aviso aviso-info">Ainda não há sessões agendadas deste curso. Faça a pré-inscrição: enviamos-lhe o convite para a inscrição quando as datas forem marcadas, sem compromisso. Para organizar o curso só para a sua equipa, <a href="/contactos/#formulario">contacte-nos</a>.</div>'
+            : '<div class="aviso aviso-info">Ainda não há edições agendadas deste curso. Faça a pré-inscrição: enviamos-lhe o convite para a inscrição quando as datas forem marcadas, sem compromisso. Para organizar o curso só para a sua equipa, <a href="/contactos/#formulario">contacte-nos</a>.</div>'
               . '<p><a class="botao" href="' . h(link_pre_inscricao((int) $c['id'])) . '">Fazer pré-inscrição</a></p>') . '
       </div></section>';
     $curso_ld = [
@@ -781,7 +780,7 @@ function curso_publico(): array
     $json = json_encode($curso_ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_PRETTY_PRINT);
     return [
         'titulo' => $c['nome'] . ' | Formação | Gadgetmetodo, Lda.',
-        'descricao' => resumir((string) ($c['descricao'] ?: $c['nome'] . ': programa, módulos, temas e próximas sessões.'), 155),
+        'descricao' => resumir((string) ($c['descricao'] ?: $c['nome'] . ': programa, módulos, temas e próximas edições.'), 155),
         'canonical' => SITE_CANONICO . link_curso_publico($c),
         'jsonld' => "  <script type=\"application/ld+json\">\n" . $json . "\n  </script>\n",
         'conteudo' => $html,

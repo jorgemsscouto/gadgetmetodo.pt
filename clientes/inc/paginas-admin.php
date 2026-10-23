@@ -85,7 +85,7 @@ function admin_formacao(): void
             $quando = horario($f) . ' · ' . (MODALIDADES[$f['modalidade']] ?? '') . ($f['local'] ? ' · ' . $f['local'] : '');
             enviar_convite($convite['nome'], $convite['email'], $convite['mensagem'], 'Convite: ' . $f['titulo'] . ', ' . data_hora($f['inicio'], false),
                 '<p style="margin:0 0 4px;"><strong>' . h($f['titulo']) . '</strong> · ' . h(nome_modulo($f)) . '</p><p style="margin:0;color:#687280;">' . h($quando) . '</p>',
-                $f['titulo'] . ' · ' . nome_modulo($f) . "\n" . $quando, endereco_site() . '/formacoes/inscricao.php?f=' . $id, 'Inscrever-me nesta sessão');
+                $f['titulo'] . ' · ' . nome_modulo($f) . "\n" . $quando, endereco_site() . '/formacoes/inscricao.php?f=' . $id, 'Inscrever-me nesta edição');
             aviso('Convite enviado para ' . h($convite['email']) . '.');
         }
         redirecionar('formacao', ['id' => $id]);
@@ -96,26 +96,29 @@ function admin_formacao(): void
         redirecionar('formacao', ['id' => $id]);
     }
     if ($post && $acao === '') {
-        [$d, $curso_id, $modulo_id, $erros] = ler_sessao();
+        [$d, $curso_id, $erros] = ler_sessao();
         if (!$erros) {
-            $id = gravar_sessao($d, $curso_id, $modulo_id, $f ? $id : 0);
+            $id = gravar_sessao($d, $curso_id, $f ? $id : 0);
             aviso($f ? 'Formação atualizada.' : 'Formação criada e visível para os clientes e na área de formação do site.');
             redirecionar('formacao', ['id' => $id]);
         }
-        $f = ['id' => $id ?: null, 'titulo' => '', 'curso_id' => $curso_id, 'modulo_id' => $modulo_id, 'inicio' => $d['data'] . ' ' . $d['hora_inicio'], 'fim' => $d['hora_fim'] ? $d['data'] . ' ' . $d['hora_fim'] : '', 'modalidade' => $d['modalidade'], 'local' => $d['local'], 'vagas' => $d['vagas'], 'estado' => $d['estado'], 'notas' => $d['notas'], 'reuniao' => $d['reuniao']];
+        $f = ['id' => $id ?: null, 'titulo' => '', 'curso_id' => $curso_id, 'modulo_id' => $f['modulo_id'] ?? null, 'inicio' => $d['data'] . ' ' . $d['hora_inicio'], 'fim' => $d['hora_fim'] ? $d['data'] . ' ' . $d['hora_fim'] : '', 'modalidade' => $d['modalidade'], 'local' => $d['local'], 'vagas' => $d['vagas'], 'estado' => $d['estado'], 'notas' => $d['notas'], 'reuniao' => $d['reuniao']];
     }
     $v = $f ?: ['curso_id' => (int) ($_GET['curso'] ?? 0), 'modulo_id' => null, 'inicio' => '', 'fim' => '', 'modalidade' => 'presencial', 'local' => '', 'vagas' => 12, 'estado' => 'aberta', 'notas' => '', 'reuniao' => ''];
     $t = $v['inicio'] ? strtotime($v['inicio']) : false;
-    $selecionado = !empty($v['modulo_id']) ? 'm:' . $v['modulo_id'] : (!empty($v['curso_id']) ? 'c:' . $v['curso_id'] : '');
+    $selecionado = (int) ($v['curso_id'] ?? 0);
     $datas = $id ? sessoes_formacao((int) $id) : [];
     $primeira = $datas ? ['inicio' => $datas[0]['inicio'], 'fim' => $datas[0]['fim'], 'modulo_id' => $datas[0]['modulo_id']] + $v : $v;
     $atalhos = $id && $t
         ? '<a href="' . h(link_google_calendar($primeira + ['titulo' => curso((int) $v['curso_id'])['nome'] ?? ''])) . '" target="_blank" rel="noopener">abra ' . ($datas ? 'a 1.ª sessão' : 'esta sessão') . ' no Google Calendar</a> (data e hora já preenchidas), escolha "Adicionar videoconferência do Google Meet", guarde e copie a ligação para aqui; ou <a href="https://meet.new" target="_blank" rel="noopener">crie uma reunião rápida no Google Meet</a>.'
-        : 'guarde primeiro a sessão para ter o atalho do Google Calendar com a data preenchida, ou <a href="https://meet.new" target="_blank" rel="noopener">crie uma reunião rápida no Google Meet</a> e cole aqui a ligação.';
-    $form = ($erros ? '<div class="aviso aviso-erro">' . h(implode(' ', $erros)) . '</div>' : '') . '
+        : 'guarde primeiro a formação para ter o atalho do Google Calendar com a data preenchida, ou <a href="https://meet.new" target="_blank" rel="noopener">crie uma reunião rápida no Google Meet</a> e cole aqui a ligação.';
+    // Formações antigas criadas só para um módulo: ao guardar passam a ser uma edição do curso completo
+    $antiga = !empty($v['modulo_id']) && ($m = linha_bd('SELECT * FROM modulos WHERE id = ?', [(int) $v['modulo_id']]))
+        ? '<div class="aviso aviso-info">Esta formação foi criada só para "' . h(rotulo_modulo($m)) . '". As inscrições são agora sempre no curso completo, com todas as sessões: ao guardar, a formação passa a ter as datas de todas as sessões indicadas abaixo.</div>' : '';
+    $form = ($erros ? '<div class="aviso aviso-erro">' . h(implode(' ', $erros)) . '</div>' : '') . $antiga . '
       <form method="post" class="formulario">' . campo_csrf() . '
         <div class="campos-2">
-          ' . seletor_curso_modulo($selecionado, (int) ($v['curso_id'] ?? 0)) . '
+          ' . seletor_curso($selecionado) . '
           ' . campo('data', 'Data (da 1.ª sessão) *', $t ? date('Y-m-d', $t) : '', 'date', 'required') . '
           <div class="campos-2">' . campo('hora_inicio', 'Início *', $t ? date('H:i', $t) : '09:30', 'time', 'required') . campo('hora_fim', 'Fim', ($s1 = sessoes_formacao((int) $id)) ? ($s1[0]['fim'] ? date('H:i', strtotime($s1[0]['fim'])) : '') : ($v['fim'] ? date('H:i', strtotime($v['fim'])) : '13:00'), 'time') . '</div>
           ' . campo_select('modalidade', 'Modalidade *', MODALIDADES, $v['modalidade']) . '
@@ -123,7 +126,7 @@ function admin_formacao(): void
           ' . campo('vagas', 'Vagas *', (string) $v['vagas'], 'number', 'min="1" max="500" required') . '
           ' . campo_select('estado', 'Estado *', ESTADOS_FORMACAO, $v['estado']) . '
         </div>
-        ' . campos_sessoes_curso($selecionado, (int) ($v['curso_id'] ?? 0), sessoes_do_formulario($v, (int) $id)) . '
+        ' . campos_sessoes_curso($selecionado, sessoes_do_formulario((int) $id)) . '
         <div class="campo"><label for="c-reuniao">Ligação da reunião online (Google Meet)</label><input id="c-reuniao" name="reuniao" type="url" value="' . h((string) $v['reuniao']) . '" maxlength="300" placeholder="https://meet.google.com/abc-defg-hij" aria-describedby="ajuda-reuniao">
           <p class="ajuda" id="ajuda-reuniao">Só é enviada às inscrições confirmadas (no email de confirmação e na área reservada); nunca aparece na página pública. Para a criar: ' . $atalhos . '</p></div>
         ' . campo('notas', 'Notas internas', (string) $v['notas'], 'textarea', 'maxlength="2000"') . '
@@ -146,8 +149,8 @@ function admin_formacao(): void
             $programa = '<h2 class="espaco-topo">Datas das ' . count($datas) . ' sessões</h2><p class="texto-suave">Os atalhos abrem o Google Calendar com a data e a hora de cada sessão já preenchidas. Pode usar a mesma ligação do Google Meet em todas.</p><ol class="lista-datas">' . $linhas_datas . '</ol>' . $programa;
         }
         if ($v['estado'] === 'aberta' && strtotime($v['inicio']) >= strtotime('today')) {
-            $form .= partilha_e_convite(endereco_site() . '/formacoes/inscricao.php?f=' . $id, 'Ligação de inscrição nesta sessão',
-                'Quem abrir esta ligação vê o programa da sessão e faz a inscrição diretamente, sem conta. A inscrição fica pendente até a confirmar.');
+            $form .= partilha_e_convite(endereco_site() . '/formacoes/inscricao.php?f=' . $id, 'Ligação de inscrição nesta edição',
+                'Quem abrir esta ligação vê o programa e as datas desta edição e faz a inscrição diretamente, sem conta. A inscrição inclui todas as sessões do curso e fica pendente até a confirmar.');
         }
         $lista = consulta('SELECT i.*, ' . SQL_CLIENTE . ' FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id WHERE i.formacao_id = ? ORDER BY i.criado', [$id]);
         $linhas = '';
@@ -170,7 +173,7 @@ function admin_formacao(): void
 function ler_sessao(): array
 {
     $d = [
-        'curso_modulo' => (string) ($_POST['curso_modulo'] ?? ''),
+        'curso' => (int) ($_POST['curso'] ?? 0),
         'data' => texto('data', 10), 'hora_inicio' => texto('hora_inicio', 5), 'hora_fim' => texto('hora_fim', 5),
         'modalidade' => isset(MODALIDADES[$_POST['modalidade'] ?? '']) ? $_POST['modalidade'] : 'presencial',
         'local' => texto('local', 160), 'vagas' => max(1, min(500, (int) ($_POST['vagas'] ?? 12))),
@@ -178,13 +181,14 @@ function ler_sessao(): array
         'notas' => texto('notas', 2000, true), 'reuniao' => texto('reuniao', 300),
     ];
     $erros = [];
-    [$curso_id, $modulo_id] = curso_e_modulo($d['curso_modulo']);
+    // Cada formação é uma edição do curso completo: a inscrição é sempre em todas as sessões
+    $curso_id = curso($d['curso']) ? $d['curso'] : 0;
     if (!$curso_id) {
-        $erros[] = 'Escolha o curso e o módulo.';
+        $erros[] = 'Escolha o curso.';
     }
-    // Curso completo com várias sessões: uma linha por sessão (as linhas sem data são ignoradas)
+    // Cursos com várias sessões: uma linha por sessão (as linhas sem data são ignoradas)
     $d['sessoes'] = [];
-    if ($curso_id && !$modulo_id && count(modulos_curso($curso_id)) > 1) {
+    if ($curso_id && count(modulos_curso($curso_id)) > 1) {
         $ids = array_map('intval', array_column(modulos_curso($curso_id), 'id'));
         foreach (array_values(array_filter((array) ($_POST['sessoes'][$curso_id] ?? []), 'is_array')) as $n => $l) {
             $data = trim((string) ($l['data'] ?? ''));
@@ -230,16 +234,16 @@ function ler_sessao(): array
     if ($d['reuniao'] !== '' && (!filter_var($d['reuniao'], FILTER_VALIDATE_URL) || stripos($d['reuniao'], 'https://') !== 0)) {
         $erros[] = 'A ligação da reunião tem de ser um endereço completo começado por https:// (por exemplo, https://meet.google.com/abc-defg-hij).';
     }
-    return [$d, $curso_id, $modulo_id, $erros];
+    return [$d, $curso_id, $erros];
 }
 
-// Cria (sem $id) ou atualiza uma formação e as datas das suas sessões; devolve o id
-function gravar_sessao(array $d, int $curso_id, ?int $modulo_id, int $id = 0): int
+// Cria (sem $id) ou atualiza uma formação (edição do curso completo) e as datas das suas sessões; devolve o id
+function gravar_sessao(array $d, int $curso_id, int $id = 0): int
 {
     $sessoes = $d['sessoes'] ?? [];
     $inicio = $sessoes ? $sessoes[0]['inicio'] : $d['data'] . ' ' . $d['hora_inicio'] . ':00';
     $fim = $sessoes ? $sessoes[count($sessoes) - 1]['fim'] : ($d['hora_fim'] !== '' ? $d['data'] . ' ' . $d['hora_fim'] . ':00' : null);
-    $valores = [curso($curso_id)['nome'], $curso_id, $modulo_id, $inicio, $fim, $d['modalidade'], $d['local'], $d['vagas'], $d['estado'], $d['notas'], $d['reuniao'] ?: null];
+    $valores = [curso($curso_id)['nome'], $curso_id, null, $inicio, $fim, $d['modalidade'], $d['local'], $d['vagas'], $d['estado'], $d['notas'], $d['reuniao'] ?: null];
     if ($id) {
         executar('UPDATE formacoes SET titulo = ?, curso_id = ?, modulo_id = ?, inicio = ?, fim = ?, modalidade = ?, local = ?, vagas = ?, estado = ?, notas = ?, reuniao = ? WHERE id = ?', array_merge($valores, [$id]));
     } else {
@@ -253,13 +257,12 @@ function gravar_sessao(array $d, int $curso_id, ?int $modulo_id, int $id = 0): i
     return $id;
 }
 
-// Lista das sessões do curso completo, para escolher a data, o horário e a sessão do curso de cada linha.
+// Lista das sessões do curso, para escolher a data, o horário e a sessão do curso de cada linha.
 // Há um bloco por curso com várias sessões; só o do curso escolhido fica visível e ativo (assets/js/area.js troca-os).
-function campos_sessoes_curso(string $selecionado, int $curso_atual, array $atuais = []): string
+function campos_sessoes_curso(int $escolhido, array $atuais = []): string
 {
-    $escolhido = preg_match('/^c:(\d+)$/', $selecionado, $r) ? (int) $r[1] : 0;
     $html = '';
-    foreach (consulta('SELECT * FROM cursos WHERE ativo = 1 OR id = ? ORDER BY nome', [$curso_atual]) as $c) {
+    foreach (consulta('SELECT * FROM cursos WHERE ativo = 1 OR id = ? ORDER BY nome', [$escolhido]) as $c) {
         $mods = modulos_curso((int) $c['id']);
         if (count($mods) < 2) {
             continue;
@@ -291,10 +294,11 @@ function campos_sessoes_curso(string $selecionado, int $curso_atual, array $atua
     return $html;
 }
 
-// Linhas a mostrar no formulário: as enviadas (depois de um erro), as gravadas ou, numa formação antiga sem sessões, a data única
-function sessoes_do_formulario(array $v, int $id): array
+// Linhas a mostrar no formulário: as enviadas (depois de um erro) ou as gravadas. Numa formação antiga numa só data,
+// as linhas ficam vazias e são propostas semanalmente a partir dessa data.
+function sessoes_do_formulario(int $id): array
 {
-    $curso = preg_match('/^c:(\d+)$/', (string) ($_POST['curso_modulo'] ?? ''), $c) ? (int) $c[1] : 0;
+    $curso = (int) ($_POST['curso'] ?? 0);
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['sessoes'][$curso])) {
         $r = [];
         foreach (array_values(array_filter((array) $_POST['sessoes'][$curso], 'is_array')) as $l) {
@@ -310,41 +314,18 @@ function sessoes_do_formulario(array $v, int $id): array
     if ($id && ($s = sessoes_formacao($id))) {
         return array_map(function ($x) { return ['modulo_id' => (int) $x['modulo_id'], 'inicio' => $x['inicio'], 'fim' => (string) $x['fim']]; }, $s);
     }
-    if ($id && empty($v['modulo_id']) && !empty($v['inicio'])) {
-        $mods = modulos_curso((int) $v['curso_id']);
-        return array_map(function ($m, $n) use ($v) { return ['modulo_id' => (int) $m['id'], 'inicio' => $n === 0 ? $v['inicio'] : '', 'fim' => $n === 0 ? (string) $v['fim'] : '']; }, $mods, array_keys($mods));
-    }
     return [];
 }
 
-// Valor do seletor "Curso e módulo": c:ID (curso completo) ou m:ID (um módulo)
-function curso_e_modulo(string $valor): array
+// Curso de uma formação. Não há formações de um só módulo ou sessão: cada formação é uma edição do curso completo
+function seletor_curso(int $selecionado): string
 {
-    if (preg_match('/^c:(\d+)$/', $valor, $r) && curso((int) $r[1])) {
-        return [(int) $r[1], null];
+    $opcoes = '<option value="">Escolha o curso</option>';
+    foreach (consulta('SELECT * FROM cursos WHERE ativo = 1 OR id = ? ORDER BY nome', [$selecionado]) as $c) {
+        $n = count(modulos_curso((int) $c['id']));
+        $opcoes .= '<option value="' . (int) $c['id'] . '"' . ((int) $c['id'] === $selecionado ? ' selected' : '') . '>' . h($c['nome'] . ($n > 1 ? ' (' . $n . ' ' . unidade($c, true) . ')' : '')) . '</option>';
     }
-    if (preg_match('/^m:(\d+)$/', $valor, $r) && ($m = linha_bd('SELECT id, curso_id FROM modulos WHERE id = ?', [(int) $r[1]]))) {
-        return [(int) $m['curso_id'], (int) $m['id']];
-    }
-    return [0, null];
-}
-
-function seletor_curso_modulo(string $selecionado, int $curso_atual): string
-{
-    $opcoes = '<option value="">Escolha o curso e o módulo</option>';
-    $opcao = function (string $valor, string $rotulo) use ($selecionado) {
-        return '<option value="' . h($valor) . '"' . ($valor === $selecionado ? ' selected' : '') . '>' . h($rotulo) . '</option>';
-    };
-    foreach (consulta('SELECT * FROM cursos WHERE ativo = 1 OR id = ? ORDER BY nome', [$curso_atual]) as $c) {
-        $mods = modulos_curso((int) $c['id']);
-        $opcoes .= '<optgroup label="' . h($c['nome'] . ($c['tipologia'] ? ' · ' . $c['tipologia'] : '')) . '">'
-            . $opcao('c:' . $c['id'], count($mods) > 1 ? $c['nome'] . ': curso completo (' . count($mods) . ' ' . unidade($c, true) . ')' : $c['nome'] . ': curso completo');
-        foreach ($mods as $m) {
-            $opcoes .= $opcao('m:' . $m['id'], $c['nome'] . ': ' . rotulo_modulo($m));
-        }
-        $opcoes .= '</optgroup>';
-    }
-    return '<div class="campo"><label for="c-curso_modulo">Curso e módulo *</label><select id="c-curso_modulo" name="curso_modulo" required>' . $opcoes . '</select></div>';
+    return '<div class="campo"><label for="c-curso">Curso *</label><select id="c-curso" name="curso" required>' . $opcoes . '</select></div>';
 }
 
 /* Cursos: configuração de cursos, tipologias, módulos e temas */
@@ -447,10 +428,10 @@ function admin_curso(): void
                 ? consulta('SELECT * FROM preinscricoes WHERE id = ? AND curso_id = ?', [(int) ($_POST['pre_id'] ?? 0), $id])
                 : consulta("SELECT * FROM preinscricoes WHERE curso_id = ? AND estado = 'nova' ORDER BY criado", [$id]);
             if (!sessoes_com_vagas($id)) {
-                aviso('Agende primeiro uma sessão com inscrições abertas: o convite leva o candidato às datas do curso.', 'erro');
+                aviso('Agende primeiro uma edição do curso com inscrições abertas: o convite leva o candidato às datas do curso.', 'erro');
             } else {
                 foreach ($lista as $pre) {
-                    convite_curso($c, (string) $pre['nome'], (string) $pre['email'], 'Fez a pré-inscrição n' . curso_com_artigo((string) $c['nome']) . '. Já há datas agendadas: escolha a sessão que lhe convém e faça a inscrição na página do curso. As vagas são limitadas e atribuídas por ordem de inscrição.');
+                    convite_curso($c, (string) $pre['nome'], (string) $pre['email'], 'Fez a pré-inscrição n' . curso_com_artigo((string) $c['nome']) . '. Já há datas agendadas: escolha a edição que lhe convém e faça a inscrição na página do curso (a inscrição inclui todas as sessões). As vagas são limitadas e atribuídas por ordem de inscrição.');
                     executar("UPDATE preinscricoes SET estado = 'convidada' WHERE id = ?", [$pre['id']]);
                 }
                 aviso(count($lista) === 1 ? 'Convite enviado para ' . h((string) $lista[0]['email']) . '.' : count($lista) . ' convites enviados.');
@@ -506,7 +487,7 @@ function admin_curso(): void
         ' . campo('enquadramento', 'Enquadramento legal', (string) $v['enquadramento'], 'textarea', 'maxlength="3000" rows="3"') . '
         ' . campo('investimento', 'Investimento e condições (vazio: não aparece)', (string) $v['investimento'], 'textarea', 'maxlength="400" rows="2"') . '
         <label class="opcao consentimento"><input type="checkbox" name="diagnostico" value="1"' . ($v['diagnostico'] ? ' checked' : '') . '> <span>Incluir o diagnóstico de utilização de IA na inscrição (recomendado nos cursos de inteligência artificial)</span></label>
-        <label class="opcao consentimento"><input type="checkbox" name="ativo" value="1"' . ($v['ativo'] ? ' checked' : '') . '> <span>Curso ativo (disponível para agendar sessões)</span></label>
+        <label class="opcao consentimento"><input type="checkbox" name="ativo" value="1"' . ($v['ativo'] ? ' checked' : '') . '> <span>Curso ativo (disponível para agendar edições)</span></label>
         <div><button class="botao" type="submit">' . ($c ? 'Guardar curso' : 'Criar curso') . '</button></div>
       </form>';
     if ($c) {
@@ -525,7 +506,7 @@ function admin_curso(): void
         $sessoes = consulta('SELECT * FROM formacoes WHERE curso_id = ? AND inicio >= ? ORDER BY inicio', [$id, date('Y-m-d 00:00:00')]);
         $html .= '<h2 class="espaco-topo">Sessões agendadas</h2>'
             . ($sessoes ? calendario($sessoes, function ($f) { return '<a href="' . h(url('formacao', ['id' => $f['id']])) . '">Gerir</a>'; }) : '<p class="texto-suave">Este curso não tem sessões agendadas.</p>')
-            . '<p class="espaco-topo-curto"><a class="botao" href="' . h(url('formacao', ['curso' => $id])) . '">Agendar sessão deste curso</a></p>';
+            . '<p class="espaco-topo-curto"><a class="botao" href="' . h(url('formacao', ['curso' => $id])) . '">Agendar edição deste curso</a></p>';
         $html .= lista_preinscricoes($c);
         if (!linha_bd('SELECT id FROM formacoes WHERE curso_id = ?', [$id])) {
             $html .= '<form method="post" class="espaco-topo">' . campo_csrf() . '<input type="hidden" name="acao" value="apagar_curso"><button class="botao botao-secundario" type="submit">Apagar este curso</button></form>';
@@ -558,13 +539,13 @@ function lista_preinscricoes(array $c): string
             . $form('pre_apagar', '<button class="botao botao-secundario botao-pequeno" type="submit">Apagar</button>') . '</td></tr>';
     }
     return '<h2 class="espaco-topo" id="preinscricoes">Pré-inscrições</h2>
-      <p class="texto-suave">Pedidos feitos na página do curso, para receber o convite quando houver datas. O candidato recebeu uma confirmação por email. ' . ($com_datas ? 'O convite leva-o à página do curso, com as datas e a inscrição, e passa a pré-inscrição para "Convite enviado".' : 'Para enviar convites, agende primeiro uma sessão com inscrições abertas.') . ' As pré-inscrições são apagadas automaticamente 12 meses após o registo.</p>'
+      <p class="texto-suave">Pedidos feitos na página do curso, para receber o convite quando houver datas. O candidato recebeu uma confirmação por email. ' . ($com_datas ? 'O convite leva-o à página do curso, com as datas e a inscrição, e passa a pré-inscrição para "Convite enviado".' : 'Para enviar convites, agende primeiro uma edição do curso com inscrições abertas.') . ' As pré-inscrições são apagadas automaticamente 12 meses após o registo.</p>'
         . ($lista ? ($com_datas && $novas > 1 ? '<form method="post" class="espaco-topo-curto">' . campo_csrf() . '<input type="hidden" name="acao" value="pre_convidar_todas"><button class="botao" type="submit">Enviar convite às ' . $novas . ' pré-inscrições novas</button></form>' : '')
             . '<div class="conteudo tabela-rolante espaco-topo-curto"><table><thead><tr><th>Data</th><th>Nome e empresa</th><th>Contactos</th><th>Formandos</th><th>Diagnóstico</th><th>Modalidade e preferências</th><th>Estado</th><th>Ações</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>'
             : '<p class="texto-suave">Ainda não há pré-inscrições neste curso.</p>');
 }
 
-/* Pré-inscrição: ficha, estado e inscrição numa sessão já agendada ou numa sessão nova (definir datas) */
+/* Pré-inscrição: ficha, estado e inscrição numa edição já agendada ou numa edição nova (definir datas) */
 
 // Estados que se escolhem à mão; "Inscrita" só resulta de inscrever o candidato numa sessão
 function estados_preinscricao_manuais(string $atual = ''): array
@@ -605,14 +586,14 @@ function admin_preinscricao(): void
             $f = null;
             $nova = null;
             if (($_POST['sessao'] ?? '') === 'nova') {
-                [$d, $curso_id, $modulo_id, $e] = ler_sessao();
+                [$d, $curso_id, $e] = ler_sessao();
                 if (!$e && strtotime($d['data']) < strtotime('today')) {
-                    $e[] = 'A data da sessão já passou.';
+                    $e[] = 'A data da 1.ª sessão já passou.';
                 }
                 $erros = array_merge($erros, $e);
-                $nova = [$d, $curso_id, $modulo_id];
+                $nova = [$d, $curso_id];
             } elseif (!($f = linha_bd("SELECT * FROM formacoes WHERE id = ? AND estado != 'cancelada'", [(int) ($_POST['sessao'] ?? 0)]))) {
-                $erros[] = 'Escolha a sessão ou "Nova sessão".';
+                $erros[] = 'Escolha a edição ou "Nova edição".';
             }
             if (!$erros) {
                 if ($nova) {
@@ -653,8 +634,8 @@ function admin_preinscricao(): void
         $opcoes .= '<label class="opcao"><input type="radio" name="sessao" value="' . (int) $f['id'] . '"' . ($escolha === (string) $f['id'] ? ' checked' : '') . '> <span><strong>' . h($f['titulo']) . '</strong> · ' . h(nome_modulo($f)) . '<br>'
             . h(horario($f)) . ' · ' . h(MODALIDADES[$f['modalidade']] ?? '') . ' · ' . ($livres > 0 ? $livres . ' vaga(s) livre(s)' : 'sem vagas livres') . ($f['estado'] !== 'aberta' ? ' · ' . h(ESTADOS_FORMACAO[$f['estado']]) : '') . '</span></label>';
     }
-    $opcoes .= '<label class="opcao"><input type="radio" name="sessao" value="nova"' . ($escolha === 'nova' ? ' checked' : '') . '> <span><strong>Nova sessão</strong>: definir agora a data e o horário (fica também no calendário e no site)</span></label>';
-    $v = $_POST + ['curso_modulo' => 'c:' . $c['id'], 'data' => '', 'hora_inicio' => '09:30', 'hora_fim' => '10:30', 'modalidade' => $p['modalidade'] ?: 'presencial', 'local' => '', 'vagas' => '12', 'reuniao' => '', 'formando' => $p['nome'], 'email_formando' => $p['email'], 'estado_inscricao' => 'confirmada'];
+    $opcoes .= '<label class="opcao"><input type="radio" name="sessao" value="nova"' . ($escolha === 'nova' ? ' checked' : '') . '> <span><strong>Nova edição</strong>: definir agora as datas e o horário das sessões (fica também no calendário e no site)</span></label>';
+    $v = $_POST + ['curso' => $c['id'], 'data' => '', 'hora_inicio' => '09:30', 'hora_fim' => '10:30', 'modalidade' => $p['modalidade'] ?: 'presencial', 'local' => '', 'vagas' => '12', 'reuniao' => '', 'formando' => $p['nome'], 'email_formando' => $p['email'], 'estado_inscricao' => 'confirmada'];
     $a = $respostas ? avaliar_diagnostico($respostas) : null;
     $rec = $respostas ? recomendacao_de(['respostas' => json_encode($respostas), 'curso_id' => $c['id']]) : '';
     $dados = array_filter([
@@ -689,19 +670,19 @@ function admin_preinscricao(): void
         <details class="programa"><summary>Ver as respostas</summary><div class="programa-corpo conteudo tabela-rolante">' . tabela_diagnostico(['respostas' => json_encode($respostas)]) . '</div></details>' : '');
     if ($p['estado'] !== 'inscrita') {
         $html .= '<h2 class="espaco-topo" id="inscrever">Inscrever e definir datas</h2>
-        <p class="texto-suave">Escolha uma sessão já agendada ou crie uma sessão nova com a data e o horário. A pré-inscrição passa a "Inscrita" e a inscrição aparece em Inscrições, com os contactos e o diagnóstico.' . ((int) $p['formandos'] > 1 ? ' Esta pré-inscrição prevê ' . (int) $p['formandos'] . ' formandos: os restantes inscrevem-se depois, a partir da sessão.' : '') . '</p>
+        <p class="texto-suave">Escolha uma edição já agendada ou crie uma edição nova, com as datas das sessões. A inscrição inclui sempre todas as sessões do curso. A pré-inscrição passa a "Inscrita" e a inscrição aparece em Inscrições, com os contactos e o diagnóstico.' . ((int) $p['formandos'] > 1 ? ' Esta pré-inscrição prevê ' . (int) $p['formandos'] . ' formandos: os restantes inscrevem-se depois, na mesma edição.' : '') . '</p>
         <form method="post" class="formulario" action="' . h(url('preinscricao', ['id' => $id])) . '#inscrever">' . campo_csrf() . '<input type="hidden" name="acao" value="inscrever">
           <fieldset class="campo-grupo"><legend>Sessão *</legend><div class="opcoes">' . $opcoes . '</div></fieldset>
-          <fieldset class="campo-grupo nova-sessao"><legend>Nova sessão (preencher só se escolheu "Nova sessão")</legend>
+          <fieldset class="campo-grupo nova-sessao"><legend>Nova edição (preencher só se escolheu "Nova edição")</legend>
             <div class="campos-2">
-              ' . seletor_curso_modulo((string) $v['curso_modulo'], (int) $c['id']) . '
+              ' . seletor_curso((int) $v['curso']) . '
               ' . campo('data', 'Data (da 1.ª sessão)', (string) $v['data'], 'date') . '
               <div class="campos-2">' . campo('hora_inicio', 'Início', (string) $v['hora_inicio'], 'time') . campo('hora_fim', 'Fim', (string) $v['hora_fim'], 'time') . '</div>
               ' . campo_select('modalidade', 'Modalidade', MODALIDADES, (string) $v['modalidade']) . '
               ' . campo('local', 'Local', (string) $v['local'], 'text', 'maxlength="160" placeholder="Morada, nas sessões presenciais ou mistas"') . '
               ' . campo('vagas', 'Vagas', (string) $v['vagas'], 'number', 'min="1" max="500"') . '
             </div>
-            ' . campos_sessoes_curso((string) $v['curso_modulo'], (int) $c['id'], sessoes_do_formulario([], 0)) . '
+            ' . campos_sessoes_curso((int) $v['curso'], sessoes_do_formulario(0)) . '
             ' . campo('reuniao', 'Ligação da reunião online (Google Meet)', (string) $v['reuniao'], 'url', 'maxlength="300" placeholder="https://meet.google.com/abc-defg-hij"') . '
           </fieldset>
           <div class="campos-2">
@@ -709,7 +690,7 @@ function admin_preinscricao(): void
             ' . campo('email_formando', 'Email do formando', (string) $v['email_formando'], 'email', 'maxlength="160"') . '
             ' . campo_select('estado_inscricao', 'Estado da inscrição', ['confirmada' => 'Confirmada', 'pendente' => 'Pendente'], (string) $v['estado_inscricao']) . '
           </div>
-          <label class="opcao consentimento"><input type="checkbox" name="avisar" value="1" checked> <span>Enviar a confirmação por email ao candidato, com a data, o local e a ligação da sessão online (só quando o estado é Confirmada)</span></label>
+          <label class="opcao consentimento"><input type="checkbox" name="avisar" value="1" checked> <span>Enviar a confirmação por email ao candidato, com as datas, o local e a ligação das sessões online (só quando o estado é Confirmada)</span></label>
           <div><button class="botao" type="submit">Inscrever</button></div>
         </form>';
     }
