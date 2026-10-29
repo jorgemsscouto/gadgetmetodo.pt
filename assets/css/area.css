@@ -1221,3 +1221,5 @@ h2.calendario-mes {
 .tabela-precos .com-iva { display: block; margin-top: 4px; color: var(--cinzento); font-size: 0.8rem; text-align: right; }
 .tabela-precos td.centro { text-align: center; }
 .tabela-precos tr.linha-nova td { padding-top: 14px; border-top: 1px dashed #9aa3af; }
+.tabela-precos input.nova-opcao { margin-top: 4px; font-size: 0.85rem; }
+.acoes-formulario { display: flex; flex-wrap: wrap; gap: 10px; }

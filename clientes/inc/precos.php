@@ -6,6 +6,8 @@ declare(strict_types=1);
 
 const TAXAS_IVA = ['23' => '23%', '13' => '13%', '6' => '6%', 'isento' => 'Isento'];
 const UNIDADES_PRECO = ['por formando', 'por edição', 'por grupo', 'por hora', 'por dia', 'por mês', 'por projeto'];
+const CATEGORIAS_PRECO = ['Formação: cursos abertos', 'Formação à medida', 'Consultoria'];
+const OUTRA_OPCAO = '__outra__'; // escolha "Outra (escrever)" nas listas de categoria e de unidade
 
 // Linhas iniciais, sem valores: os cursos ativos e as áreas de serviço. Só na primeira abertura da página.
 function semear_precos(): void
@@ -72,11 +74,18 @@ function ler_linha_preco(array $l, string $onde): array
         $v = is_string($v) && preg_match('//u', $v) ? preg_replace('/[^\P{C}]+/u', '', preg_replace('/\s+/u', ' ', $v)) : '';
         return trim((string) preg_replace('/^(.{0,' . $max . '}).*$/us', '$1', $v));
     };
+    // Categoria e unidade: a opção da lista ou, em "Outra (escrever)", o texto escrito ao lado
+    $escolha = function (string $campo, int $max) use ($l, $limpar) {
+        $v = $limpar($l[$campo] ?? '', $max);
+        return $v === OUTRA_OPCAO ? $limpar($l[$campo . '_outra'] ?? '', $max) : $v;
+    };
     $d = [
-        'categoria' => $limpar($l['categoria'] ?? '', 80) ?: 'Outros',
+        'categoria' => $escolha('categoria', 80),
         'designacao' => $limpar($l['designacao'] ?? '', 160),
         'descricao' => $limpar($l['descricao'] ?? '', 300),
-        'unidade' => $limpar($l['unidade'] ?? '', 40),
+        'unidade' => $escolha('unidade', 40),
+        'categoria_escolha' => (string) ($l['categoria'] ?? ''),
+        'unidade_escolha' => (string) ($l['unidade'] ?? ''),
         'valor_texto' => $limpar($l['valor'] ?? '', 20),
         'iva' => isset(TAXAS_IVA[$l['iva'] ?? '']) ? (string) $l['iva'] : '23',
         'ativo' => empty($l['ativo']) ? 0 : 1,
@@ -85,6 +94,12 @@ function ler_linha_preco(array $l, string $onde): array
     $d['valor'] = centimos($d['valor_texto']);
     if ($d['designacao'] === '') {
         return [$d, $onde . ': indique a designação.'];
+    }
+    if ($d['categoria'] === '') {
+        return [$d, $onde . ': escolha a categoria ou escreva a nova.'];
+    }
+    if (($l['unidade'] ?? '') === OUTRA_OPCAO && $d['unidade'] === '') {
+        return [$d, $onde . ': escreva a nova unidade.'];
     }
     if ($d['valor'] === false) {
         return [$d, $onde . ': o preço "' . $d['valor_texto'] . '" não é válido (por exemplo, 250 ou 1250,50).'];
@@ -120,7 +135,9 @@ function admin_precos(): void
                     continue;
                 }
                 $n++;
-                if ($id === 'nova') {
+                $id = (string) $id;
+                if (preg_match('/^nova\w*$/', $id)) {
+                    // Linha nova deixada em branco: ignorada
                     if (trim((string) ($l['designacao'] ?? '')) === '' && trim((string) ($l['valor'] ?? '')) === '') {
                         continue;
                     }
@@ -148,7 +165,7 @@ function admin_precos(): void
                 }
                 foreach ($gravar as $id => $d) {
                     $valores = [$d['categoria'], $d['designacao'], $d['descricao'], $d['unidade'], $d['valor'], $d['iva'], $d['ativo'], $d['ordem'], agora()];
-                    if ($id === 'nova') {
+                    if (preg_match('/^nova\w*$/', (string) $id)) {
                         executar('INSERT INTO precos (categoria, designacao, descricao, unidade, valor, iva, ativo, ordem, atualizado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', $valores);
                     } else {
                         $a = $existentes[(int) $id];
@@ -162,15 +179,32 @@ function admin_precos(): void
                 }
                 $pdo->commit();
                 aviso('Tabela de preços guardada' . ($apagar ? ' (' . count($apagar) . ' linha(s) apagada(s))' : '') . '.');
-                redirecionar('precos');
+                // "Acrescentar linha" sem JavaScript: grava e volta com uma linha em branco
+                redirecionar('precos', empty($_POST['acrescentar']) ? [] : ['nova' => 1]);
             }
         }
     }
 
     $lista = lista_precos();
-    $categorias = array_values(array_unique(array_merge(array_column($lista, 'categoria'), ['Formação: cursos abertos', 'Formação à medida', 'Consultoria'])));
-    $linha = function ($id, array $p, int $n) use ($enviadas) {
+    // Opções das listas: as predefinidas e as já usadas na tabela, mais "Outra (escrever)"
+    $categorias = array_values(array_unique(array_merge(CATEGORIAS_PRECO, array_column($lista, 'categoria'))));
+    $unidades = array_values(array_unique(array_merge(UNIDADES_PRECO, array_filter(array_column($lista, 'unidade')))));
+    $lista_escolha = function (string $nome, string $campo, string $rotulo, array $opcoes, string $atual, bool $vazio, int $max) {
+        $outra = $atual === OUTRA_OPCAO;
+        $html = $vazio ? '<option value=""' . ($atual === '' ? ' selected' : '') . '>(sem unidade)</option>' : '';
+        if ($atual !== '' && $atual !== OUTRA_OPCAO && !in_array($atual, $opcoes, true)) {
+            $opcoes[] = $atual;
+        }
+        foreach ($opcoes as $o) {
+            $html .= '<option value="' . h($o) . '"' . ($o === $atual ? ' selected' : '') . '>' . h($o) . '</option>';
+        }
+        $html .= '<option value="' . OUTRA_OPCAO . '"' . ($outra ? ' selected' : '') . '>Outra (escrever)</option>';
+        return '<select name="' . $nome . '[' . $campo . ']" data-outra aria-label="' . $rotulo . '">' . $html . '</select>'
+            . '<input type="text" name="' . $nome . '[' . $campo . '_outra]" class="nova-opcao" maxlength="' . $max . '" placeholder="Escreva a nova opção" aria-label="Nova opção: ' . $rotulo . '"' . ($outra ? '' : ' hidden') . '>';
+    };
+    $linha = function (string $id, array $p, int $n) use ($enviadas, $categorias, $unidades, $lista_escolha) {
         $v = $enviadas[$id] ?? null;
+        $nova = (bool) preg_match('/^nova/', $id);
         $nome = 'precos[' . $id . ']';
         $val = function (string $campo) use ($v, $p) {
             if ($v !== null) {
@@ -181,28 +215,40 @@ function admin_precos(): void
             }
             return (string) ($p[$campo] ?? '');
         };
-        $rotulo = $id === 'nova' ? 'linha nova' : 'linha ' . $n;
+        $rotulo = $nova ? 'linha nova' : 'linha ' . $n;
         $ativo = $v !== null ? $v['ativo'] : (int) ($p['ativo'] ?? 1);
         $iva = $val('iva') ?: '23';
         $total = ($p['valor'] ?? null) !== null && $v === null ? euros(com_iva((int) $p['valor'], (string) $p['iva'])) : '';
-        return '<tr' . ($id === 'nova' ? ' class="linha-nova"' : '') . '>'
-            . '<td><input type="text" name="' . $nome . '[categoria]" value="' . h($val('categoria')) . '" list="precos-categorias" maxlength="80" aria-label="Categoria, ' . $rotulo . '"></td>'
-            . '<td><input type="text" name="' . $nome . '[designacao]" value="' . h($val('designacao')) . '" maxlength="160" aria-label="Designação, ' . $rotulo . '"' . ($id === 'nova' ? ' placeholder="Nova linha: designação"' : ' required') . '>'
+        // Depois de um erro em "Outra (escrever)" sem texto, a lista volta a mostrar essa escolha
+        $categoria = $val('categoria') !== '' ? $val('categoria') : ($nova && $v === null ? CATEGORIAS_PRECO[0] : OUTRA_OPCAO);
+        $unidade = $v !== null && $v['unidade'] === '' && $v['unidade_escolha'] === OUTRA_OPCAO ? OUTRA_OPCAO : $val('unidade');
+        return '<tr' . ($nova ? ' class="linha-nova"' : '') . '>'
+            . '<td>' . $lista_escolha($nome, 'categoria', 'Categoria, ' . $rotulo, $categorias, $categoria, false, 80) . '</td>'
+            . '<td><input type="text" name="' . $nome . '[designacao]" value="' . h($val('designacao')) . '" maxlength="160" aria-label="Designação, ' . $rotulo . '"' . ($nova ? ' placeholder="Designação da nova linha"' : ' required') . '>'
             . '<input type="text" name="' . $nome . '[descricao]" value="' . h($val('descricao')) . '" maxlength="300" class="descricao" placeholder="Descrição (opcional)" aria-label="Descrição, ' . $rotulo . '"></td>'
-            . '<td><input type="text" name="' . $nome . '[unidade]" value="' . h($val('unidade')) . '" list="precos-unidades" maxlength="40" aria-label="Unidade, ' . $rotulo . '"></td>'
+            . '<td>' . $lista_escolha($nome, 'unidade', 'Unidade, ' . $rotulo, $unidades, $unidade, true, 40) . '</td>'
             . '<td><input type="text" name="' . $nome . '[valor]" value="' . h($val('valor')) . '" inputmode="decimal" maxlength="20" placeholder="Sob consulta" class="valor" aria-label="Preço sem IVA em euros, ' . $rotulo . '">'
             . ($total ? '<span class="com-iva">Com IVA: ' . h($total) . '</span>' : '') . '</td>'
             . '<td><select name="' . $nome . '[iva]" aria-label="IVA, ' . $rotulo . '">' . opcoes_select(TAXAS_IVA, $iva) . '</select></td>'
             . '<td class="centro"><input type="checkbox" name="' . $nome . '[ativo]" value="1"' . ($ativo ? ' checked' : '') . ' aria-label="Incluir no PDF, ' . $rotulo . '"></td>'
-            . '<td><input type="number" name="' . $nome . '[ordem]" value="' . h($id === 'nova' && $v === null ? (string) ($n * 10) : $val('ordem')) . '" min="0" max="9999" class="ordem" aria-label="Ordem, ' . $rotulo . '"></td>'
-            . '<td class="centro">' . ($id === 'nova' ? '' : '<input type="checkbox" name="' . $nome . '[apagar]" value="1" aria-label="Apagar, ' . $rotulo . '">') . '</td>'
+            . '<td><input type="number" name="' . $nome . '[ordem]" value="' . h($nova && $v === null ? (string) ($n * 10) : $val('ordem')) . '" min="0" max="9999" class="ordem" aria-label="Ordem, ' . $rotulo . '"></td>'
+            . '<td class="centro">' . ($nova ? '' : '<input type="checkbox" name="' . $nome . '[apagar]" value="1" aria-label="Apagar, ' . $rotulo . '">') . '</td>'
             . '</tr>';
     };
     $corpo = '';
     foreach ($lista as $n => $p) {
         $corpo .= $linha((string) $p['id'], $p, $n + 1);
     }
-    $corpo .= $linha('nova', [], count($lista) + 1);
+    // Linhas novas: as enviadas (depois de um erro) ou uma em branco quando a tabela está vazia ou se pediu "Acrescentar linha"
+    $proxima = ($lista ? max(array_map('intval', array_column($lista, 'ordem'))) : 0) + 10;
+    $novas = array_values(array_filter(array_keys($enviadas), function ($k) { return (bool) preg_match('/^nova/', (string) $k); }));
+    if (!$novas && (!$lista || !empty($_GET['nova']))) {
+        $novas = ['nova'];
+    }
+    foreach ($novas as $k => $id) {
+        $corpo .= $linha((string) $id, [], (int) ($proxima / 10) + $k);
+    }
+    $modelo = $linha('nova__N__', [], (int) ($proxima / 10));
     $ultima = $lista ? max(array_column($lista, 'atualizado')) : '';
     $validade = (string) definicao(bd(), 'precos_validade');
     $notas = definicao(bd(), 'precos_notas') ?? 'Preços em euros. Aos preços sem IVA acresce o IVA à taxa indicada. Os valores "sob consulta" são definidos em proposta, de acordo com o âmbito.';
@@ -217,10 +263,9 @@ function admin_precos(): void
           <thead><tr><th scope="col">Categoria</th><th scope="col">Designação e descrição</th><th scope="col">Unidade</th><th scope="col">Preço sem IVA (€)</th><th scope="col">IVA</th><th scope="col">No PDF</th><th scope="col">Ordem</th><th scope="col">Apagar</th></tr></thead>
           <tbody>' . $corpo . '</tbody>
         </table></div>
-        <datalist id="precos-categorias">' . implode('', array_map(function ($c) { return '<option value="' . h($c) . '"></option>'; }, $categorias)) . '</datalist>
-        <datalist id="precos-unidades">' . implode('', array_map(function ($u) { return '<option value="' . h($u) . '"></option>'; }, UNIDADES_PRECO)) . '</datalist>
-        <p class="ajuda">A última linha serve para acrescentar um preço. As linhas aparecem no PDF agrupadas por categoria, pela ordem indicada.</p>
-        <div><button class="botao" type="submit">Guardar alterações</button></div>
+        <template id="modelo-linha-preco">' . $modelo . '</template>
+        <p class="ajuda">Em Categoria e Unidade, escolha "Outra (escrever)" para criar uma opção nova. As linhas aparecem no PDF agrupadas por categoria, pela ordem indicada; as linhas novas deixadas em branco são ignoradas.</p>
+        <div class="acoes-formulario"><button class="botao" type="submit">Guardar alterações</button> <button class="botao botao-secundario" type="submit" name="acrescentar" value="1" data-acrescentar-linha>Acrescentar linha</button></div>
       </form>
       <h2 class="espaco-topo">Documento em PDF</h2>
       <form method="post" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="documento">

@@ -89,3 +89,46 @@
   });
   mostrar(false);
 })();
+
+// Tabela de preços: "Outra (escrever)" mostra o campo para a nova opção; "Acrescentar linha" junta uma linha em branco à tabela
+// (sem JavaScript, o botão grava e a página volta com uma linha em branco)
+(function () {
+  var tabela = document.querySelector('.tabela-precos');
+  if (!tabela) {
+    return;
+  }
+  function alternar(lista, focar) {
+    var campo = lista.parentNode.querySelector('.nova-opcao');
+    if (!campo) {
+      return;
+    }
+    var outra = lista.value === '__outra__';
+    campo.hidden = !outra;
+    campo.required = outra;
+    if (outra && focar) {
+      campo.focus();
+    }
+  }
+  tabela.addEventListener('change', function (e) {
+    if (e.target.matches('select[data-outra]')) {
+      alternar(e.target, true);
+    }
+  });
+  tabela.querySelectorAll('select[data-outra]').forEach(function (lista) { alternar(lista, false); });
+  var modelo = document.getElementById('modelo-linha-preco');
+  var botao = document.querySelector('[data-acrescentar-linha]');
+  var n = 0;
+  if (modelo && botao) {
+    botao.addEventListener('click', function (e) {
+      e.preventDefault();
+      n++;
+      var corpo = tabela.tBodies[0];
+      corpo.insertAdjacentHTML('beforeend', modelo.innerHTML.replace(/__N__/g, 'js' + n));
+      var linha = corpo.lastElementChild;
+      linha.querySelectorAll('select[data-outra]').forEach(function (lista) { alternar(lista, false); });
+      var designacao = linha.querySelector('input[name$="[designacao]"]');
+      designacao.scrollIntoView({ block: 'center' });
+      designacao.focus();
+    });
+  }
+})();
