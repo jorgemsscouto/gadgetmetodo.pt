@@ -9,6 +9,7 @@ require __DIR__ . '/inc/diagnostico.php';
 require __DIR__ . '/inc/vistas.php';
 require __DIR__ . '/inc/paginas-admin.php';
 require __DIR__ . '/inc/paginas-cliente.php';
+require __DIR__ . '/inc/precos.php';
 
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
@@ -57,7 +58,7 @@ $comuns = ['inscrever' => 'pagina_inscrever', 'inscricao' => 'pagina_inscricao',
 $rotas = eh_admin()
     ? ['painel' => 'admin_painel', 'calendario' => 'admin_calendario', 'formacao' => 'admin_formacao', 'cursos' => 'admin_cursos', 'curso' => 'admin_curso', 'inscricoes' => 'admin_inscricoes',
        'preinscricao' => 'admin_preinscricao', 'clientes' => 'admin_clientes', 'cliente' => 'admin_cliente', 'utilizadores' => 'admin_utilizadores', 'utilizador' => 'admin_utilizador',
-       'pedidos' => 'admin_pedidos'] + $comuns
+       'pedidos' => 'admin_pedidos', 'precos' => 'admin_precos'] + $comuns
     : ['painel' => 'cliente_painel', 'calendario' => 'cliente_formacoes', 'inscricoes' => 'cliente_inscricoes'] + $comuns;
 
 if (!isset($rotas[$p])) {

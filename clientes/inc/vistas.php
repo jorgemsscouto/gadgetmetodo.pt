@@ -6,7 +6,7 @@ declare(strict_types=1);
 function menu_area(string $atual): string
 {
     $itens = eh_admin()
-        ? ['painel' => 'Painel', 'calendario' => 'Calendário', 'cursos' => 'Cursos', 'inscricoes' => 'Inscrições', 'clientes' => 'Clientes', 'utilizadores' => 'Utilizadores', 'pedidos' => 'Pedidos do site', 'conta' => 'A minha conta']
+        ? ['painel' => 'Painel', 'calendario' => 'Calendário', 'cursos' => 'Cursos', 'precos' => 'Preços', 'inscricoes' => 'Inscrições', 'clientes' => 'Clientes', 'utilizadores' => 'Utilizadores', 'pedidos' => 'Pedidos do site', 'conta' => 'A minha conta']
         : ['painel' => 'Painel', 'calendario' => 'Formações', 'inscricoes' => 'Inscrições', 'conta' => 'A minha conta'];
     $html = '';
     foreach ($itens as $p => $nome) {

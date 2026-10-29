@@ -96,6 +96,10 @@ function bd(): ?PDO
             tipo_cliente TEXT, ferramentas TEXT)");
         acrescentar_colunas($pdo, 'preinscricoes', ['respostas' => 'TEXT', 'inscricao_id' => 'INTEGER', 'tipo_cliente' => 'TEXT', 'ferramentas' => 'TEXT']);
         $pdo->exec('CREATE INDEX IF NOT EXISTS preinscricoes_curso ON preinscricoes (curso_id)');
+        // Tabela de preços (administração): valor em cêntimos, sem IVA; sem valor, "sob consulta"
+        $pdo->exec("CREATE TABLE IF NOT EXISTS precos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, categoria TEXT NOT NULL, designacao TEXT NOT NULL, descricao TEXT, unidade TEXT,
+            valor INTEGER, iva TEXT NOT NULL DEFAULT '23', ativo INTEGER NOT NULL DEFAULT 1, ordem INTEGER NOT NULL DEFAULT 0, atualizado TEXT NOT NULL)");
         juntar_formacoes_por_sessao($pdo);
         // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação; as pré-inscrições, 12 meses depois do registo
         $pdo->prepare('DELETE FROM inscricoes WHERE formacao_id IN (SELECT id FROM formacoes WHERE inicio < ?)')

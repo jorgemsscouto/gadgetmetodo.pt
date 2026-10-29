@@ -40,6 +40,7 @@ class FichaPdf extends FPDF
     ];
     const LARGURA = 170; // largura útil: A4 (210 mm) menos 20 mm de cada lado
 
+    public $documento = 'Ficha de curso';
     public $titulo_curso = '';
     public $logotipo = '';
 
@@ -215,7 +216,7 @@ class FichaPdf extends FPDF
             $this->Image($this->logotipo, $this->lMargin, 10, 34);
         }
         $this->fonte('inter', '', 7.5, 'suave');
-        $t = pdf_txt('Ficha de curso · ' . $this->titulo_curso);
+        $t = pdf_txt($this->documento . ($this->titulo_curso !== '' ? ' · ' . $this->titulo_curso : ''));
         while ($this->GetStringWidth($t) > 120 && strlen($t) > 10) {
             $t = substr($t, 0, -2);
         }
