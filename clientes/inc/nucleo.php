@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../formulario/dados.php';
 require_once __DIR__ . '/../../formulario/email.php';
+require_once __DIR__ . '/../../formulario/comunicacao.php';
 require_once __DIR__ . '/cursos.php';
 
 date_default_timezone_set('Europe/Lisbon');
@@ -22,6 +23,11 @@ const DIAS_PREINSCRICOES = 365; // conservação das pré-inscrições após o r
 const TIPOS_CLIENTE = ['particular' => 'Particular', 'empresa' => 'Empresa'];
 // Rótulos das opções nos formulários públicos
 const OPCOES_TIPO_CLIENTE = ['particular' => 'Particular', 'empresa' => 'Empresa ou outra organização'];
+
+function endereco_site(): string
+{
+    return rtrim((string) (cfg()['site'] ?? 'https://www.gadgetmetodo.pt'), '/');
+}
 
 function cfg(): array
 {
@@ -349,15 +355,21 @@ function url(string $p, array $parametros = []): string
     return 'area.php?' . http_build_query(['p' => $p] + $parametros);
 }
 
-function redirecionar(string $p, array $parametros = []): void
+function redirecionar(string $p, array $parametros = [], string $ancora = ''): void
 {
-    header('Location: ' . url($p, $parametros), true, 303);
+    header('Location: ' . url($p, $parametros) . ($ancora !== '' ? '#' . $ancora : ''), true, 303);
     exit;
 }
 
 function aviso(string $texto, string $tipo = 'ok'): void
 {
     $_SESSION['avisos'][] = [$tipo, $texto];
+}
+
+// Mensagem depois de um envio de email pedido na administração, com aviso de erro se o envio falhou
+function aviso_envio(bool $ok, string $mensagem): void
+{
+    aviso($ok ? $mensagem : 'O email não foi enviado: o envio falhou ou este email está desativado em Configuração, Comunicação. Os detalhes ficam no registo de erros do alojamento.', $ok ? 'ok' : 'erro');
 }
 
 function avisos(): string
@@ -508,24 +520,71 @@ function exportar_csv(string $nome, array $cabecalho, array $linhas): void
 
 /* Emails da área */
 
-function enviar_aviso(string $para, string $assunto, string $titulo, string $corpo_html, string $corpo_texto, string $responder_a = '', string $bcc = '', string $cc = ''): void
+// Configuração da comunicação (Configuração, Comunicação): remetente, destinatários e textos dos emails
+function comunicacao(bool $renovar = false): array
+{
+    return config_comunicacao(bd(), cfg(), $renovar);
+}
+
+// Caixa que recebe os avisos internos e as respostas dos clientes
+function email_admin(): string
+{
+    return comunicacao()['geral']['email_admin'];
+}
+
+// Envia um email do catálogo (formulario/comunicacao.php) com o assunto, o título, o texto e o fecho configurados.
+// $meio são os dados próprios do envio (HTML e texto), entre o texto e o fecho. Os emails para clientes levam a
+// assinatura e respondem para a administração; os avisos internos levam a cópia oculta geral.
+// Opções: texto (substitui o texto configurado, mantendo a saudação), responder_a, cc, teste (envia mesmo desativado e sem cópias).
+function enviar_mensagem(string $tipo, string $para, array $vars, array $meio = ['', ''], array $op = []): bool
+{
+    $com = comunicacao();
+    $e = $com['emails'][$tipo];
+    if (!$e['ativo'] && empty($op['teste'])) {
+        return false;
+    }
+    $interno = EMAILS[$tipo]['grupo'] === 'admin';
+    $texto = substituir_variaveis($e['texto'], $vars);
+    if (($op['texto'] ?? '') !== '') {
+        // Mensagem escrita à mão (sem variáveis): fica a saudação do modelo (1.º parágrafo, curto e acabado em vírgula)
+        $partes = preg_split('/\n[ \t]*\n/u', trim(str_replace("\r\n", "\n", $texto)), 2);
+        $saudacao = count($partes) === 2 && strlen($partes[0]) <= 60 && substr(rtrim($partes[0]), -1) === ',' ? $partes[0] : '';
+        $texto = ($saudacao !== '' ? $saudacao . "\n\n" : '') . $op['texto'];
+    }
+    $fecho = substituir_variaveis($e['fecho'], $vars);
+    $assinatura = $interno ? '' : $com['geral']['assinatura'];
+    $html = html_paragrafos($texto) . $meio[0] . html_paragrafos($fecho, 'margin:18px 0 0;') . html_paragrafos($assinatura, 'margin:22px 0 0;');
+    $txt = implode("\n\n", array_filter([texto_paragrafos($texto), trim($meio[1]), texto_paragrafos($fecho), texto_paragrafos($assinatura)], 'strlen'));
+    // Os emails de teste vão só para quem os pede, sem cópias
+    $bcc = !empty($op['teste']) ? [] : array_merge($interno ? (lista_emails($com['geral']['bcc']) ?: []) : [], lista_emails($e['copia']) ?: []);
+    return enviar_aviso($para, (!empty($op['teste']) ? '[Teste] ' : '') . assunto_email($e['assunto'], $vars), substituir_variaveis($e['titulo'], $vars) ?: EMAILS[$tipo]['nome'],
+        $html, $txt, (string) ($op['responder_a'] ?? ($interno ? '' : email_admin())), implode(',', $bcc), (string) ($op['cc'] ?? ''));
+}
+
+// Email com o grafismo da área (cabeçalho, corpo e rodapé). $cc e $bcc aceitam vários endereços separados por vírgula.
+function enviar_aviso(string $para, string $assunto, string $titulo, string $corpo_html, string $corpo_texto, string $responder_a = '', string $bcc = '', string $cc = ''): bool
 {
     $cfg = cfg();
     if (empty($cfg['remetente_email'])) {
         error_log('Área de clientes: email não enviado, formulario/config.php em falta');
-        return;
+        return false;
     }
+    $geral = comunicacao()['geral'];
     try {
-        $m = novo_email($cfg);
+        $m = novo_email(['remetente_nome' => $geral['remetente_nome']] + $cfg);
         $m->addAddress($para);
         if ($responder_a !== '') {
             $m->addReplyTo($responder_a);
         }
-        if ($cc !== '' && strcasecmp($cc, $para) !== 0) {
-            $m->addCC($cc);
+        foreach (lista_emails($cc) ?: [] as $e) {
+            if (strcasecmp($e, $para) !== 0) {
+                $m->addCC($e);
+            }
         }
-        if ($bcc !== '' && strcasecmp($bcc, $para) !== 0) {
-            $m->addBCC($bcc);
+        foreach (lista_emails($bcc) ?: [] as $e) {
+            if (strcasecmp($e, $para) !== 0) {
+                $m->addBCC($e);
+            }
         }
         $m->Subject = $assunto;
         $m->isHTML(true);
@@ -533,14 +592,16 @@ function enviar_aviso(string $para, string $assunto, string $titulo, string $cor
         $m->Body = '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"></head><body style="margin:0;background:#F5F7F8;">'
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 16px;">'
             . '<table role="presentation" width="620" cellpadding="0" cellspacing="0" style="width:100%;max-width:620px;background:#FFFFFF;border:1px solid #E5E7EB;">'
-            . '<tr><td style="padding:22px 32px;background:#0A0F26;"><p style="margin:0 0 4px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8FC3C6;font-weight:700;">Formação · Gadgetmetodo</p>'
+            . '<tr><td style="padding:22px 32px;background:#0A0F26;">' . ($geral['cabecalho'] !== '' ? '<p style="margin:0 0 4px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8FC3C6;font-weight:700;">' . h($geral['cabecalho']) . '</p>' : '')
             . '<p style="margin:0;font-family:' . $f . ';font-size:19px;color:#FFFFFF;font-weight:700;">' . h($titulo) . '</p></td></tr>'
             . '<tr><td style="padding:24px 32px 28px;font-family:' . $f . ';font-size:14px;line-height:1.6;color:#333333;">' . $corpo_html . '</td></tr>'
-            . '<tr><td style="padding:18px 32px;border-top:1px solid #E5E7EB;font-family:' . $f . ';font-size:12px;color:#687280;">Gadgetmetodo, Lda. · Rua das Cruzes, 625 · 4100-195 Porto · info@gadgetmetodo.pt · www.gadgetmetodo.pt</td></tr>'
+            . ($geral['rodape'] !== '' ? '<tr><td style="padding:18px 32px;border-top:1px solid #E5E7EB;font-family:' . $f . ';font-size:12px;color:#687280;">' . nl2br(h($geral['rodape']), false) . '</td></tr>' : '')
             . '</table></td></tr></table></body></html>';
-        $m->AltBody = $titulo . "\n\n" . $corpo_texto . "\n\n--\nGadgetmetodo, Lda. · info@gadgetmetodo.pt · www.gadgetmetodo.pt\n";
+        $m->AltBody = $titulo . "\n\n" . $corpo_texto . ($geral['rodape'] !== '' ? "\n\n--\n" . $geral['rodape'] : '') . "\n";
         $m->send();
+        return true;
     } catch (Throwable $e) {
         error_log('Área de clientes: falha no envio de email: ' . $e->getMessage());
+        return false;
     }
 }

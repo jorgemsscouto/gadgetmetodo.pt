@@ -9,6 +9,7 @@ use PHPMailer\PHPMailer\Exception as PHPMailerException;
 require __DIR__ . '/email.php';
 require __DIR__ . '/modelos.php';
 require __DIR__ . '/dados.php';
+require_once __DIR__ . '/comunicacao.php';
 
 date_default_timezone_set('Europe/Lisbon');
 
@@ -60,6 +61,15 @@ if (!is_file($ficheiro_config)) {
     responder(false, 503, ['mensagem' => 'O formulário está temporariamente indisponível. Escreva para info@gadgetmetodo.pt.'], $quer_json);
 }
 $cfg = require $ficheiro_config;
+
+// Remetente, destinatários e textos definidos na área reservada (Configuração, Comunicação); sem base de dados, valem os do config.php
+try {
+    $com = config_comunicacao(ligacao($cfg), $cfg);
+} catch (Throwable $e) {
+    $com = config_comunicacao(null, $cfg);
+}
+$cfg['remetente_nome'] = $com['geral']['remetente_nome'];
+$cfg['destinatario'] = $com['geral']['email_admin'];
 
 // Só aceita envios a partir do próprio site
 $origem = rtrim((string) ($_SERVER['HTTP_ORIGIN'] ?? ''), '/');
@@ -198,11 +208,12 @@ $dados['registos'] = $dados['site'] . '/formulario/registos.php';
 try {
     $interno = novo_email($cfg);
     $interno->addAddress($cfg['destinatario']);
-    if (!empty($cfg['bcc'])) {
-        $interno->addBCC($cfg['bcc']);
+    foreach (array_merge(lista_emails($com['geral']['bcc']) ?: [], lista_emails($com['emails']['pedido_aviso']['copia']) ?: []) as $copia) {
+        $interno->addBCC($copia);
     }
     $interno->addReplyTo($email, $nome);
-    $interno->Subject = sprintf('%s: %s (%s) [%s]', $dados['tipo'], $dados['cliente'], $nome, $referencia);
+    $interno->Subject = assunto_email($com['emails']['pedido_aviso']['assunto'],
+        ['tipo' => $dados['tipo'], 'cliente' => $dados['cliente'], 'nome_completo' => $nome, 'email' => $email, 'referencia' => $referencia]);
     $interno->isHTML(true);
     $interno->Body = email_interno_html($dados);
     $interno->AltBody = email_interno_texto($dados);
@@ -219,19 +230,28 @@ try {
     error_log('Formulário: falha ao registar o pedido ' . $referencia . ': ' . $e->getMessage());
 }
 
-// 2. Confirmação ao remetente; uma falha aqui não invalida o pedido já entregue
-try {
-    $confirmacao = novo_email($cfg);
-    $confirmacao->addAddress($email, nome_saudacao($nome));
-    $confirmacao->addReplyTo($cfg['remetente_email'], $cfg['remetente_nome']);
-    $confirmacao->addCustomHeader('Auto-Submitted', 'auto-generated');
-    $confirmacao->Subject = 'Confirmação de receção do seu pedido · Ref. ' . $referencia;
-    $confirmacao->isHTML(true);
-    $confirmacao->Body = email_confirmacao_html($dados);
-    $confirmacao->AltBody = email_confirmacao_texto($dados);
-    $confirmacao->send();
-} catch (PHPMailerException $e) {
-    error_log('Formulário: falha na confirmação do pedido ' . $referencia . ': ' . $e->getMessage());
+// 2. Confirmação ao remetente (se não estiver desativada); uma falha aqui não invalida o pedido já entregue
+$modelo = $com['emails']['pedido_confirmacao'];
+if ($modelo['ativo']) {
+    $vars = ['nome' => nome_saudacao($nome) ?: 'Senhor(a)', 'tipo_pedido' => $dados['tipo'] === 'Pedido de orçamento' ? 'pedido de orçamento' : 'pedido de informações', 'referencia' => $referencia];
+    $dados['textos'] = ['titulo' => substituir_variaveis($modelo['titulo'], $vars), 'texto' => substituir_variaveis($modelo['texto'], $vars),
+        'fecho' => substituir_variaveis($modelo['fecho'], $vars), 'assinatura' => $com['geral']['assinatura']];
+    try {
+        $confirmacao = novo_email($cfg);
+        $confirmacao->addAddress($email, nome_saudacao($nome));
+        $confirmacao->addReplyTo($cfg['destinatario'], $cfg['remetente_nome']);
+        foreach (lista_emails($modelo['copia']) ?: [] as $copia) {
+            $confirmacao->addBCC($copia);
+        }
+        $confirmacao->addCustomHeader('Auto-Submitted', 'auto-generated');
+        $confirmacao->Subject = assunto_email($modelo['assunto'], $vars);
+        $confirmacao->isHTML(true);
+        $confirmacao->Body = email_confirmacao_html($dados);
+        $confirmacao->AltBody = email_confirmacao_texto($dados);
+        $confirmacao->send();
+    } catch (PHPMailerException $e) {
+        error_log('Formulário: falha na confirmação do pedido ' . $referencia . ': ' . $e->getMessage());
+    }
 }
 
 responder(true, 200, ['referencia' => $referencia], $quer_json);

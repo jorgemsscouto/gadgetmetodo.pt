@@ -1224,3 +1224,182 @@ h2.calendario-mes {
 .tabela-precos td.centro { text-align: center; }
 .tabela-precos tr.linha-nova td { padding-top: 14px; border-top: 1px dashed #9aa3af; }
 .acoes-formulario { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Configuração: separadores, cartões da visão geral e emails da Comunicação */
+
+.area-subnav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.area-subnav li + li {
+  margin-top: 0;
+}
+
+.area-subnav a {
+  display: block;
+  padding: 8px 16px;
+  color: var(--marinho);
+  font-family: var(--fonte-titulos);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--branco);
+  border: 1px solid var(--cinzento-claro);
+  border-radius: 999px;
+}
+
+.area-subnav a:hover {
+  color: var(--petroleo);
+  border-color: var(--petroleo);
+}
+
+.area-subnav a[aria-current="page"] {
+  color: var(--branco);
+  background: var(--marinho);
+  border-color: var(--marinho);
+}
+
+.cartoes-config {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 16px;
+}
+
+.cartao-config {
+  display: flex;
+  flex-direction: column;
+  padding: 22px 24px;
+  background: var(--branco);
+  border: 1px solid var(--cinzento-claro);
+  border-radius: var(--raio);
+}
+
+.cartao-config h2 {
+  margin: 0 0 8px;
+}
+
+.cartao-config p {
+  color: var(--cinzento);
+  font-size: 0.93rem;
+}
+
+.cartao-config ul {
+  margin: 0 0 18px;
+  padding-left: 1.1em;
+  font-size: 0.93rem;
+}
+
+.cartao-config .acoes-formulario {
+  margin-top: auto;
+}
+
+.cartao-email {
+  margin-bottom: 12px;
+  background: var(--branco);
+  border: 1px solid var(--cinzento-claro);
+  border-radius: var(--raio);
+}
+
+.cartao-email > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 16px 20px;
+  cursor: pointer;
+}
+
+.cartao-email > summary strong {
+  color: var(--marinho);
+  font-family: var(--fonte-titulos);
+}
+
+.cartao-email > summary .texto-suave {
+  flex-basis: 100%;
+  font-size: 0.88rem;
+}
+
+.cartao-email[open] > summary {
+  border-bottom: 1px solid var(--cinzento-claro);
+}
+
+.cartao-email-corpo {
+  padding: 18px 20px 20px;
+}
+
+.cartao-email-corpo .formulario {
+  margin-top: 16px;
+}
+
+.variaveis-email {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 12px;
+  margin: 6px 0 0;
+}
+
+.variaveis-email dt {
+  color: var(--marinho);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+.variaveis-email dd {
+  margin: 0;
+}
+
+.pre-email {
+  max-width: 640px;
+  margin-top: 10px;
+  padding: 16px 20px;
+  font-size: 0.93rem;
+  background: var(--branco);
+  border: 1px solid var(--cinzento-claro);
+  border-radius: var(--raio-pequeno);
+}
+
+.pre-email .pre-assunto {
+  margin: 0 0 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--cinzento-claro);
+}
+
+.pre-email .pre-assunto span {
+  margin-right: 6px;
+  color: var(--cinzento);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pre-email .pre-titulo {
+  margin: 0 0 12px;
+  color: var(--marinho);
+  font-family: var(--fonte-titulos);
+  font-weight: 700;
+}
+
+.pre-email .pre-dados {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  color: var(--cinzento);
+  font-size: 0.86rem;
+  background: var(--nevoa);
+  border: 1px dashed #c9ced8;
+  border-radius: var(--raio-pequeno);
+}
+
+@media (max-width: 640px) {
+  .variaveis-email {
+    grid-template-columns: 1fr;
+  }
+
+  .variaveis-email dd {
+    margin-bottom: 6px;
+  }
+}

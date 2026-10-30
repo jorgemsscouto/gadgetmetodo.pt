@@ -260,8 +260,7 @@ function emails_nova_inscricao(int $id): void
     if (!$i) {
         return;
     }
-    $cfg = cfg();
-    $site = rtrim((string) ($cfg['site'] ?? 'https://www.gadgetmetodo.pt'), '/');
+    $site = endereco_site();
     $publica = $i['origem'] === 'site';
     $quando = horario($i) . ' · ' . modalidade_e_local($i);
     $a = $i['respostas'] ? avaliar_diagnostico((array) json_decode((string) $i['respostas'], true)) : null;
@@ -294,26 +293,25 @@ function emails_nova_inscricao(int $id): void
         return '<p style="margin:22px 0 0;"><a href="' . h($href) . '" style="display:inline-block;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">' . h($rotulo) . '</a></p>';
     };
 
+    $vars = ['formando' => $i['formando'], 'cliente' => $i['cliente'], 'formacao' => $i['titulo'], 'data' => data_hora($i['inicio'], false),
+        'horario' => horario($i), 'local' => modalidade_e_local($i), 'canal' => $publica ? 'pelo site' : 'na área reservada'];
+
     // Aviso interno para a Gadgetmetodo
-    $destino = (string) ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt');
-    enviar_aviso($destino, ($publica ? 'Nova inscrição pelo site: ' : 'Nova inscrição: ') . $i['formando'] . ' (' . $i['cliente'] . '), ' . data_hora($i['inicio'], false), 'Nova inscrição em formação',
-        '<p style="margin:0 0 16px;">Foi registada uma nova inscrição, pendente de confirmação.' . ($publica ? ' Veio do site público: associe-a a um cliente na área reservada.' : '') . '</p>' . $tabela
+    enviar_mensagem('inscricao_aviso', email_admin(), $vars, [
+        ($publica ? '<p style="margin:0 0 16px;">Veio do site público: associe-a a um cliente na área reservada.</p>' : '') . $tabela
         . ($recomendacao ? '<p style="margin:16px 0 0;"><strong>Recomendação:</strong> ' . h($recomendacao) . '</p>' : '') . $botao($link_area, 'Ver inscrição na área reservada'),
-        "Foi registada uma nova inscrição, pendente de confirmação.\n\n" . $texto . ($recomendacao ? "\nRecomendação: " . $recomendacao : '') . "\n\n" . $link_area,
-        $contacto['email'] ?? '', (string) ($cfg['bcc'] ?? ''));
+        ($publica ? "Veio do site público: associe-a a um cliente na área reservada.\n\n" : '') . $texto . ($recomendacao ? "\nRecomendação: " . $recomendacao : '') . "\n\n" . $link_area,
+    ], ['responder_a' => $contacto['email'] ?? '']);
 
     // Confirmação de receção para quem fez a inscrição
     if ($contacto) {
         [$datas_html, $datas_texto] = datas_email($i);
-        $ver = $contacto['area'] ? $botao($link_area, 'Ver inscrição na área reservada') : ($i['curso_id'] ? $botao($site . link_curso_publico(['id' => $i['curso_id']]), 'Ver a página do curso') : $botao($site . '/formacoes/', 'Ver a área de formação'));
-        $alterar = $contacto['area'] ? 'Para alterar ou cancelar a inscrição, use a área reservada ou responda a este email.' : 'Para alterar ou cancelar a inscrição, basta responder a este email.';
-        enviar_aviso($contacto['email'], 'Inscrição recebida: ' . $i['formando'] . ', ' . $i['titulo'] . ' de ' . data_hora($i['inicio'], false), 'Inscrição recebida',
-            '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 16px;">Recebemos a inscrição de <strong>' . h($i['formando']) . '</strong> na formação ' . h($i['titulo']) . ', em ' . h($quando) . '. A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis.</p>' . $datas_html
-            . ($i['nivel'] ? '<p style="margin:0 0 16px;">O diagnóstico indica o nível <strong>' . h($i['nivel']) . '</strong> de utilização de IA. Vamos usá-lo para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>' : '')
-            . ($indicacao ? '<p style="margin:0 0 16px;">' . h($indicacao) . '</p>' : '') . $ver
-            . '<p style="margin:22px 0 0;color:#687280;font-size:13px;">' . h($alterar) . '</p>',
-            nome_curto($contacto['nome']) . ",\n\nRecebemos a inscrição de " . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . $quando . ". A Gadgetmetodo confirma a inscrição por email nos próximos dias úteis." . $datas_texto . "\n\n" . ($i['nivel'] ? 'Nível de utilização de IA indicado pelo diagnóstico: ' . $i['nivel'] . ".\n\n" : '') . ($indicacao ? $indicacao . "\n\n" : '') . $alterar,
-            $destino);
+        $ver = $contacto['area'] ? [$link_area, 'Ver inscrição na área reservada'] : ($i['curso_id'] ? [$site . link_curso_publico(['id' => $i['curso_id']]), 'Ver a página do curso'] : [$site . '/formacoes/', 'Ver a área de formação']);
+        enviar_mensagem('inscricao_recebida', $contacto['email'], ['nome' => nome_curto($contacto['nome'])] + $vars, [
+            $datas_html . ($i['nivel'] ? '<p style="margin:0 0 16px;">O diagnóstico indica o nível <strong>' . h($i['nivel']) . '</strong> de utilização de IA. Vamos usá-lo para ajustar os exemplos e os exercícios ao ponto de partida do grupo.</p>' : '')
+            . ($indicacao ? '<p style="margin:0 0 16px;">' . h($indicacao) . '</p>' : '') . $botao($ver[0], $ver[1]),
+            trim($datas_texto) . ($i['nivel'] ? "\n\nNível de utilização de IA indicado pelo diagnóstico: " . $i['nivel'] . '.' : '') . ($indicacao ? "\n\n" . $indicacao : '') . "\n\n" . $ver[1] . ': ' . $ver[0],
+        ]);
     }
 }
 
@@ -342,18 +340,16 @@ function pagina_inscricao(): void
         if ($acao === 'cancelar' && $i['estado'] !== 'cancelada' && ($admin || $futura)) {
             executar("UPDATE inscricoes SET estado = 'cancelada' WHERE id = ?", [$id]);
             if (!$admin) {
-                $cfg = cfg();
-                enviar_aviso((string) ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt'), 'Inscrição cancelada pelo cliente: ' . $i['formando'] . ' (' . $i['cliente'] . ')', 'Inscrição cancelada pelo cliente',
-                    '<p style="margin:0;">' . h(utilizador()['nome']) . ' cancelou a inscrição de <strong>' . h($i['formando']) . '</strong> (' . h($i['cliente']) . ') na formação ' . h($i['titulo']) . ' de ' . h(horario($i)) . '.</p>',
-                    utilizador()['nome'] . ' cancelou a inscrição de ' . $i['formando'] . ' (' . $i['cliente'] . ') na formação ' . $i['titulo'] . ' de ' . horario($i) . '.', '', (string) ($cfg['bcc'] ?? ''));
+                enviar_mensagem('cancelamento_aviso', email_admin(), ['utilizador' => utilizador()['nome'], 'formando' => $i['formando'], 'cliente' => $i['cliente'],
+                    'formacao' => $i['titulo'], 'data' => data_hora($i['inicio'], false), 'horario' => horario($i)]);
             }
             aviso('Inscrição cancelada.');
         } elseif ($acao === 'estado' && $admin && isset(ESTADOS_INSCRICAO[$_POST['estado'] ?? ''])) {
             $novo = $_POST['estado'];
             executar('UPDATE inscricoes SET estado = ? WHERE id = ?', [$novo, $id]);
             if (!empty($_POST['avisar']) && $novo !== $i['estado'] && $contacto) {
-                avisar_estado_inscricao($i, $novo, $contacto);
-                aviso('Estado atualizado e aviso enviado por email para ' . h($contacto['email']) . '.');
+                aviso('Estado atualizado.');
+                aviso_envio(avisar_estado_inscricao($i, $novo, $contacto), 'Aviso enviado por email para ' . h($contacto['email']) . '.');
             } else {
                 aviso('Estado atualizado.');
             }
@@ -471,18 +467,19 @@ function pagina_conta(): void
 }
 
 // Email a quem fez a inscrição com o novo estado; na confirmação, com o local e a ligação da sessão online (cópia ao formando)
-function avisar_estado_inscricao(array $i, string $novo, array $contacto): void
+function avisar_estado_inscricao(array $i, string $novo, array $contacto): bool
 {
-    $frase = $novo === 'confirmada'
-        ? 'A inscrição de ' . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . horario($i) . ', está confirmada.'
-        : 'A inscrição de ' . $i['formando'] . ' na formação ' . $i['titulo'] . ', em ' . horario($i) . ', passou ao estado: ' . strtolower(ESTADOS_INSCRICAO[$novo]) . '.';
-    $local = $novo === 'confirmada' ? modalidade_e_local($i, ': ') : '';
-    [$reuniao_html, $reuniao_texto] = $novo === 'confirmada' ? bloco_reuniao($i) : ['', ''];
+    $confirmada = $novo === 'confirmada';
+    $local = $confirmada ? modalidade_e_local($i, ': ') : '';
+    [$reuniao_html, $reuniao_texto] = $confirmada ? bloco_reuniao($i) : ['', ''];
     [$datas_html, $datas_texto] = datas_email($i);
-    enviar_aviso($contacto['email'], ($novo === 'confirmada' ? 'Inscrição confirmada: ' : 'Inscrição atualizada: ') . $i['formando'] . ', ' . data_hora($i['inicio'], false), $novo === 'confirmada' ? 'Inscrição confirmada' : 'Inscrição atualizada',
-        '<p style="margin:0 0 14px;">' . h(nome_curto($contacto['nome'])) . ',</p><p style="margin:0 0 14px;">' . h($frase) . '</p>' . $datas_html . ($local ? '<p style="margin:0 0 14px;"><strong>Local:</strong> ' . h($local) . '</p>' : '') . $reuniao_html . '<p style="margin:0;">Para qualquer questão, basta responder a este email.</p>',
-        nome_curto($contacto['nome']) . ",\n\n" . $frase . $datas_texto . ($local ? "\n\nLocal: " . $local : '') . $reuniao_texto . "\n\nPara qualquer questão, basta responder a este email.",
-        (string) (cfg()['destinatario'] ?? 'info@gadgetmetodo.pt'), '', $novo === 'confirmada' ? (string) $i['email'] : '');
+    return enviar_mensagem($confirmada ? 'inscricao_confirmada' : 'inscricao_estado', $contacto['email'], [
+        'nome' => nome_curto($contacto['nome']), 'formando' => $i['formando'], 'cliente' => $i['cliente'] ?? '', 'formacao' => $i['titulo'],
+        'data' => data_hora($i['inicio'], false), 'horario' => horario($i), 'local' => modalidade_e_local($i), 'estado' => strtolower(ESTADOS_INSCRICAO[$novo]),
+    ], [
+        $datas_html . ($local ? '<p style="margin:0 0 14px;"><strong>Local:</strong> ' . h($local) . '</p>' : '') . $reuniao_html,
+        trim($datas_texto . ($local ? "\n\nLocal: " . $local : '') . $reuniao_texto),
+    ], ['cc' => $confirmada ? (string) $i['email'] : '']);
 }
 
 // Datas de cada sessão, para os emails (HTML e texto); vazio quando a formação decorre numa só data
@@ -525,28 +522,24 @@ function enviar_reuniao_confirmados(array $f): int
         }
         [$html, $texto] = bloco_reuniao($i);
         $nome = $i['email'] ? $i['formando'] : ($contacto['nome'] ?? $i['formando']);
-        $frase = 'Segue a ligação para as sessões online de ' . $i['titulo'] . ' (' . nome_modulo($i) . '), em ' . horario($i) . ', em que ' . ($i['email'] ? 'está inscrito(a)' : $i['formando'] . ' está inscrito(a)') . '.';
-        enviar_aviso($para, 'Ligação para as sessões online: ' . $i['titulo'] . ', ' . data_hora($i['inicio']), 'Ligação para as sessões online',
-            '<p style="margin:0 0 14px;">' . h(nome_curto($nome)) . ',</p><p style="margin:0 0 16px;">' . h($frase) . '</p>' . $html . '<p style="margin:0;">Recomendamos entrar alguns minutos antes da hora de início. Para qualquer questão, basta responder a este email.</p>',
-            nome_curto($nome) . ",\n\n" . $frase . $texto . "\n\nRecomendamos entrar alguns minutos antes da hora de início.",
-            (string) (cfg()['destinatario'] ?? 'info@gadgetmetodo.pt'), '', $i['email'] ? ($contacto['email'] ?? '') : '');
+        if (!enviar_mensagem('reuniao', $para, ['nome' => nome_curto($nome), 'formando' => $i['formando'], 'formacao' => $i['titulo'], 'data' => data_hora($i['inicio'], false), 'horario' => horario($i)],
+            [$html, trim($texto)], ['cc' => $i['email'] ? ($contacto['email'] ?? '') : ''])) {
+            continue;
+        }
         $enviados++;
     }
     return $enviados;
 }
 
-// Convite por email a um candidato, com a ligação para a página do curso ou para a inscrição numa sessão
-function enviar_convite(string $nome, string $email, string $mensagem, string $assunto, string $resumo_html, string $resumo_texto, string $link, string $botao): void
+// Convite por email a um candidato, com a ligação para a página do curso ou para a inscrição numa sessão.
+// A mensagem escrita no formulário substitui o texto do modelo; responde para quem envia, com cópia para a administração.
+function enviar_convite(string $tipo, string $nome, string $email, string $mensagem, array $vars, string $resumo_html, string $resumo_texto, string $link, string $botao): bool
 {
-    $cfg = cfg();
     $u = utilizador();
-    enviar_aviso($email, $assunto, 'Convite para formação',
-        '<p style="margin:0 0 14px;">' . h(nome_curto($nome)) . ',</p>'
-        . ($mensagem !== '' ? '<p style="margin:0 0 16px;">' . nl2br(h($mensagem)) . '</p>' : '<p style="margin:0 0 16px;">Temos o gosto de o(a) convidar para a formação abaixo. Na página indicada encontra o programa, os temas de cada módulo e as datas disponíveis, e pode fazer a inscrição diretamente.</p>')
-        . $resumo_html
+    return enviar_mensagem($tipo, $email, ['nome' => nome_curto($nome)] + $vars, [
+        '<div style="margin:0 0 4px;">' . $resumo_html . '</div>'
         . '<p style="margin:22px 0 0;"><a href="' . h($link) . '" style="display:inline-block;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">' . h($botao) . '</a></p>'
-        . '<p style="margin:18px 0 0;color:#687280;font-size:13px;">Se o botão não funcionar, copie este endereço para o navegador: ' . h($link) . '</p>'
-        . '<p style="margin:18px 0 0;">Com os melhores cumprimentos,<br>' . h((string) ($u['nome'] ?? 'Gadgetmetodo')) . '<br>Gadgetmetodo, Lda.</p>',
-        nome_curto($nome) . ",\n\n" . ($mensagem !== '' ? $mensagem : 'Temos o gosto de o(a) convidar para a formação abaixo. Na página indicada encontra o programa, os temas e as datas disponíveis, e pode fazer a inscrição diretamente.') . "\n\n" . $resumo_texto . "\n\n" . $botao . ': ' . $link . "\n\nCom os melhores cumprimentos,\n" . ($u['nome'] ?? 'Gadgetmetodo') . "\nGadgetmetodo, Lda.",
-        (string) ($u['email'] ?? ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt')), (string) ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt'));
+        . '<p style="margin:18px 0 0;color:#687280;font-size:13px;">Se o botão não funcionar, copie este endereço para o navegador: ' . h($link) . '</p>',
+        $resumo_texto . "\n\n" . $botao . ': ' . $link,
+    ], ['texto' => $mensagem, 'responder_a' => (string) ($u['email'] ?? email_admin()), 'cc' => email_admin()]);
 }
