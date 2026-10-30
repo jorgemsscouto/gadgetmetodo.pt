@@ -96,10 +96,20 @@ function bd(): ?PDO
             tipo_cliente TEXT, ferramentas TEXT)");
         acrescentar_colunas($pdo, 'preinscricoes', ['respostas' => 'TEXT', 'inscricao_id' => 'INTEGER', 'tipo_cliente' => 'TEXT', 'ferramentas' => 'TEXT']);
         $pdo->exec('CREATE INDEX IF NOT EXISTS preinscricoes_curso ON preinscricoes (curso_id)');
-        // Tabela de preços (administração): valor em cêntimos, sem IVA; sem valor, "sob consulta"
+        // Tabela de preços (administração): linhas (cursos), modalidades (colunas) e preço de cada linha em cada modalidade,
+        // em cêntimos e sem IVA (sem valor, "sob consulta"). As linhas com "legado" são da 1.ª versão (uma lista simples
+        // com categoria, unidade, valor e IVA) e ficam só para consulta.
         $pdo->exec("CREATE TABLE IF NOT EXISTS precos (
             id INTEGER PRIMARY KEY AUTOINCREMENT, categoria TEXT NOT NULL, designacao TEXT NOT NULL, descricao TEXT, unidade TEXT,
-            valor INTEGER, iva TEXT NOT NULL DEFAULT '23', ativo INTEGER NOT NULL DEFAULT 1, ordem INTEGER NOT NULL DEFAULT 0, atualizado TEXT NOT NULL)");
+            valor INTEGER, iva TEXT NOT NULL DEFAULT '23', ativo INTEGER NOT NULL DEFAULT 1, ordem INTEGER NOT NULL DEFAULT 0, atualizado TEXT NOT NULL,
+            detalhe TEXT, legado INTEGER NOT NULL DEFAULT 0)");
+        acrescentar_colunas($pdo, 'precos', ['detalhe' => 'TEXT', 'legado' => 'INTEGER NOT NULL DEFAULT 0']);
+        $pdo->exec('CREATE TABLE IF NOT EXISTS precos_colunas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, etiqueta TEXT NOT NULL, titulo TEXT, descricao TEXT, coluna TEXT NOT NULL, detalhe TEXT,
+            ordem INTEGER NOT NULL DEFAULT 0, ativo INTEGER NOT NULL DEFAULT 1, atualizado TEXT NOT NULL)');
+        $pdo->exec('CREATE TABLE IF NOT EXISTS precos_valores (
+            preco_id INTEGER NOT NULL REFERENCES precos(id), coluna_id INTEGER NOT NULL REFERENCES precos_colunas(id), valor INTEGER,
+            PRIMARY KEY (preco_id, coluna_id))');
         juntar_formacoes_por_sessao($pdo);
         // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação; as pré-inscrições, 12 meses depois do registo
         $pdo->prepare('DELETE FROM inscricoes WHERE formacao_id IN (SELECT id FROM formacoes WHERE inicio < ?)')

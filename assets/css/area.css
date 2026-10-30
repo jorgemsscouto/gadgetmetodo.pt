@@ -1168,18 +1168,21 @@ h2.calendario-mes {
 /* Tabela de preços (administração): tabela editável; a descrição fica por baixo da designação e o preço com IVA por baixo do preço */
 .tabela-precos {
   width: 100%;
-  min-width: 940px;
+  min-width: 900px;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
-.tabela-precos .c-categoria { width: 190px; }
-.tabela-precos .c-unidade { width: 145px; }
-.tabela-precos .c-valor { width: 130px; }
-.tabela-precos .c-iva { width: 92px; }
+.tabela-precos .c-n { width: 34px; }
+.tabela-precos .c-preco { width: 130px; text-align: right; }
 .tabela-precos .c-pdf { width: 60px; }
 .tabela-precos .c-ordem { width: 72px; }
 .tabela-precos .c-apagar { width: 60px; }
+.tabela-precos th small { display: block; font-weight: 400; }
+.tabela-precos td.n { padding-top: 16px; color: var(--petroleo); font-weight: 700; }
+.tabela-modalidades th:first-child { width: 220px; }
+.tabela-modalidades th:nth-child(3) { width: 210px; }
+.tabela-precos textarea { width: 100%; padding: 6px 8px; font: inherit; font-size: 0.86rem; }
 
 .tabela-precos th,
 .tabela-precos td {
@@ -1218,8 +1221,6 @@ h2.calendario-mes {
 }
 
 .tabela-precos .valor { text-align: right; }
-.tabela-precos .com-iva { display: block; margin-top: 4px; color: var(--cinzento); font-size: 0.8rem; text-align: right; }
 .tabela-precos td.centro { text-align: center; }
 .tabela-precos tr.linha-nova td { padding-top: 14px; border-top: 1px dashed #9aa3af; }
-.tabela-precos input.nova-opcao { margin-top: 4px; font-size: 0.85rem; }
 .acoes-formulario { display: flex; flex-wrap: wrap; gap: 10px; }
