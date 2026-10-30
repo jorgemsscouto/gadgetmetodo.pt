@@ -281,9 +281,11 @@
       var botao = el('button', { type: 'button', class: 'regiao', 'data-codigo': codigo, onclick: function () { alternarRegiao(codigo); } }, [
         el('span', { class: 'regiao-ordem', 'aria-hidden': 'true' }),
         el('span', { class: 'sr regiao-ordem-sr' }),
-        el('span', { class: 'regiao-nome', text: r.name || codigo }),
-        el('span', { class: 'regiao-pais', text: '(' + (r.country || '') + ')' }),
-        el('span', { class: 'regiao-nota', text: r.note || '' })
+        el('span', { class: 'regiao-conteudo' }, [
+          el('span', { class: 'regiao-nome', text: r.name || codigo }),
+          el('span', { class: 'regiao-pais', text: '(' + (r.country || '') + ')' }),
+          el('span', { class: 'regiao-nota', text: r.note || '' })
+        ])
       ]);
       grelha.appendChild(el('div', { class: 'regiao-cartao' }, [botao].concat(mapaRegiao(codigo, r))));
     });

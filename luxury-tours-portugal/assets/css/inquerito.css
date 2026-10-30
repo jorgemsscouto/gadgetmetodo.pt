@@ -450,7 +450,8 @@ h3.pergunta {
 
 .regiao {
   position: relative;
-  display: block;
+  display: flex;
+  align-items: flex-start;
   inline-size: 100%;
   text-align: start;
   padding-block: 14px;
@@ -462,6 +463,10 @@ h3.pergunta {
   font: inherit;
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.regiao-conteudo {
+  display: block;
 }
 
 .regiao:hover {
@@ -526,8 +531,14 @@ h3.pergunta {
 
 /* Mapa de cada região: ícone (i) e pré-visualização */
 
+/* O cartão ocupa a altura toda da linha da grelha, para os quadrados ficarem alinhados */
 .regiao-cartao {
   position: relative;
+  display: flex;
+}
+
+.regiao-cartao > .regiao {
+  flex: 1 1 auto;
 }
 
 .regiao-info {
