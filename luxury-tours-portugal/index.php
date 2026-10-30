@@ -44,6 +44,10 @@ $dados = [
         'budget' => LTP_ORCAMENTO_VALORES,
         'maxComment' => LTP_MAX_COMENTARIO,
         'maxOther' => LTP_MAX_OUTRA,
+        'maxName' => LTP_MAX_NOME,
+        'maps' => array_combine(LTP_REGIOES, array_map('ltp_ligacao_mapa', LTP_REGIOES)),
+        // Só na ligação geral: os países (códigos ISO) para a identificação; os nomes são traduzidos no navegador
+        'countries' => $cliente ? [] : array_keys(ltp_paises()),
     ],
 ];
 $json = json_encode($dados, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);

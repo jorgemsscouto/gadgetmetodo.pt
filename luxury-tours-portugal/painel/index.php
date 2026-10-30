@@ -1,12 +1,14 @@
 <?php
 // Inquérito Luxury Tours Portugal: painel de gestão (em português).
-// Acesso com a palavra-passe definida em config.php (senha_painel).
+// Cada pessoa entra com o seu email e palavra-passe; os perfis estão em inc/utilizadores.php.
+// A palavra-passe de config.php (senha_painel) só serve para o primeiro acesso, até existir um administrador.
 
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/inc/nucleo.php';
 require dirname(__DIR__) . '/inc/painel.php';
 require dirname(__DIR__) . '/inc/email.php';
+require dirname(__DIR__) . '/inc/utilizadores.php';
 
 header('X-Robots-Tag: noindex, nofollow');
 header('Cache-Control: no-store');
@@ -25,7 +27,7 @@ session_set_cookie_params([
 ]);
 session_start();
 
-if (!empty($_SESSION['entrou']) && time() - (int) ($_SESSION['atividade'] ?? 0) > LTP_SESSAO_MAXIMA) {
+if (isset($_SESSION['utilizador']) && time() - (int) ($_SESSION['atividade'] ?? 0) > LTP_SESSAO_MAXIMA) {
     $_SESSION = [];
 }
 $_SESSION['atividade'] = time();
@@ -53,22 +55,32 @@ function idioma_filtro(): ?string
     return in_array($i, LTP_IDIOMAS, true) ? $i : null;
 }
 
-$configurado = ltp_configurado();
-$entrou = $configurado && !empty($_SESSION['entrou']);
 $pdo = ltp_bd();
+$configurado = ltp_ha_utilizadores($pdo) || (string) ltp_cfg()['senha_painel'] !== '';
+$eu = ltp_utilizador_sessao($pdo);
+$entrou = $eu !== null;
+$inicial = $entrou && (int) $eu['id'] === 0;
 
 /* Ações (POST) */
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $acao = (string) ($_POST['acao'] ?? '');
     if ($acao === 'entrar' && $configurado) {
-        if (hash_equals((string) ltp_cfg()['senha_painel'], (string) ($_POST['senha'] ?? ''))) {
+        $email = trim((string) ($_POST['email'] ?? ''));
+        $senha = (string) ($_POST['senha'] ?? '');
+        $u = $email !== '' && $pdo ? ltp_autenticar($pdo, $email, $senha) : null;
+        if ($u) {
             session_regenerate_id(true);
-            $_SESSION['entrou'] = true;
+            $_SESSION['utilizador'] = (int) $u['id'];
             voltar();
         }
+        if ($email === '' && ltp_acesso_inicial_disponivel($pdo) && hash_equals((string) ltp_cfg()['senha_painel'], $senha)) {
+            session_regenerate_id(true);
+            $_SESSION['utilizador'] = 0;
+            voltar('v=utilizadores', 'Acesso inicial. Crie a conta de administrador; a partir daí, a palavra-passe de configuração deixa de dar acesso.', 'aviso');
+        }
         sleep(1);
-        voltar('', 'Palavra-passe incorreta.', 'erro');
+        voltar('', 'Email ou palavra-passe incorretos.', 'erro');
     }
     if (!$entrou || !hash_equals($_SESSION['csrf'], (string) ($_POST['csrf'] ?? ''))) {
         voltar('', 'A sessão expirou. Entre novamente.', 'erro');
@@ -81,7 +93,74 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     if (!$pdo) {
         voltar('', 'Sem base de dados: o alojamento precisa de PHP com SQLite e de uma pasta com permissão de escrita.', 'erro');
     }
+    $permissoesAcoes = [
+        'importar' => 'clientes', 'apagar_cliente' => 'clientes', 'gerar_demo' => 'clientes', 'apagar_demo' => 'clientes',
+        'revisto' => 'idiomas', 'apagar_tudo' => 'apagar_tudo', 'criar_utilizador' => 'utilizadores',
+        'editar_utilizador' => 'utilizadores', 'repor_senha' => 'utilizadores', 'apagar_utilizador' => 'utilizadores',
+    ];
+    if (isset($permissoesAcoes[$acao]) && !ltp_pode($eu, $permissoesAcoes[$acao])) {
+        voltar('', 'O seu perfil não permite esta ação.', 'erro');
+    }
     switch ($acao) {
+        case 'criar_utilizador':
+            $erro = ltp_criar_utilizador($pdo, (string) ($_POST['nome'] ?? ''), (string) ($_POST['email'] ?? ''), (string) ($_POST['papel'] ?? ''), (string) ($_POST['senha'] ?? ''));
+            if ($erro !== null) {
+                voltar('v=utilizadores', $erro, 'erro');
+            }
+            if ($inicial && ltp_ha_admin($pdo)) {
+                unset($_SESSION['utilizador']);
+                voltar('', 'Conta de administrador criada. Entre com esse email e palavra-passe.');
+            }
+            voltar('v=utilizadores', 'Utilizador criado. Comunique a palavra-passe inicial por um canal seguro.');
+        case 'editar_utilizador':
+            $id = (int) ($_POST['id'] ?? 0);
+            $papel = (string) ($_POST['papel'] ?? '');
+            $nome = trim((string) ($_POST['nome'] ?? ''));
+            $ativo = !empty($_POST['ativo']) ? 1 : 0;
+            if (!ltp_utilizador($pdo, $id) || !isset(LTP_PAPEIS[$papel]) || mb_strlen($nome) < 2) {
+                voltar('v=utilizadores', 'Dados inválidos.', 'erro');
+            }
+            if (($papel !== 'admin' || !$ativo) && ltp_ultimo_admin($pdo, $id)) {
+                voltar('v=utilizadores', 'Tem de existir pelo menos um administrador ativo.', 'erro');
+            }
+            $pdo->prepare('UPDATE utilizadores SET nome = ?, papel = ?, ativo = ? WHERE id = ?')->execute([mb_substr($nome, 0, 120), $papel, $ativo, $id]);
+            voltar('v=utilizadores', 'Utilizador atualizado.');
+        case 'repor_senha':
+            $id = (int) ($_POST['id'] ?? 0);
+            $senha = (string) ($_POST['senha'] ?? '');
+            if ($erro = ltp_erro_senha($senha)) {
+                voltar('v=utilizadores', $erro, 'erro');
+            }
+            $pdo->prepare('UPDATE utilizadores SET senha = ? WHERE id = ?')->execute([password_hash($senha, PASSWORD_DEFAULT), $id]);
+            voltar('v=utilizadores', 'Palavra-passe definida. Comunique-a ao utilizador por um canal seguro.');
+        case 'apagar_utilizador':
+            $id = (int) ($_POST['id'] ?? 0);
+            if ($id === (int) $eu['id']) {
+                voltar('v=utilizadores', 'Não pode apagar a sua própria conta.', 'erro');
+            }
+            if (ltp_ultimo_admin($pdo, $id)) {
+                voltar('v=utilizadores', 'Tem de existir pelo menos um administrador ativo.', 'erro');
+            }
+            $pdo->prepare('DELETE FROM utilizadores WHERE id = ?')->execute([$id]);
+            voltar('v=utilizadores', 'Utilizador apagado.');
+        case 'alterar_senha':
+            if ($inicial) {
+                voltar('v=utilizadores', 'Crie primeiro a conta de administrador.', 'erro');
+            }
+            $atual = ltp_utilizador($pdo, (int) $eu['id']);
+            $nova = (string) ($_POST['nova'] ?? '');
+            if (!$atual || !password_verify((string) ($_POST['atual'] ?? ''), $atual['senha'])) {
+                sleep(1);
+                voltar('v=conta', 'A palavra-passe atual não está correta.', 'erro');
+            }
+            if ($erro = ltp_erro_senha($nova)) {
+                voltar('v=conta', $erro, 'erro');
+            }
+            if ($nova !== (string) ($_POST['confirmar'] ?? '')) {
+                voltar('v=conta', 'A confirmação não coincide com a nova palavra-passe.', 'erro');
+            }
+            $pdo->prepare('UPDATE utilizadores SET senha = ? WHERE id = ?')->execute([password_hash($nova, PASSWORD_DEFAULT), $atual['id']]);
+            voltar('v=conta', 'Palavra-passe alterada.');
         case 'importar':
             $f = $_FILES['ficheiro'] ?? null;
             if (!$f || $f['error'] !== UPLOAD_ERR_OK || $f['size'] > 2 * 1024 * 1024) {
@@ -93,7 +172,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             }
             $msg = sprintf('Importação concluída: %d novos, %d atualizados.', $rel['inseridos'], $rel['atualizados']);
             if ($rel['sem_idioma']) {
-                $msg .= sprintf(' %d sem idioma válido (a página usará o idioma do navegador ou inglês).', $rel['sem_idioma']);
+                $msg .= sprintf(' %d sem idioma válido (recebem o inquérito e o email em inglês).', $rel['sem_idioma']);
             }
             if ($rel['ignorados']) {
                 $msg .= ' Ignorados: ' . implode(' | ', array_slice($rel['ignorados'], 0, 10)) . (count($rel['ignorados']) > 10 ? ' (…)' : '');
@@ -130,11 +209,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 $descarregar = is_string($_GET['descarregar'] ?? null) ? $_GET['descarregar'] : '';
 if ($entrou && $descarregar !== '') {
     $idioma = idioma_filtro();
+    if (in_array($descarregar, ['modelo_csv', 'mail_merge'], true) && !ltp_pode($eu, 'clientes')) {
+        voltar('', 'O seu perfil não permite esta exportação.', 'erro');
+    }
     if ($descarregar === 'modelo_csv') {
         ltp_enviar_csv('modelo-clientes.csv', ['name', 'email', 'language', 'form', 'country', 'reference'], [
             ['Anna Smith', 'anna.smith@example.com', 'en', 'f', 'United Kingdom', 'C-0001'],
             ['Sr. João Silva', 'joao.silva@example.com', 'pt', 'm', 'Portugal', 'C-0002'],
             ['Νίκος Παπαδόπουλος', 'nikos@example.com', 'el', 'm', 'Ελλάδα', 'C-0003'],
+            ['Frau Müller', 'mueller@example.com', 'de', 'f', 'Deutschland', 'C-0004'],
         ]);
         exit;
     }
@@ -169,8 +252,22 @@ if ($entrou && $descarregar !== '') {
 /* Páginas */
 
 $vista = is_string($_GET['v'] ?? null) ? $_GET['v'] : 'resumo';
-$vistas = ['resumo' => 'Resumo', 'clientes' => 'Clientes e convites', 'respostas' => 'Respostas', 'idiomas' => 'Idiomas', 'emails' => 'Email de convite'];
-if (!isset($vistas[$vista])) {
+$vistas = ['resumo' => 'Resumo'];
+if (ltp_pode($eu, 'clientes')) {
+    $vistas['clientes'] = 'Clientes e convites';
+}
+$vistas['respostas'] = 'Respostas';
+if (ltp_pode($eu, 'idiomas')) {
+    $vistas['idiomas'] = 'Idiomas';
+}
+$vistas['emails'] = 'Email de convite';
+if (ltp_pode($eu, 'utilizadores')) {
+    $vistas['utilizadores'] = 'Utilizadores';
+}
+if ($inicial) {
+    $vistas = ['utilizadores' => 'Utilizadores'];
+    $vista = 'utilizadores';
+} elseif (!isset($vistas[$vista]) && $vista !== 'conta') {
     $vista = 'resumo';
 }
 $aviso = $_SESSION['aviso'] ?? null;
@@ -225,6 +322,10 @@ function barras(array $contagem, int $total, callable $rotulo): string
   </div>
 <?php if ($entrou): ?>
   <div class="cabecalho-acoes">
+    <span class="quem"><?= ltp_h($eu['nome']) ?> <span class="suave">· <?= ltp_h(LTP_PAPEIS[$eu['papel']]) ?></span></span>
+<?php if (!$inicial): ?>
+    <a href="?v=conta"<?= $vista === 'conta' ? ' aria-current="page"' : '' ?>>A minha conta</a>
+<?php endif; ?>
     <a href="../" target="_blank" rel="noopener">Ver inquérito</a>
     <form method="post"><?= campo_csrf() ?><button type="submit" name="acao" value="sair" class="ligacao">Sair</button></form>
   </div>
@@ -235,7 +336,7 @@ function barras(array $contagem, int $total, callable $rotulo): string
 <main class="conteudo estreito">
   <section class="bloco">
     <h1>Falta configurar o painel</h1>
-    <p>Para ativar o painel, copie <code>config.exemplo.php</code> para <code>config.php</code> (na pasta <code>luxury-tours-portugal</code>), defina a palavra-passe em <code>senha_painel</code> e publique o ficheiro. O <code>config.php</code> fica fora do Git.</p>
+    <p>Para o primeiro acesso, copie <code>config.exemplo.php</code> para <code>config.php</code> (na pasta <code>luxury-tours-portugal</code>), defina uma palavra-passe em <code>senha_painel</code> e publique o ficheiro. Com ela, crie a conta de administrador; a partir daí, cada pessoa entra com o seu email. O <code>config.php</code> fica fora do Git.</p>
     <p>O inquérito funciona sem esta configuração, em modo de demonstração.</p>
   </section>
 </main>
@@ -248,9 +349,13 @@ function barras(array $contagem, int $total, callable $rotulo): string
 <?php endif; ?>
     <form method="post" class="formulario">
       <input type="hidden" name="acao" value="entrar">
-      <label>Palavra-passe <input type="password" name="senha" autocomplete="current-password" required autofocus></label>
+      <label>Email <input type="email" name="email" autocomplete="username" autofocus<?= ltp_acesso_inicial_disponivel($pdo) ? '' : ' required' ?>></label>
+      <label>Palavra-passe <input type="password" name="senha" autocomplete="current-password" required></label>
       <button type="submit" class="botao">Entrar</button>
     </form>
+<?php if (ltp_acesso_inicial_disponivel($pdo)): ?>
+    <p class="nota">Primeiro acesso: deixe o email em branco e use a palavra-passe de configuração (<code>senha_painel</code> em <code>config.php</code>). Serve apenas para criar a conta de administrador.</p>
+<?php endif; ?>
   </section>
 </main>
 <?php else: ?>
@@ -269,9 +374,9 @@ function barras(array $contagem, int $total, callable $rotulo): string
     $temDemo = (bool) $pdo->query('SELECT 1 FROM clientes WHERE demo = 1 UNION SELECT 1 FROM respostas WHERE demo = 1 LIMIT 1')->fetchColumn();
     if (ltp_demo() || $temDemo): ?>
   <div class="mensagem mensagem-aviso">
-    <?php if (ltp_demo()): ?>Modo de demonstração ativo: o inquérito mostra os 6 idiomas, com a indicação "protótipo" e o aviso de tradução por rever. <?php endif; ?>
+    <?php if (ltp_demo()): ?>Modo de demonstração ativo: o inquérito mostra os <?= count(LTP_IDIOMAS) ?> idiomas, com a indicação "protótipo" e o aviso de tradução por rever. <?php endif; ?>
     <?php if ($temDemo): ?>Os números incluem dados de demonstração fictícios.
-      <form method="post" class="em-linha" data-confirmar="Apagar todos os dados de demonstração?"><?= campo_csrf() ?><button type="submit" name="acao" value="apagar_demo" class="ligacao">Apagar dados de demonstração</button></form>
+      <?php if (ltp_pode($eu, 'clientes')): ?><form method="post" class="em-linha" data-confirmar="Apagar todos os dados de demonstração?"><?= campo_csrf() ?><button type="submit" name="acao" value="apagar_demo" class="ligacao">Apagar dados de demonstração</button></form><?php endif; ?>
     <?php endif; ?>
   </div>
 <?php endif; ?>
@@ -380,7 +485,7 @@ function barras(array $contagem, int $total, callable $rotulo): string
     <p class="nota">Ficheiros para Excel (separador ponto e vírgula, UTF-8), com os rótulos em português<?= $filtro ? ' e filtrados pelo idioma escolhido' : '' ?>.</p>
   </section>
 
-<?php if (!$temDemo && $n === 0): ?>
+<?php if (!$temDemo && $n === 0 && ltp_pode($eu, 'clientes')): ?>
   <section class="bloco">
     <h2>Dados de demonstração</h2>
     <p>Para apresentar o painel antes do envio real, pode criar 60 clientes fictícios com respostas simuladas. Ficam marcados e podem ser apagados à parte.</p>
@@ -400,7 +505,7 @@ function barras(array $contagem, int $total, callable $rotulo): string
       <ul class="lista-colunas">
         <li><code>name</code> ou <code>nome</code>: como tratar a pessoa (por exemplo, "Anna" ou "Sr. Silva")</li>
         <li><code>email</code> (obrigatório; identifica o cliente, uma nova importação atualiza os dados)</li>
-        <li><code>language</code> ou <code>idioma</code>: pt, en, es, fr, el, ar ("gr" é lido como grego). Em falta ou inválido: idioma do navegador, se suportado; caso contrário, inglês</li>
+        <li><code>language</code> ou <code>idioma</code>: pt, en, es, fr, de, el, ar ("gr" é lido como grego). Em falta ou inválido: inglês</li>
         <li><code>form</code> ou <code>tratamento</code>: m ou f, para a saudação (opcional; sem valor usa uma forma neutra)</li>
         <li><code>country</code>, <code>reference</code> (opcionais)</li>
       </ul>
@@ -415,7 +520,7 @@ function barras(array $contagem, int $total, callable $rotulo): string
     </section>
 
     <section class="bloco">
-      <h2>Ficheiro para mail merge</h2>
+      <h2>Ficheiro para envio em série (mail merge)</h2>
       <p>Uma linha por cliente, com <code>language</code>, a saudação já no idioma certo, o assunto, a ligação pessoal e a data limite. Os modelos do email estão no separador Email de convite.</p>
       <form method="get" class="formulario">
         <input type="hidden" name="descarregar" value="mail_merge">
@@ -448,10 +553,10 @@ function barras(array $contagem, int $total, callable $rotulo): string
       <tbody>
 <?php foreach ($clientes as $c): ?>
         <tr>
-          <td><?= ltp_h($c['nome']) ?><?= $c['demo'] ? ' <span class="etiqueta">demo</span>' : '' ?></td>
+          <td><?= ltp_h($c['nome']) ?><?= $c['demo'] ? ' <span class="etiqueta">fictício</span>' : '' ?></td>
           <td><?= ltp_h($c['email']) ?></td>
-          <td><?= $c['idioma'] ? ltp_h(LTP_NOMES_IDIOMAS[$c['idioma']] ?? $c['idioma']) : '<span class="suave">Navegador</span>' ?></td>
-          <td><?= $c['respondeu'] ? 'Respondeu em ' . ltp_h(substr($c['respondeu'], 0, 10)) . ($c['idioma_resposta'] && $c['idioma_resposta'] !== $c['idioma'] ? ' (' . ltp_h(LTP_NOMES_IDIOMAS[$c['idioma_resposta']]) . ')' : '') : '<span class="suave">Por responder</span>' ?></td>
+          <td><?= $c['idioma'] ? ltp_h(LTP_NOMES_IDIOMAS[$c['idioma']] ?? $c['idioma']) : '<span class="suave">Inglês (sem idioma na lista)</span>' ?></td>
+          <td><?= $c['respondeu'] ? 'Respondeu em ' . ltp_h(ltp_data_pt($c['respondeu'], false)) . ($c['idioma_resposta'] && $c['idioma_resposta'] !== $c['idioma'] ? ' (' . ltp_h(LTP_NOMES_IDIOMAS[$c['idioma_resposta']]) . ')' : '') : '<span class="suave">Por responder</span>' ?></td>
           <td><input class="ligacao-pessoal" type="text" readonly value="<?= ltp_h(ltp_ligacao_pessoal($c['token'])) ?>" aria-label="Ligação pessoal de <?= ltp_h($c['nome']) ?>"></td>
           <td><form method="post" data-confirmar="Apagar este cliente e a sua resposta?"><?= campo_csrf() ?><input type="hidden" name="id" value="<?= (int) $c['id'] ?>"><button type="submit" name="acao" value="apagar_cliente" class="ligacao perigo">Apagar</button></form></td>
         </tr>
@@ -468,11 +573,13 @@ function barras(array $contagem, int $total, callable $rotulo): string
       <form method="post"><?= campo_csrf() ?><button type="submit" name="acao" value="gerar_demo" class="botao botao-secundario">Criar dados de demonstração</button></form>
       <form method="post" data-confirmar="Apagar todos os dados de demonstração?"><?= campo_csrf() ?><button type="submit" name="acao" value="apagar_demo" class="botao botao-secundario">Apagar dados de demonstração</button></form>
     </div>
+<?php if (ltp_pode($eu, 'apagar_tudo')): ?>
     <form method="post" class="formulario perigo-zona" data-confirmar="Apagar TODOS os clientes e respostas? Esta ação não pode ser desfeita.">
       <?= campo_csrf() ?>
       <label>Para apagar todos os clientes e respostas (reais e de demonstração), escreva APAGAR <input type="text" name="confirmar" autocomplete="off"></label>
       <button type="submit" name="acao" value="apagar_tudo" class="botao perigo">Apagar tudo</button>
     </form>
+<?php endif; ?>
   </section>
 
 <?php elseif ($vista === 'respostas'):
@@ -493,9 +600,9 @@ function barras(array $contagem, int $total, callable $rotulo): string
     <tbody>
 <?php foreach ($respostas as $r): ?>
       <tr>
-        <td class="sem-quebra"><?= ltp_h(substr($r['atualizado'], 0, 16)) ?></td>
+        <td class="sem-quebra"><?= ltp_h(ltp_data_pt($r['atualizado'])) ?></td>
         <td><?= ltp_h(LTP_NOMES_IDIOMAS[$r['idioma']] ?? $r['idioma']) ?></td>
-        <td><?= $r['cliente_id'] ? ltp_h($r['nome']) : '<span class="suave">Ligação geral</span>' ?><?= $r['demo'] ? ' <span class="etiqueta">demo</span>' : '' ?></td>
+        <td><?php if ($r['cliente_id']): ?><?= ltp_h($r['nome']) ?><?php else: ?><?= ltp_h($r['ident_nome'] ?: 'Sem identificação') ?> <span class="etiqueta">ligação geral</span><br><span class="suave"><?= ltp_h(implode(' · ', array_filter([$r['ident_email'], $r['ident_telemovel'], ltp_paises()[$r['ident_pais'] ?? ''] ?? '']))) ?></span><?php endif; ?><?= $r['demo'] ? ' <span class="etiqueta">fictício</span>' : '' ?></td>
         <td><?= ltp_h(ltp_rotulo_regiao($r['regiao_1'])) ?></td>
         <td><?= ltp_h(ltp_rotulo_regiao($r['regiao_2'])) ?></td>
         <td><?= ltp_h(ltp_rotulo_regiao($r['regiao_3'])) ?></td>
@@ -563,6 +670,95 @@ function barras(array $contagem, int $total, callable $rotulo): string
     </section>
     <section class="bloco bloco-previsao">
       <iframe class="previsao" title="Pré-visualização do email" srcdoc="<?= ltp_h($exemplo) ?>" sandbox></iframe>
+    </section>
+  </div>
+
+<?php elseif ($vista === 'utilizadores'):
+    $utilizadores = $pdo->query('SELECT * FROM utilizadores ORDER BY ativo DESC, nome COLLATE NOCASE')->fetchAll(PDO::FETCH_ASSOC);
+?>
+  <h1>Utilizadores</h1>
+  <p class="nota">Pessoas da empresa com acesso a este painel. Cada utilizador entra com o seu email e a sua palavra-passe (mínimo <?= LTP_SENHA_MINIMA ?> caracteres), que pode alterar em "A minha conta".</p>
+  <div class="grelha">
+    <section class="bloco">
+      <h2><?= $inicial ? 'Criar a conta de administrador' : 'Novo utilizador' ?></h2>
+      <form method="post" class="formulario">
+        <?= campo_csrf() ?>
+        <label>Nome <input type="text" name="nome" required maxlength="120" autocomplete="off"></label>
+        <label>Email <input type="email" name="email" required autocomplete="off"></label>
+        <label>Perfil
+          <select name="papel"<?= $inicial ? ' disabled' : '' ?>>
+<?php foreach (LTP_PAPEIS as $c => $n): ?>
+            <option value="<?= $c ?>"<?= $c === ($inicial ? 'admin' : 'gestor') ? ' selected' : '' ?>><?= ltp_h($n) ?></option>
+<?php endforeach; ?>
+          </select>
+        </label>
+<?php if ($inicial): ?>
+        <input type="hidden" name="papel" value="admin">
+<?php endif; ?>
+        <label>Palavra-passe inicial <input type="password" name="senha" required minlength="<?= LTP_SENHA_MINIMA ?>" autocomplete="new-password"></label>
+        <button type="submit" name="acao" value="criar_utilizador" class="botao">Criar</button>
+      </form>
+    </section>
+    <section class="bloco">
+      <h2>Perfis</h2>
+      <dl class="perfis">
+<?php foreach (LTP_PAPEIS as $c => $n): ?>
+        <dt><?= ltp_h($n) ?></dt><dd><?= ltp_h(LTP_DESCRICAO_PAPEIS[$c]) ?></dd>
+<?php endforeach; ?>
+      </dl>
+    </section>
+  </div>
+<?php if ($utilizadores): ?>
+  <section class="bloco">
+    <h2>Lista (<?= count($utilizadores) ?>)</h2>
+    <div class="tabela-rolante">
+    <table class="tabela utilizadores">
+      <thead><tr><th scope="col">Nome</th><th scope="col">Email</th><th scope="col">Perfil</th><th scope="col">Ativo</th><th scope="col">Último acesso</th><th scope="col"><span class="sr">Guardar</span></th><th scope="col">Nova palavra-passe</th><th scope="col"><span class="sr">Apagar</span></th></tr></thead>
+      <tbody>
+<?php foreach ($utilizadores as $u): $f = 'u' . (int) $u['id']; ?>
+        <tr<?= (int) $u['ativo'] ? '' : ' class="inativo"' ?>>
+          <td><input form="<?= $f ?>" type="text" name="nome" value="<?= ltp_h($u['nome']) ?>" required maxlength="120" aria-label="Nome"><?= (int) $u['id'] === (int) $eu['id'] ? ' <span class="etiqueta">eu</span>' : '' ?></td>
+          <td><?= ltp_h($u['email']) ?></td>
+          <td><select form="<?= $f ?>" name="papel" aria-label="Perfil de <?= ltp_h($u['nome']) ?>">
+<?php foreach (LTP_PAPEIS as $c => $n): ?>
+            <option value="<?= $c ?>"<?= $c === $u['papel'] ? ' selected' : '' ?>><?= ltp_h($n) ?></option>
+<?php endforeach; ?>
+          </select></td>
+          <td><input form="<?= $f ?>" type="checkbox" name="ativo" value="1"<?= (int) $u['ativo'] ? ' checked' : '' ?> aria-label="Ativo"></td>
+          <td class="sem-quebra suave"><?= $u['ultimo_acesso'] ? ltp_h(ltp_data_pt($u['ultimo_acesso'])) : 'Nunca' ?></td>
+          <td><form method="post" id="<?= $f ?>"><?= campo_csrf() ?><input type="hidden" name="id" value="<?= (int) $u['id'] ?>"><button type="submit" name="acao" value="editar_utilizador" class="botao botao-secundario">Guardar</button></form></td>
+          <td><form method="post" class="em-linha-campos"><?= campo_csrf() ?><input type="hidden" name="id" value="<?= (int) $u['id'] ?>"><input type="password" name="senha" minlength="<?= LTP_SENHA_MINIMA ?>" required autocomplete="new-password" aria-label="Nova palavra-passe de <?= ltp_h($u['nome']) ?>"><button type="submit" name="acao" value="repor_senha" class="ligacao">Definir</button></form></td>
+          <td><?php if ((int) $u['id'] !== (int) $eu['id']): ?><form method="post" data-confirmar="Apagar o utilizador <?= ltp_h($u['nome']) ?>?"><?= campo_csrf() ?><input type="hidden" name="id" value="<?= (int) $u['id'] ?>"><button type="submit" name="acao" value="apagar_utilizador" class="ligacao perigo">Apagar</button></form><?php endif; ?></td>
+        </tr>
+<?php endforeach; ?>
+      </tbody>
+    </table>
+    </div>
+    <p class="nota">Desativar um utilizador corta o acesso de imediato, sem apagar a conta. Tem de existir sempre pelo menos um administrador ativo.</p>
+  </section>
+<?php endif; ?>
+
+<?php elseif ($vista === 'conta'): ?>
+  <h1>A minha conta</h1>
+  <div class="grelha">
+    <section class="bloco">
+      <h2>Dados</h2>
+      <dl class="perfis">
+        <dt>Nome</dt><dd><?= ltp_h($eu['nome']) ?></dd>
+        <dt>Email</dt><dd><?= ltp_h($eu['email']) ?></dd>
+        <dt>Perfil</dt><dd><?= ltp_h(LTP_PAPEIS[$eu['papel']]) ?>: <?= ltp_h(LTP_DESCRICAO_PAPEIS[$eu['papel']]) ?></dd>
+      </dl>
+    </section>
+    <section class="bloco">
+      <h2>Alterar a palavra-passe</h2>
+      <form method="post" class="formulario">
+        <?= campo_csrf() ?>
+        <input type="text" name="email" value="<?= ltp_h($eu['email']) ?>" autocomplete="username" hidden>
+        <label>Palavra-passe atual <input type="password" name="atual" required autocomplete="current-password"></label>
+        <label>Nova palavra-passe (mínimo <?= LTP_SENHA_MINIMA ?> caracteres) <input type="password" name="nova" required minlength="<?= LTP_SENHA_MINIMA ?>" autocomplete="new-password"></label>
+        <label>Confirmar a nova palavra-passe <input type="password" name="confirmar" required minlength="<?= LTP_SENHA_MINIMA ?>" autocomplete="new-password"></label>
+        <button type="submit" name="acao" value="alterar_senha" class="botao">Alterar</button>
+      </form>
     </section>
   </div>
 <?php endif; ?>

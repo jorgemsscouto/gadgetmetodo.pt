@@ -458,6 +458,7 @@ code {
 
 .formulario input[type="password"],
 .formulario input[type="text"],
+.formulario input[type="email"],
 .formulario select,
 .filtro select {
   padding: 9px 10px;
@@ -575,4 +576,64 @@ code {
   .grelha-email {
     grid-template-columns: 1fr;
   }
+}
+
+/* Utilizadores e conta */
+
+.quem {
+  font-size: 14px;
+}
+
+.cabecalho-acoes a[aria-current="page"] {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
+.perfis {
+  margin: 0;
+  font-size: 14px;
+}
+
+.perfis dt {
+  font-weight: 600;
+  margin-block-start: 10px;
+}
+
+.perfis dd {
+  margin: 2px 0 0;
+  color: var(--suave);
+}
+
+.utilizadores input[type="text"],
+.utilizadores input[type="password"],
+.utilizadores select {
+  padding: 6px 8px;
+  border: 1px solid #cbbfa8;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 13px;
+  background: var(--papel);
+}
+
+.utilizadores input[type="text"] {
+  inline-size: 100%;
+  min-inline-size: 120px;
+}
+
+.utilizadores input[type="password"] {
+  inline-size: 120px;
+}
+
+.utilizadores form {
+  margin: 0;
+}
+
+.em-linha-campos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.utilizadores tr.inativo td {
+  opacity: 0.6;
 }

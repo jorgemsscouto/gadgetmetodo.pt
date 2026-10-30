@@ -30,7 +30,12 @@
     "prototype": "Protótipo para apresentação",
     "pending_review": "Tradução a aguardar revisão por falante nativo",
     "noscript": "Para responder a este inquérito, ative o JavaScript no navegador.",
-    "privacy": "Política de privacidade"
+    "privacy": "Política de privacidade",
+    "required_fields": "Preencha todos os campos para continuar.",
+    "invalid_email": "Indique um endereço de email válido.",
+    "invalid_phone": "Indique um número de telemóvel válido, com o indicativo do país.",
+    "map_label": "Mapa: {region}",
+    "map_open": "Abrir o mapa"
   },
   "intro": {
     "eyebrow": "Um inquérito reservado aos nossos clientes",
@@ -66,7 +71,7 @@
   "steps": {
     "regions": {
       "title": "Que regiões vinícolas gostaria mais de descobrir connosco?",
-      "help": "Escolha até três, por ordem de preferência. Toque novamente numa região para a retirar.",
+      "help": "Escolha até três, por ordem de preferência. Para retirar uma região, selecione-a novamente.",
       "other_label": "Outra região que gostaria de conhecer",
       "other_placeholder": "Por exemplo, Wachau (Áustria)"
     },
@@ -75,7 +80,7 @@
       "title": "Qual a probabilidade de fazer esta viagem connosco nos próximos dois anos?"
     },
     "duration": {
-      "title": "Quanto tempo teria a sua viagem ideal?"
+      "title": "Quanto tempo duraria a sua viagem ideal?"
     },
     "group": {
       "title": "Com quem viajaria?"
@@ -97,7 +102,18 @@
     },
     "contact": {
       "title": "Podemos entrar em contacto consigo quando esta viagem estiver pronta?",
-      "privacy_text": "As suas respostas servem apenas para desenhar novas viagens e, se concordar, para lhe darmos notícias quando estiverem prontas."
+      "privacy_text": "As suas respostas servem apenas para preparar novas viagens e, se concordar, para lhe darmos notícias quando estiverem prontas."
+    },
+    "identity": {
+      "title": "Os seus dados",
+      "intro": "Como está a responder através de uma ligação geral, pedimos que se identifique.",
+      "name": "Nome",
+      "email": "Email",
+      "phone": "Telemóvel",
+      "phone_help": "Com o indicativo do país (por exemplo, +351)",
+      "country": "País de origem",
+      "country_placeholder": "Escolha um país",
+      "privacy_text": "Usamos os seus dados apenas para identificar as respostas e, se concordar, para lhe darmos notícias desta viagem."
     }
   },
   "options": {
@@ -135,7 +151,7 @@
   "thanks": {
     "title_name": "Muito obrigado, {name}.",
     "title": "Muito obrigado.",
-    "text": "Recebemos as suas preferências. Vão ajudar-nos a desenhar a nossa próxima viagem.",
+    "text": "Recebemos as suas preferências. Vão ajudar-nos a preparar a nossa próxima viagem.",
     "summary": "As suas escolhas",
     "edit": "Alterar respostas",
     "signature": "A equipa Luxury Tours Portugal"

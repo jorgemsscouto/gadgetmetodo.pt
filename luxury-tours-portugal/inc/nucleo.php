@@ -6,7 +6,7 @@ declare(strict_types=1);
 
 date_default_timezone_set('Europe/Lisbon');
 
-const LTP_IDIOMAS = ['pt', 'en', 'es', 'fr', 'el', 'ar'];
+const LTP_IDIOMAS = ['pt', 'en', 'es', 'fr', 'de', 'el', 'ar'];
 const LTP_IDIOMA_PADRAO = 'en';
 // Nomes alternativos aceites na importação da lista de clientes ("gr" = grego)
 const LTP_ALIASES_IDIOMA = [
@@ -14,6 +14,7 @@ const LTP_ALIASES_IDIOMA = [
     'en-gb' => 'en', 'en-us' => 'en', 'ingles' => 'en', 'inglês' => 'en', 'english' => 'en',
     'es-es' => 'es', 'espanhol' => 'es', 'spanish' => 'es', 'español' => 'es',
     'fr-fr' => 'fr', 'frances' => 'fr', 'francês' => 'fr', 'french' => 'fr', 'français' => 'fr',
+    'de-de' => 'de', 'de-at' => 'de', 'de-ch' => 'de', 'alemao' => 'de', 'alemão' => 'de', 'german' => 'de', 'deutsch' => 'de',
     'gr' => 'el', 'el-gr' => 'el', 'grego' => 'el', 'greek' => 'el', 'ελληνικά' => 'el',
     'arabe' => 'ar', 'árabe' => 'ar', 'arabic' => 'ar', 'العربية' => 'ar',
 ];
@@ -24,6 +25,21 @@ const LTP_REGIOES = [
     'region_ribera', 'region_mosel', 'region_santorini', 'region_napa', 'region_mendoza', 'region_stellenbosch',
 ];
 const LTP_MAX_REGIOES = 3;
+// Pesquisa no Google Maps usada no ícone (i) de cada região
+const LTP_MAPAS = [
+    'region_tuscany' => 'Tuscany, Italy',
+    'region_piedmont' => 'Langhe, Piedmont, Italy',
+    'region_bordeaux' => 'Gironde, France',
+    'region_burgundy' => "Côte-d'Or, France",
+    'region_champagne' => 'Champagne-Ardenne, France',
+    'region_rioja' => 'La Rioja, Spain',
+    'region_ribera' => 'Ribera del Duero, Spain',
+    'region_mosel' => 'Mosel Valley, Germany',
+    'region_santorini' => 'Santorini, Greece',
+    'region_napa' => 'Napa Valley, California',
+    'region_mendoza' => 'Mendoza Province, Argentina',
+    'region_stellenbosch' => 'Stellenbosch, South Africa',
+];
 const LTP_MAX_PRIORIDADES = 3;
 const LTP_CAMPOS = [
     // campo => [tipo, opções, obrigatório]
@@ -54,6 +70,7 @@ const LTP_PASSOS = [
 const LTP_MAX_COMENTARIO = 1000;
 const LTP_MAX_OUTRA = 120;
 const LTP_TRATAMENTOS = ['m', 'f'];
+const LTP_MAX_NOME = 120;
 
 /* Configuração */
 
@@ -171,8 +188,25 @@ function ltp_bd(): ?PDO
         anonimo TEXT UNIQUE, idioma TEXT NOT NULL, regiao_1 TEXT, regiao_2 TEXT, regiao_3 TEXT, regiao_outra TEXT,
         intencao TEXT, duracao TEXT, grupo TEXT, orcamento TEXT, epocas TEXT, prioridades TEXT, comentario TEXT,
         contacto TEXT, demo INTEGER NOT NULL DEFAULT 0, criado TEXT NOT NULL, atualizado TEXT NOT NULL)');
+    // Identificação de quem responde pela ligação geral (sem convite)
+    ltp_acrescentar_colunas($pdo, 'respostas', ['ident_nome' => 'TEXT', 'ident_email' => 'TEXT', 'ident_telemovel' => 'TEXT', 'ident_pais' => 'TEXT']);
     $pdo->exec('CREATE TABLE IF NOT EXISTS definicoes (chave TEXT PRIMARY KEY, valor TEXT)');
+    // Utilizadores internos do painel
+    $pdo->exec("CREATE TABLE IF NOT EXISTS utilizadores (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, email TEXT NOT NULL UNIQUE COLLATE NOCASE, senha TEXT NOT NULL,
+        papel TEXT NOT NULL CHECK (papel IN ('admin', 'gestor', 'consulta')), ativo INTEGER NOT NULL DEFAULT 1,
+        criado TEXT NOT NULL, ultimo_acesso TEXT)");
     return $pdo;
+}
+
+function ltp_acrescentar_colunas(PDO $pdo, string $tabela, array $colunas): void
+{
+    $existentes = array_column($pdo->query('PRAGMA table_info(' . $tabela . ')')->fetchAll(PDO::FETCH_ASSOC), 'name');
+    foreach ($colunas as $nome => $tipo) {
+        if (!in_array($nome, $existentes, true)) {
+            $pdo->exec("ALTER TABLE $tabela ADD COLUMN $nome $tipo");
+        }
+    }
 }
 
 function ltp_definicao(string $chave): ?string
@@ -257,42 +291,14 @@ function ltp_normalizar_idioma(?string $valor): ?string
     return LTP_ALIASES_IDIOMA[$v] ?? null;
 }
 
-// Idioma do navegador (cabeçalho Accept-Language), se suportado e publicado
-function ltp_idioma_navegador(array $publicados): ?string
-{
-    $cabecalho = (string) ($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '');
-    $preferencias = [];
-    foreach (explode(',', $cabecalho) as $i => $parte) {
-        $bits = explode(';', trim($parte));
-        $codigo = strtolower(substr(trim($bits[0]), 0, 2));
-        $q = 1.0;
-        if (isset($bits[1]) && preg_match('/q=([0-9.]+)/', $bits[1], $m)) {
-            $q = (float) $m[1];
-        }
-        if ($codigo !== '') {
-            $preferencias[] = [$codigo, $q, $i];
-        }
-    }
-    usort($preferencias, fn($a, $b) => [$b[1], $a[2]] <=> [$a[1], $b[2]]);
-    foreach ($preferencias as [$codigo]) {
-        if (in_array($codigo, $publicados, true)) {
-            return $codigo;
-        }
-    }
-    return null;
-}
-
-// Ordem: escolha manual (?lang), idioma do cliente, idioma do navegador, inglês, primeiro publicado
+// Ordem: escolha manual (?lang), idioma do cliente na lista de convites, inglês, primeiro idioma publicado.
+// Quem entra pela ligação geral vê sempre o inquérito em inglês e pode mudar no seletor.
 function ltp_resolver_idioma(?string $pedido, ?string $doCliente, array $publicados): ?string
 {
     foreach ([ltp_normalizar_idioma($pedido), ltp_normalizar_idioma($doCliente)] as $c) {
         if ($c !== null && in_array($c, $publicados, true)) {
             return $c;
         }
-    }
-    $nav = ltp_idioma_navegador($publicados);
-    if ($nav !== null) {
-        return $nav;
     }
     if (in_array(LTP_IDIOMA_PADRAO, $publicados, true)) {
         return LTP_IDIOMA_PADRAO;
@@ -311,6 +317,47 @@ function ltp_formatar_data(DateTimeImmutable $data, string $idioma): string
         }
     }
     return $data->format('d/m/Y');
+}
+
+/* Identificação na ligação geral */
+
+// Códigos ISO 3166-1 alfa-2 => nome em português de Portugal
+function ltp_paises(): array
+{
+    static $paises = null;
+    if ($paises === null) {
+        $paises = require __DIR__ . '/paises-pt.php';
+    }
+    return $paises;
+}
+
+function ltp_ligacao_mapa(string $regiao): string
+{
+    return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode(LTP_MAPAS[$regiao] ?? '');
+}
+
+// Devolve [identificação normalizada, erro]; o erro é o nome do campo inválido
+function ltp_validar_identidade($i): array
+{
+    $i = is_array($i) ? $i : [];
+    $nome = ltp_limpar_texto($i['name'] ?? '', LTP_MAX_NOME);
+    if (mb_strlen($nome) < 2) {
+        return [null, 'name'];
+    }
+    $email = mb_strtolower(trim((string) ($i['email'] ?? '')));
+    if (mb_strlen($email) > 160 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return [null, 'email'];
+    }
+    $telemovel = trim(preg_replace('/\s+/', ' ', (string) ($i['phone'] ?? '')) ?? '');
+    $digitos = preg_replace('/\D/', '', $telemovel) ?? '';
+    if (!preg_match('/^(\+|00)?[0-9 ().\-]{6,24}$/', $telemovel) || strlen($digitos) < 7 || strlen($digitos) > 15) {
+        return [null, 'phone'];
+    }
+    $pais = strtoupper(trim((string) ($i['country'] ?? '')));
+    if (!isset(ltp_paises()[$pais])) {
+        return [null, 'country'];
+    }
+    return [['nome' => $nome, 'email' => $email, 'telemovel' => $telemovel, 'pais' => $pais], null];
 }
 
 /* Clientes e respostas */
@@ -408,7 +455,7 @@ function ltp_validar(array $r): array
     return [$limpo, null];
 }
 
-function ltp_guardar_resposta(PDO $pdo, array $v, string $idioma, ?int $clienteId, ?string $anonimo, bool $demo = false, ?string $quando = null): void
+function ltp_guardar_resposta(PDO $pdo, array $v, string $idioma, ?int $clienteId, ?string $anonimo, bool $demo = false, ?string $quando = null, ?array $identidade = null): void
 {
     $agora = $quando ?? date('Y-m-d H:i:s');
     $dados = [
@@ -426,6 +473,12 @@ function ltp_guardar_resposta(PDO $pdo, array $v, string $idioma, ?int $clienteI
         'comentario' => $v['comment'],
         'contacto' => $v['contact'],
     ];
+    if ($identidade !== null) {
+        $dados += [
+            'ident_nome' => $identidade['nome'], 'ident_email' => $identidade['email'],
+            'ident_telemovel' => $identidade['telemovel'], 'ident_pais' => $identidade['pais'],
+        ];
+    }
     $chave = $clienteId !== null ? 'cliente_id' : 'anonimo';
     $valorChave = $clienteId ?? $anonimo;
     $st = $pdo->prepare("SELECT id FROM respostas WHERE $chave = ?");

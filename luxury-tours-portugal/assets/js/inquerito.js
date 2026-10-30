@@ -17,8 +17,12 @@
     vista: D.state === 'open' ? 'intro' : D.state, // intro | passo | fim | closed | unavailable
     passo: 1,
     respostas: D.previous ? JSON.parse(JSON.stringify(D.previous)) : vazio(),
+    // Identificação: só pedida a quem entra pela ligação geral (sem convite)
+    identidade: { name: '', email: '', phone: '', country: '' },
     aEnviar: false
   };
+  var pedeIdentidade = !D.token;
+  var comHover = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   function vazio() {
     return { regions: [], regions_other: '', intent: null, duration: null, group: null, budget: null, seasons: [], priorities: [], comment: '', contact: null };
@@ -179,6 +183,10 @@
       ])
     ]);
     var primeiro = true;
+    if (passo.id === 'contact' && pedeIdentidade) {
+      corpo.appendChild(campoIdentidade());
+      primeiro = false;
+    }
     passo.fields.forEach(function (campo) {
       corpo.appendChild(campoVista(campo, primeiro));
       primeiro = false;
@@ -231,7 +239,7 @@
     });
     grupo.appendChild(lista);
     if (campo === 'contact') {
-      var priv = el('p', { class: 'privacidade' }, [t('steps.contact.privacy_text')]);
+      var priv = el('p', { class: 'privacidade' }, [t(pedeIdentidade ? 'steps.identity.privacy_text' : 'steps.contact.privacy_text')]);
       if (D.privacyUrl) {
         priv.appendChild(document.createTextNode(' '));
         priv.appendChild(el('a', { href: D.privacyUrl, target: '_blank', rel: 'noopener', text: t('ui.privacy') }));
@@ -277,7 +285,7 @@
         el('span', { class: 'regiao-pais', text: '(' + (r.country || '') + ')' }),
         el('span', { class: 'regiao-nota', text: r.note || '' })
       ]);
-      grelha.appendChild(botao);
+      grelha.appendChild(el('div', { class: 'regiao-cartao' }, [botao].concat(mapaRegiao(codigo, r))));
     });
     grupo.appendChild(grelha);
     var outra = el('input', {
@@ -292,6 +300,142 @@
     setTimeout(atualizarRegioes, 0);
     return grupo;
   }
+
+  /* Identificação (ligação geral) */
+
+  function nomesPaises() {
+    var nomes = null;
+    try { nomes = new Intl.DisplayNames([locale(), estado.lang], { type: 'region' }); } catch (e) { /* sem suporte: mostra o código */ }
+    var lista = S.countries.map(function (c) {
+      var n = c;
+      try { n = (nomes && nomes.of(c)) || c; } catch (e) { /* código desconhecido no navegador */ }
+      return { codigo: c, nome: n };
+    });
+    var ordem;
+    try { ordem = new Intl.Collator(locale()).compare; } catch (e) { ordem = function (a, b) { return a < b ? -1 : a > b ? 1 : 0; }; }
+    lista.sort(function (a, b) { return ordem(a.nome, b.nome); });
+    return lista;
+  }
+
+  function campoTexto(id, rotulo, atributos, ajuda) {
+    var chave = id.slice(3);
+    var input = el(atributos.tag || 'input', Object.assign({
+      id: id, name: chave, required: true,
+      'aria-describedby': ajuda ? id + '-ajuda' : null,
+      oninput: function (e) { estado.identidade[chave] = e.target.value; mostrarErro(null); e.target.removeAttribute('aria-invalid'); },
+      onchange: function (e) { estado.identidade[chave] = e.target.value; }
+    }, atributos.attrs || {}), atributos.filhos || []);
+    if (input.tagName === 'INPUT') input.value = estado.identidade[chave];
+    return el('div', { class: 'texto-livre identidade-campo' }, [
+      el('label', { for: id, text: rotulo }),
+      input,
+      ajuda ? el('p', { class: 'ajuda-campo', id: id + '-ajuda', text: ajuda }) : null
+    ]);
+  }
+
+  function campoIdentidade() {
+    var opcoes = [el('option', { value: '', text: t('steps.identity.country_placeholder') })];
+    nomesPaises().forEach(function (p) {
+      opcoes.push(el('option', { value: p.codigo, selected: estado.identidade.country === p.codigo, text: p.nome }));
+    });
+    return el('fieldset', { class: 'campo identidade', 'aria-labelledby': 'q-identity' }, [
+      titulo(t('steps.identity.title'), true, 'q-identity'),
+      el('p', { class: 'ajuda', text: t('steps.identity.intro') }),
+      el('div', { class: 'identidade-grelha' }, [
+        campoTexto('id-name', t('steps.identity.name'), { attrs: { type: 'text', autocomplete: 'name', maxlength: String(S.maxName) } }),
+        campoTexto('id-email', t('steps.identity.email'), { attrs: { type: 'email', autocomplete: 'email', inputmode: 'email', dir: 'ltr', maxlength: '160' } }),
+        campoTexto('id-phone', t('steps.identity.phone'), { attrs: { type: 'tel', autocomplete: 'tel', inputmode: 'tel', dir: 'ltr', maxlength: '30' } }, t('steps.identity.phone_help')),
+        campoTexto('id-country', t('steps.identity.country'), { tag: 'select', attrs: { autocomplete: 'country' }, filhos: opcoes })
+      ])
+    ]);
+  }
+
+  /* Mapa de cada região: (i) com pré-visualização ao passar o rato; o clique abre o mapa */
+
+  function icone(caminhos, classe) {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('class', classe);
+    caminhos.forEach(function (d) {
+      var p = document.createElementNS(ns, 'path');
+      p.setAttribute('d', d);
+      svg.appendChild(p);
+    });
+    return svg;
+  }
+
+  function mapaRegiao(codigo, r) {
+    var nome = (r.name || codigo) + ' (' + (r.country || '') + ')';
+    var rotulo = t('ui.map_label').replace('{region}', nome);
+    var ligacao = S.maps[codigo];
+    var painel = el('div', { class: 'regiao-mapa', id: 'mapa-' + codigo, role: 'tooltip', hidden: true }, [
+      el('img', { src: 'assets/img/mapas/' + codigo + '.svg', alt: rotulo, width: '320', height: '220', loading: 'lazy', decoding: 'async' }),
+      el('p', { class: 'regiao-mapa-titulo' }, [el('bdi', null, [nomeRegiao(codigo)])]),
+      el('a', { class: 'regiao-mapa-ligacao', href: ligacao, target: '_blank', rel: 'noopener' }, [
+        el('span', { text: t('ui.map_open') }),
+        icone(['M14 4h6v6', 'M20 4l-9 9', 'M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5'], 'icone-externo')
+      ])
+    ]);
+    var info = el('a', {
+      class: 'regiao-info', href: ligacao, target: '_blank', rel: 'noopener',
+      'aria-label': rotulo, 'aria-describedby': 'mapa-' + codigo, 'aria-expanded': 'false'
+    }, [icone(['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M12 11v6', 'M12 7.5v.01'], 'icone-info')]);
+
+    var temporizador = null;
+    var abertoEm = 0;
+    function abrir() {
+      clearTimeout(temporizador);
+      abertoEm = Date.now();
+      fecharMapas(painel);
+      painel.hidden = false;
+      info.setAttribute('aria-expanded', 'true');
+      painel.classList.remove('acima');
+      var caixa = painel.getBoundingClientRect();
+      if (caixa.bottom > window.innerHeight - 8 && caixa.top - caixa.height - 48 > 0) painel.classList.add('acima');
+    }
+    function fechar() {
+      painel.hidden = true;
+      info.setAttribute('aria-expanded', 'false');
+    }
+    function fecharDepois() {
+      clearTimeout(temporizador);
+      temporizador = setTimeout(fechar, 220);
+    }
+    painel._fechar = fechar;
+    if (comHover) {
+      [info, painel].forEach(function (n) {
+        n.addEventListener('mouseenter', abrir);
+        n.addEventListener('mouseleave', fecharDepois);
+      });
+    } else {
+      // Ecrãs tácteis: o primeiro toque mostra o mapa; o botão dentro do mapa abre-o
+      info.addEventListener('click', function (e) {
+        e.preventDefault();
+        // O toque também dá foco ao (i) e abre o mapa; só fecha num segundo toque
+        if (painel.hidden) abrir(); else if (Date.now() - abertoEm > 400) fechar();
+      });
+    }
+    info.addEventListener('focus', abrir);
+    info.addEventListener('blur', function () { if (!painel.contains(document.activeElement)) fecharDepois(); });
+    painel.addEventListener('focusout', function (e) { if (!painel.contains(e.relatedTarget) && e.relatedTarget !== info) fecharDepois(); });
+    painel.addEventListener('focusin', function () { clearTimeout(temporizador); });
+    return [info, painel];
+  }
+
+  function fecharMapas(excepto) {
+    app.querySelectorAll('.regiao-mapa').forEach(function (m) {
+      if (m !== excepto && !m.hidden && m._fechar) m._fechar();
+    });
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') fecharMapas(null);
+  });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest || !e.target.closest('.regiao-info, .regiao-mapa')) fecharMapas(null);
+  });
 
   function alternarRegiao(codigo) {
     var lista = estado.respostas.regions;
@@ -404,7 +548,33 @@
     }
   }
 
+  function validarIdentidade() {
+    var i = estado.identidade;
+    var digitos = i.phone.replace(/\D/g, '');
+    var falhas = [
+      ['name', i.name.trim().length < 2, 'ui.required_fields'],
+      ['email', !i.email.trim(), 'ui.required_fields'],
+      ['phone', !i.phone.trim(), 'ui.required_fields'],
+      ['country', !i.country, 'ui.required_fields'],
+      ['email', !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(i.email.trim()), 'ui.invalid_email'],
+      ['phone', !/^(\+|00)?[0-9 ().\-]{6,24}$/.test(i.phone.trim()) || digitos.length < 7 || digitos.length > 15, 'ui.invalid_phone']
+    ];
+    app.querySelectorAll('.identidade [aria-invalid]').forEach(function (n) { n.removeAttribute('aria-invalid'); });
+    for (var k = 0; k < falhas.length; k++) {
+      if (falhas[k][1]) {
+        var campo = document.getElementById('id-' + falhas[k][0]);
+        if (campo) campo.setAttribute('aria-invalid', 'true');
+        return { foco: campo, msg: t(falhas[k][2]) };
+      }
+    }
+    return null;
+  }
+
   function validarPasso(n) {
+    if (S.steps[n - 1].id === 'contact' && pedeIdentidade) {
+      var falhaId = validarIdentidade();
+      if (falhaId) return falhaId;
+    }
     var campos = S.steps[n - 1].fields;
     for (var i = 0; i < campos.length; i++) {
       var c = campos[i];
@@ -422,6 +592,10 @@
     var falha = validarPasso(estado.passo);
     if (falha) {
       mostrarErro(falha.msg);
+      if (falha.foco) {
+        falha.foco.focus();
+        return;
+      }
       var alvo = app.querySelector('[data-campo="' + falha.campo + '"] input, [data-campo="' + falha.campo + '"] .regiao');
       if (alvo) alvo.focus();
       return;
@@ -458,6 +632,7 @@
       token: D.token,
       anon: D.token ? null : idAnonimo(),
       website: isco ? isco.value : '',
+      identity: pedeIdentidade ? estado.identidade : null,
       answers: estado.respostas
     };
     fetch('api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo), credentials: 'same-origin' })

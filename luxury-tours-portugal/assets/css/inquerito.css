@@ -524,6 +524,148 @@ h3.pergunta {
   display: none;
 }
 
+/* Mapa de cada região: ícone (i) e pré-visualização */
+
+.regiao-cartao {
+  position: relative;
+}
+
+.regiao-info {
+  position: absolute;
+  inset-block-end: 10px;
+  inset-inline-end: 10px;
+  display: grid;
+  place-items: center;
+  inline-size: 36px;
+  block-size: 36px;
+  border-radius: 50%;
+  color: var(--ouro-texto);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.regiao-info:hover,
+.regiao-info[aria-expanded="true"] {
+  background: var(--ouro-claro);
+  color: var(--tinta);
+}
+
+.icone-info {
+  inline-size: 20px;
+  block-size: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.regiao-mapa {
+  position: absolute;
+  z-index: 20;
+  inset-block-start: calc(100% - 6px);
+  inset-inline-end: 0;
+  inline-size: min(300px, calc(100vw - 32px));
+  padding: 10px 10px 12px;
+  background: var(--papel);
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio);
+  box-shadow: 0 18px 40px -12px rgba(47, 46, 44, 0.35);
+}
+
+.regiao-mapa.acima {
+  inset-block-start: auto;
+  inset-block-end: 44px;
+}
+
+.regiao-mapa[hidden] {
+  display: none;
+}
+
+.regiao-mapa img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 320 / 220;
+  border-radius: 2px;
+  background: #f6f1e8;
+}
+
+.regiao-mapa-titulo {
+  margin: 10px 2px 2px;
+  font-family: var(--titulos);
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.regiao-mapa-ligacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 2px 0;
+  min-block-size: 36px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ouro-texto);
+}
+
+.icone-externo {
+  inline-size: 16px;
+  block-size: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+[dir="rtl"] .icone-externo {
+  transform: scaleX(-1);
+}
+
+/* Identificação na ligação geral */
+
+.identidade-grelha {
+  display: grid;
+  gap: 0 16px;
+}
+
+@media (min-width: 600px) {
+  .identidade-grelha {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.identidade-campo {
+  margin-block-start: 14px;
+}
+
+.texto-livre select {
+  inline-size: 100%;
+  min-block-size: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio);
+  background: var(--papel);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 16px;
+}
+
+.texto-livre select:focus {
+  border-color: var(--tinta);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ouro-claro);
+}
+
+.texto-livre [aria-invalid="true"] {
+  border-color: var(--vinho);
+}
+
+.ajuda-campo {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
 /* Opções (escolha única e múltipla) */
 
 .opcoes {

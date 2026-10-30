@@ -1,14 +1,19 @@
 {
   "name": "gadgetmetodo-ferramentas",
   "private": true,
-  "description": "Geradores das páginas do site, do catálogo de serviços e da página de instalação das assinaturas de email",
+  "description": "Geradores das páginas do site, do catálogo de serviços e da página de instalação das assinaturas de email e dos mapas do inquérito Luxury Tours Portugal",
   "type": "module",
   "scripts": {
     "site": "node gerar-site.mjs ..",
     "catalogo": "node gerar-catalogo.mjs ../documentos/catalogo",
-    "assinatura": "node gerar-assinatura.mjs ../documentos/assinatura-email"
+    "assinatura": "node gerar-assinatura.mjs ../documentos/assinatura-email",
+    "mapas-luxury-tours": "node gerar-mapas-luxury-tours.mjs ../luxury-tours-portugal/assets/img/mapas"
   },
   "dependencies": {
-    "lucide-static": "1.59.0"
+    "d3-geo": "3.1.1",
+    "lucide-static": "1.59.0",
+    "topojson-client": "3.1.0",
+    "us-atlas": "3.0.1",
+    "world-atlas": "2.0.2"
   }
 }
