@@ -25,6 +25,7 @@ Site estático em HTML e CSS, sem dependências nem passo de compilação. Funci
 | `assets/css/area.css` | Estilos próprios da área reservada (só carregados nessas páginas) |
 | `ferramentas/` | Geradores das páginas e do catálogo (não publicados) |
 | `documentos/` | Catálogo de serviços em PDF e respetiva fonte, e assinaturas de email em `assinatura-email/` (não publicados) |
+| `luxury-tours-portugal/` | Protótipo independente do site, para apresentar a um cliente: inquérito multilingue da Luxury Tours Portugal com painel (PHP). Não indexado; ver `luxury-tours-portugal/LEIA-ME.md` |
 
 ## Preparação para pesquisa com inteligência artificial
 

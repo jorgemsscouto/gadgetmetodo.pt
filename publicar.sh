@@ -82,6 +82,9 @@ mirror --reverse --verbose --no-perms \
   --exclude-glob publicar.sh \
   --exclude-glob configurar-formulario.sh \
   --exclude-glob formulario/config.exemplo.php \
+  --exclude-glob luxury-tours-portugal/config.exemplo.php \
+  --exclude-glob luxury-tours-portugal/LEIA-ME.md \
+  --exclude-glob luxury-tours-portugal/dados/ \
   --exclude-glob documentos/ \
   --exclude-glob ferramentas/ \
   . "$PASTA"

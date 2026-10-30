@@ -1,0 +1,155 @@
+{
+  "_review": "PENDING NATIVE REVIEW",
+  "_note": "Source language. Every other language file is translated from this one.",
+  "lang": "en",
+  "locale": "en-GB",
+  "dir": "ltr",
+  "native_name": "English",
+  "meta": {
+    "title": "Where would you like to travel with us next? | Luxury Tours Portugal",
+    "description": "A private survey for the guests of Luxury Tours Portugal by Wine Tourism in Portugal."
+  },
+  "ui": {
+    "language": "Language",
+    "begin": "Begin",
+    "next": "Continue",
+    "back": "Back",
+    "submit": "Send my answers",
+    "sending": "Sending…",
+    "progress": "Step {n} of {total}",
+    "optional": "Optional",
+    "required_one": "Please choose an option to continue.",
+    "required_rank": "Please choose at least one region to continue.",
+    "limit_reached": "You can choose up to {max}. Remove one to choose another.",
+    "selected_count": "{count} of {max} chosen",
+    "remove": "Remove",
+    "error_send": "We could not send your answers. Please check your connection and try again.",
+    "closed_title": "This survey is now closed",
+    "closed_text": "Thank you for your interest. We look forward to sharing our next journey with you.",
+    "unavailable": "This survey is not available at the moment.",
+    "prototype": "Prototype for presentation",
+    "pending_review": "Translation pending native review",
+    "noscript": "Please enable JavaScript in your browser to answer this survey.",
+    "privacy": "Privacy policy"
+  },
+  "intro": {
+    "eyebrow": "A private survey for our guests",
+    "greeting": "Dear {name},",
+    "greeting_m": "Dear {name},",
+    "greeting_f": "Dear {name},",
+    "title": "Where would you like to travel with us next?",
+    "lead": "We are preparing a small collection of private wine journeys beyond Portugal, crafted with the same attention to detail you know from us. Your answers will help us choose the first destination.",
+    "length": "Six short steps, about two minutes.",
+    "deadline": "Open until {date}.",
+    "returning": "You have already shared your preferences. You may review and update them until {date}."
+  },
+  "rank": {
+    "1": "1st",
+    "2": "2nd",
+    "3": "3rd"
+  },
+  "rank_choice": "{rank} choice",
+  "regions": {
+    "region_tuscany": { "name": "Tuscany", "country": "Italy", "note": "Brunello, Chianti and Renaissance villas" },
+    "region_piedmont": { "name": "Piedmont", "country": "Italy", "note": "Barolo, Barbaresco and white truffles" },
+    "region_bordeaux": { "name": "Bordeaux", "country": "France", "note": "Grand cru châteaux of the Médoc and Saint-Émilion" },
+    "region_burgundy": { "name": "Burgundy", "country": "France", "note": "Pinot Noir and Chardonnay of the Côte d’Or" },
+    "region_champagne": { "name": "Champagne", "country": "France", "note": "Historic houses and chalk cellars" },
+    "region_rioja": { "name": "Rioja", "country": "Spain", "note": "Tempranillo and landmark architecture" },
+    "region_ribera": { "name": "Ribera del Duero", "country": "Spain", "note": "Bold reds along the Spanish Douro" },
+    "region_mosel": { "name": "Mosel", "country": "Germany", "note": "Riesling on steep slate slopes" },
+    "region_santorini": { "name": "Santorini", "country": "Greece", "note": "Assyrtiko from volcanic vineyards" },
+    "region_napa": { "name": "Napa Valley", "country": "United States", "note": "Cabernet Sauvignon and Californian hospitality" },
+    "region_mendoza": { "name": "Mendoza", "country": "Argentina", "note": "Malbec at the foot of the Andes" },
+    "region_stellenbosch": { "name": "Stellenbosch", "country": "South Africa", "note": "Cape estates between mountains and sea" }
+  },
+  "steps": {
+    "regions": {
+      "title": "Which wine regions would you most like to discover with us?",
+      "help": "Choose up to three, in order of preference. Tap a region again to remove it.",
+      "other_label": "Another region you would love to explore",
+      "other_placeholder": "For example, Wachau (Austria)"
+    },
+    "intent": {
+      "kicker": "Your first choice: {region}",
+      "title": "How likely would you be to make this journey with us in the next two years?"
+    },
+    "duration": {
+      "title": "How long would your ideal journey be?"
+    },
+    "group": {
+      "title": "Who would be travelling with you?"
+    },
+    "budget": {
+      "title": "What would be your indicative budget per person, excluding international flights?"
+    },
+    "seasons": {
+      "title": "When would you prefer to travel?",
+      "help": "Choose all that apply."
+    },
+    "priorities": {
+      "title": "What would make this journey unforgettable for you?",
+      "help": "Choose up to three."
+    },
+    "comment": {
+      "label": "Is there anything else you would like us to know?",
+      "placeholder": "A special occasion, a favourite wine, a dream experience…"
+    },
+    "contact": {
+      "title": "May we contact you when this journey is ready?",
+      "privacy_text": "Your answers are used only to design new journeys and, if you agree, to let you know when they are ready."
+    }
+  },
+  "options": {
+    "intent_very_likely": "Very likely",
+    "intent_likely": "Likely",
+    "intent_considering": "I would consider it",
+    "intent_unlikely": "Unlikely for now",
+    "duration_3_4": "3 to 4 nights",
+    "duration_5_7": "5 to 7 nights",
+    "duration_8_plus": "8 nights or more",
+    "group_couple": "As a couple",
+    "group_family": "With family",
+    "group_friends": "With friends",
+    "group_private": "A private group or company",
+    "budget_up_to_5000": "Up to {max}",
+    "budget_5000_10000": "{min} to {max}",
+    "budget_10000_20000": "{min} to {max}",
+    "budget_over_20000": "Over {min}",
+    "budget_undisclosed": "I prefer not to say",
+    "season_spring": "Spring",
+    "season_summer": "Summer",
+    "season_harvest": "During the harvest",
+    "season_winter": "Late autumn and winter",
+    "season_flexible": "My dates are flexible",
+    "priority_private_access": "Private access to iconic estates",
+    "priority_winemakers": "Time with winemakers and owners",
+    "priority_dining": "Michelin-starred and chef’s table dining",
+    "priority_hotels": "Exceptional hotels and private villas",
+    "priority_culture": "Art, history and heritage",
+    "priority_wellness": "Wellness and time to slow down",
+    "priority_transfers": "Private chauffeur and helicopter transfers",
+    "contact_yes": "Yes, I would like to be among the first to know",
+    "contact_no": "No, not for now"
+  },
+  "thanks": {
+    "title_name": "Thank you, {name}.",
+    "title": "Thank you.",
+    "text": "Your preferences have been received and will help shape our next journey.",
+    "summary": "Your choices",
+    "edit": "Change my answers",
+    "signature": "The Luxury Tours Portugal team"
+  },
+  "email": {
+    "subject": "Where would you like to travel with us next?",
+    "preheader": "Two minutes to help us choose our next private wine journey.",
+    "p1": "We are preparing a small collection of private wine journeys beyond Portugal, crafted with the same attention to detail you know from us. Before we choose the first destination, we would value your opinion.",
+    "p2": "Six short steps, about two minutes. This link is personal to you and lets you update your answers until {date}.",
+    "button": "Share my preferences",
+    "link_fallback": "If the button does not work, copy this link into your browser:",
+    "closing": "With warm regards,",
+    "signature": "The Luxury Tours Portugal team",
+    "footer": "You are receiving this email as a guest or contact of Luxury Tours Portugal by Wine Tourism in Portugal.",
+    "privacy": "Privacy policy"
+  }
+}
