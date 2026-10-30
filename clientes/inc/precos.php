@@ -415,7 +415,7 @@ function admin_precos(): void
         <p class="ajuda">A caixa "Informações e inscrições" do PDF usa os contactos da empresa e um código QR para a página de formação do site.</p>
         <div><button class="botao" type="submit">Guardar textos</button></div>
       </form>
-      ' . $html_legado, 'Gestão');
+      ' . $html_legado, 'Configuração');
 }
 
 /* PDF */

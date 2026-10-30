@@ -598,13 +598,11 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
     $respostas = json_decode((string) $p['respostas'], true);
     $diagnostico = is_array($respostas) && $respostas ? avaliar_diagnostico($respostas) : null;
     $ind = $diagnostico ? curso_indicado($respostas, curso((int) $p['curso_id'])) : null;
-    $cfg = cfg();
-    $site = rtrim((string) ($cfg['site'] ?? SITE_CANONICO), '/');
+    $site = endereco_site();
     $c = ['id' => $p['curso_id']];
     $link_curso = $site . link_curso_publico($c);
     $link_ficha = $site . link_ficha($c);
     $link_area = $site . '/clientes/' . url('preinscricao', ['id' => $id]);
-    $destino = (string) ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt');
     $linhas = [
         'Curso' => $p['curso'], 'Nome' => $p['nome'], 'Cliente' => $p['tipo_cliente'] === 'particular' ? 'Particular' : (string) $p['empresa'], 'Email' => $p['email'], 'Telefone' => $p['telefone'],
         'Formandos' => (string) $p['formandos'], 'Modalidade' => MODALIDADES_PREFERIDAS[$p['modalidade'] ?? ''] ?? 'Indiferente', 'Preferências' => $p['preferencias'],
@@ -626,26 +624,22 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
         return '<a href="' . h($href) . '" style="display:inline-block;margin:0 8px 8px 0;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">' . h($rotulo) . '</a>';
     };
 
-    enviar_aviso($destino, ($atualizada ? 'Pré-inscrição atualizada: ' : 'Nova pré-inscrição pelo site: ') . $p['nome'] . ($p['empresa'] ? ' (' . $p['empresa'] . ')' : '') . ', ' . $p['curso'], 'Nova pré-inscrição em curso',
-        '<p style="margin:0 0 16px;">' . ($atualizada ? 'Uma pré-inscrição por tratar foi atualizada pelo candidato.' : 'Foi registada uma pré-inscrição. Está em Inscrições, na área reservada, com o estado "Pré-inscrição": aí pode inscrever o candidato numa edição já agendada ou numa edição nova, definindo as datas.') . '</p>' . $tabela
-        . ($ind && (int) $ind['curso']['id'] !== (int) $p['curso_id'] ? '<p style="margin:16px 0 0;"><strong>Atenção:</strong> o diagnóstico indica ' . h(curso_com_artigo((string) $ind['curso']['nome'])) . ' (' . h($ind['motivo']) . '), e não o curso escolhido. Confirmar com o candidato.</p>' : '')
+    $cliente = $p['tipo_cliente'] === 'particular' ? 'Particular' : (string) $p['empresa'];
+    $atencao = $ind && (int) $ind['curso']['id'] !== (int) $p['curso_id'] ? 'o diagnóstico indica ' . curso_com_artigo((string) $ind['curso']['nome']) . ' (' . $ind['motivo'] . '), e não o curso escolhido. Confirmar com o candidato.' : '';
+    enviar_mensagem('preinscricao_aviso', email_admin(), ['acao' => $atualizada ? 'Pré-inscrição atualizada' : 'Nova pré-inscrição pelo site', 'nome_completo' => $p['nome'], 'cliente' => $cliente, 'curso' => $p['curso'], 'email' => $p['email']], [
+        ($atualizada ? '<p style="margin:0 0 16px;"><strong>Atualização:</strong> o candidato alterou uma pré-inscrição ainda por tratar.</p>' : '') . $tabela
+        . ($atencao ? '<p style="margin:16px 0 0;"><strong>Atenção:</strong> ' . h($atencao) . '</p>' : '')
         . '<p style="margin:22px 0 0;">' . $botao($link_area, 'Ver a pré-inscrição na área reservada') . '</p>',
-        "Foi registada uma pré-inscrição.\n\n" . $texto . "\n" . $link_area,
-        (string) $p['email'], (string) ($cfg['bcc'] ?? ''));
+        ($atualizada ? "Atualização: o candidato alterou uma pré-inscrição ainda por tratar.\n\n" : '') . $texto . ($atencao ? "\nAtenção: " . $atencao : '') . "\n" . $link_area,
+    ], ['responder_a' => (string) $p['email']]);
 
-    $nome = nome_curto((string) $p['nome']);
-    $frase = 'Recebemos a sua pré-inscrição n' . curso_com_artigo((string) $p['curso']) . ($p['percurso'] ? ', do percurso ' . explode(':', (string) $p['percurso'])[0] : '') . '.';
-    $seguinte = 'Quando houver datas, enviamos-lhe o convite para a inscrição, com a data, o horário e a modalidade de cada sessão. A pré-inscrição não o(a) obriga a inscrever-se.';
     $indicacao = $ind ? frase_indicacao($ind, curso((int) $p['curso_id'])) : '';
-    enviar_aviso((string) $p['email'], 'Pré-inscrição recebida: ' . $p['curso'], 'Pré-inscrição recebida',
-        '<p style="margin:0 0 14px;">' . h($nome) . ',</p><p style="margin:0 0 12px;">' . h($frase) . '</p><p style="margin:0 0 16px;">' . h($seguinte) . '</p>'
-        . ($indicacao ? '<p style="margin:0 0 16px;padding:12px 14px;background:#E8F1F1;border-left:3px solid #00636A;">' . h($indicacao) . '</p>' : '')
+    enviar_mensagem('preinscricao_recebida', (string) $p['email'], ['nome' => nome_curto((string) $p['nome']), 'curso' => $p['curso'], 'no_curso' => 'n' . curso_com_artigo((string) $p['curso'])], [
+        ($indicacao ? '<p style="margin:0 0 16px;padding:12px 14px;background:#E8F1F1;border-left:3px solid #00636A;">' . h($indicacao) . '</p>' : '')
         . '<p style="margin:0 0 6px;"><strong>Dados da pré-inscrição</strong></p>' . $tabela
-        . '<p style="margin:22px 0 0;">' . $botao($link_curso, 'Ver o programa do curso') . $botao($link_ficha, 'Ficha do curso (PDF)') . '</p>'
-        . '<p style="margin:14px 0 0;color:#687280;font-size:13px;">Para alterar ou cancelar a pré-inscrição, basta responder a este email. Os dados são apagados automaticamente 12 meses após o registo.</p>',
-        $nome . ",\n\n" . $frase . "\n\n" . $seguinte . ($indicacao ? "\n\n" . $indicacao : '') . "\n\nDados da pré-inscrição:\n" . $texto . "\nPrograma do curso: " . $link_curso . "\nFicha do curso (PDF): " . $link_ficha
-        . "\n\nPara alterar ou cancelar a pré-inscrição, basta responder a este email.",
-        $destino);
+        . '<p style="margin:22px 0 0;">' . $botao($link_curso, 'Ver o programa do curso') . $botao($link_ficha, 'Ficha do curso (PDF)') . '</p>',
+        ($indicacao ? $indicacao . "\n\n" : '') . "Dados da pré-inscrição:\n" . $texto . "\nPrograma do curso: " . $link_curso . "\nFicha do curso (PDF): " . $link_ficha,
+    ]);
 }
 
 // Aviso, depois da inscrição ou da pré-inscrição, com o curso indicado pelo diagnóstico (parâmetro "indicado")

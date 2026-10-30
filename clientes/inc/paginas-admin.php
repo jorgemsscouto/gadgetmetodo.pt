@@ -83,10 +83,10 @@ function admin_formacao(): void
             aviso(h($convite), 'erro');
         } else {
             $quando = horario($f) . ' · ' . modalidade_e_local($f);
-            enviar_convite($convite['nome'], $convite['email'], $convite['mensagem'], 'Convite: ' . $f['titulo'] . ', ' . data_hora($f['inicio'], false),
+            $ok = enviar_convite('convite', $convite['nome'], $convite['email'], $convite['mensagem'], ['formacao' => $f['titulo'], 'data' => data_hora($f['inicio'], false)],
                 '<p style="margin:0 0 4px;"><strong>' . h($f['titulo']) . '</strong> · ' . h(nome_modulo($f)) . '</p><p style="margin:0;color:#687280;">' . h($quando) . '</p>',
                 $f['titulo'] . ' · ' . nome_modulo($f) . "\n" . $quando, endereco_site() . '/formacoes/inscricao.php?f=' . $id, 'Inscrever-me nesta edição');
-            aviso('Convite enviado para ' . h($convite['email']) . '.');
+            aviso_envio($ok, 'Convite enviado para ' . h($convite['email']) . '.');
         }
         redirecionar('formacao', ['id' => $id]);
     }
@@ -430,8 +430,7 @@ function admin_curso(): void
             if (is_string($convite)) {
                 aviso(h($convite), 'erro');
             } else {
-                convite_curso($c, $convite['nome'], $convite['email'], $convite['mensagem']);
-                aviso('Convite enviado para ' . h($convite['email']) . '.');
+                aviso_envio(convite_curso($c, $convite['nome'], $convite['email'], $convite['mensagem']), 'Convite enviado para ' . h($convite['email']) . '.');
             }
         } elseif (in_array($acao, ['pre_convidar', 'pre_convidar_todas'], true) && $c) {
             // Convite às pré-inscrições: só quando o curso tem sessões abertas com vagas
@@ -441,11 +440,14 @@ function admin_curso(): void
             if (!sessoes_com_vagas($id)) {
                 aviso('Agende primeiro uma edição do curso com inscrições abertas: o convite leva o candidato às datas do curso.', 'erro');
             } else {
+                $enviados = 0;
                 foreach ($lista as $pre) {
-                    convite_curso($c, (string) $pre['nome'], (string) $pre['email'], 'Fez a pré-inscrição n' . curso_com_artigo((string) $c['nome']) . '. Já há datas agendadas: escolha a edição que lhe convém e faça a inscrição na página do curso (a inscrição inclui todas as sessões). As vagas são limitadas e atribuídas por ordem de inscrição.');
-                    executar("UPDATE preinscricoes SET estado = 'convidada' WHERE id = ?", [$pre['id']]);
+                    if (convite_curso($c, (string) $pre['nome'], (string) $pre['email'], '', 'convite_preinscricao')) {
+                        executar("UPDATE preinscricoes SET estado = 'convidada' WHERE id = ?", [$pre['id']]);
+                        $enviados++;
+                    }
                 }
-                aviso(count($lista) === 1 ? 'Convite enviado para ' . h((string) $lista[0]['email']) . '.' : count($lista) . ' convites enviados.');
+                aviso_envio($enviados > 0, count($lista) === 1 ? 'Convite enviado para ' . h((string) $lista[0]['email']) . '.' : $enviados . ' de ' . count($lista) . ' convites enviados.');
             }
         } elseif ($acao === 'pre_estado' && $c) {
             $estado = (string) ($_POST['estado'] ?? '');
@@ -619,10 +621,7 @@ function admin_preinscricao(): void
                     executar('UPDATE inscricoes SET estado = ? WHERE id = ?', [$estado, $r['id']]);
                     executar("UPDATE preinscricoes SET estado = 'inscrita', inscricao_id = ? WHERE id = ?", [$r['id'], $id]);
                     $i = linha_bd(SQL_INSCRICAO, [$r['id']]);
-                    $avisado = $estado === 'confirmada' && !empty($_POST['avisar']) && ($contacto = contacto_inscricao($i));
-                    if ($avisado) {
-                        avisar_estado_inscricao($i, 'confirmada', $contacto);
-                    }
+                    $avisado = $estado === 'confirmada' && !empty($_POST['avisar']) && ($contacto = contacto_inscricao($i)) && avisar_estado_inscricao($i, 'confirmada', $contacto);
                     aviso('Inscrição de ' . h($formando) . ' registada: ' . h(horario($f)) . ($nova ? ' (formação nova criada no calendário)' : '') . '.'
                         . ($avisado ? ' Confirmação enviada por email para ' . h((string) $p['email']) . '.' : ''));
                     redirecionar('inscricao', ['id' => $r['id']]);
@@ -725,12 +724,12 @@ function diagnostico_preinscricao(array $p, array $c): string
 }
 
 // Convite por email para a página de um curso, com as próximas edições abertas
-function convite_curso(array $c, string $nome, string $email, string $mensagem): void
+function convite_curso(array $c, string $nome, string $email, string $mensagem, string $tipo = 'convite'): bool
 {
     $sessoes = consulta("SELECT * FROM formacoes WHERE curso_id = ? AND inicio >= ? AND estado = 'aberta' ORDER BY inicio LIMIT 6", [$c['id'], date('Y-m-d 00:00:00')]);
     $datas = array_map(function ($f) { return horario($f) . ' · ' . nome_modulo($f) . ' · ' . (MODALIDADES[$f['modalidade']] ?? ''); }, $sessoes);
     $detalhe = array_filter([$c['tipologia'], $c['duracao']]);
-    enviar_convite($nome, $email, $mensagem, 'Convite: ' . $c['nome'],
+    return enviar_convite($tipo, $nome, $email, $mensagem, ['formacao' => $c['nome'], 'curso' => $c['nome'], 'no_curso' => 'n' . curso_com_artigo((string) $c['nome']), 'data' => ''],
         '<p style="margin:0 0 4px;"><strong>' . h($c['nome']) . '</strong>' . ($detalhe ? ' · ' . h(implode(' · ', $detalhe)) : '') . '</p>'
         . ($c['descricao'] ? '<p style="margin:0 0 10px;color:#687280;">' . h($c['descricao']) . '</p>' : '')
         . ($datas ? '<p style="margin:0 0 4px;"><strong>Próximas edições</strong></p><ul style="margin:0;padding-left:18px;">' . implode('', array_map(function ($d) { return '<li>' . h($d) . '</li>'; }, $datas)) . '</ul>' : ''),
@@ -907,7 +906,10 @@ function admin_utilizadores(): void
         $gerada = $senha === '';
         $senha = $gerada ? gerar_senha() : $senha;
         executar('INSERT INTO utilizadores (email, nome, senha, papel, cliente_id, criado) VALUES (?, ?, ?, ?, ?, ?)', [$email, $nome, password_hash($senha, PASSWORD_DEFAULT), $papel, $cliente_id, agora()]);
-        aviso('Utilizador criado. Dados de acesso para comunicar a ' . h($nome) . ':<br>Endereço: <strong>https://www.gadgetmetodo.pt/clientes/</strong><br>Email: <strong>' . h($email) . '</strong><br>Palavra-passe: <strong class="senha">' . h($senha) . '</strong><br>' . ($gerada ? 'Esta palavra-passe não volta a ser mostrada.' : ''));
+        aviso('Utilizador criado. Dados de acesso para comunicar a ' . h($nome) . ':<br>Endereço: <strong>' . h(endereco_site()) . '/clientes/</strong><br>Email: <strong>' . h($email) . '</strong><br>Palavra-passe: <strong class="senha">' . h($senha) . '</strong><br>' . ($gerada ? 'Esta palavra-passe não volta a ser mostrada.' : ''));
+        if (!empty($_POST['enviar_acesso'])) {
+            aviso_envio(enviar_acesso(['nome' => $nome, 'email' => $email, 'papel' => $papel, 'cliente_id' => $cliente_id], $senha), 'Dados de acesso enviados por email para ' . h($email) . '.');
+        }
         redirecionar('utilizadores');
     }
     $lista = consulta('SELECT u.*, c.nome AS cliente FROM utilizadores u LEFT JOIN clientes c ON c.id = u.cliente_id ORDER BY u.papel, c.nome, u.nome');
@@ -918,7 +920,7 @@ function admin_utilizadores(): void
     $pre = (int) ($_GET['cliente'] ?? 0);
     pagina_area('utilizadores', 'Utilizadores', '
       <div class="conteudo tabela-rolante"><table><thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Cliente</th><th>Estado</th><th>Último acesso</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
-      <h2 class="espaco-topo">Novo utilizador</h2>
+      <h2 class="espaco-topo" id="novo">Novo utilizador</h2>
       <p class="texto-suave">Perfil Gadgetmetodo: vê e gere tudo. Perfil Cliente: vê apenas as formações e as inscrições do seu cliente.</p>
       <form method="post" class="formulario">' . campo_csrf() . '<div class="campos-2">
         ' . campo('nome', 'Nome *', '', 'text', 'required maxlength="120"') . '
@@ -926,7 +928,9 @@ function admin_utilizadores(): void
         ' . campo_select('papel', 'Perfil *', PAPEIS, 'cliente') . '
         ' . campo_select('cliente_id', 'Cliente (perfil Cliente)', $clientes, $pre, 'Escolha o cliente') . '
         ' . campo('senha', 'Palavra-passe', '', 'text', 'minlength="10" autocomplete="new-password" placeholder="Vazio: é gerada automaticamente"') . '
-      </div><div><button class="botao" type="submit">Criar utilizador</button></div></form>', 'Gestão de acessos');
+      </div>
+      <label class="opcao consentimento"><input type="checkbox" name="enviar_acesso" value="1"> <span>Enviar os dados de acesso por email ao utilizador, com a palavra-passe (texto em <a href="' . h(url('comunicacao', ['aberto' => 'acesso'])) . '#email-acesso">Comunicação</a>)</span></label>
+      <div><button class="botao" type="submit">Criar utilizador</button></div></form>', 'Configuração');
 }
 
 function admin_utilizador(): void
@@ -943,6 +947,9 @@ function admin_utilizador(): void
             $senha = gerar_senha();
             executar('UPDATE utilizadores SET senha = ? WHERE id = ?', [password_hash($senha, PASSWORD_DEFAULT), $id]);
             aviso('Nova palavra-passe de ' . h($u['nome']) . ': <strong class="senha">' . h($senha) . '</strong><br>Comunique-a ao utilizador; não volta a ser mostrada.');
+            if (!empty($_POST['enviar_acesso'])) {
+                aviso_envio(enviar_acesso($u, $senha), 'Nova palavra-passe enviada por email para ' . h($u['email']) . '.');
+            }
             redirecionar('utilizador', ['id' => $id]);
         }
         $nome = texto('nome', 120);
@@ -979,8 +986,26 @@ function admin_utilizador(): void
       <div><button class="botao" type="submit">Guardar alterações</button></div></form>
       <h2 class="espaco-topo">Palavra-passe</h2>
       <p class="texto-suave">Gera uma palavra-passe nova, mostrada uma única vez, para comunicar ao utilizador.</p>
-      <form method="post">' . campo_csrf() . '<input type="hidden" name="acao" value="nova_senha"><button class="botao botao-secundario" type="submit">Gerar nova palavra-passe</button></form>
-      <p class="texto-suave espaco-topo">Criado em ' . h(data_hora($u['criado'])) . '. Último acesso: ' . h(data_hora($u['ultimo_acesso']) ?: 'nunca') . '.</p>', 'Utilizador');
+      <form method="post" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="nova_senha">
+        <label class="opcao consentimento"><input type="checkbox" name="enviar_acesso" value="1"> <span>Enviar a nova palavra-passe por email ao utilizador</span></label>
+        <div><button class="botao botao-secundario" type="submit">Gerar nova palavra-passe</button></div></form>
+      <p class="texto-suave espaco-topo">Criado em ' . h(data_hora($u['criado'])) . '. Último acesso: ' . h(data_hora($u['ultimo_acesso']) ?: 'nunca') . '.</p>', 'Configuração');
+}
+
+// Email com os dados de acesso à área reservada (endereço, email e palavra-passe), só quando a administração o pede
+function enviar_acesso(array $u, string $senha): bool
+{
+    $endereco = endereco_site() . '/clientes/';
+    $cliente = $u['papel'] === 'admin' ? 'Gadgetmetodo' : (string) (linha_bd('SELECT nome FROM clientes WHERE id = ?', [(int) $u['cliente_id']])['nome'] ?? '');
+    $tabela = '';
+    foreach (['Endereço' => $endereco, 'Email' => $u['email'], 'Palavra-passe' => $senha] as $k => $v) {
+        $tabela .= '<tr><td style="padding:7px 12px 7px 0;border-bottom:1px solid #E5E7EB;color:#687280;width:130px;">' . h($k) . '</td><td style="padding:7px 0;border-bottom:1px solid #E5E7EB;font-weight:700;">' . h($v) . '</td></tr>';
+    }
+    return enviar_mensagem('acesso', (string) $u['email'], ['nome' => nome_curto((string) $u['nome']), 'nome_completo' => $u['nome'], 'email' => $u['email'], 'cliente' => $cliente], [
+        '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:0 0 4px;">' . $tabela . '</table>'
+        . '<p style="margin:22px 0 0;"><a href="' . h($endereco) . '" style="display:inline-block;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">Entrar na área reservada</a></p>',
+        'Endereço: ' . $endereco . "\nEmail: " . $u['email'] . "\nPalavra-passe: " . $senha,
+    ]);
 }
 
 /* Pedidos do site e aberturas do catálogo */
@@ -1009,11 +1034,6 @@ function admin_pedidos(): void
 }
 
 /* Partilha de ligações e convites a candidatos */
-
-function endereco_site(): string
-{
-    return rtrim((string) (cfg()['site'] ?? 'https://www.gadgetmetodo.pt'), '/');
-}
 
 function ler_convite()
 {

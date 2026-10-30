@@ -29,10 +29,10 @@ function bloco_assinatura_texto(array $d): string
 
 /* Email de confirmação ao remetente */
 
+// $d['textos']: título, texto, fecho e assinatura definidos em Configuração, Comunicação (formulario/comunicacao.php)
 function email_confirmacao_html(array $d): string
 {
-    $saudacao = nome_saudacao($d['nome']);
-    $saudacao = $saudacao !== '' ? 'Caro(a) ' . h($saudacao) . ',' : 'Caro(a) Senhor(a),';
+    $t = $d['textos'];
     $tipo = $d['tipo'] === 'Pedido de orçamento' ? 'pedido de orçamento' : 'pedido de informações';
     $servicos = implode('<br>', array_map('h', $d['servicos']));
     $f = FONTE;
@@ -57,6 +57,11 @@ function email_confirmacao_html(array $d): string
 
     $site = h($d['site']);
     $ref = h($d['referencia']);
+    $paragrafo = 'margin:0 0 16px;font-family:' . $f . ';font-size:15px;line-height:1.6;color:' . COR_TEXTO . ';';
+    // Assinatura: a 1.ª linha (despedida) normal e as seguintes em destaque
+    $linhas_assinatura = preg_split('/\n/u', trim(str_replace("\r\n", "\n", $t['assinatura']))) ?: [];
+    $assinatura = trim($t['assinatura']) === '' ? '' : '<p style="margin:0 0 40px;font-family:' . $f . ';font-size:15px;line-height:1.6;color:' . COR_TEXTO . ';">' . h(array_shift($linhas_assinatura))
+        . ($linhas_assinatura ? '<br><strong style="color:' . COR_MARINHO . ';">' . implode('<br>', array_map('h', $linhas_assinatura)) . '</strong>' : '') . '</p>';
 
     return '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Confirmação de receção</title></head>'
         . '<body style="margin:0;padding:0;background:' . COR_FUNDO . ';">'
@@ -69,10 +74,8 @@ function email_confirmacao_html(array $d): string
         // Corpo
         . '<tr><td style="padding:40px 40px 8px;">'
         . '<p style="margin:0 0 12px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:' . COR_PETROLEO . ';font-weight:700;">Confirmação de receção</p>'
-        . '<h1 style="margin:0 0 24px;font-family:' . $f . ';font-size:24px;line-height:1.3;color:' . COR_MARINHO . ';font-weight:700;">Obrigado pelo seu contacto.</h1>'
-        . '<p style="margin:0 0 16px;font-family:' . $f . ';font-size:15px;line-height:1.6;color:' . COR_TEXTO . ';">' . $saudacao . '</p>'
-        . '<p style="margin:0 0 16px;font-family:' . $f . ';font-size:15px;line-height:1.6;color:' . COR_TEXTO . ';">Agradecemos o interesse nos serviços da Gadgetmetodo. Confirmamos a receção do seu ' . $tipo . ', que ficou registado com a referência <strong style="color:' . COR_MARINHO . ';">' . $ref . '</strong>.</p>'
-        . '<p style="margin:0 0 24px;font-family:' . $f . ';font-size:15px;line-height:1.6;color:' . COR_TEXTO . ';">Um membro da nossa equipa irá analisar o pedido e entrará em contacto consigo brevemente.</p>'
+        . ($t['titulo'] !== '' ? '<h1 style="margin:0 0 24px;font-family:' . $f . ';font-size:24px;line-height:1.3;color:' . COR_MARINHO . ';font-weight:700;">' . h($t['titulo']) . '</h1>' : '')
+        . html_paragrafos($t['texto'], $paragrafo) . '<div style="height:8px;line-height:8px;">&nbsp;</div>'
         // Catálogo
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px;background:' . COR_FUNDO . ';"><tr><td style="padding:22px 24px;">'
         . '<p style="margin:0 0 6px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:' . COR_PETROLEO . ';font-weight:700;">Catálogo de Serviços 2026</p>'
@@ -85,9 +88,8 @@ function email_confirmacao_html(array $d): string
         // Próximos passos
         . '<p style="margin:0 0 16px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:' . COR_SUAVE . ';font-weight:700;">Próximos passos</p>'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">' . $passos . '</table>'
-        . '<p style="margin:0 0 28px;font-family:' . $f . ';font-size:15px;line-height:1.6;color:' . COR_TEXTO . ';">Se pretender acrescentar informação, basta responder a este email indicando a referência do pedido.</p>'
-        . '<p style="margin:0 0 4px;font-family:' . $f . ';font-size:15px;line-height:1.6;color:' . COR_TEXTO . ';">Com os melhores cumprimentos,</p>'
-        . '<p style="margin:0 0 40px;font-family:' . $f . ';font-size:15px;line-height:1.6;color:' . COR_MARINHO . ';font-weight:700;">A equipa da Gadgetmetodo</p>'
+        . html_paragrafos($t['fecho'], str_replace('0 0 16px', '0 0 28px', $paragrafo))
+        . $assinatura
         . '</td></tr>'
         // Rodapé institucional
         . '<tr><td style="padding:28px 40px;background:' . COR_MARINHO . ';">'
@@ -108,14 +110,10 @@ function email_confirmacao_html(array $d): string
 
 function email_confirmacao_texto(array $d): string
 {
-    $saudacao = nome_saudacao($d['nome']);
-    $saudacao = $saudacao !== '' ? 'Caro(a) ' . $saudacao . ',' : 'Caro(a) Senhor(a),';
-    $tipo = $d['tipo'] === 'Pedido de orçamento' ? 'pedido de orçamento' : 'pedido de informações';
+    $t = $d['textos'];
     return "CONFIRMAÇÃO DE RECEÇÃO\n\n"
-        . "Obrigado pelo seu contacto.\n\n"
-        . $saudacao . "\n\n"
-        . "Agradecemos o interesse nos serviços da Gadgetmetodo. Confirmamos a receção do seu " . $tipo . ", que ficou registado com a referência " . $d['referencia'] . ".\n\n"
-        . "Um membro da nossa equipa irá analisar o pedido e entrará em contacto consigo brevemente.\n\n"
+        . ($t['titulo'] !== '' ? $t['titulo'] . "\n\n" : '')
+        . texto_paragrafos($t['texto']) . "\n\n"
         . "CATÁLOGO DE SERVIÇOS 2026\n"
         . "Enquanto analisamos o seu pedido, conheça em detalhe as nossas áreas de serviço, a forma como trabalhamos e exemplos de intervenção:\n"
         . $d['link_catalogo'] . "\n\n"
@@ -128,8 +126,8 @@ function email_confirmacao_texto(array $d): string
         . "01. Análise: a nossa equipa analisa o pedido e o respetivo contexto.\n"
         . "02. Primeira conversa: entramos em contacto para compreender os seus objetivos, prioridades e prazos.\n"
         . "03. Proposta à medida: apresentamos uma proposta com âmbito, entregáveis, calendário e investimento claros.\n\n"
-        . "Se pretender acrescentar informação, basta responder a este email indicando a referência do pedido.\n\n"
-        . "Com os melhores cumprimentos,\nA equipa da Gadgetmetodo\n\n"
+        . ($t['fecho'] !== '' ? texto_paragrafos($t['fecho']) . "\n\n" : '')
+        . (trim($t['assinatura']) !== '' ? trim($t['assinatura']) . "\n\n" : '')
         . "--\n" . bloco_assinatura_texto($d) . "\n"
         . "Esta mensagem foi enviada automaticamente em resposta a um pedido submetido em www.gadgetmetodo.pt. Se não fez este pedido, pode ignorá-la. "
         . "Se abrir o catálogo através desta mensagem, a data e hora do acesso ficam registadas e associadas ao seu pedido, para acompanhamento. "
