@@ -1,0 +1,171 @@
+{
+  "_review": "PENDING NATIVE REVIEW",
+  "_note": "Deutsch. Übersetzt aus en.json. Förmliche Anrede (Sie).",
+  "lang": "de",
+  "locale": "de-DE",
+  "dir": "ltr",
+  "native_name": "Deutsch",
+  "meta": {
+    "title": "Wohin möchten Sie als Nächstes mit uns reisen? | Luxury Tours Portugal",
+    "description": "Eine private Umfrage für die Gäste von Luxury Tours Portugal by Wine Tourism in Portugal."
+  },
+  "ui": {
+    "language": "Sprache",
+    "begin": "Beginnen",
+    "next": "Weiter",
+    "back": "Zurück",
+    "submit": "Antworten senden",
+    "sending": "Wird gesendet…",
+    "progress": "Schritt {n} von {total}",
+    "optional": "optional",
+    "required_one": "Bitte wählen Sie eine Option, um fortzufahren.",
+    "required_rank": "Bitte wählen Sie mindestens eine Region, um fortzufahren.",
+    "limit_reached": "Sie können bis zu {max} auswählen. Entfernen Sie eine, um eine andere zu wählen.",
+    "selected_count": "{count} von {max} ausgewählt",
+    "remove": "Entfernen",
+    "error_send": "Ihre Antworten konnten nicht gesendet werden. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+    "closed_title": "Diese Umfrage ist beendet",
+    "closed_text": "Vielen Dank für Ihr Interesse. Wir freuen uns darauf, Ihnen bald unsere nächste Reise vorzustellen.",
+    "unavailable": "Diese Umfrage ist derzeit nicht verfügbar.",
+    "prototype": "Prototyp zur Präsentation",
+    "pending_review": "Übersetzung wartet auf muttersprachliche Prüfung",
+    "noscript": "Bitte aktivieren Sie JavaScript in Ihrem Browser, um an dieser Umfrage teilzunehmen.",
+    "privacy": "Datenschutzerklärung",
+    "required_fields": "Bitte füllen Sie alle Felder aus, um fortzufahren.",
+    "invalid_email": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+    "invalid_phone": "Bitte geben Sie eine gültige Mobilnummer mit Landesvorwahl ein.",
+    "map_label": "Karte: {region}",
+    "map_open": "Karte öffnen"
+  },
+  "intro": {
+    "eyebrow": "Eine private Umfrage für unsere Gäste",
+    "greeting": "Guten Tag {name},",
+    "greeting_m": "Sehr geehrter {name},",
+    "greeting_f": "Sehr geehrte {name},",
+    "title": "Wohin möchten Sie als Nächstes mit uns reisen?",
+    "lead": "Wir bereiten eine kleine Kollektion privater Weinreisen jenseits von Portugal vor, mit derselben Liebe zum Detail, die Sie von uns kennen. Ihre Antworten helfen uns, das erste Reiseziel auszuwählen.",
+    "length": "Sechs kurze Schritte, etwa zwei Minuten.",
+    "deadline": "Geöffnet bis zum {date}.",
+    "returning": "Sie haben Ihre Präferenzen bereits mitgeteilt. Sie können sie bis zum {date} ansehen und ändern."
+  },
+  "rank": {
+    "1": "1.",
+    "2": "2.",
+    "3": "3."
+  },
+  "rank_choice": "{rank} Wahl",
+  "regions": {
+    "region_tuscany": { "name": "Toskana", "country": "Italien", "note": "Brunello, Chianti und Renaissance-Villen" },
+    "region_piedmont": { "name": "Piemont", "country": "Italien", "note": "Barolo, Barbaresco und weiße Trüffel" },
+    "region_bordeaux": { "name": "Bordeaux", "country": "Frankreich", "note": "Grand-Cru-Châteaux im Médoc und in Saint-Émilion" },
+    "region_burgundy": { "name": "Burgund", "country": "Frankreich", "note": "Pinot Noir und Chardonnay der Côte d’Or" },
+    "region_champagne": { "name": "Champagne", "country": "Frankreich", "note": "Traditionsreiche Häuser und Kreidekeller" },
+    "region_rioja": { "name": "Rioja", "country": "Spanien", "note": "Tempranillo und markante Architektur" },
+    "region_ribera": { "name": "Ribera del Duero", "country": "Spanien", "note": "Kraftvolle Rotweine am spanischen Douro" },
+    "region_mosel": { "name": "Mosel", "country": "Deutschland", "note": "Riesling an steilen Schieferhängen" },
+    "region_santorini": { "name": "Santorin", "country": "Griechenland", "note": "Assyrtiko aus vulkanischen Weinbergen" },
+    "region_napa": { "name": "Napa Valley", "country": "Vereinigte Staaten", "note": "Cabernet Sauvignon und kalifornische Gastfreundschaft" },
+    "region_mendoza": { "name": "Mendoza", "country": "Argentinien", "note": "Malbec am Fuße der Anden" },
+    "region_stellenbosch": { "name": "Stellenbosch", "country": "Südafrika", "note": "Weingüter am Kap zwischen Bergen und Meer" }
+  },
+  "steps": {
+    "regions": {
+      "title": "Welche Weinregionen würden Sie am liebsten mit uns entdecken?",
+      "help": "Wählen Sie bis zu drei in der Reihenfolge Ihrer Präferenz. Wählen Sie eine Region erneut aus, um sie zu entfernen.",
+      "other_label": "Eine andere Region, die Sie gerne erkunden würden",
+      "other_placeholder": "Zum Beispiel Wachau (Österreich)"
+    },
+    "intent": {
+      "kicker": "Ihre erste Wahl: {region}",
+      "title": "Wie wahrscheinlich ist es, dass Sie diese Reise in den nächsten zwei Jahren mit uns unternehmen?"
+    },
+    "duration": {
+      "title": "Wie lange würde Ihre ideale Reise dauern?"
+    },
+    "group": {
+      "title": "Mit wem würden Sie reisen?"
+    },
+    "budget": {
+      "title": "Wie hoch wäre Ihr ungefähres Budget pro Person, ohne internationale Flüge?"
+    },
+    "seasons": {
+      "title": "Zu welcher Jahreszeit würden Sie am liebsten reisen?",
+      "help": "Wählen Sie alle zutreffenden Antworten."
+    },
+    "priorities": {
+      "title": "Was würde diese Reise für Sie unvergesslich machen?",
+      "help": "Wählen Sie bis zu drei."
+    },
+    "comment": {
+      "label": "Möchten Sie uns noch etwas mitteilen?",
+      "placeholder": "Ein besonderer Anlass, ein Lieblingswein, ein Traumerlebnis…"
+    },
+    "contact": {
+      "title": "Dürfen wir Sie kontaktieren, sobald diese Reise bereit ist?",
+      "privacy_text": "Ihre Antworten werden ausschließlich zur Gestaltung neuer Reisen verwendet und, wenn Sie zustimmen, um Sie zu informieren, sobald diese bereit sind."
+    },
+    "identity": {
+      "title": "Ihre Angaben",
+      "intro": "Da Sie über einen allgemeinen Link antworten, bitten wir Sie, sich zu identifizieren.",
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Mobiltelefon",
+      "phone_help": "Mit Landesvorwahl (zum Beispiel +49)",
+      "country": "Herkunftsland",
+      "country_placeholder": "Land auswählen",
+      "privacy_text": "Wir verwenden Ihre Angaben ausschließlich, um Ihre Antworten zuzuordnen und Sie, wenn Sie zustimmen, über diese Reise zu informieren."
+    }
+  },
+  "options": {
+    "intent_very_likely": "Sehr wahrscheinlich",
+    "intent_likely": "Wahrscheinlich",
+    "intent_considering": "Ich würde es in Betracht ziehen",
+    "intent_unlikely": "Derzeit eher unwahrscheinlich",
+    "duration_3_4": "3 bis 4 Nächte",
+    "duration_5_7": "5 bis 7 Nächte",
+    "duration_8_plus": "8 Nächte oder mehr",
+    "group_couple": "Als Paar",
+    "group_family": "Mit der Familie",
+    "group_friends": "Mit Freunden",
+    "group_private": "Private Gruppe oder Unternehmen",
+    "budget_up_to_5000": "Bis {max}",
+    "budget_5000_10000": "{min} bis {max}",
+    "budget_10000_20000": "{min} bis {max}",
+    "budget_over_20000": "Über {min}",
+    "budget_undisclosed": "Keine Angabe",
+    "season_spring": "Frühling",
+    "season_summer": "Sommer",
+    "season_harvest": "Während der Weinlese",
+    "season_winter": "Spätherbst und Winter",
+    "season_flexible": "Meine Termine sind flexibel",
+    "priority_private_access": "Privater Zugang zu renommierten Weingütern",
+    "priority_winemakers": "Zeit mit Winzern und Eigentümern",
+    "priority_dining": "Sterneküche und Chef’s Table",
+    "priority_hotels": "Außergewöhnliche Hotels und private Villen",
+    "priority_culture": "Kunst, Geschichte und Kulturerbe",
+    "priority_wellness": "Wellness und Zeit zum Entschleunigen",
+    "priority_transfers": "Privater Chauffeur und Helikoptertransfers",
+    "contact_yes": "Ja, ich möchte zu den Ersten gehören, die davon erfahren",
+    "contact_no": "Nein, im Moment nicht"
+  },
+  "thanks": {
+    "title_name": "Vielen Dank, {name}.",
+    "title": "Vielen Dank.",
+    "text": "Wir haben Ihre Präferenzen erhalten. Sie helfen uns, unsere nächste Reise zu gestalten.",
+    "summary": "Ihre Auswahl",
+    "edit": "Antworten ändern",
+    "signature": "Ihr Team von Luxury Tours Portugal"
+  },
+  "email": {
+    "subject": "Wohin möchten Sie als Nächstes mit uns reisen?",
+    "preheader": "Zwei Minuten, um uns bei der Wahl unserer nächsten privaten Weinreise zu helfen.",
+    "p1": "Sie kennen unsere Liebe zum Detail. Mit derselben Sorgfalt bereiten wir nun eine kleine Kollektion privater Weinreisen jenseits von Portugal vor. Bevor wir das erste Reiseziel auswählen, möchten wir gerne Ihre Meinung erfahren.",
+    "p2": "Sechs kurze Schritte, etwa zwei Minuten. Dieser Link ist persönlich und ermöglicht es Ihnen, Ihre Antworten bis zum {date} zu ändern.",
+    "button": "Meine Präferenzen teilen",
+    "link_fallback": "Falls die Schaltfläche nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:",
+    "closing": "Mit herzlichen Grüßen",
+    "signature": "Ihr Team von Luxury Tours Portugal",
+    "footer": "Sie erhalten diese E-Mail als Gast oder Kontakt von Luxury Tours Portugal by Wine Tourism in Portugal.",
+    "privacy": "Datenschutzerklärung"
+  }
+}

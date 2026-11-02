@@ -3,10 +3,11 @@
 // Copiar para config.php (na mesma pasta) e preencher. O config.php não entra no Git.
 
 return [
-    // Palavra-passe do painel (luxury-tours-portugal/painel/). Sem ela, o painel fica fechado.
+    // Palavra-passe de primeiro acesso ao painel (luxury-tours-portugal/painel/): entra-se com o email em branco
+    // e cria-se a conta de administrador. A partir daí, cada pessoa entra com o seu email e esta deixa de funcionar.
     'senha_painel' => '',
 
-    // Modo de demonstração: mostra os 6 idiomas no inquérito (com a indicação "protótipo"),
+    // Modo de demonstração: mostra os 7 idiomas no inquérito (com a indicação "protótipo"),
     // mesmo sem a revisão nativa concluída. Para o envio real, passar a false: só ficam visíveis
     // os idiomas marcados como revistos no painel (separador Idiomas).
     'demo' => true,
@@ -21,7 +22,8 @@ return [
     // Política de privacidade do responsável pelo tratamento (o cliente). Vazio = sem ligação.
     'privacidade_url' => '',
 
-    // true: a ligação geral (sem convite) também aceita respostas. false: só ligações pessoais.
+    // true: a ligação geral (sem convite) também aceita respostas, com identificação obrigatória
+    // (nome, email, telemóvel e país de origem). false: só ligações pessoais.
     'acesso_publico' => true,
 
     // Pasta para a base de dados SQLite. Vazio = fora da pasta pública, se o alojamento o permitir;

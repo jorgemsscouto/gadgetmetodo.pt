@@ -4,7 +4,7 @@
 
 declare(strict_types=1);
 
-const LTP_NOMES_IDIOMAS = ['pt' => 'Português', 'en' => 'Inglês', 'es' => 'Espanhol', 'fr' => 'Francês', 'el' => 'Grego', 'ar' => 'Árabe'];
+const LTP_NOMES_IDIOMAS = ['pt' => 'Português', 'en' => 'Inglês', 'es' => 'Espanhol', 'fr' => 'Francês', 'de' => 'Alemão', 'el' => 'Grego', 'ar' => 'Árabe'];
 const LTP_ROTULOS_CAMPOS = [
     'intent' => 'Intenção de viajar (próximos dois anos)',
     'duration' => 'Duração preferida',
@@ -60,6 +60,13 @@ function ltp_rotulos_lista(?string $codigos): string
     return implode('; ', array_map('ltp_rotulo_opcao', array_filter(explode(',', (string) $codigos))));
 }
 
+// Data e hora no formato português (dd/mm/aaaa hh:mm)
+function ltp_data_pt(?string $iso, bool $comHora = true): string
+{
+    $d = $iso ? DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $iso) : false;
+    return $d ? $d->format($comHora ? 'd/m/Y H:i' : 'd/m/Y') : '';
+}
+
 function ltp_percentagem(int $parte, int $total): string
 {
     return $total > 0 ? number_format(100 * $parte / $total, 0, ',', ' ') . ' %' : '–';
@@ -69,7 +76,7 @@ function ltp_percentagem(int $parte, int $total): string
 
 function ltp_respostas(PDO $pdo, ?string $idioma): array
 {
-    $sql = 'SELECT r.*, c.nome, c.email, c.idioma AS idioma_cliente FROM respostas r LEFT JOIN clientes c ON c.id = r.cliente_id';
+    $sql = 'SELECT r.*, c.nome, c.email, c.idioma AS idioma_cliente, c.pais AS pais_cliente FROM respostas r LEFT JOIN clientes c ON c.id = r.cliente_id';
     $par = [];
     if ($idioma !== null) {
         $sql .= ' WHERE r.idioma = ?';
@@ -242,7 +249,9 @@ function ltp_exportar_respostas(PDO $pdo, ?string $idioma): void
     foreach (ltp_respostas($pdo, $idioma) as $r) {
         $linhas[] = [
             $r['criado'], $r['atualizado'], LTP_NOMES_IDIOMAS[$r['idioma']] ?? $r['idioma'],
-            $r['cliente_id'] ? 'Convite' : 'Ligação geral', (string) $r['nome'], (string) $r['email'],
+            $r['cliente_id'] ? 'Convite' : 'Ligação geral',
+            (string) ($r['cliente_id'] ? $r['nome'] : $r['ident_nome']), (string) ($r['cliente_id'] ? $r['email'] : $r['ident_email']),
+            (string) $r['ident_telemovel'], $r['cliente_id'] ? (string) $r['pais_cliente'] : (ltp_paises()[$r['ident_pais'] ?? ''] ?? ''),
             ltp_rotulo_regiao($r['regiao_1']), ltp_rotulo_regiao($r['regiao_2']), ltp_rotulo_regiao($r['regiao_3']), (string) $r['regiao_outra'],
             ltp_rotulo_opcao($r['intencao']), ltp_rotulo_opcao($r['duracao']), ltp_rotulo_opcao($r['grupo']), ltp_rotulo_opcao($r['orcamento']),
             ltp_rotulos_lista($r['epocas']), ltp_rotulos_lista($r['prioridades']), (string) $r['comentario'], ltp_rotulo_opcao($r['contacto']),
@@ -250,7 +259,7 @@ function ltp_exportar_respostas(PDO $pdo, ?string $idioma): void
         ];
     }
     ltp_enviar_csv('respostas-luxury-tours-' . ($idioma ?? 'todos') . '-' . date('Y-m-d') . '.csv', [
-        'Data da resposta', 'Última alteração', 'Idioma', 'Origem', 'Nome', 'Email', '1.º lugar', '2.º lugar', '3.º lugar', 'Outra região',
+        'Data da resposta', 'Última alteração', 'Idioma', 'Origem', 'Nome', 'Email', 'Telemóvel', 'País', '1.º lugar', '2.º lugar', '3.º lugar', 'Outra região',
         'Intenção', 'Duração', 'Com quem viajaria', 'Orçamento por pessoa', 'Época', 'Prioridades', 'Comentário', 'Contacto', 'Demonstração',
     ], $linhas);
 }
@@ -307,7 +316,7 @@ function ltp_gerar_demo(PDO $pdo): int
         }
         return array_key_first($pesos);
     };
-    $idiomas = ['en' => 34, 'pt' => 16, 'fr' => 14, 'es' => 10, 'ar' => 14, 'el' => 8, '' => 4];
+    $idiomas = ['en' => 30, 'pt' => 14, 'fr' => 12, 'de' => 10, 'es' => 9, 'ar' => 13, 'el' => 8, '' => 4];
     $pesosRegioes = [
         'region_tuscany' => 18, 'region_champagne' => 15, 'region_bordeaux' => 14, 'region_santorini' => 11, 'region_burgundy' => 10,
         'region_piedmont' => 9, 'region_napa' => 7, 'region_rioja' => 6, 'region_stellenbosch' => 5, 'region_mendoza' => 4,
@@ -360,10 +369,15 @@ function ltp_gerar_demo(PDO $pdo): int
             ltp_guardar_resposta($pdo, $gerarRespostas(), $idioma ?: 'en', $id, null, true, $quando);
         }
     }
-    // Algumas respostas pela ligação geral, sem convite
+    // Algumas respostas pela ligação geral, sem convite, com identificação fictícia
+    $paises = ['GB' => 4, 'US' => 3, 'AE' => 2, 'DE' => 2, 'FR' => 1, 'BR' => 1, 'CH' => 1];
     for ($i = 1; $i <= 8; $i++) {
         $quando = date('Y-m-d H:i:s', time() - mt_rand(1, 12 * 86400));
-        ltp_guardar_resposta($pdo, $gerarRespostas(), $escolher(['en' => 4, 'pt' => 2, 'fr' => 1, 'ar' => 1]), null, sprintf('demo-anonimo-%04d', $i), true, $quando);
+        $identidade = [
+            'nome' => sprintf('Visitante demo %02d', $i), 'email' => sprintf('visitante.demo%02d@example.com', $i),
+            'telemovel' => sprintf('+44 7700 900%03d', $i), 'pais' => $escolher($paises),
+        ];
+        ltp_guardar_resposta($pdo, $gerarRespostas(), $escolher(['en' => 5, 'de' => 1, 'fr' => 1, 'ar' => 1]), null, sprintf('demo-anonimo-%04d', $i), true, $quando, $identidade);
     }
     $pdo->commit();
     return $criados;

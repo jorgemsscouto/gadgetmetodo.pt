@@ -30,7 +30,12 @@
     "prototype": "Prototype de présentation",
     "pending_review": "Traduction en attente de relecture native",
     "noscript": "Veuillez activer JavaScript dans votre navigateur pour répondre à cette enquête.",
-    "privacy": "Politique de confidentialité"
+    "privacy": "Politique de confidentialité",
+    "required_fields": "Veuillez remplir tous les champs pour continuer.",
+    "invalid_email": "Veuillez indiquer une adresse e-mail valide.",
+    "invalid_phone": "Veuillez indiquer un numéro de mobile valide, avec l’indicatif du pays.",
+    "map_label": "Carte : {region}",
+    "map_open": "Ouvrir la carte"
   },
   "intro": {
     "eyebrow": "Une enquête privée pour nos clients",
@@ -66,7 +71,7 @@
   "steps": {
     "regions": {
       "title": "Quelles régions viticoles aimeriez-vous le plus découvrir avec nous ?",
-      "help": "Choisissez-en jusqu’à trois, par ordre de préférence. Touchez à nouveau une région pour la retirer.",
+      "help": "Choisissez-en jusqu’à trois, par ordre de préférence. Sélectionnez à nouveau une région pour la retirer.",
       "other_label": "Une autre région que vous aimeriez découvrir",
       "other_placeholder": "Par exemple, Wachau (Autriche)"
     },
@@ -98,6 +103,17 @@
     "contact": {
       "title": "Pouvons-nous vous contacter lorsque ce voyage sera prêt ?",
       "privacy_text": "Vos réponses servent uniquement à concevoir de nouveaux voyages et, si vous le souhaitez, à vous prévenir lorsqu’ils seront prêts."
+    },
+    "identity": {
+      "title": "Vos coordonnées",
+      "intro": "Comme vous répondez via un lien général, merci de vous identifier.",
+      "name": "Nom",
+      "email": "E-mail",
+      "phone": "Téléphone mobile",
+      "phone_help": "Avec l’indicatif du pays (par exemple +33)",
+      "country": "Pays d’origine",
+      "country_placeholder": "Choisissez un pays",
+      "privacy_text": "Nous utilisons vos coordonnées uniquement pour identifier vos réponses et, si vous le souhaitez, pour vous informer de ce voyage."
     }
   },
   "options": {

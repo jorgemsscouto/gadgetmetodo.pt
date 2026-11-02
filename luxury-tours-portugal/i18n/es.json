@@ -30,7 +30,12 @@
     "prototype": "Prototipo para presentación",
     "pending_review": "Traducción pendiente de revisión nativa",
     "noscript": "Active JavaScript en su navegador para responder a esta encuesta.",
-    "privacy": "Política de privacidad"
+    "privacy": "Política de privacidad",
+    "required_fields": "Complete todos los campos para continuar.",
+    "invalid_email": "Indique una dirección de correo electrónico válida.",
+    "invalid_phone": "Indique un número de móvil válido, con el prefijo del país.",
+    "map_label": "Mapa: {region}",
+    "map_open": "Abrir el mapa"
   },
   "intro": {
     "eyebrow": "Una encuesta privada para nuestros clientes",
@@ -66,7 +71,7 @@
   "steps": {
     "regions": {
       "title": "¿Qué regiones vinícolas le gustaría descubrir con nosotros?",
-      "help": "Elija hasta tres, por orden de preferencia. Toque de nuevo una región para quitarla.",
+      "help": "Elija hasta tres, por orden de preferencia. Vuelva a seleccionar una región para quitarla.",
       "other_label": "Otra región que le encantaría conocer",
       "other_placeholder": "Por ejemplo, Wachau (Austria)"
     },
@@ -98,6 +103,17 @@
     "contact": {
       "title": "¿Podemos ponernos en contacto con usted cuando este viaje esté listo?",
       "privacy_text": "Sus respuestas solo se utilizan para diseñar nuevos viajes y, si lo desea, para avisarle cuando estén listos."
+    },
+    "identity": {
+      "title": "Sus datos",
+      "intro": "Como está respondiendo a través de un enlace general, le rogamos que se identifique.",
+      "name": "Nombre",
+      "email": "Correo electrónico",
+      "phone": "Teléfono móvil",
+      "phone_help": "Con el prefijo del país (por ejemplo, +34)",
+      "country": "País de origen",
+      "country_placeholder": "Elija un país",
+      "privacy_text": "Utilizamos sus datos solo para identificar sus respuestas y, si lo desea, para informarle sobre este viaje."
     }
   },
   "options": {

@@ -1,6 +1,7 @@
 <?php
 // Inquérito Luxury Tours Portugal: página pública. O conteúdo é desenhado por assets/js/inquerito.js
 // a partir dos ficheiros de tradução em i18n/; aqui só se resolve o idioma inicial e o convite.
+// A tradução automática do navegador fica desligada (translate="no"): o inquérito tem as suas próprias traduções.
 
 declare(strict_types=1);
 
@@ -44,16 +45,21 @@ $dados = [
         'budget' => LTP_ORCAMENTO_VALORES,
         'maxComment' => LTP_MAX_COMENTARIO,
         'maxOther' => LTP_MAX_OUTRA,
+        'maxName' => LTP_MAX_NOME,
+        'maps' => array_combine(LTP_REGIOES, array_map('ltp_ligacao_mapa', LTP_REGIOES)),
+        // Só na ligação geral: os países (códigos ISO) para a identificação; os nomes são traduzidos no navegador
+        'countries' => $cliente ? [] : array_keys(ltp_paises()),
     ],
 ];
 $json = json_encode($dados, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
 ?>
 <!doctype html>
-<html lang="<?= ltp_h($idiomaPagina) ?>" dir="<?= ltp_h($textos['dir'] ?? 'ltr') ?>">
+<html lang="<?= ltp_h($idiomaPagina) ?>" dir="<?= ltp_h($textos['dir'] ?? 'ltr') ?>" translate="no" class="notranslate">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<meta name="google" content="notranslate">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#faf7f1">

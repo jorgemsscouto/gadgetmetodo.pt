@@ -30,7 +30,12 @@
     "prototype": "Prototype for presentation",
     "pending_review": "Translation pending native review",
     "noscript": "Please enable JavaScript in your browser to answer this survey.",
-    "privacy": "Privacy policy"
+    "privacy": "Privacy policy",
+    "required_fields": "Please complete all the fields to continue.",
+    "invalid_email": "Please enter a valid email address.",
+    "invalid_phone": "Please enter a valid mobile number, including the country code.",
+    "map_label": "Map: {region}",
+    "map_open": "Open the map"
   },
   "intro": {
     "eyebrow": "A private survey for our guests",
@@ -66,7 +71,7 @@
   "steps": {
     "regions": {
       "title": "Which wine regions would you most like to discover with us?",
-      "help": "Choose up to three, in order of preference. Tap a region again to remove it.",
+      "help": "Choose up to three, in order of preference. Select a region again to remove it.",
       "other_label": "Another region you would love to explore",
       "other_placeholder": "For example, Wachau (Austria)"
     },
@@ -98,6 +103,17 @@
     "contact": {
       "title": "May we contact you when this journey is ready?",
       "privacy_text": "Your answers are used only to design new journeys and, if you agree, to let you know when they are ready."
+    },
+    "identity": {
+      "title": "Your details",
+      "intro": "As you are answering through a general link, please tell us who you are.",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Mobile phone",
+      "phone_help": "Including the country code (for example +44)",
+      "country": "Country of origin",
+      "country_placeholder": "Choose a country",
+      "privacy_text": "We use your details only to identify your answers and, if you agree, to keep you informed about this journey."
     }
   },
   "options": {

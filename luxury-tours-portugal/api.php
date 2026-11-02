@@ -72,8 +72,18 @@ if ($erro !== null) {
     responder(422, ['ok' => false, 'error' => 'invalid', 'field' => $erro]);
 }
 
+// Quem responde pela ligação geral tem de se identificar (nome, email, telemóvel e país de origem);
+// com convite, a identificação vem da lista de clientes
+$identidade = null;
+if (!$cliente) {
+    [$identidade, $erro] = ltp_validar_identidade($corpo['identity'] ?? null);
+    if ($erro !== null) {
+        responder(422, ['ok' => false, 'error' => 'invalid', 'field' => 'identity.' . $erro]);
+    }
+}
+
 try {
-    ltp_guardar_resposta($pdo, $validas, $idioma, $cliente ? (int) $cliente['id'] : null, $anonimo, $cliente ? (bool) $cliente['demo'] : false);
+    ltp_guardar_resposta($pdo, $validas, $idioma, $cliente ? (int) $cliente['id'] : null, $anonimo, $cliente ? (bool) $cliente['demo'] : false, null, $identidade);
 } catch (Throwable $e) {
     error_log('Luxury Tours Portugal: ' . $e->getMessage());
     responder(500, ['ok' => false, 'error' => 'storage']);
