@@ -367,7 +367,7 @@ const FAQ_SERVICOS = [
 const FAQ_FORMACAO = [
   ['Que formação oferece a Gadgetmetodo?', 'Dois formatos. <a href="/formacoes/">Cursos abertos</a> a particulares e a empresas, com inscrição individual, organizados no percurso IA Generativa no Trabalho: quatro cursos de seis horas, da iniciação à liderança da implementação. E <a href="/formacoes/ai-essentials/">programas à medida</a>, como o AI Essentials, organizados na empresa para administrações e equipas.'],
   ['Como está organizado o percurso IA Generativa no Trabalho?', 'Tem quatro cursos sequenciais, cada um com seis sessões de 60 minutos (24 horas no total): Curso 1, Iniciação à IA Generativa no Trabalho; Curso 2, Produtividade com IA Generativa; Curso 3, IA nos Processos da Organização; Curso 4, Liderança e Implementação de IA. Todas as sessões terminam num Laboratório de Casos Práticos, que passa de 10 para 40 minutos por sessão ao longo do percurso. A ferramenta de referência é o Claude (Anthropic); os conceitos são transferíveis para outros assistentes de IA generativa.'],
-  ['Por que curso devo começar?', 'A inscrição e a pré-inscrição incluem um diagnóstico de nível, com 11 perguntas, que indica o curso mais adequado ao ponto de partida de cada formando. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital.'],
+  ['Por que curso devo começar?', 'Não precisa de escolher sozinho: a inscrição e a pré-inscrição incluem um diagnóstico com 10 perguntas sobre a forma como usa a IA, e a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado ao seu ponto de partida antes de confirmar a inscrição. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital.'],
   ['Como me inscrevo e o que é a pré-inscrição?', 'Na <a href="/formacoes/">área de formação</a>, cada curso tem um botão de inscrição. Pode inscrever-se como particular ou em nome de uma empresa. Se já houver datas, inscreve-se numa edição do curso, sem precisar de conta; a inscrição inclui sempre todas as sessões do curso (não há inscrições em sessões avulsas) e fica pendente até ser confirmada por email. Se ainda não houver datas, faz a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a>: recebe logo uma confirmação por email e, quando as datas forem marcadas, o convite para a inscrição. A pré-inscrição não obriga a inscrever-se.'],
   ['Que requisitos técnicos são necessários?', 'Um computador por formando, com navegador atualizado, e conta própria no Claude. Nos Cursos 1 e 2, o plano gratuito é suficiente para a maioria dos exercícios; nos Cursos 3 e 4 é necessário um plano pago (Pro, Max, Team ou Enterprise), porque as sessões sobre conectores, tarefas agendadas e agentes usam funcionalidades que não estão disponíveis, ou estão limitadas, no plano gratuito. As turmas têm 8 a 14 formandos, em modalidade presencial ou à distância síncrona.'],
   ['Como é feita a avaliação?', 'Combina avaliação prática, teste e participação, e o peso da prática cresce de curso para curso: 40% no Curso 1, 60% no Curso 2, 70% no Curso 3 e 85% no Curso 4, onde inclui um projeto final e não há teste. A aprovação exige 50% e presença em 5 das 6 sessões; no Curso 4, 50% e a entrega do projeto final.'],
@@ -1526,9 +1526,9 @@ pagina({
           <div>
             <h2 id="como-inscrever" style="font-size:1.3rem">Como se inscrever</h2>
             <ol class="etapas etapas-compactas">
-              <li><h3>Escolha o curso</h3><p>Veja o programa, os temas, os casos práticos e a ficha em PDF.</p></li>
+              <li><h3>Conheça os cursos</h3><p>Veja o programa, os temas, os casos práticos e a ficha em PDF. Não precisa de saber por qual começar.</p></li>
               <li><h3>Inscreva-se ou faça a pré-inscrição</h3><p>Com datas agendadas, inscreve-se numa edição do curso, que inclui todas as sessões. Sem datas, a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a> garante que recebe o convite quando forem marcadas.</p></li>
-              <li><h3>Receba a confirmação</h3><p>Recebe um email logo a seguir e a confirmação da Gadgetmetodo nos dias úteis seguintes.</p></li>
+              <li><h3>Receba a confirmação</h3><p>Recebe um email logo a seguir. A Gadgetmetodo analisa o diagnóstico, indica-lhe o curso mais adequado e confirma a inscrição nos dias úteis seguintes.</p></li>
             </ol>
             <p class="espaco-topo-curto mb-0"><a class="botao" href="/formacoes/pre-inscricao.php">${icone('clipboard-list')} Fazer pré-inscrição</a></p>
           </div>
@@ -1570,10 +1570,10 @@ pagina({
   estilos: [CSS_AREA],
   indexar: false,
   titulo: 'Pré-inscrição em curso',
-  descricao: 'Pré-inscrição num curso da Gadgetmetodo, Lda.: receba o convite para a inscrição quando forem marcadas as datas.',
+  descricao: 'Pré-inscrição nos cursos da Gadgetmetodo, Lda.: responda ao diagnóstico, receba a indicação do curso mais adequado e o convite quando houver datas.',
   trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/pre-inscricao.php', 'Pré-inscrição']],
   corpo: `
-    ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/pre-inscricao.php', 'Pré-inscrição']], h1: 'Pré-inscrição', lead: 'Indique o curso que pretende e deixe os seus dados: enviamos-lhe o convite para a inscrição assim que houver datas. Não fica obrigado a inscrever-se.', atualizado: false })}
+    ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/pre-inscricao.php', 'Pré-inscrição']], h1: 'Pré-inscrição', lead: 'Deixe os seus dados e responda ao diagnóstico: indicamos-lhe o curso mais adequado ao seu ponto de partida e enviamos-lhe o convite para a inscrição assim que houver datas. Não fica obrigado a inscrever-se.', atualizado: false })}
 
     <?= $pagina['conteudo'] ?>
   `,
@@ -1619,7 +1619,7 @@ pagina({
           <li><strong>Acesso ao catálogo enviado por email:</strong> quando abre o catálogo através da ligação incluída na confirmação do pedido, registamos a data e hora do acesso e o tipo de navegador, associados à referência do pedido.</li>
           <li><strong>Área reservada:</strong> nome, email profissional e entidade dos utilizadores com acesso, e data do último acesso.</li>
           <li><strong>Inscrições em formações:</strong> nome, email e função do formando, respostas ao diagnóstico de utilização de inteligência artificial, ferramentas de IA usadas e expectativas sobre a formação. Nas inscrições feitas na área de formação do site, também a indicação de inscrição particular ou de empresa, o nome da empresa (se for o caso), o NIF e o nome, o email e o telefone de quem faz a inscrição.</li>
-          <li><strong>Pré-inscrições em cursos:</strong> nome, email e telefone, indicação de pré-inscrição particular ou de empresa e, neste caso, o nome da empresa, número previsto de formandos, modalidade preferida, preferências de datas e horários, respostas ao diagnóstico de nível e ferramentas de IA usadas.</li>
+          <li><strong>Pré-inscrições em cursos:</strong> nome, email e telefone, indicação de pré-inscrição particular ou de empresa e, neste caso, o nome da empresa, número previsto de formandos, modalidade preferida, preferências de datas e horários, respostas ao diagnóstico e ferramentas de IA usadas.</li>
           <li><strong>Prevenção de abusos do formulário:</strong> o servidor guarda, durante uma hora, um código derivado do endereço IP, que não revela o endereço, para limitar envios repetidos.</li>
         </ul>
 

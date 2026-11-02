@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pré-inscrição em curso | Gadgetmetodo, Lda.</title>
-  <meta name="description" content="Pré-inscrição num curso da Gadgetmetodo, Lda.: receba o convite para a inscrição quando forem marcadas as datas.">
+  <meta name="description" content="Pré-inscrição nos cursos da Gadgetmetodo, Lda.: responda ao diagnóstico, receba a indicação do curso mais adequado e o convite quando houver datas.">
   <meta name="robots" content="noindex, follow">
   <link rel="canonical" href="https://www.gadgetmetodo.pt/formacoes/pre-inscricao.php">
   <meta name="theme-color" content="#0A0F26">
@@ -14,7 +14,7 @@
   <meta property="og:locale" content="pt_PT">
   <meta property="og:site_name" content="Gadgetmetodo, Lda.">
   <meta property="og:title" content="Pré-inscrição em curso | Gadgetmetodo, Lda.">
-  <meta property="og:description" content="Pré-inscrição num curso da Gadgetmetodo, Lda.: receba o convite para a inscrição quando forem marcadas as datas.">
+  <meta property="og:description" content="Pré-inscrição nos cursos da Gadgetmetodo, Lda.: responda ao diagnóstico, receba a indicação do curso mais adequado e o convite quando houver datas.">
   <meta property="og:url" content="https://www.gadgetmetodo.pt/formacoes/pre-inscricao.php">
   <meta property="og:image" content="https://www.gadgetmetodo.pt/assets/img/partilha.png">
   <meta property="og:image:width" content="1200">
@@ -29,7 +29,7 @@
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/site.css?v=239f9b98b7">
-  <link rel="stylesheet" href="/assets/css/area.css?v=284a0d3bdf">
+  <link rel="stylesheet" href="/assets/css/area.css?v=8e80338b18">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -183,7 +183,7 @@
       "@id": "https://www.gadgetmetodo.pt/formacoes/pre-inscricao.php#pagina",
       "url": "https://www.gadgetmetodo.pt/formacoes/pre-inscricao.php",
       "name": "Pré-inscrição em curso",
-      "description": "Pré-inscrição num curso da Gadgetmetodo, Lda.: receba o convite para a inscrição quando forem marcadas as datas.",
+      "description": "Pré-inscrição nos cursos da Gadgetmetodo, Lda.: responda ao diagnóstico, receba a indicação do curso mais adequado e o convite quando houver datas.",
       "inLanguage": "pt-PT",
       "isPartOf": {
         "@id": "https://www.gadgetmetodo.pt/#website"
@@ -259,7 +259,7 @@
       <div class="contentor">
         <nav class="migalhas" aria-label="Localização"><ol><li><a href="/">Início</a></li><li><a href="/formacoes/">Formação</a></li><li aria-current="page">Pré-inscrição</li></ol></nav>
         <h1>Pré-inscrição</h1>
-        <p class="lead">Indique o curso que pretende e deixe os seus dados: enviamos-lhe o convite para a inscrição assim que houver datas. Não fica obrigado a inscrever-se.</p>
+        <p class="lead">Deixe os seus dados e responda ao diagnóstico: indicamos-lhe o curso mais adequado ao seu ponto de partida e enviamos-lhe o convite para a inscrição assim que houver datas. Não fica obrigado a inscrever-se.</p>
         
       </div>
     </section>

@@ -226,7 +226,7 @@ function formacoes_publico(): array
             . ($crescente
                 ? ' A prática no Laboratório de Casos Práticos passa de ' . reset($labs) . ' para ' . end($labs) . ' minutos por sessão ao longo do percurso.' : '')
             . (count($publicos) === 1 ? ' Destinatários: ' . rtrim(lcfirst((string) reset($publicos)), '.') . '.' : '')
-            . (com_nivel(['curso_id' => $lista[0]['id']]) ? ' Não sabe por qual começar? A inscrição e a pré-inscrição incluem um diagnóstico de nível que indica o curso mais adequado.' : '');
+            . (com_nivel(['curso_id' => $lista[0]['id']]) ? ' Não sabe por qual começar? A inscrição e a pré-inscrição incluem um diagnóstico com 10 perguntas: a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado antes de confirmar a inscrição.' : '');
         $html .= '<section class="secao secao-nevoa secao-percurso" aria-labelledby="' . $id . '"><div class="contentor">
           <div class="cabeca-secao"><span class="sobretitulo">Cursos abertos · Percurso</span><h2 id="' . $id . '">' . h($titulo) . '</h2>' . ($sub !== '' ? '<p class="lead-secao">' . h(ucfirst($sub)) . '</p>' : '') . '<p>' . h($intro) . '</p></div>
           <div class="lista-cursos">' . implode('', array_map('cartao_curso', $lista)) . '</div>';
@@ -294,10 +294,8 @@ function inscricao_publica(): array
     }
     $id = (int) ($_GET['f'] ?? 0);
     if (isset($_GET['recebida'])) {
-        $sessao = $id ? linha_bd('SELECT curso_id FROM formacoes WHERE id = ?', [$id]) : null;
         return ['conteudo' => '<section class="secao"><div class="contentor estreito">
           <div class="aviso aviso-ok"><strong>Inscrição recebida.</strong> Enviámos uma confirmação para o email indicado. A Gadgetmetodo confirma a inscrição nos próximos dias úteis.</div>
-          ' . aviso_indicacao(curso((int) ($sessao['curso_id'] ?? 0))) . '
           <p>Se não receber o email nos próximos minutos, verifique a pasta de correio não desejado ou escreva para <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</p>
           <div class="acoes">' . ($id ? '<a class="botao" href="/formacoes/inscricao.php?f=' . $id . '">Inscrever outra pessoa</a>' : '') . '<a class="botao botao-secundario" href="/formacoes/">Voltar à área de formação</a></div>
         </div></section>'];
@@ -382,8 +380,7 @@ function inscricao_publica(): array
             } else {
                 limite_excedido('formacoes', 6, 3600, true);
                 emails_nova_inscricao($r['id']);
-                $ind = $respostas ? curso_indicado($respostas, curso((int) $f['curso_id'])) : null;
-                header('Location: /formacoes/inscricao.php?recebida=1&f=' . (int) $f['id'] . ($ind ? '&indicado=' . (int) $ind['curso']['id'] : ''), true, 303);
+                header('Location: /formacoes/inscricao.php?recebida=1&f=' . (int) $f['id'], true, 303);
                 exit;
             }
         }
@@ -435,9 +432,10 @@ function pre_inscricao_publica(): array
     if (!$cursos) {
         return ['conteudo' => '<section class="secao"><div class="contentor estreito"><div class="aviso aviso-info">Não há cursos abertos neste momento. Para organizar uma formação para a sua equipa, <a href="/contactos/#formulario">contacte-nos</a>.</div></div></section>'];
     }
-    // O curso vem da ligação da página do curso (?c=ID) ou é escolhido no formulário
+    // O curso de origem vem da ligação da página do curso (?c=ID). O candidato não escolhe o curso: nos cursos de um percurso,
+    // a Gadgetmetodo vê na área reservada o curso aconselhado pelo diagnóstico e associa esse ou outro ao confirmar a inscrição.
     $post = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
-    $escolhido = (int) ($post ? ($_POST['curso'] ?? 0) : ($_GET['c'] ?? 0));
+    $escolhido = (int) ($_GET['c'] ?? 0);
     $c = null;
     foreach ($cursos as $x) {
         if ((int) $x['id'] === $escolhido) {
@@ -447,8 +445,7 @@ function pre_inscricao_publica(): array
     $id = (int) ($c['id'] ?? 0);
     if (isset($_GET['recebida'])) {
         return ['conteudo' => '<section class="secao"><div class="contentor estreito">
-          <div class="aviso aviso-ok"><strong>Pré-inscrição recebida.</strong> Enviámos uma confirmação para o email indicado. ' . ($c ? 'Quando houver datas para ' . h(curso_com_artigo((string) $c['nome'])) . ', enviamos-lhe o convite para a inscrição.' : 'Quando houver datas, enviamos-lhe o convite para a inscrição.') . '</div>
-          ' . aviso_indicacao($c) . '
+          <div class="aviso aviso-ok"><strong>Pré-inscrição recebida.</strong> Enviámos uma confirmação para o email indicado. A Gadgetmetodo analisa as respostas ao diagnóstico, indica-lhe o curso mais adequado e, quando houver datas, envia-lhe o convite para a inscrição.</div>
           <p>Se não receber o email nos próximos minutos, verifique a pasta de correio não desejado ou escreva para <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</p>
           <div class="acoes">' . ($c ? '<a class="botao" href="' . h(link_curso_publico($c)) . '">Voltar ao curso</a>' : '') . '<a class="botao botao-secundario" href="/formacoes/">Ver os cursos</a></div>
         </div></section>'];
@@ -457,7 +454,7 @@ function pre_inscricao_publica(): array
     $cfg = cfg();
     $erros = [];
     $v = ['tipo_cliente' => '', 'nome' => '', 'empresa' => '', 'email' => '', 'telefone' => '', 'formandos' => '1', 'modalidade' => '', 'preferencias' => '', 'diag' => [], 'ferramentas' => []];
-    // Diagnóstico do curso escolhido; sem curso, o mais completo entre os cursos abertos (com perguntas de nível, se houver)
+    // Diagnóstico do curso da ligação; sem curso, o do primeiro curso aberto de um percurso (ou com diagnóstico)
     $ref = ['curso_id' => $id];
     if (!$c) {
         $com = array_values(array_filter($cursos, function ($x) { return com_nivel(['curso_id' => $x['id']]); }))
@@ -491,9 +488,6 @@ function pre_inscricao_publica(): array
         if (!token_valido(is_string($_POST['t'] ?? null) ? $_POST['t'] : '')) {
             $erros[] = 'O formulário expirou ou foi enviado demasiado depressa. Confirme os dados e envie de novo.';
         }
-        if (!$c) {
-            $erros[] = 'Escolha o curso que pretende.';
-        }
         if ($v['tipo_cliente'] === '') {
             $erros[] = 'Indique se a pré-inscrição é feita como particular ou em nome de uma empresa.';
         } elseif ($v['tipo_cliente'] === 'empresa' && $v['empresa'] === '') {
@@ -515,37 +509,35 @@ function pre_inscricao_publica(): array
             $erros[] = 'Recebemos várias pré-inscrições a partir desta ligação na última hora. Para mais pedidos, escreva para info@gadgetmetodo.pt.';
         }
         if (!$erros) {
-            // Uma pré-inscrição por email e curso: um novo envio atualiza a que ainda está por tratar
-            $existente = linha_bd("SELECT id FROM preinscricoes WHERE curso_id = ? AND email = ? COLLATE NOCASE AND estado = 'nova'", [$id, $v['email']]);
+            // Curso associado: o aconselhado pelo diagnóstico (cursos de um percurso) ou o da ligação; a Gadgetmetodo pode trocá-lo
+            $base = curso((int) $ref['curso_id']);
+            $ind = $respostas ? curso_indicado($respostas, $base) : null;
+            $associado = $ind ? (int) $ind['curso']['id'] : (int) $ref['curso_id'];
+            $ids = array_map('intval', array_column(cursos_do_percurso($base) ?: [['id' => $associado]], 'id'));
+            // Uma pré-inscrição por email e percurso (ou curso): um novo envio atualiza a que ainda está por tratar
+            $existente = linha_bd("SELECT id FROM preinscricoes WHERE curso_id IN (" . implode(',', $ids) . ") AND email = ? COLLATE NOCASE AND estado = 'nova'", [$v['email']]);
             $dados = [$v['tipo_cliente'], $v['nome'], $v['email'], $v['telefone'], (int) $v['formandos'], $v['modalidade'], $v['preferencias'], $respostas ? json_encode($respostas) : '', implode(', ', $v['ferramentas'])];
             if ($existente) {
                 // Os campos opcionais deixados em branco mantêm o valor anterior; a empresa acompanha o tipo de cliente
                 executar("UPDATE preinscricoes SET tipo_cliente = ?, nome = ?, email = ?, telefone = COALESCE(NULLIF(?, ''), telefone), formandos = ?,
                     modalidade = COALESCE(NULLIF(?, ''), modalidade), preferencias = COALESCE(NULLIF(?, ''), preferencias), respostas = COALESCE(NULLIF(?, ''), respostas),
-                    ferramentas = COALESCE(NULLIF(?, ''), ferramentas), empresa = ? WHERE id = ?", array_merge($dados, [$v['empresa'] ?: null, $existente['id']]));
+                    ferramentas = COALESCE(NULLIF(?, ''), ferramentas), empresa = ?, curso_id = ?, curso_origem = COALESCE(?, curso_origem) WHERE id = ?",
+                    array_merge($dados, [$v['empresa'] ?: null, $associado, $c ? $id : null, $existente['id']]));
                 $pid = (int) $existente['id'];
             } else {
-                $pid = executar('INSERT INTO preinscricoes (tipo_cliente, nome, email, telefone, formandos, modalidade, preferencias, respostas, ferramentas, empresa, curso_id, estado, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_merge($dados, [$v['empresa'] ?: null, $id, 'nova', agora()]));
+                $pid = executar('INSERT INTO preinscricoes (tipo_cliente, nome, email, telefone, formandos, modalidade, preferencias, respostas, ferramentas, empresa, curso_id, curso_origem, estado, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    array_merge($dados, [$v['empresa'] ?: null, $associado, $c ? $id : null, 'nova', agora()]));
             }
             limite_excedido('preinscricoes', 5, 3600, true);
             emails_pre_inscricao($pid, (bool) $existente);
-            $ind = $respostas ? curso_indicado($respostas, $c) : null;
-            header('Location: /formacoes/pre-inscricao.php?recebida=1&c=' . $id . ($ind ? '&indicado=' . (int) $ind['curso']['id'] : ''), true, 303);
+            header('Location: /formacoes/pre-inscricao.php?recebida=1' . ($id ? '&c=' . $id : ''), true, 303);
             exit;
         }
     }
 
-    // Lista de cursos para escolher, agrupada por percurso
-    $grupos = [];
-    foreach ($cursos as $x) {
-        $grupos[trim((string) $x['percurso']) !== '' ? explode(':', (string) $x['percurso'])[0] : 'Outros cursos'][] = $x;
-    }
-    $opcoes = '<option value="">Escolha o curso</option>';
-    foreach ($grupos as $grupo => $lista) {
-        $opcoes .= '<optgroup label="' . h($grupo) . '">' . implode('', array_map(function ($x) use ($id) {
-            return '<option value="' . (int) $x['id'] . '"' . ((int) $x['id'] === $id ? ' selected' : '') . '>' . h($x['nome']) . '</option>';
-        }, $lista)) . '</optgroup>';
-    }
+    $percurso = cursos_do_percurso(curso((int) $ref['curso_id']));
+    $nome_percurso = $percurso ? explode(':', (string) $percurso[0]['percurso'])[0] : '';
+    $nota_nivel = $percurso ? 'Não precisa de escolher o curso: responda ao diagnóstico e a Gadgetmetodo indica-lhe o curso do percurso ' . $nome_percurso . ' mais adequado ao seu ponto de partida.' : '';
     $resumo = '';
     if ($c && !$post) {
         [$sobre, $titulo] = partes_nome($c);
@@ -556,9 +548,10 @@ function pre_inscricao_publica(): array
         <p class="texto-suave mb-0">' . h(implode(' · ', array_filter([(string) $c['tipologia'], (string) $c['duracao']]))) . '</p>
         <p class="mb-0"><a href="' . h(link_curso_publico($c)) . '">Ver o programa do curso</a> · <a href="' . h(link_ficha($c)) . '" target="_blank" rel="noopener">Ficha em PDF</a></p>
       </div>
-      ' . ($op['sessoes'] ? '<div class="aviso aviso-info">Este curso já tem datas agendadas: ' . h(lcfirst($op['nota'])) . ' <a href="' . h($op['href']) . '">Inscreva-se já</a> ou deixe a pré-inscrição para outras datas.</div>' : '');
-    } elseif (!$c && !$post) {
-        $resumo = '<div class="aviso aviso-info">Escolha o curso que pretende. Se não souber qual, escolha o que lhe parecer mais próximo e responda ao diagnóstico: a seguir indicamos o curso mais adequado ao seu ponto de partida. <a href="/formacoes/#percurso">Ver os cursos</a></div>';
+      ' . ($nota_nivel ? '<div class="aviso aviso-info">' . h($nota_nivel) . '</div>' : '')
+      . ($op['sessoes'] ? '<div class="aviso aviso-info">Este curso já tem datas agendadas: ' . h(lcfirst($op['nota'])) . ' <a href="' . h($op['href']) . '">Inscreva-se já</a> ou deixe a pré-inscrição para outras datas.</div>' : '');
+    } elseif (!$post) {
+        $resumo = '<div class="aviso aviso-info">' . h($nota_nivel ?: 'Responda ao diagnóstico: a Gadgetmetodo indica-lhe o curso mais adequado ao seu ponto de partida.') . ' <a href="/formacoes/#percurso">Ver os cursos</a></div>';
     }
     $html = '<section class="secao"><div class="contentor estreito">
       ' . $resumo . '
@@ -566,9 +559,7 @@ function pre_inscricao_publica(): array
       <form method="post" action="/formacoes/pre-inscricao.php' . ($id ? '?c=' . $id : '') . '" class="formulario formulario-inscricao">
         <input type="hidden" name="t" value="' . h(token_formulario()) . '">
         <div class="campo-oculto" aria-hidden="true"><label for="c-website">Não preencher</label><input id="c-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-        <h2 class="mb-0">1. Curso</h2>
-        <div class="campo"><label for="c-curso">Curso pretendido *</label><select id="c-curso" name="curso" required>' . $opcoes . '</select></div>
-        <h2 class="mb-0 espaco-topo">2. Os seus dados</h2>
+        <h2 class="mb-0">1. Os seus dados</h2>
         ' . campo_tipo_cliente($v['tipo_cliente'], 'Faz a pré-inscrição como') . '
         <div class="campos-2">
           <div data-so-empresa>' . campo('empresa', 'Nome da empresa ou organização *', $v['empresa'], 'text', 'maxlength="160" autocomplete="organization"') . '</div>
@@ -579,7 +570,7 @@ function pre_inscricao_publica(): array
           ' . campo_select('modalidade', 'Modalidade preferida', MODALIDADES_PREFERIDAS, $v['modalidade']) . '
         </div>
         ' . campo('preferencias', 'Preferências de datas e horários (opcional)', $v['preferencias'], 'textarea', 'maxlength="1000" rows="3" placeholder="Por exemplo: terças e quintas ao fim do dia, a partir de janeiro"') . '
-        ' . bloco_diagnostico_form($ref, $v, 3, 'Responda a pensar no formando; se forem vários, no perfil mais comum do grupo.') . '
+        ' . bloco_diagnostico_form($ref, $v, 2, 'Responda a pensar no formando; se forem vários, no perfil mais comum do grupo.') . '
         <label class="opcao consentimento"><input type="checkbox" name="consentimento" value="1" required> <span>Li a <a href="/privacidade/" target="_blank" rel="noopener">Política de privacidade</a> e autorizo o tratamento destes dados pela Gadgetmetodo, Lda. para registar a pré-inscrição e enviar o convite quando houver datas. *</span></label>
         <p class="texto-suave mb-0">A pré-inscrição não o(a) obriga a inscrever-se. Os dados são apagados automaticamente 12 meses após o registo.</p>
         <div><button class="botao" type="submit">Enviar pré-inscrição</button></div>
@@ -598,68 +589,62 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
     $respostas = json_decode((string) $p['respostas'], true);
     $diagnostico = is_array($respostas) && $respostas ? avaliar_diagnostico($respostas) : null;
     $ind = $diagnostico ? curso_indicado($respostas, curso((int) $p['curso_id'])) : null;
+    $origem = $p['curso_origem'] ? curso((int) $p['curso_origem']) : null;
     $cfg = cfg();
     $site = rtrim((string) ($cfg['site'] ?? SITE_CANONICO), '/');
-    $c = ['id' => $p['curso_id']];
-    $link_curso = $site . link_curso_publico($c);
-    $link_ficha = $site . link_ficha($c);
     $link_area = $site . '/clientes/' . url('preinscricao', ['id' => $id]);
     $destino = (string) ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt');
-    $linhas = [
-        'Curso' => $p['curso'], 'Nome' => $p['nome'], 'Cliente' => $p['tipo_cliente'] === 'particular' ? 'Particular' : (string) $p['empresa'], 'Email' => $p['email'], 'Telefone' => $p['telefone'],
+    $percurso = $p['percurso'] ? explode(':', (string) $p['percurso'])[0] : '';
+    // Dados enviados pelo candidato (nos dois emails); o curso aconselhado e o diagnóstico só no aviso interno
+    $dados = [
+        'Nome' => $p['nome'], 'Cliente' => $p['tipo_cliente'] === 'particular' ? 'Particular' : (string) $p['empresa'], 'Email' => $p['email'], 'Telefone' => $p['telefone'],
         'Formandos' => (string) $p['formandos'], 'Modalidade' => MODALIDADES_PREFERIDAS[$p['modalidade'] ?? ''] ?? 'Indiferente', 'Preferências' => $p['preferencias'],
-        'Diagnóstico' => $diagnostico ? $diagnostico['nivel'] . ' (' . $diagnostico['pontuacao'] . ' em 24; uso responsável ' . $diagnostico['responsavel'] . ' em 9)' : '',
-        'Curso indicado' => $ind ? $ind['curso']['nome'] : '',
         'Ferramentas de IA' => (string) $p['ferramentas'],
     ];
-    $tabela = '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">';
-    $texto = '';
-    foreach ($linhas as $k => $val) {
-        if ((string) $val === '') {
-            continue;
+    $internos = [
+        'Curso aconselhado' => $ind ? $ind['curso']['nome'] . ' (' . $ind['motivo'] . ')' : (string) $p['curso'],
+        'Pedido a partir de' => $origem ? (string) $origem['nome'] : ($percurso ? 'Área de formação (sem curso indicado)' : ''),
+        'Diagnóstico' => $diagnostico ? resumo_diagnostico($diagnostico) : '',
+    ] + $dados;
+    $tabela = function (array $linhas) {
+        $html = '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">';
+        $texto = '';
+        foreach ($linhas as $k => $val) {
+            if ((string) $val === '') {
+                continue;
+            }
+            $html .= '<tr><td style="padding:7px 12px 7px 0;border-bottom:1px solid #E5E7EB;color:#687280;width:130px;vertical-align:top;">' . h($k) . '</td><td style="padding:7px 0;border-bottom:1px solid #E5E7EB;">' . nl2br(h((string) $val)) . '</td></tr>';
+            $texto .= $k . ': ' . $val . "\n";
         }
-        $tabela .= '<tr><td style="padding:7px 12px 7px 0;border-bottom:1px solid #E5E7EB;color:#687280;width:130px;vertical-align:top;">' . h($k) . '</td><td style="padding:7px 0;border-bottom:1px solid #E5E7EB;">' . nl2br(h((string) $val)) . '</td></tr>';
-        $texto .= $k . ': ' . $val . "\n";
-    }
-    $tabela .= '</table>';
+        return [$html . '</table>', $texto];
+    };
+    [$tabela_interna, $texto_interno] = $tabela($internos);
+    [$tabela_candidato, $texto_candidato] = $tabela($dados);
     $botao = function (string $href, string $rotulo) {
         return '<a href="' . h($href) . '" style="display:inline-block;margin:0 8px 8px 0;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">' . h($rotulo) . '</a>';
     };
 
-    enviar_aviso($destino, ($atualizada ? 'Pré-inscrição atualizada: ' : 'Nova pré-inscrição pelo site: ') . $p['nome'] . ($p['empresa'] ? ' (' . $p['empresa'] . ')' : '') . ', ' . $p['curso'], 'Nova pré-inscrição em curso',
-        '<p style="margin:0 0 16px;">' . ($atualizada ? 'Uma pré-inscrição por tratar foi atualizada pelo candidato.' : 'Foi registada uma pré-inscrição. Está em Inscrições, na área reservada, com o estado "Pré-inscrição": aí pode inscrever o candidato numa edição já agendada ou numa edição nova, definindo as datas.') . '</p>' . $tabela
-        . ($ind && (int) $ind['curso']['id'] !== (int) $p['curso_id'] ? '<p style="margin:16px 0 0;"><strong>Atenção:</strong> o diagnóstico indica ' . h(curso_com_artigo((string) $ind['curso']['nome'])) . ' (' . h($ind['motivo']) . '), e não o curso escolhido. Confirmar com o candidato.</p>' : '')
+    enviar_aviso($destino, ($atualizada ? 'Pré-inscrição atualizada: ' : 'Nova pré-inscrição pelo site: ') . $p['nome'] . ($p['empresa'] ? ' (' . $p['empresa'] . ')' : '') . ', ' . ($ind ? 'aconselhado ' . partes_nome($ind['curso'])[0] : $p['curso']), 'Nova pré-inscrição em curso',
+        '<p style="margin:0 0 16px;">' . ($atualizada ? 'Uma pré-inscrição por tratar foi atualizada pelo candidato.' : 'Foi registada uma pré-inscrição. Está em Inscrições, na área reservada, com o estado "Pré-inscrição": aí confirma o curso aconselhado pelo diagnóstico (ou associa outro) e inscreve o candidato numa edição já agendada ou numa edição nova.') . '</p>' . $tabela_interna
         . '<p style="margin:22px 0 0;">' . $botao($link_area, 'Ver a pré-inscrição na área reservada') . '</p>',
-        "Foi registada uma pré-inscrição.\n\n" . $texto . "\n" . $link_area,
+        "Foi registada uma pré-inscrição.\n\n" . $texto_interno . "\n" . $link_area,
         (string) $p['email'], (string) ($cfg['bcc'] ?? ''));
 
+    // Confirmação para o candidato: sem o curso aconselhado, que a Gadgetmetodo confirma antes da inscrição
     $nome = nome_curto((string) $p['nome']);
-    $frase = 'Recebemos a sua pré-inscrição n' . curso_com_artigo((string) $p['curso']) . ($p['percurso'] ? ', do percurso ' . explode(':', (string) $p['percurso'])[0] : '') . '.';
-    $seguinte = 'Quando houver datas, enviamos-lhe o convite para a inscrição, com a data, o horário e a modalidade de cada sessão. A pré-inscrição não o(a) obriga a inscrever-se.';
-    $indicacao = $ind ? frase_indicacao($ind, curso((int) $p['curso_id'])) : '';
-    enviar_aviso((string) $p['email'], 'Pré-inscrição recebida: ' . $p['curso'], 'Pré-inscrição recebida',
+    $alvo = $percurso ? 'no percurso ' . $percurso : 'n' . curso_com_artigo((string) $p['curso']);
+    $frase = 'Recebemos a sua pré-inscrição ' . $alvo . '.';
+    $seguinte = ($percurso ? 'Vamos analisar as respostas ao diagnóstico e indicar-lhe o curso mais adequado ao seu ponto de partida. ' : '')
+        . 'Quando houver datas, enviamos-lhe o convite para a inscrição, com a data, o horário e a modalidade de cada sessão. A pré-inscrição não o(a) obriga a inscrever-se.';
+    $ver = $origem ? $site . link_curso_publico($origem) : $site . '/formacoes/' . ($percurso ? '#percurso' : '');
+    enviar_aviso((string) $p['email'], 'Pré-inscrição recebida: ' . ($percurso ?: $p['curso']), 'Pré-inscrição recebida',
         '<p style="margin:0 0 14px;">' . h($nome) . ',</p><p style="margin:0 0 12px;">' . h($frase) . '</p><p style="margin:0 0 16px;">' . h($seguinte) . '</p>'
-        . ($indicacao ? '<p style="margin:0 0 16px;padding:12px 14px;background:#E8F1F1;border-left:3px solid #00636A;">' . h($indicacao) . '</p>' : '')
-        . '<p style="margin:0 0 6px;"><strong>Dados da pré-inscrição</strong></p>' . $tabela
-        . '<p style="margin:22px 0 0;">' . $botao($link_curso, 'Ver o programa do curso') . $botao($link_ficha, 'Ficha do curso (PDF)') . '</p>'
+        . '<p style="margin:0 0 6px;"><strong>Dados da pré-inscrição</strong></p>' . $tabela_candidato
+        . '<p style="margin:22px 0 0;">' . $botao($ver, $percurso ? 'Ver os cursos do percurso' : 'Ver o programa do curso') . ($origem ? $botao($site . link_ficha($origem), 'Ficha do curso (PDF)') : '') . '</p>'
         . '<p style="margin:14px 0 0;color:#687280;font-size:13px;">Para alterar ou cancelar a pré-inscrição, basta responder a este email. Os dados são apagados automaticamente 12 meses após o registo.</p>',
-        $nome . ",\n\n" . $frase . "\n\n" . $seguinte . ($indicacao ? "\n\n" . $indicacao : '') . "\n\nDados da pré-inscrição:\n" . $texto . "\nPrograma do curso: " . $link_curso . "\nFicha do curso (PDF): " . $link_ficha
+        $nome . ",\n\n" . $frase . "\n\n" . $seguinte . "\n\nDados da pré-inscrição:\n" . $texto_candidato . "\n" . ($percurso ? 'Cursos do percurso: ' : 'Programa do curso: ') . $ver
         . "\n\nPara alterar ou cancelar a pré-inscrição, basta responder a este email.",
         $destino);
-}
-
-// Aviso, depois da inscrição ou da pré-inscrição, com o curso indicado pelo diagnóstico (parâmetro "indicado")
-function aviso_indicacao(?array $curso): string
-{
-    $ind = curso((int) ($_GET['indicado'] ?? 0));
-    if (!$curso || !$ind || !$ind['ativo'] || !in_array((int) $ind['id'], array_map('intval', array_column(cursos_do_percurso($curso), 'id')), true)) {
-        return '';
-    }
-    if ((int) $ind['id'] === (int) $curso['id']) {
-        return '<div class="aviso aviso-info"><strong>Diagnóstico de nível:</strong> confirma que este é o curso indicado para o ponto de partida do formando.</div>';
-    }
-    return '<div class="aviso aviso-info"><strong>Diagnóstico de nível:</strong> pelas respostas, o curso mais adequado ao ponto de partida do formando é ' . h(curso_com_artigo((string) $ind['nome'])) . '. A Gadgetmetodo vai confirmar consigo o curso antes de avançar. '
-        . '<a href="' . h(link_curso_publico($ind)) . '">Ver ' . h(curso_com_artigo((string) $ind['nome'])) . '</a>.</div>';
 }
 
 // Encurta um texto no fim de uma palavra (sem depender da extensão mbstring)
@@ -728,7 +713,7 @@ function curso_publico(): array
           <aside class="ficha-curso">
             ' . ($factos ? '<dl>' . implode('', array_map(function ($k, $x) { return '<dt>' . h($k) . '</dt><dd>' . h($x) . '</dd>'; }, array_keys($factos), $factos)) . '</dl>' : '') . '
             ' . ($c['diagnostico'] ? '<p class="texto-suave">' . (com_nivel(['curso_id' => $c['id']])
-                ? 'A inscrição e a pré-inscrição incluem um diagnóstico de nível, que indica qual dos cursos do percurso é o mais adequado ao ponto de partida do formando.'
+                ? 'A inscrição e a pré-inscrição incluem um diagnóstico com 10 perguntas: a Gadgetmetodo analisa as respostas e indica o curso do percurso mais adequado ao ponto de partida do formando antes de confirmar a inscrição.'
                 : 'A inscrição inclui um diagnóstico curto de utilização de inteligência artificial, para ajustar a formação ao ponto de partida de cada formando.') . '</p>' : '') . '
             <p class="cartao-curso-datas' . ($op['sessoes'] ? ' com-datas' : '') . '">' . h($op['nota']) . '</p>
             <div class="ficha-acoes">

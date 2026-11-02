@@ -94,7 +94,8 @@ function bd(): ?PDO
             empresa TEXT, email TEXT NOT NULL, telefone TEXT, formandos INTEGER NOT NULL DEFAULT 1, modalidade TEXT,
             preferencias TEXT, estado TEXT NOT NULL DEFAULT 'nova', criado TEXT NOT NULL, respostas TEXT, inscricao_id INTEGER,
             tipo_cliente TEXT, ferramentas TEXT)");
-        acrescentar_colunas($pdo, 'preinscricoes', ['respostas' => 'TEXT', 'inscricao_id' => 'INTEGER', 'tipo_cliente' => 'TEXT', 'ferramentas' => 'TEXT']);
+        // curso_id: curso associado (à partida, o aconselhado pelo diagnóstico); curso_origem: curso da ligação de onde veio o candidato
+        acrescentar_colunas($pdo, 'preinscricoes', ['respostas' => 'TEXT', 'inscricao_id' => 'INTEGER', 'tipo_cliente' => 'TEXT', 'ferramentas' => 'TEXT', 'curso_origem' => 'INTEGER']);
         $pdo->exec('CREATE INDEX IF NOT EXISTS preinscricoes_curso ON preinscricoes (curso_id)');
         // Tabela de preços (administração): linhas (cursos), modalidades (colunas) e preço de cada linha em cada modalidade,
         // em cêntimos e sem IVA (sem valor, "sob consulta"). As linhas com "legado" são da 1.ª versão (uma lista simples

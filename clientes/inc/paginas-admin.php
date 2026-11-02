@@ -582,6 +582,14 @@ function admin_preinscricao(): void
             aviso('Estado da pré-inscrição atualizado.');
             redirecionar('preinscricao', ['id' => $id]);
         }
+        if ($acao === 'curso') {
+            $novo = (int) ($_POST['curso_associado'] ?? 0);
+            if (in_array($novo, array_map('intval', array_column(cursos_do_percurso($c) ?: [$c], 'id')), true)) {
+                executar('UPDATE preinscricoes SET curso_id = ? WHERE id = ?', [$novo, $id]);
+                aviso('Curso associado: ' . h((string) curso($novo)['nome']) . '.');
+            }
+            redirecionar('preinscricao', ['id' => $id]);
+        }
         if ($acao === 'apagar') {
             executar('DELETE FROM preinscricoes WHERE id = ?', [$id]);
             aviso('Pré-inscrição apagada.');
@@ -649,8 +657,21 @@ function admin_preinscricao(): void
     $v = $_POST + ['curso' => $c['id'], 'data' => '', 'hora_inicio' => '09:30', 'hora_fim' => '10:30', 'modalidade' => $p['modalidade'] ?: 'presencial', 'local' => '', 'vagas' => '12', 'reuniao' => '', 'formando' => $p['nome'], 'email_formando' => $p['email'], 'estado_inscricao' => 'confirmada'];
     $a = $respostas ? avaliar_diagnostico($respostas) : null;
     $rec = $respostas ? recomendacao_de(['respostas' => json_encode($respostas), 'curso_id' => $c['id']]) : '';
+    $ind = $respostas ? curso_indicado($respostas, $c) : null;
+    $origem = $p['curso_origem'] ? curso((int) $p['curso_origem']) : null;
+    // Curso associado: à partida, o aconselhado pelo diagnóstico; pode trocar-se por outro curso do percurso
+    $lista_cursos = [];
+    foreach (cursos_do_percurso($c) ?: [$c] as $x) {
+        $lista_cursos[$x['id']] = $x['nome'] . ($ind && (int) $ind['curso']['id'] === (int) $x['id'] ? ' (aconselhado)' : '');
+    }
+    $form_curso = count($lista_cursos) > 1 && $p['estado'] !== 'inscrita' ? '<form method="post" class="formulario linha-form">' . campo_csrf() . '<input type="hidden" name="acao" value="curso">
+          ' . campo_select('curso_associado', 'Curso associado', $lista_cursos, (string) $c['id']) . '
+          <div></div><div><button class="botao botao-secundario" type="submit">Associar este curso</button></div></form>' : '';
     $dados = array_filter([
-        'Curso' => '<a href="' . h(url('curso', ['id' => $c['id']])) . '">' . h($c['nome']) . '</a>',
+        'Curso associado' => '<a href="' . h(url('curso', ['id' => $c['id']])) . '">' . h($c['nome']) . '</a>'
+            . ($ind ? ((int) $ind['curso']['id'] === (int) $c['id'] ? ' ' . etiqueta('Aconselhado pelo diagnóstico', 'ok') : ' ' . etiqueta('Diferente do aconselhado', 'info')) : ''),
+        'Curso aconselhado' => $ind ? '<strong>' . h($ind['curso']['nome']) . '</strong><br><span class="texto-suave">' . h(ucfirst($ind['motivo'])) . '</span>' : '',
+        'Pedido a partir de' => $origem ? '<a href="' . h(url('curso', ['id' => $origem['id']])) . '">' . h($origem['nome']) . '</a>' : '',
         'Pedido em' => h(data_hora($p['criado'])),
         'Cliente' => $p['tipo_cliente'] === 'particular' ? 'Particular' : h((string) $p['empresa']),
         'Contactos' => '<a href="mailto:' . h($p['email']) . '">' . h($p['email']) . '</a>' . ($p['telefone'] ? ' · ' . h($p['telefone']) : ''),
@@ -671,10 +692,11 @@ function admin_preinscricao(): void
         <form method="post" class="formulario linha-form">' . campo_csrf() . '<input type="hidden" name="acao" value="estado">
           ' . campo_select('estado', 'Estado da pré-inscrição', estados_preinscricao_manuais($p['estado']), $p['estado']) . '
           <div></div><div><button class="botao botao-secundario" type="submit">Guardar estado</button></div></form>'
+        . $form_curso
         . ($a ? '<h2 class="espaco-topo">Diagnóstico</h2>
         <div class="diagnostico-resultado">
           <div><span class="texto-suave">Nível</span>' . nivel_etiqueta($a['nivel']) . '</div>
-          <div><span class="texto-suave">Pontuação</span><span><strong>' . (int) $a['pontuacao'] . '</strong> em 24</span></div>
+          <div><span class="texto-suave">Pontuação</span><span><strong>' . (int) $a['pontuacao'] . '</strong> em ' . $a['maximo'] . '</span></div>
           <div><span class="texto-suave">Uso responsável</span><span><strong>' . (int) $a['responsavel'] . '</strong> em 9</span></div>
         </div>
         ' . ($rec ? '<p><strong>Recomendação:</strong> ' . h($rec) . '</p>' : '') . '
@@ -710,7 +732,7 @@ function admin_preinscricao(): void
     pagina_area('inscricoes', (string) $p['nome'], $html, 'Pré-inscrição');
 }
 
-// Nível e curso indicado pelo diagnóstico de uma pré-inscrição, com aviso quando difere do curso escolhido
+// Nível e curso aconselhado pelo diagnóstico de uma pré-inscrição, com aviso quando difere do curso associado
 function diagnostico_preinscricao(array $p, array $c): string
 {
     $r = json_decode((string) ($p['respostas'] ?? ''), true);
@@ -719,8 +741,8 @@ function diagnostico_preinscricao(array $p, array $c): string
     }
     $a = avaliar_diagnostico($r);
     $ind = curso_indicado($r, $c);
-    return nivel_etiqueta($a['nivel']) . ($ind ? '<br>Indica: ' . h(partes_nome($ind['curso'])[0])
-        . ((int) $ind['curso']['id'] !== (int) $c['id'] ? ' ' . etiqueta('Diferente do curso escolhido', 'info') : '') : '')
+    return nivel_etiqueta($a['nivel']) . ($ind ? '<br>Aconselhado: ' . h(partes_nome($ind['curso'])[0])
+        . ((int) $ind['curso']['id'] !== (int) $c['id'] ? ' ' . etiqueta('Diferente do curso associado', 'info') : '') : '')
         . ($a['responsavel'] <= 4 ? '<br><span class="texto-suave">Uso responsável baixo (' . (int) $a['responsavel'] . ' em 9)</span>' : '');
 }
 
@@ -786,7 +808,7 @@ function admin_inscricoes(): void
         foreach ($lista as $i) {
             $linhas[] = [$i['titulo'], data_hora($i['inicio']), $i['cliente'], TIPOS_CLIENTE[$i['cliente_tipo']] ?? '', ORIGENS[$i['origem']] ?? $i['origem'], $i['contacto_nome'], $i['contacto_email'], $i['contacto_telefone'], $i['formando'], $i['email'], $i['funcao'], ESTADOS_INSCRICAO[$i['estado']] ?? $i['estado'], $i['nivel'], $i['pontuacao'], $i['responsavel'], $i['ferramentas'], $i['expectativas'], data_hora($i['criado'])];
         }
-        exportar_csv('gadgetmetodo-inscricoes', ['Formação', 'Data da formação', 'Cliente', 'Tipo de cliente', 'Origem', 'Contacto (site)', 'Email do contacto', 'Telefone do contacto', 'Formando', 'Email', 'Função', 'Estado', 'Nível de IA', 'Pontuação (0-24)', 'Uso responsável (0-9)', 'Ferramentas usadas', 'Expectativas', 'Data da inscrição'], $linhas);
+        exportar_csv('gadgetmetodo-inscricoes', ['Formação', 'Data da formação', 'Cliente', 'Tipo de cliente', 'Origem', 'Contacto (site)', 'Email do contacto', 'Telefone do contacto', 'Formando', 'Email', 'Função', 'Estado', 'Nível de IA', 'Pontuação', 'Uso responsável (0-9)', 'Ferramentas usadas', 'Expectativas', 'Data da inscrição'], $linhas);
     }
     $formacoes = [];
     foreach (consulta('SELECT id, titulo, inicio FROM formacoes ORDER BY inicio DESC') as $f) {

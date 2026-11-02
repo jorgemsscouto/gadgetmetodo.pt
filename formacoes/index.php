@@ -29,7 +29,7 @@
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/site.css?v=239f9b98b7">
-  <link rel="stylesheet" href="/assets/css/area.css?v=284a0d3bdf">
+  <link rel="stylesheet" href="/assets/css/area.css?v=8e80338b18">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -303,9 +303,9 @@
           <div>
             <h2 id="como-inscrever" style="font-size:1.3rem">Como se inscrever</h2>
             <ol class="etapas etapas-compactas">
-              <li><h3>Escolha o curso</h3><p>Veja o programa, os temas, os casos práticos e a ficha em PDF.</p></li>
+              <li><h3>Conheça os cursos</h3><p>Veja o programa, os temas, os casos práticos e a ficha em PDF. Não precisa de saber por qual começar.</p></li>
               <li><h3>Inscreva-se ou faça a pré-inscrição</h3><p>Com datas agendadas, inscreve-se numa edição do curso, que inclui todas as sessões. Sem datas, a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a> garante que recebe o convite quando forem marcadas.</p></li>
-              <li><h3>Receba a confirmação</h3><p>Recebe um email logo a seguir e a confirmação da Gadgetmetodo nos dias úteis seguintes.</p></li>
+              <li><h3>Receba a confirmação</h3><p>Recebe um email logo a seguir. A Gadgetmetodo analisa o diagnóstico, indica-lhe o curso mais adequado e confirma a inscrição nos dias úteis seguintes.</p></li>
             </ol>
             <p class="espaco-topo-curto mb-0"><a class="botao" href="/formacoes/pre-inscricao.php"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/> <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/> <path d="M12 11h4"/> <path d="M12 16h4"/> <path d="M8 11h.01"/> <path d="M8 16h.01"/> </svg> Fazer pré-inscrição</a></p>
           </div>
@@ -323,7 +323,7 @@
           </details>
           <details>
             <summary>Por que curso devo começar?</summary>
-            <div class="resposta"><p>A inscrição e a pré-inscrição incluem um diagnóstico de nível, com 11 perguntas, que indica o curso mais adequado ao ponto de partida de cada formando. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital.</p></div>
+            <div class="resposta"><p>Não precisa de escolher sozinho: a inscrição e a pré-inscrição incluem um diagnóstico com 10 perguntas sobre a forma como usa a IA, e a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado ao seu ponto de partida antes de confirmar a inscrição. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital.</p></div>
           </details>
           <details>
             <summary>Como me inscrevo e o que é a pré-inscrição?</summary>

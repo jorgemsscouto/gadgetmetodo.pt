@@ -1,12 +1,64 @@
 <?php
-// Diagnóstico do estado de utilização de inteligência artificial por parte do formando.
-// Cada pergunta vale de 0 a 3 pontos (total 0 a 24); as perguntas marcadas como "responsavel"
-// medem práticas de uso responsável (0 a 9). Nos cursos que fazem parte de um percurso, três perguntas
-// adicionais (DIAGNOSTICO_NIVEL) permitem indicar o curso do percurso mais adequado ao formando.
+// Diagnóstico do estado de utilização de inteligência artificial por parte do formando, na inscrição e na pré-inscrição.
+// Nove perguntas de escolha (0 a 3 pontos cada, total 0 a 27), mais a pergunta das ferramentas de IA (não pontuada).
+// As perguntas marcadas como "responsavel" medem o uso responsável (0 a 9). Nos cursos de um percurso, as respostas
+// indicam o curso aconselhado, que só a Gadgetmetodo vê na área reservada e confirma (ou troca) ao confirmar a inscrição.
+// As respostas guardadas com a versão anterior (11 perguntas, total de 0 a 24) continuam a ser lidas com as regras dela.
 
 declare(strict_types=1);
 
 const DIAGNOSTICO = [
+    'frequencia' => [
+        'texto' => 'Com que frequência usa ferramentas de IA generativa, como o ChatGPT, o Copilot, o Gemini ou o Claude?',
+        'opcoes' => ['Nunca usei', 'Experimentei poucas vezes', 'Todas as semanas', 'Todos os dias'],
+    ],
+    'utilizacao' => [
+        'texto' => 'Qual é a tarefa mais exigente para que já usou a IA?',
+        'opcoes' => ['Nenhuma', 'Perguntas e pesquisas simples', 'Escrever, resumir ou traduzir textos e documentos', 'Analisar dados, preparar apresentações ou automatizar tarefas'],
+    ],
+    'instrucoes' => [
+        'texto' => 'Quando faz um pedido à IA, como o prepara?',
+        'opcoes' => ['Escrevo uma pergunta curta', 'Explico o contexto e o resultado que pretendo', 'Indico também o formato e dou exemplos ou documentos de referência', 'Uso instruções que já testei e reutilizo'],
+    ],
+    'verificacao' => [
+        'texto' => 'O que faz com as respostas da IA antes de as usar?',
+        'opcoes' => ['Uso-as como estão', 'Leio-as e corrijo o que me parece errado', 'Confirmo os factos, os números e as fontes importantes', 'Confirmo sempre e peço à IA que justifique ou indique as fontes'],
+        'responsavel' => true,
+    ],
+    'dados' => [
+        'texto' => 'Antes de colocar informação numa ferramenta de IA, verifica se tem dados pessoais ou confidenciais?',
+        'opcoes' => ['Nunca pensei nisso', 'Às vezes', 'Quase sempre', 'Sempre'],
+        'responsavel' => true,
+    ],
+    'regras' => [
+        'texto' => 'Conhece as regras para o uso de IA no seu trabalho (da organização, dos clientes ou da sua atividade)?',
+        'opcoes' => ['Não existem ou não sei', 'Existem, mas não as conheço bem', 'Conheço-as em termos gerais', 'Conheço-as e aplico-as'],
+        'responsavel' => true,
+    ],
+    'reutilizacao' => [
+        'texto' => 'Já criou instruções, modelos de pedidos ou assistentes que reutiliza (por exemplo, projetos ou GPT personalizados)?',
+        'opcoes' => ['Não', 'Experimentei', 'Uso alguns no meu trabalho', 'Criei alguns para a equipa e mantenho-os'],
+    ],
+    'processos' => [
+        'texto' => 'A IA já faz parte de processos de trabalho, seus ou da equipa (por exemplo, ligada ao email, a documentos ou a folhas de cálculo)?',
+        'opcoes' => ['Não', 'Em testes pontuais', 'Em alguns processos', 'De forma sistemática, com tarefas automatizadas'],
+    ],
+    'papel' => [
+        'texto' => 'Que papel tem, ou vai ter, na adoção de IA no seu trabalho ou na sua organização?',
+        'opcoes' => ['Usar a IA nas minhas tarefas', 'Ajudar colegas a usá-la', 'Melhorar processos da equipa ou da área', 'Decidir ou liderar a adoção na organização'],
+    ],
+];
+
+const NIVEIS = [
+    ['max' => 7, 'nome' => 'Inicial', 'recomendacao' => 'Programa completo, a começar pelo Módulo 1 (fundamentos), com exercícios práticos guiados.'],
+    ['max' => 14, 'nome' => 'Exploratório', 'recomendacao' => 'Foco nos Módulos 1 e 2: consolidar os fundamentos e identificar casos de uso no trabalho diário.'],
+    ['max' => 21, 'nome' => 'Em adoção', 'recomendacao' => 'Foco nos Módulos 2 e 3: integração da IA nos processos e regras de utilização na equipa.'],
+    ['max' => 27, 'nome' => 'Avançado', 'recomendacao' => 'Foco nos Módulos 3 a 5: governação, privacidade e segurança, e partilha de boas práticas com a equipa.'],
+];
+
+/* Versão anterior (respostas já guardadas) */
+
+const DIAGNOSTICO_V1 = [
     'frequencia' => [
         'texto' => 'Com que frequência usa ferramentas de IA (por exemplo ChatGPT, Copilot, Gemini ou Claude) no trabalho?',
         'opcoes' => ['Nunca', 'Raramente (algumas vezes por mês)', 'Todas as semanas', 'Todos os dias'],
@@ -44,7 +96,7 @@ const DIAGNOSTICO = [
     ],
 ];
 
-const DIAGNOSTICO_NIVEL = [
+const DIAGNOSTICO_NIVEL_V1 = [
     'praticas' => [
         'texto' => 'Quando usa IA, como prepara os pedidos?',
         'opcoes' => ['Escrevo perguntas curtas, sem contexto', 'Explico o contexto e o resultado que pretendo', 'Uso modelos de instruções, exemplos ou documentos de referência', 'Tenho instruções e projetos reutilizáveis, que partilho com colegas'],
@@ -59,23 +111,36 @@ const DIAGNOSTICO_NIVEL = [
     ],
 ];
 
-const NIVEIS = [
+const NIVEIS_V1 = [
     ['max' => 6, 'nome' => 'Inicial', 'recomendacao' => 'Programa completo, a começar pelo Módulo 1 (fundamentos), com exercícios práticos guiados.'],
     ['max' => 12, 'nome' => 'Exploratório', 'recomendacao' => 'Foco nos Módulos 1 e 2: consolidar os fundamentos e identificar casos de uso no trabalho diário.'],
     ['max' => 18, 'nome' => 'Em adoção', 'recomendacao' => 'Foco nos Módulos 2 e 3: integração da IA nos processos e regras de utilização na equipa.'],
     ['max' => 24, 'nome' => 'Avançado', 'recomendacao' => 'Foco nos Módulos 3 a 5: governação, privacidade e segurança, e partilha de boas práticas com a equipa.'],
 ];
 
+// Perguntas do formulário (o parâmetro mantém-se por compatibilidade: as mesmas em todos os cursos)
 function perguntas_diagnostico(bool $nivel = false): array
 {
-    return $nivel ? DIAGNOSTICO + DIAGNOSTICO_NIVEL : DIAGNOSTICO;
+    return DIAGNOSTICO;
+}
+
+// Respostas guardadas com a versão anterior do diagnóstico
+function diagnostico_v1(array $r): bool
+{
+    return isset($r['tempo']) || isset($r['equipa']) || isset($r['praticas']);
+}
+
+// Perguntas que correspondem a um conjunto de respostas guardado (versão atual ou anterior)
+function perguntas_das_respostas(array $r): array
+{
+    return diagnostico_v1($r) ? DIAGNOSTICO_V1 + (isset($r['praticas']) ? DIAGNOSTICO_NIVEL_V1 : []) : DIAGNOSTICO;
 }
 
 // Lê as respostas do formulário; devolve null se faltar alguma
 function respostas_diagnostico(bool $nivel = false): ?array
 {
     $respostas = [];
-    foreach (perguntas_diagnostico($nivel) as $id => $p) {
+    foreach (perguntas_diagnostico() as $id => $p) {
         $v = $_POST['diag'][$id] ?? null;
         if (!is_string($v) || !ctype_digit($v) || (int) $v > 3) {
             return null;
@@ -87,16 +152,17 @@ function respostas_diagnostico(bool $nivel = false): ?array
 
 function avaliar_diagnostico(array $respostas): array
 {
-    // A pontuação de 0 a 24 conta só as 8 perguntas base (as do nível não mudam a escala)
-    $total = array_sum(array_intersect_key($respostas, DIAGNOSTICO));
+    // Versão anterior: a pontuação conta só as 8 perguntas base (0 a 24)
+    [$perguntas, $niveis] = diagnostico_v1($respostas) ? [DIAGNOSTICO_V1, NIVEIS_V1] : [DIAGNOSTICO, NIVEIS];
+    $total = array_sum(array_intersect_key($respostas, $perguntas));
     $responsavel = 0;
-    foreach (DIAGNOSTICO as $id => $p) {
+    foreach ($perguntas as $id => $p) {
         if (!empty($p['responsavel'])) {
             $responsavel += $respostas[$id] ?? 0;
         }
     }
-    $nivel = NIVEIS[count(NIVEIS) - 1];
-    foreach (NIVEIS as $n) {
+    $nivel = $niveis[count($niveis) - 1];
+    foreach ($niveis as $n) {
         if ($total <= $n['max']) {
             $nivel = $n;
             break;
@@ -106,7 +172,13 @@ function avaliar_diagnostico(array $respostas): array
     if ($responsavel <= 4) {
         $recomendacao .= ' Atenção ao uso responsável: reforçar os Módulos 3, 4 e 5 (regras, dados pessoais e segurança).';
     }
-    return ['pontuacao' => $total, 'responsavel' => $responsavel, 'nivel' => $nivel['nome'], 'recomendacao' => $recomendacao];
+    return ['pontuacao' => $total, 'maximo' => 3 * count($perguntas), 'responsavel' => $responsavel, 'nivel' => $nivel['nome'], 'recomendacao' => $recomendacao];
+}
+
+// "Em adoção (18 em 27; uso responsável 7 em 9)"
+function resumo_diagnostico(array $a): string
+{
+    return $a['nivel'] . ' (' . $a['pontuacao'] . ' em ' . $a['maximo'] . '; uso responsável ' . $a['responsavel'] . ' em 9)';
 }
 
 /* Nível no percurso: qual dos cursos é o mais adequado */
@@ -133,6 +205,27 @@ function com_nivel(array $f): bool
 function colocacao(array $r): array
 {
     $v = function (string $k) use ($r) { return (int) ($r[$k] ?? 0); };
+    if (diagnostico_v1($r)) {
+        return colocacao_v1($r);
+    }
+    if ($v('frequencia') <= 1 || $v('utilizacao') <= 1) {
+        return [0, 'utilização ainda ocasional ou limitada a perguntas simples: o ponto de partida é a iniciação'];
+    }
+    if ($v('instrucoes') + $v('verificacao') + $v('reutilizacao') < 6) {
+        return [1, 'utilização regular: o passo seguinte é estruturar os pedidos, o contexto e a verificação'];
+    }
+    if ($v('processos') < 2) {
+        return [2, 'uso individual consolidado: o passo seguinte é aplicar a IA nos processos da equipa'];
+    }
+    if ($v('papel') >= 2) {
+        return [3, 'IA já aplicada em processos e responsabilidade na adoção: o foco é liderar a implementação'];
+    }
+    return [2, 'IA já aplicada em processos; o último curso do percurso destina-se sobretudo a quem lidera a adoção'];
+}
+
+function colocacao_v1(array $r): array
+{
+    $v = function (string $k) use ($r) { return (int) ($r[$k] ?? 0); };
     if ($v('frequencia') <= 1 || $v('utilizacao') <= 1) {
         return [0, 'utilização ainda ocasional ou limitada a perguntas simples: o ponto de partida é a iniciação'];
     }
@@ -148,25 +241,16 @@ function colocacao(array $r): array
     return [2, 'IA já aplicada em processos; o último curso do percurso destina-se sobretudo a quem lidera a adoção'];
 }
 
-// Curso indicado pelo diagnóstico, no percurso do curso escolhido
+// Curso aconselhado pelo diagnóstico, no percurso do curso indicado
 function curso_indicado(array $respostas, ?array $curso): ?array
 {
     $lista = cursos_do_percurso($curso);
-    if (!$lista || !isset($respostas['praticas'], $respostas['automacao'], $respostas['papel'])) {
+    $chaves = diagnostico_v1($respostas) ? ['praticas', 'automacao', 'papel'] : ['reutilizacao', 'processos', 'papel'];
+    if (!$lista || array_diff($chaves, array_keys($respostas))) {
         return null;
     }
     [$nivel, $motivo] = colocacao($respostas);
     return ['curso' => $lista[(int) round($nivel * (count($lista) - 1) / 3)], 'motivo' => $motivo];
-}
-
-// Frase para quem inscreve (páginas públicas e emails de confirmação)
-function frase_indicacao(array $indicado, array $curso, bool $com_motivo = true): string
-{
-    if ((int) $indicado['curso']['id'] === (int) $curso['id']) {
-        return 'O diagnóstico confirma que este é o curso indicado para o ponto de partida do formando' . ($com_motivo ? ' (' . $indicado['motivo'] . ')' : '') . '.';
-    }
-    return 'O diagnóstico indica ' . curso_com_artigo((string) $indicado['curso']['nome']) . ' como o mais adequado ao ponto de partida do formando' . ($com_motivo ? ' (' . $indicado['motivo'] . ')' : '')
-        . '. A Gadgetmetodo vai confirmar consigo o curso antes de confirmar a inscrição.';
 }
 
 // Recomendação a mostrar numa inscrição: a de módulos só no AI Essentials (cita os seus módulos); nos cursos de
@@ -184,8 +268,8 @@ function recomendacao_de(array $inscricao): string
     $partes = [];
     $curso = curso((int) ($inscricao['curso_id'] ?? 0));
     if ($curso && ($ind = curso_indicado($r, $curso))) {
-        $partes[] = 'Curso indicado pelo diagnóstico: ' . $ind['curso']['nome'] . ' (' . $ind['motivo'] . ').'
-            . ((int) $ind['curso']['id'] === (int) $curso['id'] ? ' Corresponde ao curso escolhido.' : ' É diferente do curso escolhido (' . $curso['nome'] . '): confirmar com o candidato antes de confirmar a inscrição.');
+        $partes[] = 'Curso aconselhado pelo diagnóstico: ' . $ind['curso']['nome'] . ' (' . $ind['motivo'] . ').'
+            . ((int) $ind['curso']['id'] === (int) $curso['id'] ? ' Corresponde ao curso associado.' : ' É diferente do curso associado (' . $curso['nome'] . '): pode associar o aconselhado ou outro antes de confirmar.');
     }
     if ($a['responsavel'] <= 4) {
         $partes[] = 'Atenção ao uso responsável: pontuação baixa nas práticas de regras de utilização, dados pessoais e verificação de resultados. Convém reforçar estes pontos nos casos práticos.';
@@ -218,7 +302,7 @@ function tabela_diagnostico(array $inscricao): string
         return '';
     }
     $html = '<table><tbody>';
-    foreach (perguntas_diagnostico(isset($r['praticas'])) as $id => $p) {
+    foreach (perguntas_das_respostas($r) as $id => $p) {
         $v = $r[$id] ?? null;
         $html .= '<tr><th scope="row">' . h($p['texto']) . '</th><td>' . ($v === null ? '' : h($p['opcoes'][$v])) . '</td></tr>';
     }

@@ -67,7 +67,7 @@ const SERVICOS = [
     titulo: 'Formação em IA para quem usa, aplica e lidera: cursos abertos e programas à medida',
     resumo: 'A formação da Gadgetmetodo tem dois formatos: o percurso IA Generativa no Trabalho, com quatro cursos abertos de seis horas, da iniciação à liderança da implementação, e programas à medida, como o AI Essentials, para administrações e equipas. Os cursos podem também ser organizados só para uma empresa.',
     questoes: ['Por que curso deve começar cada pessoa, e até onde pode ir?', 'Como passar do uso individual da IA para os processos da equipa?', 'Que regras e cuidados são necessários com dados e resultados?'],
-    funciona: ['Inscrição online em cada curso; sem datas, pré-inscrição com convite quando forem marcadas', 'Diagnóstico de nível na inscrição, que indica o curso adequado a cada formando', 'Página e ficha em PDF de cada curso, com programa, casos práticos e avaliação', 'Evidência documentada da formação realizada'],
+    funciona: ['Inscrição online em cada curso; sem datas, pré-inscrição com convite quando forem marcadas', 'Diagnóstico na inscrição: a Gadgetmetodo indica o curso adequado a cada formando', 'Página e ficha em PDF de cada curso, com programa, casos práticos e avaliação', 'Evidência documentada da formação realizada'],
     entregaveis: ['Percurso de quatro cursos com diagnóstico de nível', 'Ficha de cada curso com programa e avaliação', 'Programas à medida para administrações e equipas', 'Evidência documentada da formação realizada'],
   },
 ];
