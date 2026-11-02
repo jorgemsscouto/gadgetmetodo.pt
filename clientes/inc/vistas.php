@@ -3,16 +3,32 @@
 
 declare(strict_types=1);
 
+// Separadores da Configuração (só administração)
+const CONFIGURACAO = ['configuracao' => 'Visão geral', 'utilizadores' => 'Utilizadores', 'precos' => 'Preços', 'comunicacao' => 'Comunicação'];
+
 function menu_area(string $atual): string
 {
     $itens = eh_admin()
-        ? ['painel' => 'Painel', 'calendario' => 'Calendário', 'cursos' => 'Cursos', 'precos' => 'Preços', 'inscricoes' => 'Inscrições', 'clientes' => 'Clientes', 'utilizadores' => 'Utilizadores', 'pedidos' => 'Pedidos do site', 'conta' => 'A minha conta']
+        ? ['painel' => 'Painel', 'calendario' => 'Calendário', 'cursos' => 'Cursos', 'inscricoes' => 'Inscrições', 'clientes' => 'Clientes', 'pedidos' => 'Pedidos do site', 'configuracao' => 'Configuração', 'conta' => 'A minha conta']
         : ['painel' => 'Painel', 'calendario' => 'Formações', 'inscricoes' => 'Inscrições', 'conta' => 'A minha conta'];
+    $atual = eh_admin() && isset(CONFIGURACAO[$atual]) ? 'configuracao' : $atual;
     $html = '';
     foreach ($itens as $p => $nome) {
         $html .= '<li><a href="' . h(url($p)) . '"' . ($p === $atual ? ' aria-current="page"' : '') . '>' . h($nome) . '</a></li>';
     }
     return '<nav class="area-nav" aria-label="Área reservada"><div class="contentor"><ul>' . $html . '</ul></div></nav>';
+}
+
+function submenu_configuracao(string $atual): string
+{
+    if (!eh_admin() || !isset(CONFIGURACAO[$atual])) {
+        return '';
+    }
+    $html = '';
+    foreach (CONFIGURACAO as $p => $nome) {
+        $html .= '<li><a href="' . h(url($p)) . '"' . ($p === $atual ? ' aria-current="page"' : '') . '>' . h($nome) . '</a></li>';
+    }
+    return '<nav class="area-subnav" aria-label="Configuração"><ul>' . $html . '</ul></nav>';
 }
 
 // Acrescenta ao endereço a data de alteração do ficheiro, para os navegadores não usarem cópias antigas
@@ -56,7 +72,7 @@ function pagina_area(string $atual, string $titulo, string $conteudo, string $so
   </div></header>';
     documento($titulo, $cabecalho . menu_area($atual) . '
   <main class="secao area-conteudo"><div class="contentor">
-    ' . avisos() . '
+    ' . submenu_configuracao($atual) . avisos() . '
     ' . ($sobretitulo ? '<span class="sobretitulo">' . h($sobretitulo) . '</span>' : '') . '
     <h1>' . h($titulo) . '</h1>
     ' . $conteudo . '

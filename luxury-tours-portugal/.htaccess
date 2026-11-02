@@ -1,0 +1,14 @@
+# Inquérito Luxury Tours Portugal: fora dos motores de pesquisa e sem acesso direto à configuração e aos dados.
+
+<IfModule mod_headers.c>
+  Header always set X-Robots-Tag "noindex, nofollow"
+</IfModule>
+
+<FilesMatch "(^config.*\.php$|\.sqlite$|\.md$)">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Deny from all
+  </IfModule>
+</FilesMatch>

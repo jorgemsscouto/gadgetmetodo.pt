@@ -10,3 +10,7 @@ formulario/config.php
 
 # Dependências dos geradores
 ferramentas/node_modules/
+
+# Inquérito Luxury Tours Portugal: configuração (palavra-passe do painel) e base de dados
+luxury-tours-portugal/config.php
+luxury-tours-portugal/dados/

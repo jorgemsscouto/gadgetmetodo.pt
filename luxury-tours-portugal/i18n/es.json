@@ -1,0 +1,155 @@
+{
+  "_review": "PENDING NATIVE REVIEW",
+  "_note": "Español. Traducido a partir de en.json.",
+  "lang": "es",
+  "locale": "es-ES",
+  "dir": "ltr",
+  "native_name": "Español",
+  "meta": {
+    "title": "¿Adónde le gustaría viajar con nosotros? | Luxury Tours Portugal",
+    "description": "Encuesta privada para los clientes de Luxury Tours Portugal by Wine Tourism in Portugal."
+  },
+  "ui": {
+    "language": "Idioma",
+    "begin": "Comenzar",
+    "next": "Continuar",
+    "back": "Atrás",
+    "submit": "Enviar respuestas",
+    "sending": "Enviando…",
+    "progress": "Paso {n} de {total}",
+    "optional": "Opcional",
+    "required_one": "Elija una opción para continuar.",
+    "required_rank": "Elija al menos una región para continuar.",
+    "limit_reached": "Puede elegir hasta {max}. Quite una para elegir otra.",
+    "selected_count": "{count} de {max} elegidas",
+    "remove": "Quitar",
+    "error_send": "No hemos podido enviar sus respuestas. Compruebe su conexión e inténtelo de nuevo.",
+    "closed_title": "Esta encuesta ha finalizado",
+    "closed_text": "Gracias por su interés. Pronto le daremos noticias de nuestro próximo viaje.",
+    "unavailable": "Esta encuesta no está disponible en este momento.",
+    "prototype": "Prototipo para presentación",
+    "pending_review": "Traducción pendiente de revisión nativa",
+    "noscript": "Active JavaScript en su navegador para responder a esta encuesta.",
+    "privacy": "Política de privacidad"
+  },
+  "intro": {
+    "eyebrow": "Una encuesta privada para nuestros clientes",
+    "greeting": "Estimado/a {name}:",
+    "greeting_m": "Estimado {name}:",
+    "greeting_f": "Estimada {name}:",
+    "title": "¿Adónde le gustaría viajar con nosotros?",
+    "lead": "Estamos preparando una pequeña colección de viajes privados dedicados al vino fuera de Portugal, con el mismo cuidado por cada detalle que ya conoce. Sus respuestas nos ayudarán a elegir el primer destino.",
+    "length": "Seis pasos breves, unos dos minutos.",
+    "deadline": "Disponible hasta el {date}.",
+    "returning": "Ya ha compartido sus preferencias. Puede revisarlas y actualizarlas hasta el {date}."
+  },
+  "rank": {
+    "1": "1.º",
+    "2": "2.º",
+    "3": "3.º"
+  },
+  "rank_choice": "{rank} lugar",
+  "regions": {
+    "region_tuscany": { "name": "Toscana", "country": "Italia", "note": "Brunello, Chianti y villas renacentistas" },
+    "region_piedmont": { "name": "Piamonte", "country": "Italia", "note": "Barolo, Barbaresco y trufa blanca" },
+    "region_bordeaux": { "name": "Burdeos", "country": "Francia", "note": "Châteaux grand cru del Médoc y Saint-Émilion" },
+    "region_burgundy": { "name": "Borgoña", "country": "Francia", "note": "Pinot Noir y Chardonnay de la Côte d’Or" },
+    "region_champagne": { "name": "Champaña", "country": "Francia", "note": "Casas históricas y cavas excavadas en la caliza" },
+    "region_rioja": { "name": "Rioja", "country": "España", "note": "Tempranillo y arquitectura de autor" },
+    "region_ribera": { "name": "Ribera del Duero", "country": "España", "note": "Tintos con carácter a orillas del Duero" },
+    "region_mosel": { "name": "Mosela", "country": "Alemania", "note": "Riesling en empinadas laderas de pizarra" },
+    "region_santorini": { "name": "Santorini", "country": "Grecia", "note": "Assyrtiko de viñedos volcánicos" },
+    "region_napa": { "name": "Valle de Napa", "country": "Estados Unidos", "note": "Cabernet Sauvignon y hospitalidad californiana" },
+    "region_mendoza": { "name": "Mendoza", "country": "Argentina", "note": "Malbec al pie de los Andes" },
+    "region_stellenbosch": { "name": "Stellenbosch", "country": "Sudáfrica", "note": "Fincas del Cabo entre montaña y mar" }
+  },
+  "steps": {
+    "regions": {
+      "title": "¿Qué regiones vinícolas le gustaría descubrir con nosotros?",
+      "help": "Elija hasta tres, por orden de preferencia. Toque de nuevo una región para quitarla.",
+      "other_label": "Otra región que le encantaría conocer",
+      "other_placeholder": "Por ejemplo, Wachau (Austria)"
+    },
+    "intent": {
+      "kicker": "Su primera elección: {region}",
+      "title": "¿Qué probabilidad hay de que haga este viaje con nosotros en los próximos dos años?"
+    },
+    "duration": {
+      "title": "¿Cuánto duraría su viaje ideal?"
+    },
+    "group": {
+      "title": "¿Con quién viajaría?"
+    },
+    "budget": {
+      "title": "¿Cuál sería su presupuesto orientativo por persona, sin incluir los vuelos internacionales?"
+    },
+    "seasons": {
+      "title": "¿En qué época del año preferiría viajar?",
+      "help": "Elija todas las que correspondan."
+    },
+    "priorities": {
+      "title": "¿Qué haría inolvidable este viaje para usted?",
+      "help": "Elija hasta tres."
+    },
+    "comment": {
+      "label": "¿Hay algo más que le gustaría contarnos?",
+      "placeholder": "Una ocasión especial, un vino favorito, una experiencia soñada…"
+    },
+    "contact": {
+      "title": "¿Podemos ponernos en contacto con usted cuando este viaje esté listo?",
+      "privacy_text": "Sus respuestas solo se utilizan para diseñar nuevos viajes y, si lo desea, para avisarle cuando estén listos."
+    }
+  },
+  "options": {
+    "intent_very_likely": "Muy probable",
+    "intent_likely": "Probable",
+    "intent_considering": "Lo consideraría",
+    "intent_unlikely": "Poco probable por ahora",
+    "duration_3_4": "3 a 4 noches",
+    "duration_5_7": "5 a 7 noches",
+    "duration_8_plus": "8 noches o más",
+    "group_couple": "En pareja",
+    "group_family": "En familia",
+    "group_friends": "Con amigos",
+    "group_private": "Grupo privado o empresa",
+    "budget_up_to_5000": "Hasta {max}",
+    "budget_5000_10000": "De {min} a {max}",
+    "budget_10000_20000": "De {min} a {max}",
+    "budget_over_20000": "Más de {min}",
+    "budget_undisclosed": "Prefiero no indicarlo",
+    "season_spring": "Primavera",
+    "season_summer": "Verano",
+    "season_harvest": "Durante la vendimia",
+    "season_winter": "Finales de otoño e invierno",
+    "season_flexible": "Mis fechas son flexibles",
+    "priority_private_access": "Acceso privado a bodegas emblemáticas",
+    "priority_winemakers": "Tiempo con enólogos y propietarios",
+    "priority_dining": "Restaurantes con estrella Michelin y mesa del chef",
+    "priority_hotels": "Hoteles excepcionales y villas privadas",
+    "priority_culture": "Arte, historia y patrimonio",
+    "priority_wellness": "Bienestar y tiempo para disfrutar sin prisas",
+    "priority_transfers": "Chófer privado y traslados en helicóptero",
+    "contact_yes": "Sí, me gustaría estar entre los primeros en saberlo",
+    "contact_no": "No, por ahora no"
+  },
+  "thanks": {
+    "title_name": "Muchas gracias, {name}.",
+    "title": "Muchas gracias.",
+    "text": "Hemos recibido sus preferencias. Nos ayudarán a diseñar nuestro próximo viaje.",
+    "summary": "Sus elecciones",
+    "edit": "Modificar respuestas",
+    "signature": "El equipo de Luxury Tours Portugal"
+  },
+  "email": {
+    "subject": "¿Adónde le gustaría viajar con nosotros?",
+    "preheader": "Dos minutos para ayudarnos a elegir nuestro próximo viaje privado dedicado al vino.",
+    "p1": "Estamos preparando una pequeña colección de viajes privados dedicados al vino fuera de Portugal, con el mismo cuidado por cada detalle que ya conoce. Antes de elegir el primer destino, nos gustaría conocer su opinión.",
+    "p2": "Son seis pasos breves, unos dos minutos. Este enlace es personal y le permite actualizar sus respuestas hasta el {date}.",
+    "button": "Compartir mis preferencias",
+    "link_fallback": "Si el botón no funciona, copie este enlace en su navegador:",
+    "closing": "Un cordial saludo,",
+    "signature": "El equipo de Luxury Tours Portugal",
+    "footer": "Recibe este correo porque es cliente o contacto de Luxury Tours Portugal by Wine Tourism in Portugal.",
+    "privacy": "Política de privacidad"
+  }
+}

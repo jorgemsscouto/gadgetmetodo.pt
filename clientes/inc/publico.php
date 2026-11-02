@@ -590,14 +590,13 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
     $diagnostico = is_array($respostas) && $respostas ? avaliar_diagnostico($respostas) : null;
     $ind = $diagnostico ? curso_indicado($respostas, curso((int) $p['curso_id'])) : null;
     $origem = $p['curso_origem'] ? curso((int) $p['curso_origem']) : null;
-    $cfg = cfg();
-    $site = rtrim((string) ($cfg['site'] ?? SITE_CANONICO), '/');
+    $site = endereco_site();
     $link_area = $site . '/clientes/' . url('preinscricao', ['id' => $id]);
-    $destino = (string) ($cfg['destinatario'] ?? 'info@gadgetmetodo.pt');
     $percurso = $p['percurso'] ? explode(':', (string) $p['percurso'])[0] : '';
+    $cliente = $p['tipo_cliente'] === 'particular' ? 'Particular' : (string) $p['empresa'];
     // Dados enviados pelo candidato (nos dois emails); o curso aconselhado e o diagnóstico só no aviso interno
     $dados = [
-        'Nome' => $p['nome'], 'Cliente' => $p['tipo_cliente'] === 'particular' ? 'Particular' : (string) $p['empresa'], 'Email' => $p['email'], 'Telefone' => $p['telefone'],
+        'Nome' => $p['nome'], 'Cliente' => $cliente, 'Email' => $p['email'], 'Telefone' => $p['telefone'],
         'Formandos' => (string) $p['formandos'], 'Modalidade' => MODALIDADES_PREFERIDAS[$p['modalidade'] ?? ''] ?? 'Indiferente', 'Preferências' => $p['preferencias'],
         'Ferramentas de IA' => (string) $p['ferramentas'],
     ];
@@ -624,27 +623,25 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
         return '<a href="' . h($href) . '" style="display:inline-block;margin:0 8px 8px 0;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">' . h($rotulo) . '</a>';
     };
 
-    enviar_aviso($destino, ($atualizada ? 'Pré-inscrição atualizada: ' : 'Nova pré-inscrição pelo site: ') . $p['nome'] . ($p['empresa'] ? ' (' . $p['empresa'] . ')' : '') . ', ' . ($ind ? 'aconselhado ' . partes_nome($ind['curso'])[0] : $p['curso']), 'Nova pré-inscrição em curso',
-        '<p style="margin:0 0 16px;">' . ($atualizada ? 'Uma pré-inscrição por tratar foi atualizada pelo candidato.' : 'Foi registada uma pré-inscrição. Está em Inscrições, na área reservada, com o estado "Pré-inscrição": aí confirma o curso aconselhado pelo diagnóstico (ou associa outro) e inscreve o candidato numa edição já agendada ou numa edição nova.') . '</p>' . $tabela_interna
+    enviar_mensagem('preinscricao_aviso', email_admin(), ['acao' => $atualizada ? 'Pré-inscrição atualizada' : 'Nova pré-inscrição pelo site', 'nome_completo' => $p['nome'], 'cliente' => $cliente,
+        'curso' => $ind ? 'aconselhado ' . partes_nome($ind['curso'])[0] : (string) $p['curso'], 'email' => $p['email']], [
+        ($atualizada ? '<p style="margin:0 0 16px;"><strong>Atualização:</strong> o candidato alterou uma pré-inscrição ainda por tratar.</p>' : '') . $tabela_interna
         . '<p style="margin:22px 0 0;">' . $botao($link_area, 'Ver a pré-inscrição na área reservada') . '</p>',
-        "Foi registada uma pré-inscrição.\n\n" . $texto_interno . "\n" . $link_area,
-        (string) $p['email'], (string) ($cfg['bcc'] ?? ''));
+        ($atualizada ? "Atualização: o candidato alterou uma pré-inscrição ainda por tratar.\n\n" : '') . $texto_interno . "\n" . $link_area,
+    ], ['responder_a' => (string) $p['email']]);
 
-    // Confirmação para o candidato: sem o curso aconselhado, que a Gadgetmetodo confirma antes da inscrição
-    $nome = nome_curto((string) $p['nome']);
-    $alvo = $percurso ? 'no percurso ' . $percurso : 'n' . curso_com_artigo((string) $p['curso']);
-    $frase = 'Recebemos a sua pré-inscrição ' . $alvo . '.';
-    $seguinte = ($percurso ? 'Vamos analisar as respostas ao diagnóstico e indicar-lhe o curso mais adequado ao seu ponto de partida. ' : '')
-        . 'Quando houver datas, enviamos-lhe o convite para a inscrição, com a data, o horário e a modalidade de cada sessão. A pré-inscrição não o(a) obriga a inscrever-se.';
+    // Confirmação para o candidato: sem o curso aconselhado, que a Gadgetmetodo indica antes da inscrição
+    $nota = $percurso ? 'Vamos analisar as respostas ao diagnóstico e indicar-lhe o curso mais adequado ao seu ponto de partida.' : '';
     $ver = $origem ? $site . link_curso_publico($origem) : $site . '/formacoes/' . ($percurso ? '#percurso' : '');
-    enviar_aviso((string) $p['email'], 'Pré-inscrição recebida: ' . ($percurso ?: $p['curso']), 'Pré-inscrição recebida',
-        '<p style="margin:0 0 14px;">' . h($nome) . ',</p><p style="margin:0 0 12px;">' . h($frase) . '</p><p style="margin:0 0 16px;">' . h($seguinte) . '</p>'
+    $rotulo_ver = $origem ? 'Ver o programa do curso' : ($percurso ? 'Ver os cursos do percurso' : 'Ver a área de formação');
+    enviar_mensagem('preinscricao_recebida', (string) $p['email'], ['nome' => nome_curto((string) $p['nome']), 'curso' => $percurso ?: (string) $p['curso'],
+        'no_curso' => $percurso ? 'no percurso ' . $percurso : 'n' . curso_com_artigo((string) $p['curso'])], [
+        ($nota ? '<p style="margin:0 0 16px;padding:12px 14px;background:#E8F1F1;border-left:3px solid #00636A;">' . h($nota) . '</p>' : '')
         . '<p style="margin:0 0 6px;"><strong>Dados da pré-inscrição</strong></p>' . $tabela_candidato
-        . '<p style="margin:22px 0 0;">' . $botao($ver, $percurso ? 'Ver os cursos do percurso' : 'Ver o programa do curso') . ($origem ? $botao($site . link_ficha($origem), 'Ficha do curso (PDF)') : '') . '</p>'
-        . '<p style="margin:14px 0 0;color:#687280;font-size:13px;">Para alterar ou cancelar a pré-inscrição, basta responder a este email. Os dados são apagados automaticamente 12 meses após o registo.</p>',
-        $nome . ",\n\n" . $frase . "\n\n" . $seguinte . "\n\nDados da pré-inscrição:\n" . $texto_candidato . "\n" . ($percurso ? 'Cursos do percurso: ' : 'Programa do curso: ') . $ver
-        . "\n\nPara alterar ou cancelar a pré-inscrição, basta responder a este email.",
-        $destino);
+        . '<p style="margin:22px 0 0;">' . $botao($ver, $rotulo_ver) . ($origem ? $botao($site . link_ficha($origem), 'Ficha do curso (PDF)') : '') . '</p>',
+        ($nota ? $nota . "\n\n" : '') . "Dados da pré-inscrição:\n" . $texto_candidato . "\n" . $rotulo_ver . ': ' . $ver
+        . ($origem ? "\nFicha do curso (PDF): " . $site . link_ficha($origem) : ''),
+    ]);
 }
 
 // Encurta um texto no fim de uma palavra (sem depender da extensão mbstring)
