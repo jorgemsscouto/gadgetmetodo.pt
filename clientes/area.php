@@ -9,6 +9,7 @@ require __DIR__ . '/inc/diagnostico.php';
 require __DIR__ . '/inc/vistas.php';
 require __DIR__ . '/inc/paginas-admin.php';
 require __DIR__ . '/inc/paginas-cliente.php';
+require __DIR__ . '/inc/lembretes.php';
 require __DIR__ . '/inc/precos.php';
 require __DIR__ . '/inc/configuracao.php';
 
@@ -25,6 +26,7 @@ if (!bd()) {
     http_response_code(503);
     pagina_erro('Área indisponível', 'A área reservada está temporariamente indisponível. Contacte info@gadgetmetodo.pt.');
 }
+verificar_lembretes_na_saida();
 
 $p = (string) ($_GET['p'] ?? 'painel');
 $post = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';

@@ -9,6 +9,9 @@ require_once __DIR__ . '/nucleo.php';
 require_once __DIR__ . '/diagnostico.php';
 require_once __DIR__ . '/vistas.php';
 require_once __DIR__ . '/paginas-cliente.php';
+require_once __DIR__ . '/lembretes.php';
+
+verificar_lembretes_na_saida();
 
 const SITE_CANONICO = 'https://www.gadgetmetodo.pt';
 const MODOS_EVENTO = ['presencial' => 'OfflineEventAttendanceMode', 'online' => 'OnlineEventAttendanceMode', 'misto' => 'MixedEventAttendanceMode'];

@@ -1,11 +1,17 @@
 <?php
-// Área de clientes: Configuração (só administração). Reúne os utilizadores, a tabela de preços e a comunicação por email
-// (remetente, destinatários e textos de todos os emails enviados pelo site, definidos em formulario/comunicacao.php).
+// Área de clientes: Configuração (só administração). Reúne os utilizadores, a tabela de preços, a comunicação por email
+// (remetente, destinatários e textos de todos os emails enviados pelo site, definidos em formulario/comunicacao.php)
+// e a tarefa agendada dos lembretes automáticos das sessões (clientes/inc/lembretes.php).
 
 declare(strict_types=1);
 
 function admin_configuracao(): void
 {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['acao'] ?? '') === 'chave_lembretes') {
+        chave_lembretes(true);
+        aviso('Nova chave gerada. Atualize o endereço na tarefa agendada do alojamento: o endereço anterior deixou de funcionar.');
+        redirecionar('configuracao', [], 'lembretes');
+    }
     semear_precos();
     $n = function (string $sql) { return (int) (linha_bd($sql)['n'] ?? 0); };
     $com = comunicacao();
@@ -13,13 +19,14 @@ function admin_configuracao(): void
     $alterados = count($com['alterados']);
     $ultima_preco = (string) (linha_bd('SELECT MAX(atualizado) AS d FROM precos WHERE legado = 0')['d'] ?? '');
     $bcc = lista_emails($com['geral']['bcc']) ?: [];
+    $tarefa = estado_tarefa_lembretes();
     $cartao = function (string $titulo, string $texto, array $factos, string $acoes) {
         return '<article class="cartao-config"><h2>' . h($titulo) . '</h2><p>' . h($texto) . '</p>'
             . '<ul>' . implode('', array_map(function ($f) { return '<li>' . $f . '</li>'; }, $factos)) . '</ul>'
             . '<div class="acoes-formulario">' . $acoes . '</div></article>';
     };
     pagina_area('configuracao', 'Configuração', '
-      <p class="texto-suave">Definições gerais da área reservada e do site: quem tem acesso, a tabela de preços e os emails enviados a clientes, candidatos, utilizadores e à administração.</p>
+      <p class="texto-suave">Definições gerais da área reservada e do site: quem tem acesso, a tabela de preços, os emails enviados a clientes, candidatos, utilizadores e à administração e os lembretes automáticos das sessões.</p>
       <div class="cartoes-config">
         ' . $cartao('Utilizadores', 'Acessos à área reservada: perfil Gadgetmetodo (vê e gere tudo) ou Cliente (vê as formações e as inscrições do seu cliente).', [
             '<strong>' . $n('SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1') . '</strong> ativos: ' . $n("SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1 AND papel = 'admin'") . ' da Gadgetmetodo e ' . $n("SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1 AND papel = 'cliente'") . ' de clientes',
@@ -33,7 +40,37 @@ function admin_configuracao(): void
             '<strong>' . count(EMAILS) . '</strong> emails: ' . $alterados . ' com textos alterados, ' . $desativados . ' desativados',
             'Avisos internos para ' . h($com['geral']['email_admin']) . ($bcc ? ', com cópia oculta para ' . h(implode(', ', $bcc)) : ''),
         ], '<a class="botao" href="' . h(url('comunicacao')) . '">Configurar emails</a>') . '
-      </div>', 'Gadgetmetodo');
+        ' . $cartao('Lembretes', 'Lembretes das sessões aos formandos confirmados: botão "Enviar lembrete" na lista de inscritos de cada edição, para a véspera, e envio automático 1 hora antes.', [
+            'Envio automático: <strong>' . ($tarefa['ativo'] ? 'ativo' : 'desativado') . '</strong>',
+            'Tarefa agendada: ' . ($tarefa['ultima'] ? 'última execução em ' . h(data_hora($tarefa['ultima'])) : 'ainda não executada'),
+        ], '<a class="botao" href="#lembretes">Tarefa agendada</a><a class="botao botao-secundario" href="' . h(url('comunicacao', ['aberto' => 'lembrete_hora'])) . '#email-lembrete_hora">Textos dos lembretes</a>') . '
+      </div>
+      ' . bloco_tarefa_lembretes($tarefa), 'Gadgetmetodo');
+}
+
+// Instruções e endereço da tarefa agendada que envia os lembretes automáticos (clientes/lembretes.php)
+function bloco_tarefa_lembretes(array $tarefa): string
+{
+    $endereco = endereco_tarefa_lembretes();
+    $enviados = (int) (linha_bd("SELECT SUM(enviados) AS n FROM lembretes WHERE tipo = 'hora' AND criado >= ?", [date('Y-m-d H:i:s', time() - 30 * 86400)])['n'] ?? 0);
+    $estado = !$tarefa['ativo'] ? 'O envio automático está desativado (email "Lembrete automático 1 hora antes", em Comunicação).'
+        : ($tarefa['recente'] ? 'A tarefa agendada está a funcionar: última execução em ' . data_hora($tarefa['ultima']) . '.'
+            : ($tarefa['ultima'] ? 'A tarefa agendada não corre desde ' . data_hora($tarefa['ultima']) . ': confirme-a no painel do alojamento.' : 'A tarefa agendada ainda não foi executada: configure-a como indicado abaixo.'));
+    return '<section class="partilha espaco-topo" id="lembretes">
+      <h2 class="mt-0">Lembretes automáticos das sessões</h2>
+      <p>Cerca de 1 hora antes de cada sessão, cada formando com inscrição confirmada recebe um lembrete com a hora, o local e a ligação da sessão. O alojamento só envia emails quando uma página é aberta, por isso é preciso uma tarefa agendada (cron) que abra o endereço abaixo a cada 10 minutos.</p>
+      <div class="aviso ' . ($tarefa['ativo'] && $tarefa['recente'] ? 'aviso-ok' : 'aviso-info') . '">' . h($estado) . ' Lembretes automáticos enviados nos últimos 30 dias: ' . $enviados . '.</div>
+      <div class="partilha-ligacao"><label class="visualmente-oculto" for="endereco-lembretes">Endereço da tarefa agendada</label><input id="endereco-lembretes" type="text" readonly value="' . h($endereco) . '"><button class="botao botao-secundario" type="button" data-copiar="' . h($endereco) . '">Copiar endereço</button></div>
+      <p class="estado-copia" role="status" aria-live="polite"></p>
+      <h3>Como configurar</h3>
+      <ol class="lista-datas">
+        <li>No painel de controlo do alojamento, abra as tarefas agendadas (Cron).</li>
+        <li>Crie uma tarefa a cada 10 minutos (<code>*/10 * * * *</code>). Se o painel pedir um comando, use <code>wget -q -O /dev/null "' . h($endereco) . '"</code>; se pedir um endereço, cole o endereço acima.</li>
+        <li>Volte a esta página depois de 10 minutos: o estado passa a mostrar a hora da última execução.</li>
+      </ol>
+      <p class="texto-suave">Se o plano de alojamento não tiver tarefas agendadas, pode usar um serviço externo de chamadas agendadas com o mesmo endereço. Sem tarefa agendada, os lembretes automáticos só seguem quando alguém abre a área reservada ou as páginas de formação na hora anterior à sessão. O endereço tem uma chave própria e só envia os lembretes que estiverem na hora; se for divulgado, gere uma nova chave e atualize a tarefa.</p>
+      <form method="post">' . campo_csrf() . '<input type="hidden" name="acao" value="chave_lembretes"><button class="botao botao-secundario" type="submit">Gerar nova chave</button></form>
+    </section>';
 }
 
 /* Comunicação */

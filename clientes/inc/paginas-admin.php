@@ -95,6 +95,18 @@ function admin_formacao(): void
         aviso($n ? 'Ligação da reunião enviada para ' . $n . ' inscrição(ões) confirmada(s).' : 'Não há inscrições confirmadas com email para enviar a ligação.', $n ? 'ok' : 'erro');
         redirecionar('formacao', ['id' => $id]);
     }
+    if ($post && $acao === 'lembrete' && $f) {
+        [$enviados, $falhados, $s] = enviar_lembrete_proxima($f);
+        if (!$s) {
+            aviso('Todas as sessões desta edição já começaram: não há lembretes por enviar.', 'erro');
+        } elseif ($enviados) {
+            aviso('Lembrete da próxima sessão (' . h(dia_sessao($s['inicio'])) . ', ' . h(hora_sessao($s)) . ') enviado para ' . $enviados . ' formando(s).'
+                . ($falhados ? ' ' . $falhados . ' sem envio: sem email ou com falha no envio.' : ''), $falhados ? 'info' : 'ok');
+        } else {
+            aviso('O lembrete não foi enviado: não há inscrições confirmadas com email, ou o envio de emails falhou.', 'erro');
+        }
+        redirecionar('formacao', ['id' => $id], 'lembretes');
+    }
     if ($post && $acao === '') {
         [$d, $curso_id, $erros] = ler_sessao();
         if (!$erros) {
@@ -141,7 +153,7 @@ function admin_formacao(): void
         $confirmadas = (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado = 'confirmada'", [$id])['n'] ?? 0);
         if (!empty($v['reuniao']) && $confirmadas) {
             $form .= '<form method="post" class="espaco-topo">' . campo_csrf() . '<input type="hidden" name="acao" value="enviar_reuniao"><button class="botao botao-secundario" type="submit">Enviar a ligação da reunião às ' . $confirmadas . ' inscrição(ões) confirmada(s)</button>
-              <p class="ajuda">Envia a cada formando (ou, sem email do formando, a quem o inscreveu) uma mensagem com a data, a hora e a ligação. Útil quando a ligação é criada ou alterada depois das confirmações, ou como lembrete.</p></form>';
+              <p class="ajuda">Envia a cada formando (ou, sem email do formando, a quem o inscreveu) uma mensagem com a data, a hora e a ligação. Útil quando a ligação é criada ou alterada depois das confirmações. Para lembrar a próxima sessão, use "Lembretes aos formandos", na lista de inscritos.</p></form>';
         }
         $programa = programa_html($v, true);
         if (count($datas) > 1) {
@@ -166,6 +178,7 @@ function admin_formacao(): void
             . '<p><a class="botao" href="' . h(url('inscrever', ['formacao' => $id])) . '">Inscrever formando</a>'
             . ($linhas ? ' <a class="botao botao-secundario" href="' . h(url('inscricoes', ['formacao' => $id, 'exportar' => 1])) . '">Exportar inscritos para Excel</a>' : '') . '</p>'
             . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Formando</th><th>Função</th><th>Cliente</th><th>Nível de IA</th><th>Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições nesta formação.</p>');
+        $inscritos .= $linhas ? lembretes_edicao(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]), $confirmadas) : '';
         if (!$linhas && !linha_bd('SELECT id FROM inscricoes WHERE formacao_id = ?', [$id])) {
             $inscritos .= '<form method="post" class="espaco-topo">' . campo_csrf() . '<input type="hidden" name="acao" value="apagar"><button class="botao botao-secundario" type="submit">Apagar esta formação</button></form>';
         }
