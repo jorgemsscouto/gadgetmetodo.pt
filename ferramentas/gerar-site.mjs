@@ -985,6 +985,60 @@ fs.writeFileSync(path.join(OUT, 'servicos/formacao-ai-essentials/index.html'), `
 </html>
 `);
 
+/* Manual do Formando do Curso 1 em áudio: página para partilhar com os formandos (sem indexação nem sitemap).
+   O ficheiro M4A não está no Git: é enviado à parte para a raiz do site, no endereço indicado em AUDIO. */
+const MANUAL_CURSO1 = {
+  url: '/formacoes/manual-curso-1/',
+  audio: '/Manual_Formando_Curso1_IA_Generativa.m4a',
+  curso: 'Curso 1: Iniciação à IA Generativa no Trabalho',
+};
+pagina({
+  url: MANUAL_CURSO1.url,
+  titulo: 'Manual do Formando do Curso 1 em áudio',
+  descricao: 'Manual do Formando do Curso 1: Iniciação à IA Generativa no Trabalho, em áudio. Ouça no navegador ou descarregue o ficheiro.',
+  trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], [MANUAL_CURSO1.url, 'Manual do Formando, Curso 1']],
+  indexar: false,
+  scripts: [JS_COPIAR],
+  corpo: `${topoPagina({
+    trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], [MANUAL_CURSO1.url, 'Manual do Formando, Curso 1']],
+    h1: 'Manual do Formando em áudio',
+    lead: `${MANUAL_CURSO1.curso}, do percurso IA Generativa no Trabalho. Ouça aqui ou descarregue o ficheiro para ouvir quando quiser.`,
+    atualizado: false,
+  })}
+
+    <section class="secao" aria-labelledby="audio-titulo">
+      <div class="contentor estreito">
+        <div class="audio-cartao">
+          <div class="audio-cabeca">
+            <span class="audio-icone">${icone('headphones')}</span>
+            <div>
+              <span class="sobretitulo">Manual do Formando · Áudio</span>
+              <h2 id="audio-titulo">${MANUAL_CURSO1.curso}</h2>
+            </div>
+          </div>
+          <audio class="audio-leitor" controls preload="metadata" src="${MANUAL_CURSO1.audio}">
+            <a href="${MANUAL_CURSO1.audio}">Descarregar o áudio do Manual do Formando</a>
+          </audio>
+          <div class="ficha-acoes audio-acoes">
+            <a class="botao" href="${MANUAL_CURSO1.audio}" download>${icone('download')} Descarregar o áudio (M4A)</a>
+            <button class="botao botao-secundario" type="button" data-copiar="${URL_BASE}${MANUAL_CURSO1.url}">${icone('link')} Copiar a ligação desta página</button>
+            <p class="estado-copia" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <div class="resumo espaco-topo">
+          <h2>Como ouvir</h2>
+          <p>Carregue no botão de reprodução para ouvir no navegador, no computador ou no telemóvel. Para ouvir sem ligação à internet, descarregue o ficheiro: abre em qualquer leitor de áudio (por exemplo, Música no iPhone e no Mac, ou o leitor de multimédia no Android e no Windows).</p>
+          <p>Dúvidas sobre o curso ou sobre o manual: <a href="mailto:${EMAIL}">${EMAIL}</a>.</p>
+        </div>
+
+        <div class="acoes">
+          <a class="botao botao-secundario" href="/formacoes/">${icone('calendar-days')} Ver os cursos e as próximas edições</a>
+        </div>
+      </div>
+    </section>`,
+});
+
 const FASES_ABORDAGEM = [
   ['Diagnóstico', 'Levantamento da situação atual: processos, sistemas, equipas, dados e riscos. Identificação das prioridades e oportunidades com maior retorno, com base em informação da própria empresa e, quando útil, em dados públicos do setor.'],
   ['Desenho', 'Definição da solução: modelo organizacional, processos, arquitetura de sistemas, regras de governação e plano de ação com responsáveis, calendário e indicadores.'],

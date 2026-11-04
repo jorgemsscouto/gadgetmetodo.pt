@@ -14,3 +14,6 @@ ferramentas/node_modules/
 # Inquérito Luxury Tours Portugal: configuração (palavra-passe do painel) e base de dados
 luxury-tours-portugal/config.php
 luxury-tours-portugal/dados/
+
+# Áudios (por exemplo, o Manual do Formando): enviados para o site pelo publicar.sh a partir da pasta local, sem ir para o Git
+*.m4a

@@ -18,6 +18,7 @@ DirectoryIndex index.html index.php
 <IfModule mod_mime.c>
   AddType application/manifest+json .webmanifest
   AddType text/plain .txt
+  AddType audio/mp4 .m4a
   AddCharset utf-8 .txt .html .css .js .xml .webmanifest
 </IfModule>
 

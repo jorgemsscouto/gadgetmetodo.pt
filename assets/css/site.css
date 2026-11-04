@@ -1640,3 +1640,88 @@ a.cartao:hover .mais svg {
   grid-row: span 2;
   margin-bottom: 0;
 }
+
+/* Áudio para partilhar (página do Manual do Formando) */
+
+.audio-cartao {
+  padding: clamp(22px, 4vw, 40px);
+  background: var(--branco);
+  border: 1px solid var(--cinzento-claro);
+  border-top: 4px solid var(--petroleo);
+  border-radius: var(--raio);
+  box-shadow: 0 22px 44px -32px rgba(10, 15, 38, 0.45);
+}
+
+.audio-cabeca {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 26px;
+}
+
+.audio-cabeca .sobretitulo {
+  margin-bottom: 6px;
+}
+
+.audio-cabeca h2 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.6vw, 1.55rem);
+  line-height: 1.3;
+}
+
+.audio-icone {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  color: var(--branco);
+  background: linear-gradient(135deg, var(--petroleo), var(--profundo));
+  border-radius: 16px;
+}
+
+.audio-icone svg {
+  width: 30px;
+  height: 30px;
+}
+
+.audio-leitor {
+  display: block;
+  width: 100%;
+}
+
+.audio-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.audio-acoes .estado-copia {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--cinzento);
+  font-size: 0.95rem;
+}
+
+.audio-acoes .estado-copia:empty {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .audio-cabeca {
+    align-items: flex-start;
+  }
+
+  .audio-icone {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+  }
+
+  .audio-acoes .botao {
+    justify-content: center;
+    width: 100%;
+  }
+}
