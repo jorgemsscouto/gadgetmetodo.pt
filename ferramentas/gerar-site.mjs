@@ -1019,6 +1019,7 @@ pagina({
           <audio class="audio-leitor" controls preload="metadata" src="${MANUAL_CURSO1.audio}">
             <a href="${MANUAL_CURSO1.audio}">Descarregar o áudio do Manual do Formando</a>
           </audio>
+          <p class="audio-erro" role="alert" hidden>O áudio não carregou. Atualize a página; se o problema continuar, experimente descarregar o ficheiro ou escreva-nos para <a href="mailto:${EMAIL}">${EMAIL}</a>.</p>
           <div class="ficha-acoes audio-acoes">
             <a class="botao" href="${MANUAL_CURSO1.audio}" download>${icone('download')} Descarregar o áudio (M4A)</a>
             <button class="botao botao-secundario" type="button" data-copiar="${URL_BASE}${MANUAL_CURSO1.url}">${icone('link')} Copiar a ligação desta página</button>

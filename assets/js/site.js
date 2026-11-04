@@ -47,3 +47,14 @@
     aplicar();
   });
 })();
+
+// Leitor de áudio (página do Manual do Formando): se o ficheiro não carregar, mostra um aviso em vez do leitor vazio.
+(function () {
+  document.querySelectorAll(".audio-leitor").forEach(function (audio) {
+    var aviso = audio.parentNode.querySelector(".audio-erro");
+    if (!aviso) return;
+    function falhou() { aviso.hidden = false; }
+    audio.addEventListener("error", falhou);
+    if (audio.error) falhou();
+  });
+})();

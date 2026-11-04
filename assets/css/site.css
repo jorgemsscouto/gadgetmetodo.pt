@@ -1725,3 +1725,11 @@ a.cartao:hover .mais svg {
     width: 100%;
   }
 }
+
+.audio-erro {
+  margin: 16px 0 0;
+  padding: 12px 16px;
+  color: #8a1c1c;
+  background: #fdecec;
+  border-radius: 10px;
+}
