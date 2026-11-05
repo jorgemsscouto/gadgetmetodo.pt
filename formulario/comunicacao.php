@@ -35,6 +35,7 @@ const VARIAVEIS_EMAIL = [
     'dia' => ['Dia da sessão por extenso, com "hoje" ou "amanhã" quando for o caso', 'amanhã, terça-feira, 3 de novembro de 2026'],
     'hora' => ['Horário da sessão', 'das 18:30 às 19:30'],
     'inicio' => ['Hora de início da sessão', '18:30'],
+    'quando' => ['Dia e hora da sessão em poucas palavras ("hoje às 18:30", "amanhã às 18:30" ou o dia por extenso)', 'amanhã às 18:30'],
 ];
 
 // Emails enviados pelo site. Em cada um: grupo, nome, quando é enviado, os dados acrescentados pelo sistema entre o texto
@@ -119,23 +120,23 @@ const EMAILS = [
         'fecho' => 'Recomendamos entrar alguns minutos antes da hora de início. Para qualquer questão, basta responder a este email.',
     ],
     'lembrete_vespera' => [
-        'grupo' => 'clientes', 'nome' => 'Lembrete da próxima sessão',
-        'quando' => 'Botão "Enviar lembrete" na lista de inscritos de uma edição, para usar na véspera: a cada inscrição confirmada, para o formando (sem email do formando, para quem o inscreveu).',
+        'grupo' => 'clientes', 'nome' => 'Lembrete da sessão',
+        'quando' => 'Botão "Enviar lembrete" na lista de inscritos de uma edição (por omissão, para a próxima sessão; pode escolher-se outra, mesmo atrasada ou já começada): a cada inscrição confirmada, para o formando (sem email do formando, para quem o inscreveu).',
         'dados' => 'Sessão, data, horário e local, e ligação e botão para entrar na sessão online.',
-        'desativavel' => false, 'variaveis' => ['nome', 'formando', 'formacao', 'sessao', 'dia', 'hora', 'inicio', 'local'],
-        'assunto' => 'Lembrete: sessão de {dia}, às {inicio} ({formacao})',
-        'titulo' => 'Lembrete da próxima sessão',
-        'texto' => "{nome},\n\nLembramos que a próxima sessão da formação {formacao} é {dia}, {hora}.",
+        'desativavel' => false, 'variaveis' => ['nome', 'formando', 'formacao', 'sessao', 'dia', 'hora', 'inicio', 'quando', 'local'],
+        'assunto' => 'Lembrete: sessão {quando} ({formacao})',
+        'titulo' => 'Lembrete da sessão',
+        'texto' => "{nome},\n\nLembramos a sessão da formação {formacao}: {dia}, {hora}.",
         'fecho' => 'Recomendamos chegar ou entrar alguns minutos antes da hora de início. Se não puder participar, basta responder a este email.',
     ],
     'lembrete_hora' => [
-        'grupo' => 'clientes', 'nome' => 'Lembrete automático 1 hora antes',
-        'quando' => 'Automaticamente, cerca de 1 hora antes de cada sessão, a cada inscrição confirmada (para o formando ou, sem email do formando, para quem o inscreveu). Precisa da tarefa agendada indicada em Configuração, Lembretes automáticos.',
+        'grupo' => 'clientes', 'nome' => 'Lembrete automático antes da sessão',
+        'quando' => 'Automaticamente, antes de cada sessão (1 hora antes, por omissão, ou a antecedência escolhida em cada edição, no bloco "Lembretes aos formandos"), a cada inscrição confirmada (para o formando ou, sem email do formando, para quem o inscreveu). Precisa da tarefa agendada indicada em Configuração, Lembretes automáticos.',
         'dados' => 'Sessão, data, horário e local, e ligação e botão para entrar na sessão online.',
-        'desativavel' => true, 'variaveis' => ['nome', 'formando', 'formacao', 'sessao', 'dia', 'hora', 'inicio', 'local'],
-        'assunto' => 'Hoje às {inicio}: {formacao}',
-        'titulo' => 'A sessão começa daqui a pouco',
-        'texto' => "{nome},\n\nA sessão de hoje da formação {formacao} começa às {inicio}.",
+        'desativavel' => true, 'variaveis' => ['nome', 'formando', 'formacao', 'sessao', 'dia', 'hora', 'inicio', 'quando', 'local'],
+        'assunto' => 'Lembrete: sessão {quando} ({formacao})',
+        'titulo' => 'Lembrete da sessão',
+        'texto' => "{nome},\n\nA sessão da formação {formacao} começa {quando}.",
         'fecho' => 'Recomendamos chegar ou entrar alguns minutos antes da hora de início. Se não puder participar, basta responder a este email.',
     ],
     'preinscricao_recebida' => [

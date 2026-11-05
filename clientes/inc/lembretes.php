@@ -1,6 +1,7 @@
 <?php
 // Lembretes das sessões aos formandos com inscrição confirmada: o botão "Enviar lembrete" na lista de inscritos de uma
-// edição (para usar na véspera) e o envio automático cerca de 1 hora antes de cada sessão. O envio automático corre na
+// edição (na véspera ou quando for preciso, para a sessão escolhida) e o envio automático antes de cada sessão (1 hora, por
+// omissão, ou a antecedência escolhida na edição). O envio automático corre na
 // tarefa agendada do alojamento (clientes/lembretes.php, com a chave mostrada em Configuração) e, como reserva, nas
 // visitas à área reservada e às páginas de formação, no máximo de 5 em 5 minutos. Cada envio fica registado na tabela
 // "lembretes"; o automático é único por sessão, mesmo que duas verificações corram ao mesmo tempo.
@@ -10,7 +11,10 @@ declare(strict_types=1);
 require_once __DIR__ . '/nucleo.php';
 require_once __DIR__ . '/paginas-cliente.php';
 
-const LEMBRETE_ANTECEDENCIA = 3600; // segundos antes do início da sessão
+const LEMBRETE_ANTECEDENCIA = 60; // minutos antes do início da sessão, quando a edição não define outra antecedência
+// Antecedências propostas na ficha da edição (minutos); 0 = sem envio automático nessa edição
+const ANTECEDENCIAS = [0 => 'Não enviar automaticamente', 15 => '15 minutos antes', 30 => '30 minutos antes', 60 => '1 hora antes', 120 => '2 horas antes',
+    180 => '3 horas antes', 360 => '6 horas antes', 720 => '12 horas antes', 1440 => '24 horas antes (véspera)', 2880 => '48 horas antes'];
 const LEMBRETES_INTERVALO_VISITAS = 300; // segundos entre verificações nas visitas
 
 // Sessões de uma edição, pela ordem: número, total, início, fim e "Sessão 2 de 6: tema" (vazio numa formação de uma só data)
@@ -46,6 +50,29 @@ function dia_sessao(string $inicio, bool $relativo = true): string
     $dia = date('Y-m-d', $t);
     $prefixo = !$relativo ? '' : ($dia === date('Y-m-d') ? 'hoje, ' : ($dia === date('Y-m-d', strtotime('tomorrow')) ? 'amanhã, ' : ''));
     return $prefixo . $dias[(int) date('w', $t)] . ', ' . data_extensa($inicio);
+}
+
+// "hoje às 18:30", "amanhã às 18:30" ou "na terça-feira, 10 de novembro de 2026, às 18:30"
+function quando_sessao(string $inicio): string
+{
+    $hora = date('H:i', strtotime($inicio));
+    $dia = dia_sessao($inicio);
+    return strpos($dia, 'hoje, ') === 0 ? 'hoje às ' . $hora : (strpos($dia, 'amanhã, ') === 0 ? 'amanhã às ' . $hora : 'na ' . $dia . ', às ' . $hora);
+}
+
+// Antecedência do envio automático de uma edição, em minutos (0 = desligado)
+function antecedencia_edicao(array $f): int
+{
+    return isset($f['lembrete_antecedencia']) && $f['lembrete_antecedencia'] !== null ? max(0, (int) $f['lembrete_antecedencia']) : LEMBRETE_ANTECEDENCIA;
+}
+
+// "1 hora", "2 horas", "1 h 30 min", "45 minutos"
+function texto_antecedencia(int $min): string
+{
+    if ($min % 60 === 0) {
+        return ($min / 60) . ($min === 60 ? ' hora' : ' horas');
+    }
+    return $min > 60 ? intdiv($min, 60) . ' h ' . ($min % 60) . ' min' : $min . ' minutos';
 }
 
 // "das 18:30 às 19:30" ou "às 18:30"
@@ -91,17 +118,19 @@ function enviar_lembretes(array $f, array $s, string $tipo): array
         $nome = $contacto ? ($contacto['nome'] ?: $i['formando']) : $i['formando'];
         $ok = enviar_mensagem($tipo === 'hora' ? 'lembrete_hora' : 'lembrete_vespera', $para, [
             'nome' => nome_curto($nome), 'formando' => $i['formando'], 'formacao' => $i['titulo'], 'sessao' => $s['nome'],
-            'dia' => dia_sessao($s['inicio']), 'hora' => hora_lembrete($s), 'inicio' => date('H:i', strtotime($s['inicio'])), 'local' => modalidade_e_local($i),
+            'dia' => dia_sessao($s['inicio']), 'hora' => hora_lembrete($s), 'inicio' => date('H:i', strtotime($s['inicio'])), 'quando' => quando_sessao($s['inicio']), 'local' => modalidade_e_local($i),
         ], bloco_lembrete($i, $s, $contacto !== null));
         $ok ? $enviados++ : $falhados++;
     }
     return [$enviados, $falhados];
 }
 
-// Botão da lista de inscritos: lembrete da próxima sessão, enviado agora
-function enviar_lembrete_proxima(array $f): array
+// Botão da lista de inscritos: lembrete de uma sessão (n.º 1, 2...; por omissão, a próxima), enviado agora, mesmo que a sessão
+// já tenha começado ou decorrido
+function enviar_lembrete_sessao(array $f, int $n = 0): array
 {
-    $s = proxima_sessao($f);
+    $todas = sessoes_edicao($f);
+    $s = $n > 0 ? ($todas[$n - 1] ?? null) : proxima_sessao($f);
     if (!$s) {
         return [0, 0, null];
     }
@@ -111,19 +140,20 @@ function enviar_lembrete_proxima(array $f): array
     return [$enviados, $falhados, $s];
 }
 
-// Sessões que começam na próxima hora, em edições não canceladas com inscrições confirmadas e ainda sem lembrete automático
+// Sessões que já entraram na antecedência de envio da sua edição (1 hora, por omissão) e ainda não começaram, em edições não
+// canceladas, com envio automático ligado, inscrições confirmadas e ainda sem lembrete automático
 function sessoes_para_lembrete(): array
 {
-    $de = date('Y-m-d H:i:s');
-    $ate = date('Y-m-d H:i:s', time() + LEMBRETE_ANTECEDENCIA);
+    $agora = date('Y-m-d H:i:s');
     return consulta("SELECT x.formacao_id, x.inicio FROM (
             SELECT s.formacao_id, s.inicio FROM sessoes s
             UNION SELECT f.id, f.inicio FROM formacoes f WHERE NOT EXISTS (SELECT 1 FROM sessoes s WHERE s.formacao_id = f.id)
         ) x JOIN formacoes f ON f.id = x.formacao_id
-        WHERE f.estado <> 'cancelada' AND x.inicio > ? AND x.inicio <= ?
+        WHERE f.estado <> 'cancelada' AND COALESCE(f.lembrete_antecedencia, " . LEMBRETE_ANTECEDENCIA . ") > 0 AND x.inicio > ?
+          AND x.inicio <= datetime(?, '+' || COALESCE(f.lembrete_antecedencia, " . LEMBRETE_ANTECEDENCIA . ") || ' minutes')
           AND EXISTS (SELECT 1 FROM inscricoes i WHERE i.formacao_id = f.id AND i.estado = 'confirmada')
           AND NOT EXISTS (SELECT 1 FROM lembretes l WHERE l.formacao_id = f.id AND l.sessao = x.inicio AND l.tipo = 'hora')
-        ORDER BY x.inicio", [$de, $ate]);
+        ORDER BY x.inicio", [$agora, $agora]);
 }
 
 // Envio automático. Cada sessão é reservada antes do envio (índice único), para não haver lembretes repetidos; se todos
@@ -213,46 +243,65 @@ function estado_tarefa_lembretes(): array
     return ['ativo' => comunicacao()['emails']['lembrete_hora']['ativo'], 'ultima' => $ultima, 'recente' => $ultima !== '' && strtotime($ultima) > time() - 86400];
 }
 
-// Bloco "Lembretes aos formandos" na lista de inscritos de uma edição
+// Bloco "Lembretes aos formandos" na lista de inscritos de uma edição: envio pelo botão (a sessão escolhe-se; por omissão,
+// a próxima) e antecedência do envio automático desta edição
 function lembretes_edicao(array $f, int $confirmadas): string
 {
     if ($f['estado'] === 'cancelada') {
         return '';
     }
-    $s = proxima_sessao($f);
+    $todas = sessoes_edicao($f);
+    $proxima = proxima_sessao($f);
+    $escolhida = $proxima ? $proxima['n'] : count($todas);
     $envios = consulta('SELECT * FROM lembretes WHERE formacao_id = ? ORDER BY criado', [$f['id']]);
     $data_curta = function (string $d) { return date('d/m/Y \à\s H:i', strtotime($d)); };
     $html = '<div class="partilha espaco-topo lembretes" id="lembretes"><h3 class="mt-0">Lembretes aos formandos</h3>';
-    if ($s) {
-        $html .= '<p>Próxima sessão: <strong>' . h($s['nome'] ?: 'Sessão') . '</strong>, ' . h(dia_sessao($s['inicio'])) . ', ' . h(hora_sessao($s)) . '.</p>';
-        if (in_array($f['modalidade'], ['online', 'misto'], true) && empty($f['reuniao'])) {
-            $html .= '<div class="aviso aviso-info">Esta edição ainda não tem a ligação da reunião online: os lembretes seguem sem ligação. Indique-a acima e guarde antes de enviar.</div>';
-        }
-        $anteriores = array_values(array_filter($envios, function ($e) use ($s) { return $e['tipo'] === 'vespera' && $e['sessao'] === $s['inicio']; }));
-        if ($confirmadas) {
-            $html .= '<form method="post">' . campo_csrf() . '<input type="hidden" name="acao" value="lembrete"><button class="botao" type="submit">'
-                . ($anteriores ? 'Enviar de novo o lembrete' : 'Enviar lembrete') . ' aos ' . $confirmadas . ' formando(s) confirmado(s)</button></form>'
-                . '<p class="ajuda">Para usar na véspera: cada formando com inscrição confirmada (ou, sem email do formando, quem o inscreveu) recebe a sessão, a data, o horário, o local e a ligação para entrar.</p>';
-        } else {
-            $html .= '<p class="texto-suave">Ainda não há inscrições confirmadas: os lembretes só seguem para as inscrições confirmadas.</p>';
-        }
-        foreach ($anteriores as $e) {
-            $html .= '<p class="texto-suave">Lembrete desta sessão enviado em ' . h($data_curta($e['criado'])) . ' para ' . (int) $e['enviados'] . ' formando(s)'
-                . ($e['falhados'] ? ', ' . (int) $e['falhados'] . ' sem envio' : '') . '.</p>';
-        }
-    } else {
-        $html .= '<p class="texto-suave">Todas as sessões desta edição já começaram: não há lembretes por enviar.</p>';
+    $html .= $proxima ? '<p>Próxima sessão: <strong>' . h($proxima['nome'] ?: 'Sessão') . '</strong>, ' . h(dia_sessao($proxima['inicio'])) . ', ' . h(hora_sessao($proxima)) . '.</p>'
+        : '<p class="texto-suave">Todas as sessões desta edição já começaram. Pode, mesmo assim, enviar o lembrete de uma delas.</p>';
+    if (in_array($f['modalidade'], ['online', 'misto'], true) && empty($f['reuniao'])) {
+        $html .= '<div class="aviso aviso-info">Esta edição ainda não tem a ligação da reunião online: os lembretes seguem sem ligação. Indique-a acima e guarde antes de enviar.</div>';
     }
+    if ($confirmadas) {
+        $opcoes = '';
+        foreach ($todas as $s) {
+            $estado = strtotime($s['inicio']) > time() ? '' : (strtotime($s['fim'] ?: $s['inicio']) > time() ? ' (a decorrer)' : ' (já decorreu)');
+            $opcoes .= '<option value="' . (int) $s['n'] . '"' . ((int) $s['n'] === $escolhida ? ' selected' : '') . '>'
+                . h(($s['nome'] ?: 'Sessão') . ' · ' . dia_sessao($s['inicio']) . ', ' . hora_sessao($s) . $estado) . '</option>';
+        }
+        $html .= '<form method="post" class="formulario lembrete-envio">' . campo_csrf() . '<input type="hidden" name="acao" value="lembrete">
+          <div class="campo"><label for="c-lembrete-sessao">Sessão do lembrete</label><select id="c-lembrete-sessao" name="sessao">' . $opcoes . '</select></div>
+          <div><button class="botao" type="submit">Enviar lembrete aos ' . $confirmadas . ' formando(s) confirmado(s)</button></div></form>'
+            . '<p class="ajuda">Para usar na véspera ou a qualquer momento, também para uma sessão atrasada ou já começada: cada formando com inscrição confirmada (ou, sem email do formando, quem o inscreveu) recebe a sessão, a data, o horário, o local e a ligação para entrar.</p>';
+    } else {
+        $html .= '<p class="texto-suave">Ainda não há inscrições confirmadas: os lembretes só seguem para as inscrições confirmadas.</p>';
+    }
+    $manuais = array_filter($envios, function ($e) { return $e['tipo'] === 'vespera'; });
+    if ($manuais) {
+        $html .= '<ul class="lista-datas">' . implode('', array_map(function ($e) use ($data_curta) {
+            return '<li>Lembrete da sessão de ' . h($data_curta($e['sessao'])) . ' enviado em ' . h($data_curta($e['criado'])) . ' para ' . (int) $e['enviados'] . ' formando(s)' . ($e['falhados'] ? ', ' . (int) $e['falhados'] . ' sem envio' : '') . '</li>';
+        }, $manuais)) . '</ul>';
+    }
+    // Envio automático: antecedência desta edição
+    $min = antecedencia_edicao($f);
     $estado = estado_tarefa_lembretes();
-    $html .= '<p class="espaco-topo-curto"><strong>Envio automático 1 hora antes de cada sessão:</strong> '
-        . (!$estado['ativo'] ? 'desativado em <a href="' . h(url('comunicacao', ['aberto' => 'lembrete_hora']) . '#email-lembrete_hora') . '">Configuração, Comunicação</a>.'
-            : 'cada formando confirmado recebe um lembrete com a hora e a ligação da sessão.'
-                . ($estado['recente'] ? '' : ' <a href="' . h(url('configuracao') . '#lembretes') . '">A tarefa agendada que faz este envio ainda não correu nas últimas 24 horas</a>: sem ela, o envio depende de haver visitas ao site nessa hora.'))
-        . '</p>';
+    $outra = !isset(ANTECEDENCIAS[$min]);
+    $html .= '<h4 class="espaco-topo">Envio automático antes de cada sessão</h4>';
+    if (!$estado['ativo']) {
+        $html .= '<p>Desativado para todas as edições em <a href="' . h(url('comunicacao', ['aberto' => 'lembrete_hora']) . '#email-lembrete_hora') . '">Configuração, Comunicação</a>.</p>';
+    } else {
+        $html .= '<p>' . ($min ? 'Cada formando confirmado recebe um lembrete com a hora e a ligação da sessão <strong>' . h(texto_antecedencia($min)) . ' antes</strong> do início de cada sessão.' : 'Esta edição não tem envio automático.')
+            . ($min && !$estado['recente'] ? ' <a href="' . h(url('configuracao') . '#lembretes') . '">A tarefa agendada que faz este envio ainda não correu nas últimas 24 horas</a>: sem ela, o envio depende de haver visitas ao site nessa hora.' : '') . '</p>';
+    }
+    $html .= '<form method="post" class="formulario antecedencia">' . campo_csrf() . '<input type="hidden" name="acao" value="antecedencia">
+        <div class="campos-antecedencia">
+          <div class="campo"><label for="c-antecedencia">Antecedência</label><select id="c-antecedencia" name="antecedencia" data-outra-escolha>' . opcoes_select(ANTECEDENCIAS + ['outra' => 'Outra antecedência'], $outra ? 'outra' : (string) $min) . '</select></div>
+          <div class="campo" data-outra-campo' . ($outra ? '' : ' hidden') . '><label for="c-antecedencia-min">Outra antecedência, em minutos</label><input id="c-antecedencia-min" name="antecedencia_min" type="number" min="5" max="10080" step="5" value="' . ($outra ? $min : '') . '"></div>
+          <div class="campo campo-botao"><button class="botao botao-secundario" type="submit">Guardar antecedência</button></div>
+        </div></form>';
     $automaticos = array_filter($envios, function ($e) { return $e['tipo'] === 'hora'; });
     if ($automaticos) {
         $html .= '<ul class="lista-datas">' . implode('', array_map(function ($e) use ($data_curta) {
-            return '<li>Sessão de ' . h($data_curta($e['sessao'])) . ': lembrete enviado em ' . h($data_curta($e['criado'])) . ' para ' . (int) $e['enviados'] . ' formando(s)' . ($e['falhados'] ? ', ' . (int) $e['falhados'] . ' sem envio' : '') . '</li>';
+            return '<li>Sessão de ' . h($data_curta($e['sessao'])) . ': lembrete automático enviado em ' . h($data_curta($e['criado'])) . ' para ' . (int) $e['enviados'] . ' formando(s)' . ($e['falhados'] ? ', ' . (int) $e['falhados'] . ' sem envio' : '') . '</li>';
         }, $automaticos)) . '</ul>';
     }
     return $html . '</div>';

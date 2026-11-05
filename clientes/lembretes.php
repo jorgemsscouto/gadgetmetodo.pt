@@ -1,5 +1,5 @@
 <?php
-// Tarefa agendada dos lembretes automáticos (1 hora antes de cada sessão). Deve correr a cada 5 a 15 minutos:
+// Tarefa agendada dos lembretes automáticos (antes de cada sessão: 1 hora, por omissão, ou a antecedência da edição). Deve correr a cada 5 a 15 minutos:
 // pelo endereço com a chave mostrada na área reservada (Configuração, Lembretes automáticos) ou, na linha de
 // comandos do alojamento, com "php clientes/lembretes.php" (sem chave).
 

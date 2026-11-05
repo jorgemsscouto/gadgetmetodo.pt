@@ -455,6 +455,7 @@ function pagina_inscricao(): void
       ' . ($i['ferramentas'] ? '<p><strong>Ferramentas usadas:</strong> ' . h($i['ferramentas']) . '</p>' : '') . '
       ' . ($i['expectativas'] ? '<p><strong>Expectativas:</strong> ' . nl2br(h($i['expectativas'])) . '</p>' : '') . '
       ' . (!$admin ? $acoes : '') . '
+      ' . ($admin ? '<p class="espaco-topo">' . botao_apagar('inscricao', (int) $i['id'], 'Apagar esta inscrição') . '</p>' : '') . '
       <p class="espaco-topo"><a href="' . h(url('inscricoes')) . '">Voltar às inscrições</a></p>', 'Inscrição');
 }
 

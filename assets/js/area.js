@@ -112,3 +112,21 @@
     });
   });
 })();
+
+// Listas com a opção "Outra" (por exemplo, a antecedência do lembrete automático): o campo para escrever o valor só
+// aparece com essa opção escolhida. Sem JavaScript, o campo fica visível quando o valor gravado não está na lista.
+(function () {
+  document.querySelectorAll("[data-outra-escolha]").forEach(function (lista) {
+    var form = lista.closest("form");
+    var campo = form && form.querySelector("[data-outra-campo]");
+    if (!campo) return;
+    function aplicar() {
+      var outra = lista.value === "outra";
+      campo.hidden = !outra;
+      var entrada = campo.querySelector("input");
+      if (entrada) entrada.required = outra;
+    }
+    lista.addEventListener("change", aplicar);
+    aplicar();
+  });
+})();

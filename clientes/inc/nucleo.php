@@ -75,6 +75,8 @@ function bd(): ?PDO
             modalidade TEXT, local TEXT, vagas INTEGER NOT NULL DEFAULT 12, estado TEXT NOT NULL DEFAULT 'aberta',
             notas TEXT, criado TEXT NOT NULL, curso_id INTEGER REFERENCES cursos(id), modulo_id INTEGER REFERENCES modulos(id), reuniao TEXT)");
         acrescentar_colunas($pdo, 'formacoes', ['curso_id' => 'INTEGER REFERENCES cursos(id)', 'modulo_id' => 'INTEGER REFERENCES modulos(id)', 'reuniao' => 'TEXT']);
+        // Antecedência do lembrete automático da edição, em minutos (vazio = 1 hora; 0 = sem lembrete automático)
+        acrescentar_colunas($pdo, 'formacoes', ['lembrete_antecedencia' => 'INTEGER']);
         // Edições do curso completo: uma linha por sessão, com data e horário próprios (formacoes.inicio é o da 1.ª
         // sessão e formacoes.fim o fim da última); sem linhas, a formação decorre numa só data
         $pdo->exec('CREATE TABLE IF NOT EXISTS sessoes (
@@ -119,7 +121,7 @@ function bd(): ?PDO
             PRIMARY KEY (preco_id, coluna_id))');
         juntar_formacoes_por_sessao($pdo);
         // Lembretes das sessões enviados aos formandos (clientes/inc/lembretes.php): "vespera" pelo botão da edição,
-        // "hora" automaticamente 1 hora antes; o automático é único por sessão (sessao = data e hora de início)
+        // "hora" automaticamente antes da sessão (1 hora ou a antecedência da edição); o automático é único por sessão (sessao = data e hora de início)
         $pdo->exec('CREATE TABLE IF NOT EXISTS lembretes (
             id INTEGER PRIMARY KEY AUTOINCREMENT, formacao_id INTEGER NOT NULL REFERENCES formacoes(id) ON DELETE CASCADE, sessao TEXT NOT NULL,
             tipo TEXT NOT NULL, origem TEXT NOT NULL, enviados INTEGER NOT NULL DEFAULT 0, falhados INTEGER NOT NULL DEFAULT 0,

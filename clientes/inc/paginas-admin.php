@@ -66,17 +66,6 @@ function admin_formacao(): void
     $erros = [];
     $post = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
     $acao = (string) ($_POST['acao'] ?? '');
-    if ($post && $acao === 'apagar' && $f) {
-        // Só se apaga uma formação sem inscrições; com inscrições, deve ser cancelada
-        if ((int) (linha_bd('SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ?', [$id])['n'] ?? 0) > 0) {
-            aviso('Esta formação tem inscrições e não pode ser apagada. Altere o estado para Cancelada.', 'erro');
-            redirecionar('formacao', ['id' => $id]);
-        }
-        executar('DELETE FROM sessoes WHERE formacao_id = ?', [$id]);
-        executar('DELETE FROM formacoes WHERE id = ?', [$id]);
-        aviso('Formação apagada.');
-        redirecionar('calendario');
-    }
     if ($post && $acao === 'convite' && $f) {
         $convite = ler_convite();
         if (is_string($convite)) {
@@ -119,14 +108,27 @@ function admin_formacao(): void
         redirecionar('formacao', ['id' => $id]);
     }
     if ($post && $acao === 'lembrete' && $f) {
-        [$enviados, $falhados, $s] = enviar_lembrete_proxima($f);
+        [$enviados, $falhados, $s] = enviar_lembrete_sessao($f, (int) ($_POST['sessao'] ?? 0));
         if (!$s) {
-            aviso('Todas as sessões desta edição já começaram: não há lembretes por enviar.', 'erro');
+            aviso('Escolha a sessão do lembrete.', 'erro');
         } elseif ($enviados) {
-            aviso('Lembrete da próxima sessão (' . h(dia_sessao($s['inicio'])) . ', ' . h(hora_sessao($s)) . ') enviado para ' . $enviados . ' formando(s).'
+            aviso('Lembrete da ' . h($s['nome'] ? mb_strtolower(mb_substr($s['nome'], 0, 1)) . mb_substr($s['nome'], 1) : 'sessão') . ' (' . h(dia_sessao($s['inicio'])) . ', ' . h(hora_sessao($s)) . ') enviado para ' . $enviados . ' formando(s).'
                 . ($falhados ? ' ' . $falhados . ' sem envio: sem email ou com falha no envio.' : ''), $falhados ? 'info' : 'ok');
         } else {
             aviso('O lembrete não foi enviado: não há inscrições confirmadas com email, ou o envio de emails falhou.', 'erro');
+        }
+        redirecionar('formacao', ['id' => $id], 'lembretes');
+    }
+    if ($post && $acao === 'antecedencia' && $f) {
+        $escolha = (string) ($_POST['antecedencia'] ?? '');
+        $min = $escolha === 'outra' ? (int) ($_POST['antecedencia_min'] ?? 0) : (int) $escolha;
+        if ($escolha === 'outra' && ($min < 5 || $min > 10080)) {
+            aviso('Indique a antecedência em minutos, entre 5 e 10080 (7 dias).', 'erro');
+        } elseif ($escolha !== 'outra' && !isset(ANTECEDENCIAS[$min])) {
+            aviso('Escolha a antecedência do lembrete automático.', 'erro');
+        } else {
+            executar('UPDATE formacoes SET lembrete_antecedencia = ? WHERE id = ?', [$min, $id]);
+            aviso($min ? 'Lembrete automático desta edição: ' . texto_antecedencia($min) . ' antes de cada sessão.' : 'Esta edição deixa de ter lembrete automático.');
         }
         redirecionar('formacao', ['id' => $id], 'lembretes');
     }
@@ -203,9 +205,7 @@ function admin_formacao(): void
             . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Formando</th><th>Função</th><th>Cliente</th><th>Nível de IA</th><th>Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições nesta formação.</p>');
         $inscritos .= $linhas ? lembretes_edicao(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]), $confirmadas) : '';
         $inscritos .= juntar_edicoes_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]));
-        if (!$linhas && !linha_bd('SELECT id FROM inscricoes WHERE formacao_id = ?', [$id])) {
-            $inscritos .= '<form method="post" class="espaco-topo">' . campo_csrf() . '<input type="hidden" name="acao" value="apagar"><button class="botao botao-secundario" type="submit">Apagar esta formação</button></form>';
-        }
+        $inscritos .= '<p class="espaco-topo">' . botao_apagar('formacao', $id, 'Apagar esta edição') . '</p>';
     }
     pagina_area('calendario', $id ? 'Editar formação' : 'Nova formação', $form . $inscritos, 'Calendário');
 }
@@ -573,14 +573,6 @@ function admin_curso(): void
                 executar('INSERT INTO modulos (nome, ordem, descricao, temas, horas, caso_pratico, curso_id) VALUES (?, ?, ?, ?, ?, ?, ?)', array_merge($valores, [$id]));
                 aviso('Módulo acrescentado.');
             }
-        } elseif ($acao === 'apagar_modulo' && $c) {
-            $mid = (int) ($_POST['modulo_id'] ?? 0);
-            if (linha_bd('SELECT id FROM formacoes WHERE modulo_id = ? UNION ALL SELECT id FROM sessoes WHERE modulo_id = ?', [$mid, $mid])) {
-                aviso('Este módulo tem sessões no calendário e não pode ser apagado.', 'erro');
-            } else {
-                executar('DELETE FROM modulos WHERE id = ? AND curso_id = ?', [$mid, $id]);
-                aviso('Módulo apagado.');
-            }
         } elseif ($acao === 'convite' && $c) {
             $convite = ler_convite();
             if (is_string($convite)) {
@@ -610,20 +602,6 @@ function admin_curso(): void
             if (isset(estados_preinscricao_manuais()[$estado])) {
                 executar('UPDATE preinscricoes SET estado = ? WHERE id = ? AND curso_id = ?', [$estado, (int) ($_POST['pre_id'] ?? 0), $id]);
                 aviso('Estado da pré-inscrição atualizado.');
-            }
-        } elseif ($acao === 'pre_apagar' && $c) {
-            executar('DELETE FROM preinscricoes WHERE id = ? AND curso_id = ?', [(int) ($_POST['pre_id'] ?? 0), $id]);
-            aviso('Pré-inscrição apagada.');
-        } elseif ($acao === 'apagar_curso' && $c) {
-            if (linha_bd('SELECT id FROM formacoes WHERE curso_id = ?', [$id])) {
-                aviso('Este curso tem sessões no calendário e não pode ser apagado. Desative-o para deixar de o poder agendar.', 'erro');
-            } elseif (linha_bd('SELECT id FROM preinscricoes WHERE curso_id = ?', [$id])) {
-                aviso('Este curso tem pré-inscrições. Apague-as antes de apagar o curso, ou desative-o.', 'erro');
-            } else {
-                executar('DELETE FROM modulos WHERE curso_id = ?', [$id]);
-                executar('DELETE FROM cursos WHERE id = ?', [$id]);
-                aviso('Curso apagado.');
-                redirecionar('cursos');
             }
         }
         redirecionar('curso', ['id' => $id]);
@@ -677,9 +655,7 @@ function admin_curso(): void
             . ($sessoes ? calendario($sessoes, function ($f) { return '<a href="' . h(url('formacao', ['id' => $f['id']])) . '">Gerir</a>'; }) : '<p class="texto-suave">Este curso não tem sessões agendadas.</p>')
             . '<p class="espaco-topo-curto"><a class="botao" href="' . h(url('formacao', ['curso' => $id])) . '">Agendar edição deste curso</a></p>';
         $html .= lista_preinscricoes($c);
-        if (!linha_bd('SELECT id FROM formacoes WHERE curso_id = ?', [$id])) {
-            $html .= '<form method="post" class="espaco-topo">' . campo_csrf() . '<input type="hidden" name="acao" value="apagar_curso"><button class="botao botao-secundario" type="submit">Apagar este curso</button></form>';
-        }
+        $html .= '<p class="espaco-topo">' . botao_apagar('curso', $id, 'Apagar este curso') . '</p>';
     }
     pagina_area('cursos', $c ? $c['nome'] : 'Novo curso', $html, 'Cursos');
 }
@@ -705,7 +681,7 @@ function lista_preinscricoes(array $c): string
             . '<td>' . h(trim((MODALIDADES[$p['modalidade']] ?? 'Indiferente') . ($p['preferencias'] ? '. ' . $p['preferencias'] : ''))) . '</td>'
             . '<td>' . $form('pre_estado', '<label class="visualmente-oculto" for="pre-estado-' . (int) $p['id'] . '">Estado</label><select id="pre-estado-' . (int) $p['id'] . '" name="estado">' . opcoes_select(estados_preinscricao_manuais($p['estado']), $p['estado']) . '</select><button class="botao botao-secundario botao-pequeno" type="submit">Guardar</button>') . '</td>'
             . '<td class="acoes-celula">' . ($p['estado'] !== 'inscrita' ? '<a class="botao botao-pequeno" href="' . h(url('preinscricao', ['id' => $p['id']])) . '#inscrever">Inscrever</a>' : '') . ($com_datas ? $form('pre_convidar', '<button class="botao botao-pequeno" type="submit">' . ($p['estado'] === 'convidada' ? 'Reenviar convite' : 'Enviar convite') . '</button>') : '')
-            . $form('pre_apagar', '<button class="botao botao-secundario botao-pequeno" type="submit">Apagar</button>') . '</td></tr>';
+            . botao_apagar('preinscricao', (int) $p['id'], 'Apagar', 'botao botao-secundario botao-pequeno botao-apagar') . '</td></tr>';
     }
     return '<h2 class="espaco-topo" id="preinscricoes">Pré-inscrições</h2>
       <p class="texto-suave">Pedidos feitos na página do curso, para receber o convite quando houver datas. O candidato recebeu uma confirmação por email. ' . ($com_datas ? 'O convite leva-o à página do curso, com as datas e a inscrição, e passa a pré-inscrição para "Convite enviado".' : 'Para enviar convites, agende primeiro uma edição do curso com inscrições abertas.') . ' As pré-inscrições são apagadas automaticamente 12 meses após o registo.</p>'
@@ -747,11 +723,6 @@ function admin_preinscricao(): void
                 aviso('Curso associado: ' . h((string) curso($novo)['nome']) . '.');
             }
             redirecionar('preinscricao', ['id' => $id]);
-        }
-        if ($acao === 'apagar') {
-            executar('DELETE FROM preinscricoes WHERE id = ?', [$id]);
-            aviso('Pré-inscrição apagada.');
-            redirecionar('inscricoes', ['estado' => 'preinscricao']);
         }
         if ($acao === 'inscrever') {
             $formando = texto('formando', 120) ?: (string) $p['nome'];
@@ -882,7 +853,7 @@ function admin_preinscricao(): void
           <div><button class="botao" type="submit">Inscrever</button></div>
         </form>';
     }
-    $html .= '<form method="post" class="espaco-topo">' . campo_csrf() . '<input type="hidden" name="acao" value="apagar"><button class="botao botao-secundario" type="submit">Apagar esta pré-inscrição</button></form>
+    $html .= '<p class="espaco-topo">' . botao_apagar('preinscricao', $id, 'Apagar esta pré-inscrição') . '</p>
       <p class="espaco-topo"><a href="' . h(url('inscricoes', ['estado' => 'preinscricao'])) . '">Voltar às pré-inscrições</a></p>';
     pagina_area('inscricoes', (string) $p['nome'], $html, 'Pré-inscrição');
 }
@@ -932,7 +903,7 @@ function form_modulo(array $m, int $numero, string $unidade = 'Módulo'): string
         ' . campo('caso_pratico', 'Caso prático', (string) ($m['caso_pratico'] ?? ''), 'textarea', 'maxlength="1000" rows="2"', $p . 'caso') . '
         <div class="acoes-modulo"><button class="botao' . ($novo ? '' : ' botao-secundario') . '" type="submit">' . ($novo ? 'Acrescentar' : 'Guardar') . ' ' . strtolower($unidade) . '</button></div>
       </form>
-      ' . ($novo ? '' : '<form method="post" class="apagar-modulo">' . campo_csrf() . '<input type="hidden" name="acao" value="apagar_modulo"><input type="hidden" name="modulo_id" value="' . (int) $m['id'] . '"><button class="botao-texto" type="submit">Apagar ' . strtolower($unidade) . '</button></form>') . '
+      ' . ($novo ? '' : '<p class="apagar-modulo">' . botao_apagar('modulo', (int) $m['id'], 'Apagar ' . strtolower($unidade), 'botao-texto') . '</p>') . '
     </div>';
 }
 
@@ -1053,7 +1024,8 @@ function admin_cliente(): void
     pagina_area('clientes', $c['nome'], form_cliente($c) . '
       <h2 class="espaco-topo">Utilizadores deste cliente</h2>
       ' . ($lu ? '<ul>' . $lu . '</ul>' : '<p class="texto-suave">Ainda não tem utilizadores.</p>') . '
-      <p><a class="botao botao-secundario" href="' . h(url('utilizadores', ['cliente' => $id])) . '">Criar utilizador</a> <a class="botao botao-secundario" href="' . h(url('inscricoes', ['cliente' => $id])) . '">Ver inscrições</a></p>', 'Cliente');
+      <p><a class="botao botao-secundario" href="' . h(url('utilizadores', ['cliente' => $id])) . '">Criar utilizador</a> <a class="botao botao-secundario" href="' . h(url('inscricoes', ['cliente' => $id])) . '">Ver inscrições</a></p>
+      <p class="espaco-topo">' . botao_apagar('cliente', $id, 'Apagar este cliente') . '</p>', 'Cliente');
 }
 
 /* Utilizadores */
@@ -1167,7 +1139,8 @@ function admin_utilizador(): void
       <form method="post" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="nova_senha">
         <label class="opcao consentimento"><input type="checkbox" name="enviar_acesso" value="1"> <span>Enviar a nova palavra-passe por email ao utilizador</span></label>
         <div><button class="botao botao-secundario" type="submit">Gerar nova palavra-passe</button></div></form>
-      <p class="texto-suave espaco-topo">Criado em ' . h(data_hora($u['criado'])) . '. Último acesso: ' . h(data_hora($u['ultimo_acesso']) ?: 'nunca') . '.</p>', 'Configuração');
+      <p class="texto-suave espaco-topo">Criado em ' . h(data_hora($u['criado'])) . '. Último acesso: ' . h(data_hora($u['ultimo_acesso']) ?: 'nunca') . '.</p>'
+      . ($eu ? '' : '<p class="espaco-topo">' . botao_apagar('utilizador', $id, 'Apagar este utilizador') . '</p>'), 'Configuração');
 }
 
 // Email com os dados de acesso à área reservada (endereço, email e palavra-passe), só quando a administração o pede
@@ -1203,12 +1176,12 @@ function admin_pedidos(): void
     foreach ($registos as $p) {
         $reais = array_filter($p['aberturas'], function ($a) { return !$a['automatica']; });
         $ab = $p['aberturas'] ? implode('<br>', array_map(function ($a) { return h(data_hora($a['aberto'])) . ($a['automatica'] ? ' ' . etiqueta('automática') : ''); }, $p['aberturas'])) : etiqueta('Não aberto');
-        $linhas .= '<tr><td>' . h($p['ref']) . '<br><span class="texto-suave">' . h(data_hora($p['criado'])) . '</span></td><td>' . h($p['nome']) . '<br><span class="texto-suave">' . h($p['empresa'] ?: 'Particular') . '</span></td><td><a href="mailto:' . h($p['email']) . '">' . h($p['email']) . '</a><br>' . h($p['telemovel']) . '</td><td>' . h($p['servicos']) . '</td><td>' . ($reais ? etiqueta('Aberto', 'ok') . '<br>' : '') . $ab . '</td></tr>';
+        $linhas .= '<tr><td>' . h($p['ref']) . '<br><span class="texto-suave">' . h(data_hora($p['criado'])) . '</span></td><td>' . h($p['nome']) . '<br><span class="texto-suave">' . h($p['empresa'] ?: 'Particular') . '</span></td><td><a href="mailto:' . h($p['email']) . '">' . h($p['email']) . '</a><br>' . h($p['telemovel']) . '</td><td>' . h($p['servicos']) . '</td><td>' . ($reais ? etiqueta('Aberto', 'ok') . '<br>' : '') . $ab . '</td><td>' . botao_apagar('pedido', (string) $p['ref'], 'Apagar', 'botao botao-secundario botao-pequeno botao-apagar') . '</td></tr>';
     }
     pagina_area('pedidos', 'Pedidos do site', '
       <p class="texto-suave">Pedidos de orçamento e de informações recebidos pelo formulário do site e aberturas do catálogo enviado na confirmação. Registos dos últimos 12 meses.</p>
       <p><a class="botao botao-secundario" href="' . h(url('pedidos', ['exportar' => 1])) . '">Exportar para Excel</a></p>
-      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Pedido</th><th>Nome e empresa</th><th>Contactos</th><th>Serviços</th><th>Catálogo</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há pedidos registados.</p>'), 'Formulário do site');
+      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Pedido</th><th>Nome e empresa</th><th>Contactos</th><th>Serviços</th><th>Catálogo</th><th><span class="visualmente-oculto">Ações</span></th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há pedidos registados.</p>'), 'Formulário do site');
 }
 
 /* Partilha de ligações e convites a candidatos */

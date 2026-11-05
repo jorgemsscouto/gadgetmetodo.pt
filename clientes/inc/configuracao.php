@@ -40,7 +40,7 @@ function admin_configuracao(): void
             '<strong>' . count(EMAILS) . '</strong> emails: ' . $alterados . ' com textos alterados, ' . $desativados . ' desativados',
             'Avisos internos para ' . h($com['geral']['email_admin']) . ($bcc ? ', com cópia oculta para ' . h(implode(', ', $bcc)) : ''),
         ], '<a class="botao" href="' . h(url('comunicacao')) . '">Configurar emails</a>') . '
-        ' . $cartao('Lembretes', 'Lembretes das sessões aos formandos confirmados: botão "Enviar lembrete" na lista de inscritos de cada edição, para a véspera, e envio automático 1 hora antes.', [
+        ' . $cartao('Lembretes', 'Lembretes das sessões aos formandos confirmados: botão "Enviar lembrete" na lista de inscritos de cada edição, para a véspera ou para a sessão escolhida, e envio automático antes de cada sessão (1 hora, por omissão, ou outra antecedência por edição).', [
             'Envio automático: <strong>' . ($tarefa['ativo'] ? 'ativo' : 'desativado') . '</strong>',
             'Tarefa agendada: ' . ($tarefa['ultima'] ? 'última execução em ' . h(data_hora($tarefa['ultima'])) : 'ainda não executada'),
         ], '<a class="botao" href="#lembretes">Tarefa agendada</a><a class="botao botao-secundario" href="' . h(url('comunicacao', ['aberto' => 'lembrete_hora'])) . '#email-lembrete_hora">Textos dos lembretes</a>') . '
@@ -53,12 +53,12 @@ function bloco_tarefa_lembretes(array $tarefa): string
 {
     $endereco = endereco_tarefa_lembretes();
     $enviados = (int) (linha_bd("SELECT SUM(enviados) AS n FROM lembretes WHERE tipo = 'hora' AND criado >= ?", [date('Y-m-d H:i:s', time() - 30 * 86400)])['n'] ?? 0);
-    $estado = !$tarefa['ativo'] ? 'O envio automático está desativado (email "Lembrete automático 1 hora antes", em Comunicação).'
+    $estado = !$tarefa['ativo'] ? 'O envio automático está desativado (email "Lembrete automático antes da sessão", em Comunicação).'
         : ($tarefa['recente'] ? 'A tarefa agendada está a funcionar: última execução em ' . data_hora($tarefa['ultima']) . '.'
             : ($tarefa['ultima'] ? 'A tarefa agendada não corre desde ' . data_hora($tarefa['ultima']) . ': confirme-a no painel do alojamento.' : 'A tarefa agendada ainda não foi executada: configure-a como indicado abaixo.'));
     return '<section class="partilha espaco-topo" id="lembretes">
       <h2 class="mt-0">Lembretes automáticos das sessões</h2>
-      <p>Cerca de 1 hora antes de cada sessão, cada formando com inscrição confirmada recebe um lembrete com a hora, o local e a ligação da sessão. O alojamento só envia emails quando uma página é aberta, por isso é preciso uma tarefa agendada (cron) que abra o endereço abaixo a cada 10 minutos.</p>
+      <p>Antes de cada sessão (1 hora antes, por omissão, ou a antecedência escolhida em cada edição), cada formando com inscrição confirmada recebe um lembrete com a hora, o local e a ligação da sessão. O alojamento só envia emails quando uma página é aberta, por isso é preciso uma tarefa agendada (cron) que abra o endereço abaixo a cada 10 minutos.</p>
       <div class="aviso ' . ($tarefa['ativo'] && $tarefa['recente'] ? 'aviso-ok' : 'aviso-info') . '">' . h($estado) . ' Lembretes automáticos enviados nos últimos 30 dias: ' . $enviados . '.</div>
       <div class="partilha-ligacao"><label class="visualmente-oculto" for="endereco-lembretes">Endereço da tarefa agendada</label><input id="endereco-lembretes" type="text" readonly value="' . h($endereco) . '"><button class="botao botao-secundario" type="button" data-copiar="' . h($endereco) . '">Copiar endereço</button></div>
       <p class="estado-copia" role="status" aria-live="polite"></p>
