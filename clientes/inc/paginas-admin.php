@@ -95,6 +95,29 @@ function admin_formacao(): void
         aviso($n ? 'Ligação da reunião enviada para ' . $n . ' inscrição(ões) confirmada(s).' : 'Não há inscrições confirmadas com email para enviar a ligação.', $n ? 'ok' : 'erro');
         redirecionar('formacao', ['id' => $id]);
     }
+    if ($post && $acao === 'juntar' && $f) {
+        $ids = array_map('intval', array_filter((array) ($_POST['edicoes'] ?? []), 'is_numeric'));
+        $ordenar = !empty($_POST['ordenar']);
+        if (!$ids && !$ordenar) {
+            aviso('Escolha as edições a juntar ou a opção de pôr as sessões por ordem.', 'erro');
+            redirecionar('formacao', ['id' => $id], 'juntar');
+        }
+        [$juntadas, $movidas, $repetidas, $n_sessoes] = juntar_edicoes($f, $ids, !empty($_POST['datas']), $ordenar);
+        $partes = [];
+        if ($juntadas) {
+            $partes[] = ($juntadas === 1 ? '1 edição juntada' : $juntadas . ' edições juntadas') . ': ' . $movidas . ' inscrição(ões) passaram para esta edição'
+                . ($repetidas ? ' (' . ($repetidas === 1 ? '1 inscrição repetida da mesma pessoa ficou cancelada' : $repetidas . ' inscrições repetidas da mesma pessoa ficaram canceladas') . ', sem se perderem dados)' : '') . '.';
+        }
+        if ($ordenar && $n_sessoes > 1) {
+            $partes[] = 'As ' . $n_sessoes . ' sessões ficaram por ordem de data, cada uma com a sessão do curso correspondente.';
+        }
+        $vagas = (int) (linha_bd('SELECT vagas FROM formacoes WHERE id = ?', [$id])['vagas'] ?? 0);
+        if (inscritos($id) > $vagas) {
+            $partes[] = 'Atenção: a edição tem agora ' . inscritos($id) . ' inscritos para ' . $vagas . ' vagas.';
+        }
+        aviso($partes ? implode(' ', $partes) : 'Nada a alterar.', $partes ? 'ok' : 'info');
+        redirecionar('formacao', ['id' => $id]);
+    }
     if ($post && $acao === 'lembrete' && $f) {
         [$enviados, $falhados, $s] = enviar_lembrete_proxima($f);
         if (!$s) {
@@ -179,11 +202,131 @@ function admin_formacao(): void
             . ($linhas ? ' <a class="botao botao-secundario" href="' . h(url('inscricoes', ['formacao' => $id, 'exportar' => 1])) . '">Exportar inscritos para Excel</a>' : '') . '</p>'
             . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Formando</th><th>Função</th><th>Cliente</th><th>Nível de IA</th><th>Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições nesta formação.</p>');
         $inscritos .= $linhas ? lembretes_edicao(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]), $confirmadas) : '';
+        $inscritos .= juntar_edicoes_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]));
         if (!$linhas && !linha_bd('SELECT id FROM inscricoes WHERE formacao_id = ?', [$id])) {
             $inscritos .= '<form method="post" class="espaco-topo">' . campo_csrf() . '<input type="hidden" name="acao" value="apagar"><button class="botao botao-secundario" type="submit">Apagar esta formação</button></form>';
         }
     }
     pagina_area('calendario', $id ? 'Editar formação' : 'Nova formação', $form . $inscritos, 'Calendário');
+}
+
+/* Juntar edições do mesmo curso e pôr as sessões por ordem */
+
+// Outras edições do mesmo curso que podem ser juntadas a esta (não canceladas, dos últimos 6 meses em diante)
+function edicoes_para_juntar(array $f): array
+{
+    return consulta("SELECT f.*, (SELECT COUNT(*) FROM inscricoes i WHERE i.formacao_id = f.id AND i.estado != 'cancelada') AS n_inscritos,
+            (SELECT COUNT(*) FROM inscricoes i WHERE i.formacao_id = f.id AND i.estado = 'confirmada') AS n_confirmadas
+        FROM formacoes f WHERE f.curso_id = ? AND f.id != ? AND f.estado != 'cancelada' AND COALESCE(f.fim, f.inicio) >= ? ORDER BY f.inicio",
+        [(int) $f['curso_id'], (int) $f['id'], date('Y-m-d 00:00:00', strtotime('-180 days'))]);
+}
+
+// Sessões de uma formação com data e hora (as da tabela "sessoes" ou, numa só data, a própria formação)
+function datas_da_edicao(array $f): array
+{
+    return sessoes_formacao((int) $f['id']) ?: [['inicio' => $f['inicio'], 'fim' => $f['fim'] ?? null, 'modulo_id' => $f['modulo_id'] ?? null]];
+}
+
+// Junta a esta edição as edições indicadas do mesmo curso: as inscrições passam para esta (a mesma pessoa fica com uma só
+// inscrição, a confirmada ou a mais antiga; as outras ficam canceladas) e as edições juntadas são apagadas. Com $datas, as
+// datas das sessões dessas edições juntam-se às desta (a mesma data e hora conta uma vez), por ordem de data. Com $ordenar,
+// cada data recebe a sessão do curso pela ordem (1.ª data, sessão 1; 2.ª data, sessão 2...).
+// Devolve [edições juntadas, inscrições movidas, inscrições repetidas canceladas, n.º de sessões].
+function juntar_edicoes(array $f, array $ids, bool $datas, bool $ordenar): array
+{
+    $pdo = bd();
+    $id = (int) $f['id'];
+    $origens = [];
+    foreach (array_unique($ids) as $o) {
+        if ($e = linha_bd('SELECT * FROM formacoes WHERE id = ? AND curso_id = ? AND id != ?', [$o, (int) $f['curso_id'], $id])) {
+            $origens[] = $e;
+        }
+    }
+    $pdo->beginTransaction();
+    try {
+        $sessoes = [];
+        foreach (array_merge([$f], $datas ? $origens : []) as $e) {
+            foreach (datas_da_edicao($e) as $s) {
+                $sessoes[$s['inicio']] = $sessoes[$s['inicio']] ?? $s;
+            }
+        }
+        ksort($sessoes);
+        $sessoes = array_values($sessoes);
+        if ($ordenar) {
+            foreach (modulos_curso((int) $f['curso_id']) as $n => $m) {
+                if (isset($sessoes[$n])) {
+                    $sessoes[$n]['modulo_id'] = (int) $m['id'];
+                }
+            }
+        }
+        if ($datas && $origens || $ordenar) {
+            executar('DELETE FROM sessoes WHERE formacao_id = ?', [$id]);
+            foreach (count($sessoes) > 1 ? $sessoes : [] as $n => $s) {
+                executar('INSERT INTO sessoes (formacao_id, ordem, modulo_id, inicio, fim) VALUES (?, ?, ?, ?, ?)', [$id, $n + 1, $s['modulo_id'] ?: null, $s['inicio'], $s['fim'] ?: null]);
+            }
+            $fins = array_filter(array_column($sessoes, 'fim'));
+            $ultima = $sessoes[count($sessoes) - 1];
+            executar('UPDATE formacoes SET inicio = ?, fim = ?, modulo_id = NULL WHERE id = ?', [min(array_column($sessoes, 'inicio')), $ultima['fim'] ?: ($fins ? max($fins) : null), $id]);
+        }
+        // Local e ligação da reunião: os desta edição; em falta, os da primeira edição juntada que os tenha
+        foreach (['local', 'reuniao'] as $campo) {
+            if (empty($f[$campo])) {
+                foreach ($origens as $e) {
+                    if (!empty($e[$campo])) {
+                        executar("UPDATE formacoes SET $campo = ? WHERE id = ?", [$e[$campo], $id]);
+                        break;
+                    }
+                }
+            }
+        }
+        $movidas = 0;
+        foreach ($origens as $e) {
+            $movidas += (int) (linha_bd('SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ?', [$e['id']])['n'] ?? 0);
+            executar('UPDATE inscricoes SET formacao_id = ? WHERE formacao_id = ?', [$id, $e['id']]);
+            executar('DELETE FROM sessoes WHERE formacao_id = ?', [$e['id']]);
+            executar('DELETE FROM formacoes WHERE id = ?', [$e['id']]);
+        }
+        $pessoa = function (string $t) { return "COALESCE(NULLIF(lower($t.email), ''), lower($t.formando))"; };
+        $st = $pdo->prepare("UPDATE inscricoes SET estado = 'cancelada' WHERE formacao_id = ? AND estado != 'cancelada'
+            AND id != (SELECT i2.id FROM inscricoes i2 WHERE i2.formacao_id = inscricoes.formacao_id AND i2.estado != 'cancelada' AND " . $pessoa('i2') . ' = ' . $pessoa('inscricoes') . "
+                ORDER BY i2.estado = 'confirmada' DESC, i2.id LIMIT 1)");
+        $st->execute([$id]);
+        $repetidas = $st->rowCount();
+        $pdo->commit();
+    } catch (Throwable $erro) {
+        $pdo->rollBack();
+        throw $erro;
+    }
+    sessoes_formacao($id, true);
+    return [count($origens), $movidas, $repetidas, count($sessoes)];
+}
+
+// Bloco "Juntar edições e ordenar as sessões" na ficha da edição
+function juntar_edicoes_html(array $f): string
+{
+    if ($f['estado'] === 'cancelada') {
+        return '';
+    }
+    $outras = edicoes_para_juntar($f);
+    $varias = count(modulos_curso((int) $f['curso_id'])) > 1;
+    if (!$outras && !$varias) {
+        return '';
+    }
+    $lista = '';
+    foreach ($outras as $e) {
+        $lista .= '<li><label class="opcao-juntar"><input type="checkbox" name="edicoes[]" value="' . (int) $e['id'] . '"> <span><strong>' . h(horario($e)) . '</strong> · '
+            . h(modalidade_e_local($e)) . ' · ' . (int) $e['n_inscritos'] . ' inscrição(ões), ' . (int) $e['n_confirmadas'] . ' confirmada(s)'
+            . ' · <a href="' . h(url('formacao', ['id' => $e['id']])) . '">abrir</a></span></label></li>';
+    }
+    return '<div class="partilha espaco-topo" id="juntar"><h3 class="mt-0">' . ($outras ? 'Juntar edições e ordenar as sessões' : 'Ordenar as sessões') . '</h3>
+      <form method="post">' . campo_csrf() . '<input type="hidden" name="acao" value="juntar">'
+        . ($outras ? '<p>Há outras edições deste curso. Para ter todos os inscritos nesta edição, escolha as que quer juntar:</p><ul class="lista-juntar">' . $lista . '</ul>'
+            . '<label class="opcao-juntar"><input type="checkbox" name="datas" value="1" checked> <span>Juntar também as datas das sessões dessas edições às desta</span></label>' : '')
+        . ($varias ? '<label class="opcao-juntar"><input type="checkbox" name="ordenar" value="1" checked> <span>Pôr as sessões por ordem de data: a 1.ª data fica com a sessão 1 do curso, a 2.ª com a sessão 2, e assim por diante</span></label>' : '')
+        . '<p class="espaco-topo-curto"><button class="botao" type="submit">' . ($outras ? 'Juntar e ordenar' : 'Pôr as sessões por ordem') . '</button></p>
+        <p class="ajuda">' . ($outras ? 'As inscrições das edições escolhidas passam para esta. Se a mesma pessoa estiver inscrita em mais de uma, fica com uma só inscrição (a confirmada ou a mais antiga); as outras ficam canceladas, sem se perderem dados. As edições juntadas deixam de existir. ' : '')
+        . 'Ninguém recebe emails com esta operação; depois confira as datas na lista de sessões acima.</p>
+      </form></div>';
 }
 
 // Lê e valida os campos de uma sessão (formulário da sessão ou "Nova sessão" na pré-inscrição)
