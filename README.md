@@ -60,6 +60,13 @@ Com um programa de FTP (FileZilla, Cyberduck ou o gestor de ficheiros do alojame
 
 Se a pasta pública tiver uma página por omissão do alojamento (por exemplo `index.php` ou `default.html`), apagá-la.
 
+### Subdomínio alertas.gadgetmetodo.pt
+
+O plano da Amen só tem um site (pasta `www`), por isso `alertas.gadgetmetodo.pt` é um alias deste site. O bloco no início do `.htaccess` (entre `# >>> alertas.gadgetmetodo.pt` e `# <<< alertas.gadgetmetodo.pt`) encaminha esse endereço, por reescrita interna, para `www/subsites/alertas`, onde fica a ponte do painel Gestão de Alertas (repositório `gestao_alertas`, pasta `ponte/`). Não altera `gadgetmetodo.pt` nem `www.gadgetmetodo.pt`.
+
+- O bloco tem de ficar antes de todas as outras regras. Não o apagar: o `publicar.sh` envia este `.htaccess` e, sem o bloco, `alertas.gadgetmetodo.pt` deixa de funcionar.
+- A pasta `subsites/` não está neste repositório e o `publicar.sh` nunca a apaga (não apaga nada no servidor).
+
 ### Formulário de contacto
 
 O formulário em `/contactos/` envia os pedidos para `formulario/enviar.php`, que precisa de PHP no alojamento. Cada pedido gera dois emails: o pedido para `info@gadgetmetodo.pt` (com cópia oculta opcional e resposta direta ao remetente) e uma confirmação de receção para quem o enviou. Depois de configurados na área reservada (Configuração, Comunicação), o destinatário, a cópia oculta, o nome do remetente, os assuntos e os textos da confirmação (que pode ser desativada) passam a ser os definidos aí; sem base de dados, valem os do `config.php`. O campo de mensagem aceita ditado por voz nos navegadores que o suportam. O pedido pode ser feito por uma empresa (ou outra organização), a opção por omissão, ou por um particular; neste caso o nome da empresa não é pedido e o pedido aparece como "Particular" no assunto do email, nos registos e na exportação.

@@ -1,3 +1,15 @@
+# >>> alertas.gadgetmetodo.pt (Gestão de Alertas)
+# O plano tem um só site: alertas.gadgetmetodo.pt é um alias desta pasta e é servido a partir de
+# /subsites/alertas (ponte do painel). Fica antes de todas as outras regras.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^alertas\.gadgetmetodo\.pt$ [NC]
+  RewriteCond %{REQUEST_URI} !^/subsites/alertas(/|$)
+  RewriteRule ^(.*)$ /subsites/alertas/$1 [L]
+</IfModule>
+# Por outros endereços (ex.: gadgetmetodo.pt/subsites/alertas/) a ponte responde 404: verificação no index.php.
+# <<< alertas.gadgetmetodo.pt
+
 # Configuração para alojamentos Apache ou LiteSpeed (ignorada noutros servidores).
 
 ErrorDocument 404 /404.html
