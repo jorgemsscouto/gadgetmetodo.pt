@@ -60,11 +60,13 @@ Com um programa de FTP (FileZilla, Cyberduck ou o gestor de ficheiros do alojame
 
 Se a pasta pública tiver uma página por omissão do alojamento (por exemplo `index.php` ou `default.html`), apagá-la.
 
-### Subdomínio alertas.gadgetmetodo.pt
+### Subdomínios alertas.gadgetmetodo.pt e certidoes.gadgetmetodo.pt
 
-O plano da Amen só tem um site (pasta `www`), por isso `alertas.gadgetmetodo.pt` é um alias deste site. O bloco no início do `.htaccess` (entre `# >>> alertas.gadgetmetodo.pt` e `# <<< alertas.gadgetmetodo.pt`) encaminha esse endereço, por reescrita interna, para `www/subsites/alertas`, onde fica a ponte do painel Gestão de Alertas (repositório `gestao_alertas`, pasta `ponte/`). Não altera `gadgetmetodo.pt` nem `www.gadgetmetodo.pt`.
+O plano da Amen só tem um site (pasta `www`), por isso cada subdomínio é um alias deste site. Um bloco por alias no início do `.htaccess` (entre `# >>> <alias>.gadgetmetodo.pt` e `# <<< <alias>.gadgetmetodo.pt`) encaminha esse endereço, por reescrita interna, para `www/subsites/<alias>`, onde fica uma ponte do repositório `gestao_alertas` (pasta `ponte/`). Não altera `gadgetmetodo.pt` nem `www.gadgetmetodo.pt`.
 
-- O bloco tem de ficar antes de todas as outras regras. Não o apagar: o `publicar.sh` envia este `.htaccess` e, sem o bloco, `alertas.gadgetmetodo.pt` deixa de funcionar.
+- `certidoes.gadgetmetodo.pt` (desde 09/11/2026): painel das certidões de não dívida, ponte em `www/subsites/certidoes`. O bloco deixa `/.well-known/acme-challenge/` no site, para a validação do certificado.
+- `alertas.gadgetmetodo.pt`: o mesmo painel, até passar para o portal de alertas jurídicos (repositório `alertas_juridicos`), ponte em `www/subsites/alertas`.
+- Os blocos têm de ficar antes de todas as outras regras. Não os apagar: o `publicar.sh` envia este `.htaccess` e, sem um bloco, o endereço respetivo deixa de funcionar. Os blocos são geridos no servidor por `deploy/alertas_htaccess.sh` do `gestao_alertas` (cópia, diff, aprovação e reposição); uma alteração feita lá tem de ser copiada para aqui, e vice-versa.
 - A pasta `subsites/` não está neste repositório e o `publicar.sh` nunca a apaga (não apaga nada no servidor).
 
 ### Formulário de contacto

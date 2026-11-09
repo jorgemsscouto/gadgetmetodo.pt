@@ -1,3 +1,17 @@
+# >>> certidoes.gadgetmetodo.pt (Gestão de Alertas)
+# O plano tem um só site: certidoes.gadgetmetodo.pt é um alias desta pasta e é servido a partir de
+# /subsites/certidoes (ponte do painel). Fica antes de todas as outras regras. A validação do certificado
+# (/.well-known/acme-challenge/) fica no site, para a emissão e a renovação automática.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^certidoes\.gadgetmetodo\.pt$ [NC]
+  RewriteCond %{REQUEST_URI} !^/subsites/certidoes(/|$)
+  RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+  RewriteRule ^(.*)$ /subsites/certidoes/$1 [L]
+</IfModule>
+# Por outros endereços (ex.: gadgetmetodo.pt/subsites/certidoes/) a ponte responde 404: verificação no index.php.
+# <<< certidoes.gadgetmetodo.pt
+
 # >>> alertas.gadgetmetodo.pt (Gestão de Alertas)
 # O plano tem um só site: alertas.gadgetmetodo.pt é um alias desta pasta e é servido a partir de
 # /subsites/alertas (ponte do painel). Fica antes de todas as outras regras.
