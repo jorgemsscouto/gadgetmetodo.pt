@@ -23,6 +23,7 @@
     "limit_reached": "Vous pouvez en choisir jusqu’à {max}. Retirez-en une pour en choisir une autre.",
     "selected_count": "{count} sur {max} choisies",
     "remove": "Retirer",
+    "other": "Autre",
     "error_send": "Nous n’avons pas pu envoyer vos réponses. Vérifiez votre connexion et réessayez.",
     "closed_title": "Cette enquête est terminée",
     "closed_text": "Merci de votre intérêt. Nous aurons bientôt le plaisir de vous présenter notre prochain voyage.",

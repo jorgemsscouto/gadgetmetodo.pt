@@ -7,13 +7,13 @@ declare(strict_types=1);
 
 const LTP_PAPEIS = ['admin' => 'Administrador', 'gestor' => 'Gestor', 'consulta' => 'Consulta'];
 const LTP_DESCRICAO_PAPEIS = [
-    'admin' => 'Tudo, incluindo utilizadores, revisão dos idiomas e eliminação de todos os dados.',
+    'admin' => 'Tudo, incluindo a configuração do inquérito (perguntas, tipos de resposta e textos), utilizadores, revisão dos idiomas e eliminação de todos os dados.',
     'gestor' => 'Resumo, respostas, clientes e convites (importação, ligações pessoais e envio em série), emails e dados de demonstração.',
     'consulta' => 'Só leitura: resumo, respostas e exportações das respostas e do ranking.',
 ];
 // Permissões por perfil
 const LTP_PERMISSOES = [
-    'admin' => ['ver', 'clientes', 'idiomas', 'utilizadores', 'apagar_tudo'],
+    'admin' => ['ver', 'clientes', 'idiomas', 'utilizadores', 'apagar_tudo', 'inquerito'],
     'gestor' => ['ver', 'clientes'],
     'consulta' => ['ver'],
 ];

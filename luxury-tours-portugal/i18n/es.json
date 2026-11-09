@@ -23,6 +23,7 @@
     "limit_reached": "Puede elegir hasta {max}. Quite una para elegir otra.",
     "selected_count": "{count} de {max} elegidas",
     "remove": "Quitar",
+    "other": "Otra",
     "error_send": "No hemos podido enviar sus respuestas. Compruebe su conexión e inténtelo de nuevo.",
     "closed_title": "Esta encuesta ha finalizado",
     "closed_text": "Gracias por su interés. Pronto le daremos noticias de nuestro próximo viaje.",

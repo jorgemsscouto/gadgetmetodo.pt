@@ -23,6 +23,7 @@
     "limit_reached": "Sie können bis zu {max} auswählen. Entfernen Sie eine, um eine andere zu wählen.",
     "selected_count": "{count} von {max} ausgewählt",
     "remove": "Entfernen",
+    "other": "Andere",
     "error_send": "Ihre Antworten konnten nicht gesendet werden. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
     "closed_title": "Diese Umfrage ist beendet",
     "closed_text": "Vielen Dank für Ihr Interesse. Wir freuen uns darauf, Ihnen bald unsere nächste Reise vorzustellen.",

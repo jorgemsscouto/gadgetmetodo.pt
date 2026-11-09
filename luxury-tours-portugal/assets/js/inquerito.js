@@ -1,5 +1,6 @@
 /* Inquérito Luxury Tours Portugal
-   Todos os textos vêm dos ficheiros i18n/*.json; este ficheiro só tem estrutura e comportamento.
+   Os passos, as perguntas e os tipos de resposta vêm da estrutura configurada no painel (D.structure); os textos, dos
+   ficheiros i18n/*.json com as alterações do painel. Este ficheiro só tem comportamento.
    As respostas são guardadas com códigos internos neutros (region_tuscany, intent_very_likely, ...). */
 (function () {
   'use strict';
@@ -16,7 +17,7 @@
     t: D.texts,
     vista: D.state === 'open' ? 'intro' : D.state, // intro | passo | fim | closed | unavailable
     passo: 1,
-    respostas: D.previous ? JSON.parse(JSON.stringify(D.previous)) : vazio(),
+    respostas: Object.assign(vazio(), D.previous ? JSON.parse(JSON.stringify(D.previous)) : {}),
     // Identificação: só pedida a quem entra pela ligação geral (sem convite)
     identidade: { name: '', email: '', phone: '', country: '' },
     aEnviar: false
@@ -24,8 +25,29 @@
   var pedeIdentidade = !D.token;
   var comHover = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
+  // Respostas em branco: lista nas perguntas de escolha múltipla e de ordenação, texto vazio nas de texto
   function vazio() {
-    return { regions: [], regions_other: '', intent: null, duration: null, group: null, budget: null, seasons: [], priorities: [], comment: '', contact: null };
+    var r = {};
+    Object.keys(S.questions).forEach(function (id) {
+      var q = S.questions[id];
+      r[id] = q.type === 'multipla' || q.type === 'ordenacao' ? [] : (q.type === 'texto_curto' || q.type === 'texto_longo' ? '' : null);
+      if (q.other) r[id + '_other'] = '';
+    });
+    return r;
+  }
+
+  function lista(id) {
+    if (!Array.isArray(estado.respostas[id])) estado.respostas[id] = estado.respostas[id] ? [estado.respostas[id]] : [];
+    return estado.respostas[id];
+  }
+
+  // Primeira escolha da primeira pergunta de ordenação (para o antetítulo, por exemplo "A sua primeira escolha: Toscana")
+  function primeiraEscolha() {
+    var ids = Object.keys(S.questions).filter(function (id) { return S.questions[id].type === 'ordenacao'; });
+    for (var i = 0; i < ids.length; i++) {
+      if (lista(ids[i])[0]) return lista(ids[i])[0];
+    }
+    return null;
   }
 
   /* Textos e formatação local */
@@ -108,14 +130,16 @@
     var r = (estado.t.regions || {})[codigo] || {};
     return el('span', { class: 'regiao-rotulo' }, [
       el('span', { class: 'regiao-nome', text: r.name || codigo }),
-      ' ',
-      el('span', { class: 'regiao-pais', text: '(' + (r.country || '') + ')' })
+      r.country ? ' ' : null,
+      r.country ? el('span', { class: 'regiao-pais', text: '(' + r.country + ')' }) : null
     ]);
   }
 
+  function infoOpcao(codigo) { return S.optionInfo[codigo] || {}; }
+
   function rotuloOpcao(codigo) {
     var texto = (estado.t.options || {})[codigo] || codigo;
-    var valores = S.budget[codigo];
+    var valores = infoOpcao(codigo).euros;
     if (!valores) return document.createTextNode(texto);
     var vars = {};
     if (valores.min !== undefined) vars.min = euros(valores.min);
@@ -183,7 +207,8 @@
       ])
     ]);
     var primeiro = true;
-    if (passo.id === 'contact' && pedeIdentidade) {
+    var ultimo = n === total;
+    if (ultimo && pedeIdentidade) {
       corpo.appendChild(campoIdentidade());
       primeiro = false;
     }
@@ -191,14 +216,13 @@
       corpo.appendChild(campoVista(campo, primeiro));
       primeiro = false;
     });
-    if (passo.id === 'contact') {
+    if (ultimo) {
       // Campo isco para robôs (invisível para pessoas)
       corpo.appendChild(el('div', { class: 'isco', 'aria-hidden': 'true' }, [
         el('input', { type: 'text', name: 'website', tabindex: '-1', autocomplete: 'off' })
       ]));
     }
     corpo.appendChild(el('p', { class: 'erro', role: 'alert', id: 'erro' }));
-    var ultimo = n === total;
     corpo.appendChild(el('div', { class: 'acoes' }, [
       el('button', { type: 'button', class: 'botao botao-secundario', onclick: function () { recuar(); } }, [
         seta('tras'), el('span', { text: t('ui.back') })
@@ -216,29 +240,34 @@
   }
 
   function campoVista(campo, principal) {
-    if (campo === 'regions') return campoRegioes(principal);
-    if (campo === 'comment') return campoComentario();
-    var def = S.fields[campo];
+    var def = S.questions[campo];
+    if (def.type === 'ordenacao') return campoOrdenacao(campo, principal);
+    if (def.type === 'texto_curto' || def.type === 'texto_longo') return campoTextoLivre(campo, principal);
     var chave = 'steps.' + campo;
     var id = 'q-' + campo;
     var grupo = el('fieldset', { class: 'campo', 'aria-labelledby': id, 'data-campo': campo });
-    if (campo === 'intent' && estado.respostas.regions[0]) {
-      grupo.appendChild(el('p', { class: 'olho olho-escolha' }, [preencher(t('steps.intent.kicker'), { region: nomeRegiao(estado.respostas.regions[0]) })]));
+    if (def.kicker && primeiraEscolha() && t(chave + '.kicker')) {
+      grupo.appendChild(el('p', { class: 'olho olho-escolha' }, [preencher(t(chave + '.kicker'), { region: nomeRegiao(primeiraEscolha()) })]));
     }
     grupo.appendChild(titulo(t(chave + '.title'), principal, id));
     if (t(chave + '.help')) grupo.appendChild(el('p', { class: 'ajuda', text: t(chave + '.help') }));
-    var lista = el('div', { class: 'opcoes' + (def.options.length > 4 ? ' opcoes-duas' : '') });
-    def.options.forEach(function (codigo) {
-      var multi = def.type === 'multi';
-      var marcado = multi ? estado.respostas[campo].indexOf(codigo) !== -1 : estado.respostas[campo] === codigo;
-      var input = el('input', {
-        type: multi ? 'checkbox' : 'radio', name: campo, value: codigo, checked: marcado,
-        onchange: function (e) { escolher(campo, codigo, e.target, multi); }
+    if (def.type === 'escala') {
+      grupo.appendChild(campoEscala(campo, def));
+    } else {
+      var multi = def.type === 'multipla';
+      var opcoes = el('div', { class: 'opcoes' + (def.options.length > 4 ? ' opcoes-duas' : '') });
+      def.options.forEach(function (codigo) {
+        var marcado = multi ? lista(campo).indexOf(codigo) !== -1 : estado.respostas[campo] === codigo;
+        var input = el('input', {
+          type: multi ? 'checkbox' : 'radio', name: campo, value: codigo, checked: marcado,
+          onchange: function (e) { escolher(campo, codigo, e.target, multi); }
+        });
+        opcoes.appendChild(el('label', { class: 'opcao' }, [input, el('span', { class: 'opcao-marca', 'aria-hidden': 'true' }), el('span', { class: 'opcao-texto' }, [rotuloOpcao(codigo)])]));
       });
-      lista.appendChild(el('label', { class: 'opcao' }, [input, el('span', { class: 'opcao-marca', 'aria-hidden': 'true' }), el('span', { class: 'opcao-texto' }, [rotuloOpcao(codigo)])]));
-    });
-    grupo.appendChild(lista);
-    if (campo === 'contact') {
+      grupo.appendChild(opcoes);
+      if (def.other) grupo.appendChild(campoOutra(campo));
+    }
+    if (def.privacy) {
       var priv = el('p', { class: 'privacidade' }, [t(pedeIdentidade ? 'steps.identity.privacy_text' : 'steps.contact.privacy_text')]);
       if (D.privacyUrl) {
         priv.appendChild(document.createTextNode(' '));
@@ -249,58 +278,119 @@
     return grupo;
   }
 
+  // Escala numérica (por exemplo, de 1 a 5), com os rótulos dos extremos
+  function campoEscala(campo, def) {
+    var chave = 'steps.' + campo;
+    var linha = el('div', { class: 'escala' });
+    def.options.forEach(function (codigo) {
+      var input = el('input', {
+        type: 'radio', name: campo, value: codigo, checked: estado.respostas[campo] === codigo,
+        onchange: function (e) { escolher(campo, codigo, e.target, false); }
+      });
+      linha.appendChild(el('label', { class: 'escala-valor' }, [input, el('span', { text: numero(Number(codigo)) })]));
+    });
+    var extremos = t(chave + '.min_label') || t(chave + '.max_label')
+      ? el('p', { class: 'escala-extremos', 'aria-hidden': 'true' }, [el('span', { text: t(chave + '.min_label') }), el('span', { text: t(chave + '.max_label') })])
+      : null;
+    return el('div', { class: 'escala-bloco' }, [linha, extremos]);
+  }
+
+  // Resposta livre "Outra", opcional, por baixo das opções
+  function campoOutra(campo) {
+    var id = 'outra-' + campo;
+    return el('div', { class: 'texto-livre' }, [
+      el('label', { for: id }, [t('steps.' + campo + '.other_label') || t('ui.other'), ' ', el('span', { class: 'opcional', text: '(' + t('ui.optional') + ')' })]),
+      el('input', {
+        type: 'text', id: id, maxlength: String(S.maxOther), placeholder: t('steps.' + campo + '.other_placeholder'),
+        value: estado.respostas[campo + '_other'] || '', autocomplete: 'off',
+        oninput: function (e) { estado.respostas[campo + '_other'] = e.target.value; }
+      })
+    ]);
+  }
+
   function escolher(campo, codigo, input, multi) {
     if (!multi) {
       estado.respostas[campo] = codigo;
     } else {
-      var lista = estado.respostas[campo];
-      var i = lista.indexOf(codigo);
+      var l = lista(campo);
+      var i = l.indexOf(codigo);
+      var max = S.questions[campo].max;
       if (input.checked && i === -1) {
-        if (campo === 'priorities' && lista.length >= S.maxPriorities) {
+        if (max && l.length >= max) {
           input.checked = false;
-          mostrarErro(preencher(t('ui.limit_reached'), { max: numero(S.maxPriorities) }));
+          mostrarErro(preencher(t('ui.limit_reached'), { max: numero(max) }));
           return;
         }
-        lista.push(codigo);
+        l.push(codigo);
       } else if (!input.checked && i !== -1) {
-        lista.splice(i, 1);
+        l.splice(i, 1);
       }
     }
     mostrarErro(null);
   }
 
-  function campoRegioes(principal) {
-    var grupo = el('fieldset', { class: 'campo', 'aria-labelledby': 'q-regions', 'data-campo': 'regions' }, [
-      titulo(t('steps.regions.title'), principal, 'q-regions'),
-      el('p', { class: 'ajuda', text: t('steps.regions.help') }),
-      el('p', { class: 'contagem', id: 'contagem', 'aria-live': 'polite' })
+  // Ordenação por preferência: cartões com nome, país ou detalhe e nota; o (i) mostra o mapa quando existe
+  function campoOrdenacao(campo, principal) {
+    var def = S.questions[campo];
+    var chave = 'steps.' + campo;
+    var grupo = el('fieldset', { class: 'campo', 'aria-labelledby': 'q-' + campo, 'data-campo': campo }, [
+      titulo(t(chave + '.title'), principal, 'q-' + campo),
+      t(chave + '.help') ? el('p', { class: 'ajuda', text: t(chave + '.help') }) : null,
+      el('p', { class: 'contagem', id: 'contagem-' + campo, 'aria-live': 'polite' })
     ]);
     var grelha = el('div', { class: 'regioes' });
-    S.regions.forEach(function (codigo) {
+    def.options.forEach(function (codigo) {
       var r = (estado.t.regions || {})[codigo] || {};
-      var botao = el('button', { type: 'button', class: 'regiao', 'data-codigo': codigo, onclick: function () { alternarRegiao(codigo); } }, [
+      var botao = el('button', { type: 'button', class: 'regiao', 'data-codigo': codigo, onclick: function () { alternarRegiao(campo, codigo); } }, [
         el('span', { class: 'regiao-ordem', 'aria-hidden': 'true' }),
         el('span', { class: 'sr regiao-ordem-sr' }),
         el('span', { class: 'regiao-conteudo' }, [
           el('span', { class: 'regiao-nome', text: r.name || codigo }),
-          el('span', { class: 'regiao-pais', text: '(' + (r.country || '') + ')' }),
-          el('span', { class: 'regiao-nota', text: r.note || '' })
+          r.country ? el('span', { class: 'regiao-pais', text: '(' + r.country + ')' }) : null,
+          r.note ? el('span', { class: 'regiao-nota', text: r.note }) : null
         ])
       ]);
-      grelha.appendChild(el('div', { class: 'regiao-cartao' }, [botao].concat(mapaRegiao(codigo, r))));
+      grelha.appendChild(el('div', { class: 'regiao-cartao' }, [botao].concat(infoOpcao(codigo).map ? mapaRegiao(codigo, r) : [])));
     });
     grupo.appendChild(grelha);
-    var outra = el('input', {
-      type: 'text', id: 'regiao-outra', maxlength: String(S.maxOther), placeholder: t('steps.regions.other_placeholder'),
-      value: estado.respostas.regions_other, autocomplete: 'off',
-      oninput: function (e) { estado.respostas.regions_other = e.target.value; }
-    });
-    grupo.appendChild(el('div', { class: 'texto-livre' }, [
-      el('label', { for: 'regiao-outra' }, [t('steps.regions.other_label'), ' ', el('span', { class: 'opcional', text: '(' + t('ui.optional') + ')' })]),
-      outra
-    ]));
-    setTimeout(atualizarRegioes, 0);
+    if (def.other) grupo.appendChild(campoOutra(campo));
+    setTimeout(function () { atualizarRegioes(campo); }, 0);
     return grupo;
+  }
+
+  // Resposta em texto (curto ou longo); como primeira pergunta do passo, o título é o cabeçalho do passo
+  function campoTextoLivre(campo, principal) {
+    var def = S.questions[campo];
+    var chave = 'steps.' + campo;
+    var id = 'texto-' + campo;
+    var rotulo = t(chave + '.title') || t(chave + '.label');
+    var atributos = {
+      id: id, maxlength: String(def.max || (def.type === 'texto_longo' ? S.maxComment : S.maxOther)), placeholder: t(chave + '.placeholder'),
+      autocomplete: 'off', oninput: function (e) { estado.respostas[campo] = e.target.value; mostrarErro(null); }
+    };
+    var opcional = def.required ? null : el('span', { class: 'opcional', text: '(' + t('ui.optional') + ')' });
+    var entrada;
+    if (def.type === 'texto_longo') {
+      atributos.rows = '4';
+      entrada = el('textarea', atributos, [estado.respostas[campo] || '']);
+    } else {
+      atributos.type = 'text';
+      atributos.value = estado.respostas[campo] || '';
+      entrada = el('input', atributos);
+    }
+    if (principal) {
+      entrada.setAttribute('aria-labelledby', 'q-' + campo);
+      return el('div', { class: 'campo', 'data-campo': campo }, [
+        titulo(rotulo, true, 'q-' + campo),
+        t(chave + '.help') ? el('p', { class: 'ajuda', text: t(chave + '.help') }) : null,
+        el('div', { class: 'texto-livre' }, [entrada])
+      ]);
+    }
+    return el('div', { class: 'texto-livre', 'data-campo': campo }, [
+      el('label', { for: id }, [rotulo, opcional ? ' ' : '', opcional]),
+      t(chave + '.help') ? el('p', { class: 'ajuda', text: t(chave + '.help') }) : null,
+      entrada
+    ]);
   }
 
   /* Identificação (ligação geral) */
@@ -369,11 +459,11 @@
   }
 
   function mapaRegiao(codigo, r) {
-    var nome = (r.name || codigo) + ' (' + (r.country || '') + ')';
+    var nome = (r.name || codigo) + (r.country ? ' (' + r.country + ')' : '');
     var rotulo = t('ui.map_label').replace('{region}', nome);
-    var ligacao = S.maps[codigo];
+    var ligacao = infoOpcao(codigo).map;
     var painel = el('div', { class: 'regiao-mapa', id: 'mapa-' + codigo, role: 'tooltip', hidden: true }, [
-      el('img', { src: 'assets/img/mapas/' + codigo + '.svg', alt: rotulo, width: '320', height: '220', loading: 'lazy', decoding: 'async' }),
+      infoOpcao(codigo).image ? el('img', { src: 'assets/img/mapas/' + codigo + '.svg', alt: rotulo, width: '320', height: '220', loading: 'lazy', decoding: 'async' }) : null,
       el('p', { class: 'regiao-mapa-titulo' }, [el('bdi', null, [nomeRegiao(codigo)])]),
       el('a', { class: 'regiao-mapa-ligacao', href: ligacao, target: '_blank', rel: 'noopener' }, [
         el('span', { text: t('ui.map_open') }),
@@ -439,52 +529,49 @@
     if (!e.target.closest || !e.target.closest('.regiao-info, .regiao-mapa')) fecharMapas(null);
   });
 
-  function alternarRegiao(codigo) {
-    var lista = estado.respostas.regions;
-    var i = lista.indexOf(codigo);
+  function alternarRegiao(campo, codigo) {
+    var l = lista(campo);
+    var max = S.questions[campo].max || 3;
+    var i = l.indexOf(codigo);
     if (i !== -1) {
-      lista.splice(i, 1);
-    } else if (lista.length >= S.maxRegions) {
-      mostrarErro(preencher(t('ui.limit_reached'), { max: numero(S.maxRegions) }));
+      l.splice(i, 1);
+    } else if (l.length >= max) {
+      mostrarErro(preencher(t('ui.limit_reached'), { max: numero(max) }));
       return;
     } else {
-      lista.push(codigo);
+      l.push(codigo);
     }
     mostrarErro(null);
-    atualizarRegioes();
+    atualizarRegioes(campo);
   }
 
-  function atualizarRegioes() {
-    var lista = estado.respostas.regions;
-    app.querySelectorAll('.regiao').forEach(function (b) {
-      var pos = lista.indexOf(b.getAttribute('data-codigo'));
+  function lugar(pos) {
+    return t('rank.' + (pos + 1)) || numero(pos + 1) + '.';
+  }
+
+  function atualizarRegioes(campo) {
+    var l = lista(campo);
+    var max = S.questions[campo].max || 3;
+    app.querySelectorAll('[data-campo="' + campo + '"] .regiao').forEach(function (b) {
+      var pos = l.indexOf(b.getAttribute('data-codigo'));
       b.setAttribute('aria-pressed', pos !== -1 ? 'true' : 'false');
-      b.querySelector('.regiao-ordem').textContent = pos !== -1 ? t('rank.' + (pos + 1)) : '';
-      b.querySelector('.regiao-ordem-sr').textContent = pos !== -1 ? t('rank_choice').replace('{rank}', t('rank.' + (pos + 1))) + ': ' : '';
+      b.querySelector('.regiao-ordem').textContent = pos !== -1 ? lugar(pos) : '';
+      b.querySelector('.regiao-ordem-sr').textContent = pos !== -1 ? t('rank_choice').replace('{rank}', lugar(pos)) + ': ' : '';
     });
-    var contagem = document.getElementById('contagem');
+    var contagem = document.getElementById('contagem-' + campo);
     if (contagem) {
       contagem.textContent = '';
-      contagem.appendChild(preencher(t('ui.selected_count'), { count: numero(lista.length), max: numero(S.maxRegions) }));
+      contagem.appendChild(preencher(t('ui.selected_count'), { count: numero(l.length), max: numero(max) }));
     }
-  }
-
-  function campoComentario() {
-    return el('div', { class: 'texto-livre' }, [
-      el('label', { for: 'comentario' }, [t('steps.comment.label'), ' ', el('span', { class: 'opcional', text: '(' + t('ui.optional') + ')' })]),
-      el('textarea', {
-        id: 'comentario', rows: '4', maxlength: String(S.maxComment), placeholder: t('steps.comment.placeholder'),
-        oninput: function (e) { estado.respostas.comment = e.target.value; }
-      }, [estado.respostas.comment])
-    ]);
   }
 
   function vistaFim() {
-    var r = estado.respostas;
-    var resumo = el('ol', { class: 'resumo' });
-    r.regions.forEach(function (codigo, i) {
+    var ordenacao = Object.keys(S.questions).filter(function (id) { return S.questions[id].type === 'ordenacao'; })[0];
+    var escolhas = ordenacao ? lista(ordenacao) : [];
+    var resumo = escolhas.length ? el('ol', { class: 'resumo' }) : null;
+    escolhas.forEach(function (codigo, i) {
       resumo.appendChild(el('li', null, [
-        el('span', { class: 'regiao-ordem', text: t('rank.' + (i + 1)) }),
+        el('span', { class: 'regiao-ordem', text: lugar(i) }),
         el('bdi', null, [nomeRegiao(codigo)])
       ]));
     });
@@ -492,7 +579,7 @@
       el('img', { class: 'selo', src: 'assets/img/selo.png', alt: '', width: '274', height: '259' }),
       el('h1', { tabindex: '-1', 'data-foco': true }, [D.name ? preencher(t('thanks.title_name'), { name: D.name }) : t('thanks.title')]),
       el('p', { class: 'lead', text: t('thanks.text') }),
-      el('h2', { class: 'olho', text: t('thanks.summary') }),
+      resumo ? el('h2', { class: 'olho', text: t('thanks.summary') }) : null,
       resumo,
       el('p', { class: 'assinatura', text: t('thanks.signature') }),
       el('div', { class: 'acoes acoes-centro' }, [
@@ -573,18 +660,20 @@
   }
 
   function validarPasso(n) {
-    if (S.steps[n - 1].id === 'contact' && pedeIdentidade) {
+    if (n === S.steps.length && pedeIdentidade) {
       var falhaId = validarIdentidade();
       if (falhaId) return falhaId;
     }
     var campos = S.steps[n - 1].fields;
     for (var i = 0; i < campos.length; i++) {
       var c = campos[i];
-      if (c === 'regions' && estado.respostas.regions.length === 0) return { campo: c, msg: t('ui.required_rank') };
-      var def = S.fields[c];
+      var def = S.questions[c];
       if (!def || !def.required) continue;
       var v = estado.respostas[c];
-      if (def.type === 'single' ? !v : !v.length) return { campo: c, msg: t('ui.required_one') };
+      if (def.type === 'ordenacao' && !lista(c).length) return { campo: c, msg: t(def.cards ? 'ui.required_rank' : 'ui.required_one') };
+      if (def.type === 'multipla' && !lista(c).length) return { campo: c, msg: t('ui.required_one') };
+      if ((def.type === 'unica' || def.type === 'escala') && !v) return { campo: c, msg: t('ui.required_one') };
+      if ((def.type === 'texto_curto' || def.type === 'texto_longo') && !String(v || '').trim()) return { campo: c, msg: t('ui.required_fields') };
     }
     return null;
   }
@@ -598,7 +687,7 @@
         falha.foco.focus();
         return;
       }
-      var alvo = app.querySelector('[data-campo="' + falha.campo + '"] input, [data-campo="' + falha.campo + '"] .regiao');
+      var alvo = app.querySelector('[data-campo="' + falha.campo + '"] input, [data-campo="' + falha.campo + '"] .regiao, [data-campo="' + falha.campo + '"] textarea');
       if (alvo) alvo.focus();
       return;
     }
@@ -666,7 +755,7 @@
 
   function carregarIdioma(codigo) {
     if (cache[codigo]) return Promise.resolve(cache[codigo]);
-    return fetch('i18n/' + codigo + '.json', { credentials: 'same-origin' }).then(function (r) {
+    return fetch('textos.php?lang=' + encodeURIComponent(codigo), { credentials: 'same-origin' }).then(function (r) {
       if (!r.ok) throw new Error('i18n');
       return r.json();
     }).then(function (j) { cache[codigo] = j; return j; });

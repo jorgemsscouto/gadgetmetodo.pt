@@ -190,6 +190,16 @@ function ltp_bd(): ?PDO
         contacto TEXT, demo INTEGER NOT NULL DEFAULT 0, criado TEXT NOT NULL, atualizado TEXT NOT NULL)');
     // Identificação de quem responde pela ligação geral (sem convite)
     ltp_acrescentar_colunas($pdo, 'respostas', ['ident_nome' => 'TEXT', 'ident_email' => 'TEXT', 'ident_telemovel' => 'TEXT', 'ident_pais' => 'TEXT']);
+    // Respostas em JSON (pergunta => valor), para o inquérito configurável; as respostas da versão anterior,
+    // guardadas em colunas fixas (regiao_1, intencao...), são convertidas uma vez
+    ltp_acrescentar_colunas($pdo, 'respostas', ['dados' => 'TEXT']);
+    $antigas = $pdo->query('SELECT * FROM respostas WHERE dados IS NULL')->fetchAll(PDO::FETCH_ASSOC);
+    if ($antigas) {
+        $st = $pdo->prepare('UPDATE respostas SET dados = ? WHERE id = ?');
+        foreach ($antigas as $r) {
+            $st->execute([json_encode(ltp_resposta_legado($r), JSON_UNESCAPED_UNICODE), $r['id']]);
+        }
+    }
     $pdo->exec('CREATE TABLE IF NOT EXISTS definicoes (chave TEXT PRIMARY KEY, valor TEXT)');
     // Utilizadores internos do painel
     $pdo->exec("CREATE TABLE IF NOT EXISTS utilizadores (
@@ -232,14 +242,30 @@ function ltp_definir(string $chave, string $valor): void
 
 /* Idiomas */
 
-function ltp_textos(string $idioma): array
+// Textos de um idioma: o ficheiro i18n com os textos alterados no painel por cima. O que faltar num idioma (por exemplo,
+// uma pergunta nova ainda sem tradução) vem do inglês e, se também faltar, do português.
+function ltp_textos(string $idioma, bool $renovar = false): array
 {
     static $cache = [];
+    if ($renovar) {
+        $cache = [];
+        return [];
+    }
     if (!in_array($idioma, LTP_IDIOMAS, true)) {
         $idioma = LTP_IDIOMA_PADRAO;
     }
     if (!isset($cache[$idioma])) {
-        $json = @file_get_contents(dirname(__DIR__) . '/i18n/' . $idioma . '.json');
+        $proprios = function (string $c) { return ltp_aplicar_caminhos(ltp_textos_ficheiro($c), ltp_textos_alterados($c)); };
+        $cache[$idioma] = array_replace_recursive($proprios('pt'), $proprios('en'), $proprios($idioma));
+    }
+    return $cache[$idioma];
+}
+
+function ltp_textos_ficheiro(string $idioma): array
+{
+    static $cache = [];
+    if (!isset($cache[$idioma])) {
+        $json = in_array($idioma, LTP_IDIOMAS, true) ? @file_get_contents(dirname(__DIR__) . '/i18n/' . $idioma . '.json') : false;
         $cache[$idioma] = $json ? (json_decode($json, true) ?: []) : [];
     }
     return $cache[$idioma];
@@ -383,8 +409,15 @@ function ltp_novo_token(): string
     return $t;
 }
 
-// Resposta guardada convertida no formato usado pela página
+// Resposta guardada no formato usado pela página (pergunta => valor)
 function ltp_resposta_para_pagina(array $r): array
+{
+    $dados = json_decode((string) ($r['dados'] ?? ''), true);
+    return is_array($dados) ? $dados : ltp_resposta_legado($r);
+}
+
+// Resposta da versão anterior, guardada em colunas fixas
+function ltp_resposta_legado(array $r): array
 {
     return [
         'regions' => array_values(array_filter([$r['regiao_1'], $r['regiao_2'], $r['regiao_3']])),
@@ -419,60 +452,10 @@ function ltp_limpar_texto($valor, int $maximo): string
     return mb_substr($t, 0, $maximo);
 }
 
-// Valida as respostas recebidas da página; devolve [respostas normalizadas, erro]
-function ltp_validar(array $r): array
-{
-    $regioes = is_array($r['regions'] ?? null) ? array_values($r['regions']) : [];
-    if (count($regioes) < 1 || count($regioes) > LTP_MAX_REGIOES || count(array_unique($regioes)) !== count($regioes)) {
-        return [null, 'regions'];
-    }
-    foreach ($regioes as $c) {
-        if (!in_array($c, LTP_REGIOES, true)) {
-            return [null, 'regions'];
-        }
-    }
-    $limpo = ['regions' => $regioes, 'regions_other' => ltp_limpar_texto($r['regions_other'] ?? '', LTP_MAX_OUTRA)];
-    foreach (LTP_CAMPOS as $campo => [$tipo, $opcoes, $obrigatorio]) {
-        $v = $r[$campo] ?? null;
-        if ($tipo === 'single') {
-            if (!is_string($v) || !in_array($v, $opcoes, true)) {
-                return [null, $campo];
-            }
-        } else {
-            $v = is_array($v) ? array_values(array_unique($v)) : [];
-            if (($obrigatorio && !$v) || ($campo === 'priorities' && count($v) > LTP_MAX_PRIORIDADES)) {
-                return [null, $campo];
-            }
-            foreach ($v as $c) {
-                if (!in_array($c, $opcoes, true)) {
-                    return [null, $campo];
-                }
-            }
-        }
-        $limpo[$campo] = $v;
-    }
-    $limpo['comment'] = ltp_limpar_texto($r['comment'] ?? '', LTP_MAX_COMENTARIO);
-    return [$limpo, null];
-}
-
 function ltp_guardar_resposta(PDO $pdo, array $v, string $idioma, ?int $clienteId, ?string $anonimo, bool $demo = false, ?string $quando = null, ?array $identidade = null): void
 {
     $agora = $quando ?? date('Y-m-d H:i:s');
-    $dados = [
-        'idioma' => $idioma,
-        'regiao_1' => $v['regions'][0] ?? null,
-        'regiao_2' => $v['regions'][1] ?? null,
-        'regiao_3' => $v['regions'][2] ?? null,
-        'regiao_outra' => $v['regions_other'],
-        'intencao' => $v['intent'],
-        'duracao' => $v['duration'],
-        'grupo' => $v['group'],
-        'orcamento' => $v['budget'],
-        'epocas' => implode(',', $v['seasons']),
-        'prioridades' => implode(',', $v['priorities']),
-        'comentario' => $v['comment'],
-        'contacto' => $v['contact'],
-    ];
+    $dados = ['idioma' => $idioma, 'dados' => json_encode($v, JSON_UNESCAPED_UNICODE)];
     if ($identidade !== null) {
         $dados += [
             'ident_nome' => $identidade['nome'], 'ident_email' => $identidade['email'],
@@ -532,3 +515,5 @@ function ltp_enviar_csv(string $nome, array $cabecalho, iterable $linhas): void
     }
     fclose($saida);
 }
+
+require_once __DIR__ . '/estrutura.php';

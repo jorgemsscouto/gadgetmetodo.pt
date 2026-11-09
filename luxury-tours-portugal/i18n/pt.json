@@ -23,6 +23,7 @@
     "limit_reached": "Pode escolher até {max}. Retire uma para escolher outra.",
     "selected_count": "{count} de {max} escolhidas",
     "remove": "Retirar",
+    "other": "Outra",
     "error_send": "Não foi possível enviar as respostas. Verifique a ligação à internet e tente novamente.",
     "closed_title": "Este inquérito já terminou",
     "closed_text": "Agradecemos o seu interesse. Em breve daremos notícias da nossa próxima viagem.",

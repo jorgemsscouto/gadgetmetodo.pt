@@ -19,3 +19,19 @@
     });
   });
 })();
+
+/* Editor do inquérito: mostra só os campos próprios do tipo de resposta escolhido ([data-para="tipo1 tipo2"]). */
+(function () {
+  'use strict';
+  var tipo = document.querySelector('select[data-tipo]');
+  if (!tipo) return;
+  function aplicar() {
+    document.querySelectorAll('[data-para]').forEach(function (n) {
+      var mostrar = n.getAttribute('data-para').split(' ').indexOf(tipo.value) !== -1;
+      n.hidden = !mostrar;
+      n.querySelectorAll('input, select').forEach(function (c) { c.disabled = !mostrar; });
+    });
+  }
+  tipo.addEventListener('change', aplicar);
+  aplicar();
+})();

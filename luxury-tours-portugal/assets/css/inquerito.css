@@ -768,6 +768,63 @@ h3.pergunta {
   outline-offset: 3px;
 }
 
+/* Escala numérica (por exemplo, de 0 a 10) */
+
+.escala-bloco {
+  margin-block-start: 4px;
+}
+
+.escala {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+  gap: 6px;
+}
+
+.escala-valor {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-block-size: 48px;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  cursor: pointer;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.escala-valor:hover {
+  border-color: var(--linha-forte);
+}
+
+.escala-valor input {
+  position: absolute;
+  opacity: 0;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: 0;
+}
+
+.escala-valor:has(input:checked) {
+  border-color: var(--tinta);
+  background: var(--tinta);
+  color: #fff;
+}
+
+.escala-valor:has(input:focus-visible) {
+  outline: 2px solid var(--ouro-texto);
+  outline-offset: 3px;
+}
+
+.escala-extremos {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
 /* Texto livre */
 
 .texto-livre {

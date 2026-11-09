@@ -23,6 +23,7 @@
     "limit_reached": "You can choose up to {max}. Remove one to choose another.",
     "selected_count": "{count} of {max} chosen",
     "remove": "Remove",
+    "other": "Other",
     "error_send": "We could not send your answers. Please check your connection and try again.",
     "closed_title": "This survey is now closed",
     "closed_text": "Thank you for your interest. We look forward to sharing our next journey with you.",

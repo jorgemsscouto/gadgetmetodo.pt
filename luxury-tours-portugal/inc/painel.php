@@ -5,60 +5,7 @@
 declare(strict_types=1);
 
 const LTP_NOMES_IDIOMAS = ['pt' => 'Português', 'en' => 'Inglês', 'es' => 'Espanhol', 'fr' => 'Francês', 'de' => 'Alemão', 'el' => 'Grego', 'ar' => 'Árabe'];
-const LTP_ROTULOS_CAMPOS = [
-    'intent' => 'Intenção de viajar (próximos dois anos)',
-    'duration' => 'Duração preferida',
-    'group' => 'Com quem viajaria',
-    'budget' => 'Orçamento por pessoa (sem voos)',
-    'seasons' => 'Época preferida (escolha múltipla)',
-    'priorities' => 'O que torna a viagem inesquecível (até três)',
-    'contact' => 'Aceita ser contactado',
-];
-// Colunas da tabela respostas correspondentes a cada campo do inquérito
-const LTP_COLUNAS = [
-    'intent' => 'intencao', 'duration' => 'duracao', 'group' => 'grupo', 'budget' => 'orcamento',
-    'seasons' => 'epocas', 'priorities' => 'prioridades', 'contact' => 'contacto',
-];
-
-function ltp_euros_pt(int $valor): string
-{
-    if (class_exists('NumberFormatter')) {
-        $f = new NumberFormatter('pt-PT', NumberFormatter::CURRENCY);
-        $f->setAttribute(NumberFormatter::MAX_FRACTION_DIGITS, 0);
-        $texto = $f->formatCurrency($valor, 'EUR');
-        if (is_string($texto)) {
-            return $texto;
-        }
-    }
-    return number_format($valor, 0, ',', $valor >= 10000 ? ' ' : '') . ' €';
-}
-
-function ltp_rotulo_regiao(?string $codigo): string
-{
-    if ($codigo === null || $codigo === '') {
-        return '';
-    }
-    $r = ltp_textos('pt')['regions'][$codigo] ?? null;
-    return $r ? $r['name'] . ' (' . $r['country'] . ')' : $codigo;
-}
-
-function ltp_rotulo_opcao(?string $codigo): string
-{
-    if ($codigo === null || $codigo === '') {
-        return '';
-    }
-    $texto = ltp_textos('pt')['options'][$codigo] ?? $codigo;
-    $v = LTP_ORCAMENTO_VALORES[$codigo] ?? [];
-    foreach ($v as $k => $n) {
-        $texto = str_replace('{' . $k . '}', ltp_euros_pt($n), $texto);
-    }
-    return $texto;
-}
-
-function ltp_rotulos_lista(?string $codigos): string
-{
-    return implode('; ', array_map('ltp_rotulo_opcao', array_filter(explode(',', (string) $codigos))));
-}
+// As perguntas, as opções e os rótulos vêm da estrutura configurada (inc/estrutura.php)
 
 // Data e hora no formato português (dd/mm/aaaa hh:mm)
 function ltp_data_pt(?string $iso, bool $comHora = true): string
@@ -84,25 +31,40 @@ function ltp_respostas(PDO $pdo, ?string $idioma): array
     }
     $st = $pdo->prepare($sql . ' ORDER BY r.atualizado DESC');
     $st->execute($par);
-    return $st->fetchAll(PDO::FETCH_ASSOC);
+    $linhas = $st->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($linhas as &$r) {
+        $r['_dados'] = ltp_resposta_para_pagina($r);
+    }
+    unset($r);
+    return $linhas;
 }
 
-// Ranking ponderado: 3 pontos para o 1.º lugar, 2 para o 2.º e 1 para o 3.º
-function ltp_ranking(array $respostas): array
+// Pontos por lugar numa pergunta de ordenação: N pelo 1.º lugar, N-1 pelo 2.º... (N = máximo de escolhas; 3-2-1 por omissão)
+function ltp_lugares(array $p): int
 {
+    return max(1, $p['max'] ?: 3);
+}
+
+function ltp_pontos_texto(array $p): string
+{
+    return implode('-', range(ltp_lugares($p), 1));
+}
+
+// Ranking ponderado de uma pergunta de ordenação; em caso de empate, conta o número de vezes em 1.º lugar
+function ltp_ranking(array $respostas, array $p): array
+{
+    $n = ltp_lugares($p);
     $linhas = [];
-    foreach (LTP_REGIOES as $c) {
+    foreach (ltp_opcoes($p) as $c) {
         $linhas[$c] = ['codigo' => $c, 'pontos' => 0, 'primeiro' => 0, 'mencoes' => 0];
     }
     foreach ($respostas as $r) {
-        foreach (['regiao_1' => 3, 'regiao_2' => 2, 'regiao_3' => 1] as $col => $pts) {
-            $c = $r[$col];
-            if ($c && isset($linhas[$c])) {
-                $linhas[$c]['pontos'] += $pts;
-                $linhas[$c]['mencoes']++;
-                if ($pts === 3) {
-                    $linhas[$c]['primeiro']++;
-                }
+        foreach (array_slice(ltp_valor($r['_dados'], $p), 0, $n) as $i => $c) {
+            $linhas[$c] = $linhas[$c] ?? ['codigo' => $c, 'pontos' => 0, 'primeiro' => 0, 'mencoes' => 0];
+            $linhas[$c]['pontos'] += $n - $i;
+            $linhas[$c]['mencoes']++;
+            if ($i === 0) {
+                $linhas[$c]['primeiro']++;
             }
         }
     }
@@ -111,20 +73,43 @@ function ltp_ranking(array $respostas): array
     return $linhas;
 }
 
-function ltp_distribuicao(array $respostas, string $campo): array
+// Contagem por opção (escolha única, múltipla ou escala); respostas a opções entretanto retiradas também contam
+function ltp_distribuicao(array $respostas, array $p): array
 {
-    [$tipo, $opcoes] = LTP_CAMPOS[$campo];
-    $contagem = array_fill_keys($opcoes, 0);
-    $col = LTP_COLUNAS[$campo];
+    $contagem = array_fill_keys(ltp_opcoes($p), 0);
     foreach ($respostas as $r) {
-        $valores = $tipo === 'multi' ? array_filter(explode(',', (string) $r[$col])) : [$r[$col]];
-        foreach ($valores as $v) {
-            if (isset($contagem[$v])) {
-                $contagem[$v]++;
-            }
+        $v = ltp_valor($r['_dados'], $p);
+        foreach (is_array($v) ? $v : ($v === '' ? [] : [$v]) as $c) {
+            $contagem[$c] = ($contagem[$c] ?? 0) + 1;
         }
     }
     return $contagem;
+}
+
+// Número de respostas dadas a uma pergunta (para perguntas opcionais e para o editor)
+function ltp_respondidas(array $respostas, array $p): int
+{
+    return count(array_filter($respostas, function ($r) use ($p) { $v = ltp_valor($r['_dados'], $p); return is_array($v) ? (bool) $v : $v !== ''; }));
+}
+
+function ltp_media_escala(array $respostas, array $p): ?float
+{
+    $valores = array_filter(array_map(function ($r) use ($p) { return ltp_valor($r['_dados'], $p); }, $respostas), 'is_numeric');
+    return $valores ? array_sum($valores) / count($valores) : null;
+}
+
+// Textos livres de uma pergunta (resposta de texto ou "Outra"), dos mais recentes para os mais antigos
+function ltp_textos_livres(array $respostas, array $p): array
+{
+    $chave = in_array($p['tipo'], ['texto_curto', 'texto_longo'], true) ? $p['id'] : $p['id'] . '_other';
+    return array_values(array_filter(array_map(function ($r) use ($chave) { return trim((string) ($r['_dados'][$chave] ?? '')); }, $respostas), 'strlen'));
+}
+
+// Pergunta de consentimento para contacto (a do inquérito original), se existir
+function ltp_pergunta_contacto(): ?array
+{
+    $p = ltp_perguntas_ativas()['contact'] ?? null;
+    return $p && in_array('contact_yes', $p['opcoes'], true) ? $p : null;
 }
 
 // Taxa de resposta dos clientes convidados, pelo idioma da lista de clientes ('' = sem idioma definido)
@@ -243,37 +228,72 @@ function ltp_importar_csv(PDO $pdo, string $conteudo): array
 
 /* Exportações */
 
+// Uma linha por resposta, com uma coluna por pergunta (nas de ordenação, uma por lugar); as perguntas desativadas
+// continuam a sair, para não se perderem respostas já recolhidas
 function ltp_exportar_respostas(PDO $pdo, ?string $idioma): void
 {
+    $perguntas = ltp_todas_perguntas();
+    $cabecalho = ['Data da resposta', 'Última alteração', 'Idioma', 'Origem', 'Nome', 'Email', 'Telemóvel', 'País'];
+    foreach ($perguntas as $p) {
+        $rotulo = ltp_rotulo_pergunta($p) . ($p['ativa'] ? '' : ' (desativada)');
+        if ($p['tipo'] === 'ordenacao') {
+            for ($i = 1; $i <= ltp_lugares($p); $i++) {
+                $cabecalho[] = $rotulo . ': ' . $i . '.º lugar';
+            }
+        } else {
+            $cabecalho[] = $rotulo;
+        }
+        if ($p['outra']) {
+            $cabecalho[] = $rotulo . ': outra';
+        }
+    }
+    $cabecalho[] = 'Demonstração';
     $linhas = [];
     foreach (ltp_respostas($pdo, $idioma) as $r) {
-        $linhas[] = [
+        $l = [
             $r['criado'], $r['atualizado'], LTP_NOMES_IDIOMAS[$r['idioma']] ?? $r['idioma'],
             $r['cliente_id'] ? 'Convite' : 'Ligação geral',
             (string) ($r['cliente_id'] ? $r['nome'] : $r['ident_nome']), (string) ($r['cliente_id'] ? $r['email'] : $r['ident_email']),
             (string) $r['ident_telemovel'], $r['cliente_id'] ? (string) $r['pais_cliente'] : (ltp_paises()[$r['ident_pais'] ?? ''] ?? ''),
-            ltp_rotulo_regiao($r['regiao_1']), ltp_rotulo_regiao($r['regiao_2']), ltp_rotulo_regiao($r['regiao_3']), (string) $r['regiao_outra'],
-            ltp_rotulo_opcao($r['intencao']), ltp_rotulo_opcao($r['duracao']), ltp_rotulo_opcao($r['grupo']), ltp_rotulo_opcao($r['orcamento']),
-            ltp_rotulos_lista($r['epocas']), ltp_rotulos_lista($r['prioridades']), (string) $r['comentario'], ltp_rotulo_opcao($r['contacto']),
-            $r['demo'] ? 'Sim' : 'Não',
         ];
+        foreach ($perguntas as $p) {
+            $v = ltp_valor($r['_dados'], $p);
+            if ($p['tipo'] === 'ordenacao') {
+                for ($i = 0; $i < ltp_lugares($p); $i++) {
+                    $l[] = ltp_rotulo_resposta($p, $v[$i] ?? null);
+                }
+            } elseif (is_array($v)) {
+                $l[] = implode('; ', array_map(function ($c) use ($p) { return ltp_rotulo_resposta($p, $c); }, $v));
+            } else {
+                $l[] = in_array($p['tipo'], ['texto_curto', 'texto_longo'], true) ? $v : ltp_rotulo_resposta($p, $v);
+            }
+            if ($p['outra']) {
+                $l[] = (string) ($r['_dados'][$p['id'] . '_other'] ?? '');
+            }
+        }
+        $l[] = $r['demo'] ? 'Sim' : 'Não';
+        $linhas[] = $l;
     }
-    ltp_enviar_csv('respostas-luxury-tours-' . ($idioma ?? 'todos') . '-' . date('Y-m-d') . '.csv', [
-        'Data da resposta', 'Última alteração', 'Idioma', 'Origem', 'Nome', 'Email', 'Telemóvel', 'País', '1.º lugar', '2.º lugar', '3.º lugar', 'Outra região',
-        'Intenção', 'Duração', 'Com quem viajaria', 'Orçamento por pessoa', 'Época', 'Prioridades', 'Comentário', 'Contacto', 'Demonstração',
-    ], $linhas);
+    ltp_enviar_csv('respostas-luxury-tours-' . ($idioma ?? 'todos') . '-' . date('Y-m-d') . '.csv', $cabecalho, $linhas);
 }
 
-function ltp_exportar_ranking(PDO $pdo, ?string $idioma): void
+// Ranking de uma pergunta de ordenação (por omissão, a primeira)
+function ltp_exportar_ranking(PDO $pdo, ?string $idioma, ?string $perguntaId = null): void
 {
+    $ordenacoes = array_filter(ltp_todas_perguntas(), fn($p) => $p['tipo'] === 'ordenacao');
+    $p = $ordenacoes[$perguntaId ?? ''] ?? (reset($ordenacoes) ?: null);
+    if (!$p) {
+        ltp_enviar_csv('ranking-luxury-tours.csv', ['Sem perguntas de ordenação'], []);
+        return;
+    }
     $respostas = ltp_respostas($pdo, $idioma);
     $n = count($respostas);
     $linhas = [];
-    foreach (ltp_ranking($respostas) as $i => $l) {
-        $linhas[] = [$i + 1, ltp_rotulo_regiao($l['codigo']), $l['pontos'], $l['primeiro'], $l['mencoes'], ltp_percentagem($l['mencoes'], $n)];
+    foreach (ltp_ranking($respostas, $p) as $i => $l) {
+        $linhas[] = [$i + 1, ltp_rotulo_resposta($p, $l['codigo']), $l['pontos'], $l['primeiro'], $l['mencoes'], ltp_percentagem($l['mencoes'], $n)];
     }
-    ltp_enviar_csv('ranking-luxury-tours-' . ($idioma ?? 'todos') . '-' . date('Y-m-d') . '.csv',
-        ['Posição', 'Região', 'Pontos (3-2-1)', 'Vezes em 1.º lugar', 'Menções', '% de respondentes'], $linhas);
+    ltp_enviar_csv('ranking-luxury-tours-' . $p['id'] . '-' . ($idioma ?? 'todos') . '-' . date('Y-m-d') . '.csv',
+        ['Posição', ltp_rotulo_pergunta($p), 'Pontos (' . ltp_pontos_texto($p) . ')', 'Vezes em 1.º lugar', 'Menções', '% de respondentes'], $linhas);
 }
 
 // CSV para mail merge: uma linha por cliente, com o idioma, a saudação, o assunto e a ligação pessoal
@@ -329,24 +349,41 @@ function ltp_gerar_demo(PDO $pdo): int
         'budget' => ['budget_up_to_5000' => 12, 'budget_5000_10000' => 38, 'budget_10000_20000' => 30, 'budget_over_20000' => 12, 'budget_undisclosed' => 8],
         'contact' => ['contact_yes' => 82, 'contact_no' => 18],
     ];
-    $pesosEpocas = ['season_spring' => 40, 'season_summer' => 18, 'season_harvest' => 52, 'season_winter' => 10, 'season_flexible' => 20];
-    $pesosPrioridades = ['priority_private_access' => 44, 'priority_winemakers' => 40, 'priority_dining' => 36, 'priority_hotels' => 30, 'priority_culture' => 18, 'priority_wellness' => 12, 'priority_transfers' => 14];
+    $pesos['regions'] = $pesosRegioes;
+    $pesos['seasons'] = ['season_spring' => 40, 'season_summer' => 18, 'season_harvest' => 52, 'season_winter' => 10, 'season_flexible' => 20];
+    $pesos['priorities'] = ['priority_private_access' => 44, 'priority_winemakers' => 40, 'priority_dining' => 36, 'priority_hotels' => 30, 'priority_culture' => 18, 'priority_wellness' => 12, 'priority_transfers' => 14];
+    $quantas = ['seasons' => [1, 2], 'priorities' => [2, 3]];
     $amostra = function (array $p, int $n) use ($escolher) {
         $r = [];
         while (count($r) < $n && $p) {
             $k = $escolher($p);
-            $r[] = $k;
+            $r[] = (string) $k;
             unset($p[$k]);
         }
         return $r;
     };
-    $gerarRespostas = function () use ($escolher, $amostra, $pesosRegioes, $pesos, $pesosEpocas, $pesosPrioridades) {
-        $v = ['regions' => $amostra($pesosRegioes, mt_rand(1, 10) > 2 ? 3 : mt_rand(1, 2)), 'regions_other' => '', 'comment' => ''];
-        foreach ($pesos as $campo => $p) {
-            $v[$campo] = $escolher($p);
+    // Respostas simuladas para cada pergunta ativa, com pesos realistas nas perguntas do inquérito original
+    $gerarRespostas = function () use ($escolher, $amostra, $pesos, $quantas) {
+        $v = [];
+        foreach (ltp_perguntas_ativas() as $id => $p) {
+            $opcoes = ltp_opcoes($p);
+            $pp = array_intersect_key($pesos[$id] ?? [], array_flip($opcoes)) ?: array_combine($opcoes, $p['tipo'] === 'escala' ? range(1, count($opcoes)) : array_fill(0, count($opcoes), 1));
+            if (!$opcoes) {
+                $v[$id] = '';
+            } elseif ($p['tipo'] === 'ordenacao') {
+                $max = min(ltp_lugares($p), count($opcoes));
+                $v[$id] = $amostra($pp, mt_rand(1, 10) > 2 ? $max : mt_rand(1, $max));
+            } elseif ($p['tipo'] === 'multipla') {
+                [$de, $ate] = $quantas[$id] ?? [1, min(3, count($opcoes))];
+                $ate = min($ate, $p['max'] ?: $ate, count($opcoes));
+                $v[$id] = $amostra($pp, mt_rand(min($de, $ate), $ate));
+            } else {
+                $v[$id] = (string) $escolher($pp);
+            }
+            if ($p['outra']) {
+                $v[$id . '_other'] = '';
+            }
         }
-        $v['seasons'] = $amostra($pesosEpocas, mt_rand(1, 2));
-        $v['priorities'] = $amostra($pesosPrioridades, mt_rand(2, 3));
         return $v;
     };
 

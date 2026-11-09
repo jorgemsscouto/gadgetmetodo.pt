@@ -1,6 +1,7 @@
 <?php
 // Inquérito Luxury Tours Portugal: página pública. O conteúdo é desenhado por assets/js/inquerito.js
-// a partir dos ficheiros de tradução em i18n/; aqui só se resolve o idioma inicial e o convite.
+// a partir da estrutura configurada no painel e dos textos (ficheiros i18n/ e alterações do painel);
+// aqui só se resolve o idioma inicial e o convite.
 // A tradução automática do navegador fica desligada (translate="no"): o inquérito tem as suas próprias traduções.
 
 declare(strict_types=1);
@@ -36,17 +37,11 @@ $dados = [
     'previous' => $anterior ? ltp_resposta_para_pagina($anterior) : null,
     'closeDate' => $fecho ? $fecho->format('Y-m-d') : null,
     'privacyUrl' => (string) ltp_cfg()['privacidade_url'],
-    'structure' => [
-        'steps' => LTP_PASSOS,
-        'regions' => LTP_REGIOES,
-        'maxRegions' => LTP_MAX_REGIOES,
-        'maxPriorities' => LTP_MAX_PRIORIDADES,
-        'fields' => array_map(fn($c) => ['type' => $c[0], 'options' => $c[1], 'required' => $c[2]], LTP_CAMPOS),
-        'budget' => LTP_ORCAMENTO_VALORES,
+    // Passos, perguntas e opções configurados no painel (separador Inquérito)
+    'structure' => ltp_estrutura_para_pagina() + [
         'maxComment' => LTP_MAX_COMENTARIO,
         'maxOther' => LTP_MAX_OUTRA,
         'maxName' => LTP_MAX_NOME,
-        'maps' => array_combine(LTP_REGIOES, array_map('ltp_ligacao_mapa', LTP_REGIOES)),
         // Só na ligação geral: os países (códigos ISO) para a identificação; os nomes são traduzidos no navegador
         'countries' => $cliente ? [] : array_keys(ltp_paises()),
     ],

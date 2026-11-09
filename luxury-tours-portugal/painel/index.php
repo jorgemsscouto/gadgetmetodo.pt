@@ -8,6 +8,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/inc/nucleo.php';
 require dirname(__DIR__) . '/inc/painel.php';
 require dirname(__DIR__) . '/inc/email.php';
+require dirname(__DIR__) . '/inc/editor.php';
 require dirname(__DIR__) . '/inc/utilizadores.php';
 
 header('X-Robots-Tag: noindex, nofollow');
@@ -100,6 +101,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     ];
     if (isset($permissoesAcoes[$acao]) && !ltp_pode($eu, $permissoesAcoes[$acao])) {
         voltar('', 'O seu perfil não permite esta ação.', 'erro');
+    }
+    // Editor do inquérito (separador Inquérito)
+    if (strpos($acao, 'inq_') === 0) {
+        if (!ltp_pode($eu, 'inquerito')) {
+            voltar('', 'O seu perfil não permite esta ação.', 'erro');
+        }
+        [$consulta, $mensagem, $tipo] = ltp_editor_acao($acao, $pdo);
+        voltar($consulta, $mensagem, $tipo);
     }
     switch ($acao) {
         case 'criar_utilizador':
@@ -240,7 +249,7 @@ if ($entrou && $descarregar !== '') {
         exit;
     }
     if ($descarregar === 'ranking') {
-        ltp_exportar_ranking($pdo, $idioma);
+        ltp_exportar_ranking($pdo, $idioma, is_string($_GET['pergunta'] ?? null) ? $_GET['pergunta'] : null);
         exit;
     }
     if ($descarregar === 'mail_merge') {
@@ -257,6 +266,9 @@ if (ltp_pode($eu, 'clientes')) {
     $vistas['clientes'] = 'Clientes e convites';
 }
 $vistas['respostas'] = 'Respostas';
+if (ltp_pode($eu, 'inquerito')) {
+    $vistas['inquerito'] = 'Inquérito';
+}
 if (ltp_pode($eu, 'idiomas')) {
     $vistas['idiomas'] = 'Idiomas';
 }
@@ -393,9 +405,8 @@ function barras(array $contagem, int $total, callable $rotulo): string
         $responderam = array_sum(array_column($taxas, 'responderam'));
     }
     $gerais = count(array_filter($respostas, fn($r) => $r['cliente_id'] === null));
-    $contacto = count(array_filter($respostas, fn($r) => $r['contacto'] === 'contact_yes'));
-    $ranking = ltp_ranking($respostas);
-    $maxPontos = max(1, $ranking[0]['pontos'] ?? 0);
+    $pContacto = ltp_pergunta_contacto();
+    $contacto = $pContacto ? count(array_filter($respostas, fn($r) => ltp_valor($r['_dados'], $pContacto) === 'contact_yes')) : 0;
     $q = $filtro ? '&idioma=' . $filtro : '';
 ?>
   <div class="titulo-linha">
@@ -407,26 +418,39 @@ function barras(array $contagem, int $total, callable $rotulo): string
     <div class="indicador"><span class="valor"><?= $n ?></span><span class="rotulo">Respostas<?= $filtro ? ' neste idioma' : '' ?></span></div>
     <div class="indicador"><span class="valor"><?= ltp_percentagem($responderam, $convidados) ?></span><span class="rotulo">Taxa de resposta (<?= $responderam ?> de <?= $convidados ?> convidados<?= $filtro ? ' com este idioma na lista' : '' ?>)</span></div>
     <div class="indicador"><span class="valor"><?= $gerais ?></span><span class="rotulo">Respostas pela ligação geral, sem convite</span></div>
+<?php if ($pContacto): ?>
     <div class="indicador"><span class="valor"><?= ltp_percentagem($contacto, $n) ?></span><span class="rotulo">Aceitam ser contactados (<?= $contacto ?>)</span></div>
+<?php endif; ?>
   </div>
 
+<?php if ($n === 0): ?>
+  <section class="bloco"><p class="vazio">Ainda não há respostas<?= $filtro ? ' neste idioma' : '' ?>.</p></section>
+<?php endif; ?>
+<?php
+    // Uma secção por pergunta ativa, pela ordem do inquérito: ranking nas de ordenação, barras nas de escolha e na
+    // escala, e as respostas mais recentes nas de texto
+    $grelhaAberta = false;
+    foreach ($n > 0 ? ltp_perguntas_ativas() : [] as $pid => $p):
+        $rotular = fn($c) => ltp_rotulo_resposta($p, (string) $c);
+        $livres = $p['outra'] || in_array($p['tipo'], ['texto_curto', 'texto_longo'], true) ? ltp_textos_livres($respostas, $p) : [];
+        if ($p['tipo'] === 'ordenacao'):
+            if ($grelhaAberta) { echo "  </div>\n"; $grelhaAberta = false; }
+            $ranking = ltp_ranking($respostas, $p);
+            $maxPontos = max(1, $ranking[0]['pontos'] ?? 0); ?>
   <section class="bloco">
     <div class="titulo-linha">
-      <h2>Ranking das regiões</h2>
-      <a class="botao botao-secundario" href="?descarregar=ranking<?= $q ?>">Exportar ranking (CSV)</a>
+      <h2><?= ltp_h(ltp_rotulo_pergunta($p)) ?></h2>
+      <a class="botao botao-secundario" href="?descarregar=ranking&amp;pergunta=<?= ltp_h($pid) ?><?= $q ?>">Exportar ranking (CSV)</a>
     </div>
-    <p class="nota">Pontuação ponderada: 3 pontos pelo 1.º lugar, 2 pelo 2.º e 1 pelo 3.º. Em caso de empate, conta o número de vezes em 1.º lugar.</p>
-<?php if ($n === 0): ?>
-    <p class="vazio">Ainda não há respostas<?= $filtro ? ' neste idioma' : '' ?>.</p>
-<?php else: ?>
+    <p class="nota">Pontuação ponderada: <?= ltp_h(implode(', ', array_map(fn($i) => (ltp_lugares($p) - $i + 1) . ($i === ltp_lugares($p) ? ' ponto' : ' pontos') . ' pelo ' . $i . '.º lugar', range(1, ltp_lugares($p))))) ?>. Em caso de empate, conta o número de vezes em 1.º lugar.</p>
     <div class="tabela-rolante">
     <table class="tabela ranking">
-      <thead><tr><th scope="col">#</th><th scope="col">Região</th><th scope="col" class="coluna-barra">Pontos</th><th scope="col" class="num">Pontos</th><th scope="col" class="num">1.º lugar</th><th scope="col" class="num">Menções</th><th scope="col" class="num">% respondentes</th></tr></thead>
+      <thead><tr><th scope="col">#</th><th scope="col">Opção</th><th scope="col" class="coluna-barra">Pontos</th><th scope="col" class="num">Pontos</th><th scope="col" class="num">1.º lugar</th><th scope="col" class="num">Menções</th><th scope="col" class="num">% respondentes</th></tr></thead>
       <tbody>
 <?php foreach ($ranking as $i => $l): ?>
-        <tr title="<?= ltp_h(ltp_rotulo_regiao($l['codigo']) . ': ' . $l['pontos'] . ' pontos') ?>">
+        <tr title="<?= ltp_h($rotular($l['codigo']) . ': ' . $l['pontos'] . ' pontos') ?>">
           <td class="posicao"><?= $i + 1 ?>.º</td>
-          <th scope="row"><?= ltp_h(ltp_rotulo_regiao($l['codigo'])) ?></th>
+          <th scope="row"><?= ltp_h($rotular($l['codigo'])) ?></th>
           <td class="barra-celula"><span class="barra" style="inline-size:<?= round(100 * $l['pontos'] / $maxPontos, 1) ?>%"></span></td>
           <td class="num forte"><?= $l['pontos'] ?></td>
           <td class="num"><?= $l['primeiro'] ?></td>
@@ -437,23 +461,36 @@ function barras(array $contagem, int $total, callable $rotulo): string
       </tbody>
     </table>
     </div>
-<?php
-    $outras = array_values(array_filter(array_map(fn($r) => trim((string) $r['regiao_outra']), $respostas)));
-    if ($outras): ?>
-    <p class="nota">Outras regiões sugeridas: <?= ltp_h(implode('; ', $outras)) ?></p>
-<?php endif; endif; ?>
-  </section>
-
-<?php if ($n > 0): ?>
-  <div class="grelha">
-<?php foreach (LTP_ROTULOS_CAMPOS as $campo => $titulo): ?>
-    <section class="bloco">
-      <h2><?= ltp_h($titulo) ?></h2>
-      <?= barras(ltp_distribuicao($respostas, $campo), $n, 'ltp_rotulo_opcao') ?>
-    </section>
-<?php endforeach; ?>
-  </div>
+<?php if ($livres): ?>
+    <p class="nota">Outras sugestões: <?= ltp_h(implode('; ', $livres)) ?></p>
 <?php endif; ?>
+  </section>
+<?php   else:
+            if (!$grelhaAberta) { echo "  <div class=\"grelha\">\n"; $grelhaAberta = true; } ?>
+    <section class="bloco">
+      <h2><?= ltp_h(ltp_rotulo_pergunta($p)) ?></h2>
+<?php       if (in_array($p['tipo'], ['texto_curto', 'texto_longo'], true)): ?>
+      <p class="nota"><?= count($livres) ?> resposta(s) de <?= $n ?><?= $livres ? '. As mais recentes:' : '.' ?></p>
+<?php           if ($livres): ?>
+      <ul class="textos-livres">
+<?php               foreach (array_slice($livres, 0, 8) as $texto): ?>
+        <li><?= ltp_h($texto) ?></li>
+<?php               endforeach; ?>
+      </ul>
+<?php           endif; ?>
+<?php       else: ?>
+<?php           if ($p['tipo'] === 'escala' && ($media = ltp_media_escala($respostas, $p)) !== null): ?>
+      <p class="nota">Média: <strong><?= number_format($media, 1, ',', ' ') ?></strong> (de <?= $p['escala']['min'] ?> a <?= $p['escala']['max'] ?>)</p>
+<?php           endif; ?>
+      <?= barras(ltp_distribuicao($respostas, $p), $n, $rotular) ?>
+<?php           if ($livres): ?>
+      <p class="nota">Outras: <?= ltp_h(implode('; ', array_slice($livres, 0, 20))) ?></p>
+<?php           endif; ?>
+<?php       endif; ?>
+    </section>
+<?php   endif;
+    endforeach;
+    if ($grelhaAberta) { echo "  </div>\n"; } ?>
 
   <section class="bloco">
     <h2>Taxa de resposta por idioma</h2>
@@ -480,7 +517,9 @@ function barras(array $contagem, int $total, callable $rotulo): string
     <h2>Exportações</h2>
     <p class="acoes-linha">
       <a class="botao" href="?descarregar=respostas<?= $q ?>">Respostas (CSV)</a>
+<?php if (array_filter(ltp_perguntas_ativas(), fn($p) => $p['tipo'] === 'ordenacao')): ?>
       <a class="botao botao-secundario" href="?descarregar=ranking<?= $q ?>">Ranking (CSV)</a>
+<?php endif; ?>
     </p>
     <p class="nota">Ficheiros para Excel (separador ponto e vírgula, UTF-8), com os rótulos em português<?= $filtro ? ' e filtrados pelo idioma escolhido' : '' ?>.</p>
   </section>
@@ -594,28 +633,39 @@ function barras(array $contagem, int $total, callable $rotulo): string
 <?php if (!$respostas): ?>
   <p class="vazio">Ainda não há respostas<?= $filtro ? ' neste idioma' : '' ?>.</p>
 <?php else: ?>
+<?php
+    $todas = ltp_todas_perguntas();
+    $destaque = array_values(array_filter(ltp_perguntas_ativas(), fn($p) => $p['tipo'] !== 'texto_longo'))[0] ?? null; ?>
   <div class="tabela-rolante">
   <table class="tabela compacta">
-    <thead><tr><th scope="col">Data</th><th scope="col">Idioma</th><th scope="col">Cliente</th><th scope="col">1.º lugar</th><th scope="col">2.º lugar</th><th scope="col">3.º lugar</th><th scope="col">Intenção</th><th scope="col">Orçamento</th><th scope="col">Contacto</th><th scope="col">Comentário</th></tr></thead>
+    <thead><tr><th scope="col">Data</th><th scope="col">Idioma</th><th scope="col">Cliente</th><?php if ($destaque): ?><th scope="col"><?= ltp_h(ltp_rotulo_pergunta($destaque)) ?></th><?php endif; ?><th scope="col">Todas as respostas</th></tr></thead>
     <tbody>
 <?php foreach ($respostas as $r): ?>
       <tr>
         <td class="sem-quebra"><?= ltp_h(ltp_data_pt($r['atualizado'])) ?></td>
         <td><?= ltp_h(LTP_NOMES_IDIOMAS[$r['idioma']] ?? $r['idioma']) ?></td>
         <td><?php if ($r['cliente_id']): ?><?= ltp_h($r['nome']) ?><?php else: ?><?= ltp_h($r['ident_nome'] ?: 'Sem identificação') ?> <span class="etiqueta">ligação geral</span><br><span class="suave"><?= ltp_h(implode(' · ', array_filter([$r['ident_email'], $r['ident_telemovel'], ltp_paises()[$r['ident_pais'] ?? ''] ?? '']))) ?></span><?php endif; ?><?= $r['demo'] ? ' <span class="etiqueta">fictício</span>' : '' ?></td>
-        <td><?= ltp_h(ltp_rotulo_regiao($r['regiao_1'])) ?></td>
-        <td><?= ltp_h(ltp_rotulo_regiao($r['regiao_2'])) ?></td>
-        <td><?= ltp_h(ltp_rotulo_regiao($r['regiao_3'])) ?></td>
-        <td><?= ltp_h(ltp_rotulo_opcao($r['intencao'])) ?></td>
-        <td><?= ltp_h(ltp_rotulo_opcao($r['orcamento'])) ?></td>
-        <td><?= $r['contacto'] === 'contact_yes' ? 'Sim' : 'Não' ?></td>
-        <td><?= ltp_h($r['comentario']) ?></td>
+<?php if ($destaque): ?>
+        <td><?= ltp_h(ltp_resposta_texto($r['_dados'], $destaque)) ?></td>
+<?php endif; ?>
+        <td>
+          <details class="resposta-detalhe"><summary>Ver</summary>
+            <dl>
+<?php foreach ($todas as $p): $texto = ltp_resposta_texto($r['_dados'], $p); if ($texto === '' && !$p['ativa']) { continue; } ?>
+              <dt><?= ltp_h(ltp_rotulo_pergunta($p)) ?></dt><dd><?= $texto !== '' ? ltp_h($texto) : '<span class="suave">Sem resposta</span>' ?></dd>
+<?php endforeach; ?>
+            </dl>
+          </details>
+        </td>
       </tr>
 <?php endforeach; ?>
     </tbody>
   </table>
   </div>
 <?php endif; ?>
+
+<?php elseif ($vista === 'inquerito'): ?>
+<?= ltp_editor_vista($pdo) ?>
 
 <?php elseif ($vista === 'idiomas'): ?>
   <h1>Idiomas e revisão das traduções</h1>
