@@ -13,6 +13,7 @@ require __DIR__ . '/inc/lembretes.php';
 require __DIR__ . '/inc/apagar.php';
 require __DIR__ . '/inc/precos.php';
 require __DIR__ . '/inc/configuracao.php';
+require __DIR__ . '/inc/formandos.php';
 
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
@@ -50,6 +51,11 @@ if ($p === 'entrar' && $post) {
     pagina_entrada($erro);
 }
 
+// Ligação enviada por email ao formando para definir a palavra-passe (não precisa de sessão iniciada)
+if ($p === 'senha') {
+    pagina_definir_senha();
+}
+
 if (!utilizador()) {
     pagina_entrada();
 }
@@ -63,7 +69,9 @@ $rotas = eh_admin()
     ? ['painel' => 'admin_painel', 'calendario' => 'admin_calendario', 'formacao' => 'admin_formacao', 'cursos' => 'admin_cursos', 'curso' => 'admin_curso', 'inscricoes' => 'admin_inscricoes',
        'preinscricao' => 'admin_preinscricao', 'clientes' => 'admin_clientes', 'cliente' => 'admin_cliente', 'utilizadores' => 'admin_utilizadores', 'utilizador' => 'admin_utilizador',
        'pedidos' => 'admin_pedidos', 'configuracao' => 'admin_configuracao', 'precos' => 'admin_precos', 'comunicacao' => 'admin_comunicacao', 'apagar' => 'admin_apagar'] + $comuns
-    : ['painel' => 'cliente_painel', 'calendario' => 'cliente_formacoes', 'inscricoes' => 'cliente_inscricoes'] + $comuns;
+    : (eh_formando()
+        ? ['painel' => 'formando_painel', 'conta' => 'pagina_conta']
+        : ['painel' => 'cliente_painel', 'calendario' => 'cliente_formacoes', 'inscricoes' => 'cliente_inscricoes', 'presencas' => 'formando_painel'] + $comuns);
 
 if (!isset($rotas[$p])) {
     negar();

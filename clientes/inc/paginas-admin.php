@@ -107,6 +107,9 @@ function admin_formacao(): void
         aviso($partes ? implode(' ', $partes) : 'Nada a alterar.', $partes ? 'ok' : 'info');
         redirecionar('formacao', ['id' => $id]);
     }
+    if ($post && in_array($acao, ['presencas', 'acessos'], true) && $f) {
+        tratar_presencas_edicao($f);
+    }
     if ($post && $acao === 'lembrete' && $f) {
         [$enviados, $falhados, $s] = enviar_lembrete_sessao($f, (int) ($_POST['sessao'] ?? 0));
         if (!$s) {
@@ -204,6 +207,7 @@ function admin_formacao(): void
             . ($linhas ? ' <a class="botao botao-secundario" href="' . h(url('inscricoes', ['formacao' => $id, 'exportar' => 1])) . '">Exportar inscritos para Excel</a>' : '') . '</p>'
             . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Formando</th><th>Função</th><th>Cliente</th><th>Nível de IA</th><th>Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições nesta formação.</p>');
         $inscritos .= $linhas ? lembretes_edicao(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]), $confirmadas) : '';
+        $inscritos .= $confirmadas ? presencas_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id])) : '';
         $inscritos .= juntar_edicoes_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]));
         $inscritos .= '<p class="espaco-topo">' . botao_apagar('formacao', $id, 'Apagar esta edição') . '</p>';
     }
@@ -759,6 +763,9 @@ function admin_preinscricao(): void
                     $avisado = $estado === 'confirmada' && !empty($_POST['avisar']) && ($contacto = contacto_inscricao($i)) && avisar_estado_inscricao($i, 'confirmada', $contacto);
                     aviso('Inscrição de ' . h($formando) . ' registada: ' . h(horario($f)) . ($nova ? ' (formação nova criada no calendário)' : '') . '.'
                         . ($avisado ? ' Confirmação enviada por email para ' . h((string) $p['email']) . '.' : ''));
+                    if ($estado === 'confirmada' && ($acesso = acesso_apos_confirmacao((int) $r['id']))) {
+                        aviso(...$acesso);
+                    }
                     redirecionar('inscricao', ['id' => $r['id']]);
                 }
             }
@@ -1036,7 +1043,7 @@ function admin_utilizadores(): void
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $nome = texto('nome', 120);
         $email = texto('email', 160);
-        $papel = ($_POST['papel'] ?? '') === 'admin' ? 'admin' : 'cliente';
+        $papel = papel_enviado();
         $cliente_id = $papel === 'cliente' ? (int) ($_POST['cliente_id'] ?? 0) : null;
         $senha = (string) ($_POST['senha'] ?? '');
         $erro = '';
@@ -1046,7 +1053,7 @@ function admin_utilizadores(): void
             $erro = 'Escolha o cliente deste utilizador.';
         } elseif ($senha !== '' && strlen($senha) < 10) {
             $erro = 'A palavra-passe tem de ter pelo menos 10 caracteres.';
-        } elseif (linha_bd('SELECT id FROM utilizadores WHERE email = ?', [$email])) {
+        } elseif (($existente = linha_bd('SELECT id, papel FROM utilizadores WHERE email = ?', [$email])) && ($existente['papel'] !== 'formando' || $papel === 'formando')) {
             $erro = 'Já existe um utilizador com este email.';
         }
         if ($erro) {
@@ -1055,7 +1062,14 @@ function admin_utilizadores(): void
         }
         $gerada = $senha === '';
         $senha = $gerada ? gerar_senha() : $senha;
-        executar('INSERT INTO utilizadores (email, nome, senha, papel, cliente_id, criado) VALUES (?, ?, ?, ?, ?, ?)', [$email, $nome, password_hash($senha, PASSWORD_DEFAULT), $papel, $cliente_id, agora()]);
+        if ($existente) {
+            // O email já tinha acesso de formando: a conta passa ao novo perfil e continua a ver as suas formações e presenças
+            executar('UPDATE utilizadores SET nome = ?, senha = ?, papel = ?, cliente_id = ?, ativo = 1, token_senha = NULL, token_validade = NULL WHERE id = ?',
+                [$nome, password_hash($senha, PASSWORD_DEFAULT), $papel, $cliente_id, $existente['id']]);
+            aviso('Este email já tinha acesso de formando: a conta passou ao perfil ' . h(PAPEIS[$papel]) . ' e mantém as formações e as presenças.', 'info');
+        } else {
+            executar('INSERT INTO utilizadores (email, nome, senha, papel, cliente_id, criado) VALUES (?, ?, ?, ?, ?, ?)', [$email, $nome, password_hash($senha, PASSWORD_DEFAULT), $papel, $cliente_id, agora()]);
+        }
         aviso('Utilizador criado. Dados de acesso para comunicar a ' . h($nome) . ':<br>Endereço: <strong>' . h(endereco_site()) . '/clientes/</strong><br>Email: <strong>' . h($email) . '</strong><br>Palavra-passe: <strong class="senha">' . h($senha) . '</strong><br>' . ($gerada ? 'Esta palavra-passe não volta a ser mostrada.' : ''));
         if (!empty($_POST['enviar_acesso'])) {
             aviso_envio(enviar_acesso(['nome' => $nome, 'email' => $email, 'papel' => $papel, 'cliente_id' => $cliente_id], $senha), 'Dados de acesso enviados por email para ' . h($email) . '.');
@@ -1071,7 +1085,7 @@ function admin_utilizadores(): void
     pagina_area('utilizadores', 'Utilizadores', '
       <div class="conteudo tabela-rolante"><table><thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Cliente</th><th>Estado</th><th>Último acesso</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
       <h2 class="espaco-topo" id="novo">Novo utilizador</h2>
-      <p class="texto-suave">Perfil Gadgetmetodo: vê e gere tudo. Perfil Cliente: vê apenas as formações e as inscrições do seu cliente.</p>
+      <p class="texto-suave">Perfil Gadgetmetodo: vê e gere tudo. Perfil Cliente: vê apenas as formações e as inscrições do seu cliente. Perfil Formando: vê as suas formações confirmadas (pelo email das inscrições) e regista a presença em cada sessão; é criado automaticamente quando uma inscrição com email é confirmada.</p>
       <form method="post" class="formulario">' . campo_csrf() . '<div class="campos-2">
         ' . campo('nome', 'Nome *', '', 'text', 'required maxlength="120"') . '
         ' . campo('email', 'Email (é o nome de utilizador) *', '', 'email', 'required maxlength="160" autocomplete="off"') . '
@@ -1102,9 +1116,13 @@ function admin_utilizador(): void
             }
             redirecionar('utilizador', ['id' => $id]);
         }
+        if (($_POST['acao'] ?? '') === 'ligacao') {
+            aviso_envio(enviar_ligacao_senha($u), 'Ligação para definir a palavra-passe (válida 7 dias) enviada para ' . h($u['email']) . '.');
+            redirecionar('utilizador', ['id' => $id]);
+        }
         $nome = texto('nome', 120);
         $email = texto('email', 160);
-        $papel = ($_POST['papel'] ?? '') === 'admin' ? 'admin' : 'cliente';
+        $papel = papel_enviado();
         $cliente_id = $papel === 'cliente' ? (int) ($_POST['cliente_id'] ?? 0) : null;
         $ativo = isset($_POST['ativo']) ? 1 : 0;
         $erro = '';
@@ -1139,15 +1157,27 @@ function admin_utilizador(): void
       <form method="post" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="nova_senha">
         <label class="opcao consentimento"><input type="checkbox" name="enviar_acesso" value="1"> <span>Enviar a nova palavra-passe por email ao utilizador</span></label>
         <div><button class="botao botao-secundario" type="submit">Gerar nova palavra-passe</button></div></form>
+      <h2 class="espaco-topo">Ligação para definir a palavra-passe</h2>
+      <p class="texto-suave">Envia ao utilizador uma ligação, válida 7 dias, para ser ele a escolher a palavra-passe (é o que recebem os formandos quando a inscrição é confirmada). A ligação anterior deixa de valer.'
+        . ($u['token_senha'] !== null ? ' Estado: ' . (strtotime((string) $u['token_validade']) >= time() ? 'ligação enviada, válida até ' . h(data_hora($u['token_validade'])) : 'a última ligação expirou em ' . h(data_hora($u['token_validade'])) . ' sem ser usada') . '.' : '') . '</p>
+      <form method="post" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="ligacao">
+        <div><button class="botao botao-secundario" type="submit">Enviar ligação por email</button></div></form>
       <p class="texto-suave espaco-topo">Criado em ' . h(data_hora($u['criado'])) . '. Último acesso: ' . h(data_hora($u['ultimo_acesso']) ?: 'nunca') . '.</p>'
       . ($eu ? '' : '<p class="espaco-topo">' . botao_apagar('utilizador', $id, 'Apagar este utilizador') . '</p>'), 'Configuração');
+}
+
+// Perfil escolhido no formulário de utilizador (Cliente quando o valor não é conhecido)
+function papel_enviado(): string
+{
+    $papel = (string) ($_POST['papel'] ?? '');
+    return isset(PAPEIS[$papel]) ? $papel : 'cliente';
 }
 
 // Email com os dados de acesso à área reservada (endereço, email e palavra-passe), só quando a administração o pede
 function enviar_acesso(array $u, string $senha): bool
 {
     $endereco = endereco_site() . '/clientes/';
-    $cliente = $u['papel'] === 'admin' ? 'Gadgetmetodo' : (string) (linha_bd('SELECT nome FROM clientes WHERE id = ?', [(int) $u['cliente_id']])['nome'] ?? '');
+    $cliente = $u['papel'] === 'cliente' ? (string) (linha_bd('SELECT nome FROM clientes WHERE id = ?', [(int) $u['cliente_id']])['nome'] ?? '') : PAPEIS[$u['papel']];
     $tabela = '';
     foreach (['Endereço' => $endereco, 'Email' => $u['email'], 'Palavra-passe' => $senha] as $k => $v) {
         $tabela .= '<tr><td style="padding:7px 12px 7px 0;border-bottom:1px solid #E5E7EB;color:#687280;width:130px;">' . h($k) . '</td><td style="padding:7px 0;border-bottom:1px solid #E5E7EB;font-weight:700;">' . h($v) . '</td></tr>';

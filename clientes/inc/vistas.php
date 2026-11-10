@@ -10,7 +10,8 @@ function menu_area(string $atual): string
 {
     $itens = eh_admin()
         ? ['painel' => 'Painel', 'calendario' => 'Calendário', 'cursos' => 'Cursos', 'inscricoes' => 'Inscrições', 'clientes' => 'Clientes', 'pedidos' => 'Pedidos do site', 'configuracao' => 'Configuração', 'conta' => 'A minha conta']
-        : ['painel' => 'Painel', 'calendario' => 'Formações', 'inscricoes' => 'Inscrições', 'conta' => 'A minha conta'];
+        : (eh_formando() ? ['painel' => 'As minhas formações', 'conta' => 'A minha conta']
+            : ['painel' => 'Painel', 'calendario' => 'Formações', 'inscricoes' => 'Inscrições'] + (tambem_formando() ? ['presencas' => 'As minhas formações'] : []) + ['conta' => 'A minha conta']);
     $atual = eh_admin() && isset(CONFIGURACAO[$atual]) ? 'configuracao' : $atual;
     $html = '';
     foreach ($itens as $p => $nome) {
@@ -65,7 +66,7 @@ function documento(string $titulo, string $corpo): void
 function pagina_area(string $atual, string $titulo, string $conteudo, string $sobretitulo = ''): void
 {
     $u = utilizador();
-    $quem = h($u['nome']) . ' · ' . h($u['papel'] === 'admin' ? 'Gadgetmetodo' : (string) $u['cliente_nome']);
+    $quem = h($u['nome']) . ' · ' . h($u['papel'] === 'cliente' ? (string) $u['cliente_nome'] : PAPEIS[$u['papel']]);
     $cabecalho = '<header class="cabecalho"><div class="contentor">
     <a class="marca" href="/"><img src="/assets/marca/logotipo.svg" alt="Gadgetmetodo, Lda." width="234" height="42"></a>
     <div class="area-utilizador"><span>' . $quem . '</span><a class="botao botao-secundario" href="' . h(url('sair')) . '">Terminar sessão</a></div>
@@ -87,7 +88,7 @@ function pagina_entrada(string $erro = ''): void
     ' . avisos() . '
     <span class="sobretitulo">Área reservada</span>
     <h1>Entrar</h1>
-    <p class="texto-suave">Acesso reservado a clientes e à equipa da Gadgetmetodo. Para obter acesso, contacte <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</p>
+    <p class="texto-suave">Acesso reservado a clientes, formandos e à equipa da Gadgetmetodo. Os formandos recebem por email, quando a inscrição é confirmada, a ligação para definir a palavra-passe. Para obter acesso, contacte <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</p>
     ' . ($primeiro ? '<div class="aviso aviso-info">Primeiro acesso: entre com o email info@gadgetmetodo.pt e a palavra-passe da área reservada (<code>./configurar-formulario.sh --acesso</code>). Fica criada a conta de administração.</div>' : '') . '
     <form method="post" action="' . h(url('entrar')) . '" class="formulario" style="max-width:440px">' . campo_csrf() . '
       <div class="campo"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="username" required></div>

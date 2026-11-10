@@ -36,6 +36,7 @@ const VARIAVEIS_EMAIL = [
     'hora' => ['Horário da sessão', 'das 18:30 às 19:30'],
     'inicio' => ['Hora de início da sessão', '18:30'],
     'quando' => ['Dia e hora da sessão em poucas palavras ("hoje às 18:30", "amanhã às 18:30" ou o dia por extenso)', 'amanhã às 18:30'],
+    'validade' => ['Data e hora até à qual a ligação é válida', '17/11/2026 18:30'],
 ];
 
 // Emails enviados pelo site. Em cada um: grupo, nome, quando é enviado, os dados acrescentados pelo sistema entre o texto
@@ -139,6 +140,16 @@ const EMAILS = [
         'texto' => "{nome},\n\nA sessão da formação {formacao} começa {quando}.",
         'fecho' => 'Recomendamos chegar ou entrar alguns minutos antes da hora de início. Se não puder participar, basta responder a este email.',
     ],
+    'presenca' => [
+        'grupo' => 'clientes', 'nome' => 'Confirmação de presença',
+        'quando' => 'Quando o formando regista a presença numa sessão, com o botão "Estou presente" da área do formando (de 2 horas antes do início até 1 dia depois do fim da sessão). As presenças marcadas pela administração não enviam email.',
+        'dados' => 'Formação, sessão, data e horário, e data e hora do registo.',
+        'desativavel' => true, 'variaveis' => ['nome', 'formando', 'formacao', 'sessao', 'dia', 'hora'],
+        'assunto' => 'Presença registada: {formacao}',
+        'titulo' => 'Presença registada',
+        'texto' => "{nome},\n\nConfirmamos o registo da sua presença na sessão de {dia}, {hora}, da formação {formacao}.",
+        'fecho' => 'Se não foi você a registar esta presença, responda a este email.',
+    ],
     'preinscricao_recebida' => [
         'grupo' => 'clientes', 'nome' => 'Pré-inscrição recebida',
         'quando' => 'Logo a seguir a cada pré-inscrição no site, para o candidato.',
@@ -188,6 +199,16 @@ const EMAILS = [
         'titulo' => 'Acesso à área reservada',
         'texto' => "{nome},\n\nSeguem os dados para entrar na área reservada da Gadgetmetodo, onde pode consultar as formações, inscrever formandos e acompanhar as inscrições.",
         'fecho' => 'Por segurança, altere a palavra-passe no primeiro acesso, em "A minha conta". Se não esperava este email, responda a informar-nos.',
+    ],
+    'acesso_formando' => [
+        'grupo' => 'utilizadores', 'nome' => 'Acesso do formando',
+        'quando' => 'Quando uma inscrição com email do formando é confirmada e o formando ainda não tem acesso (ou a ligação anterior expirou sem uso), no botão "Criar o acesso e enviar a ligação" das presenças de uma edição e no botão "Enviar ligação por email" da ficha do utilizador.',
+        'dados' => 'Nome de utilizador (o email), data-limite e botão para definir a palavra-passe. A ligação é válida 7 dias e só pode ser usada uma vez.',
+        'desativavel' => false, 'variaveis' => ['nome', 'nome_completo', 'email', 'curso', 'no_curso', 'validade'],
+        'assunto' => 'A sua área de formando na Gadgetmetodo',
+        'titulo' => 'A sua área de formando',
+        'texto' => "{nome},\n\nA sua inscrição {no_curso} está confirmada. Na área do formando pode consultar as datas das sessões e registar a sua presença em cada uma, com o botão \"Estou presente\".\n\nPara entrar, defina a sua palavra-passe no botão abaixo. A ligação é válida até {validade}.",
+        'fecho' => 'Depois de definir a palavra-passe, entre em www.gadgetmetodo.pt/clientes/ com o seu email. Se não esperava este email, responda a informar-nos.',
     ],
 ];
 

@@ -352,6 +352,10 @@ function pagina_inscricao(): void
             } else {
                 aviso('Estado atualizado.');
             }
+            // Inscrição confirmada: acesso do formando à área do formando (conta e ligação para definir a palavra-passe)
+            if ($novo === 'confirmada' && $i['estado'] !== 'confirmada' && ($acesso = acesso_apos_confirmacao($id))) {
+                aviso(...$acesso);
+            }
         } elseif ($acao === 'edicao' && $admin && $i['estado'] !== 'cancelada') {
             // Passar a inscrição para outra edição (por exemplo, a do curso aconselhado pelo diagnóstico)
             $nova = linha_bd("SELECT * FROM formacoes WHERE id = ? AND estado != 'cancelada'", [(int) ($_POST['formacao_id'] ?? 0)]);

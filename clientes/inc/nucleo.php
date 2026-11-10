@@ -10,7 +10,7 @@ require_once __DIR__ . '/cursos.php';
 
 date_default_timezone_set('Europe/Lisbon');
 
-const PAPEIS = ['admin' => 'Gadgetmetodo', 'cliente' => 'Cliente'];
+const PAPEIS = ['admin' => 'Gadgetmetodo', 'cliente' => 'Cliente', 'formando' => 'Formando'];
 const ESTADOS_FORMACAO = ['aberta' => 'Inscrições abertas', 'fechada' => 'Inscrições fechadas', 'cancelada' => 'Cancelada'];
 const ESTADOS_INSCRICAO = ['pendente' => 'Pendente', 'confirmada' => 'Confirmada', 'cancelada' => 'Cancelada'];
 const MODALIDADES = ['presencial' => 'Presencial', 'online' => 'Online', 'misto' => 'Misto'];
@@ -50,11 +50,15 @@ function bd(): ?PDO
             telefone TEXT, notas TEXT, criado TEXT NOT NULL, tipo TEXT NOT NULL DEFAULT 'empresa')");
         // Os clientes podem ser empresas (ou outras organizações) ou particulares
         acrescentar_colunas($pdo, 'clientes', ['tipo' => "TEXT NOT NULL DEFAULT 'empresa'"]);
-        $pdo->exec("CREATE TABLE IF NOT EXISTS utilizadores (
+        // Perfis: admin (Gadgetmetodo), cliente e formando (área do formando). token_senha guarda o resumo (SHA-256) da
+        // ligação enviada por email para definir a palavra-passe, válida até token_validade
+        $tabela_utilizadores = "CREATE TABLE IF NOT EXISTS utilizadores (
             id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE COLLATE NOCASE, nome TEXT NOT NULL,
-            senha TEXT NOT NULL, papel TEXT NOT NULL CHECK (papel IN ('admin', 'cliente')),
+            senha TEXT NOT NULL, papel TEXT NOT NULL CHECK (papel IN ('admin', 'cliente', 'formando')),
             cliente_id INTEGER REFERENCES clientes(id), ativo INTEGER NOT NULL DEFAULT 1,
-            criado TEXT NOT NULL, ultimo_acesso TEXT)");
+            criado TEXT NOT NULL, ultimo_acesso TEXT, token_senha TEXT, token_validade TEXT)";
+        $pdo->exec($tabela_utilizadores);
+        migrar_utilizadores_formando($pdo, $tabela_utilizadores);
         $pdo->exec('CREATE TABLE IF NOT EXISTS definicoes (chave TEXT PRIMARY KEY, valor TEXT)');
         // Campos da ficha do curso: percurso, unidade (Módulo ou Sessão), objetivo, pré-requisitos, resultado esperado,
         // estrutura-tipo da sessão e avaliação (linhas "rótulo: valor"), requisitos, enquadramento legal e investimento
@@ -130,11 +134,19 @@ function bd(): ?PDO
             utilizador_id INTEGER, criado TEXT NOT NULL)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS lembretes_formacao ON lembretes (formacao_id, sessao)');
         $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS lembretes_automaticos ON lembretes (formacao_id, sessao) WHERE tipo = 'hora'");
+        // Presenças dos formandos (sessao = número da sessão na edição): origem "formando" (botão "Estou presente" na área
+        // do formando) ou "admin" (marcada pela administração)
+        $pdo->exec('CREATE TABLE IF NOT EXISTS presencas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, inscricao_id INTEGER NOT NULL REFERENCES inscricoes(id) ON DELETE CASCADE,
+            sessao INTEGER NOT NULL, registado TEXT NOT NULL, origem TEXT NOT NULL, utilizador_id INTEGER, UNIQUE (inscricao_id, sessao))');
         // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação; as pré-inscrições, 12 meses depois do registo
         $pdo->prepare('DELETE FROM inscricoes WHERE formacao_id IN (SELECT id FROM formacoes WHERE inicio < ?)')
             ->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
         $pdo->prepare('DELETE FROM lembretes WHERE criado < ?')->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
         $pdo->prepare('DELETE FROM preinscricoes WHERE criado < ?')->execute([date('Y-m-d H:i:s', time() - DIAS_PREINSCRICOES * 86400)]);
+        // Contas de formando sem nenhuma inscrição (apagadas com as inscrições, 2 anos depois da formação)
+        $pdo->prepare("DELETE FROM utilizadores WHERE papel = 'formando' AND criado < ? AND NOT EXISTS (SELECT 1 FROM inscricoes i WHERE i.email = utilizadores.email COLLATE NOCASE)")
+            ->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
         aplicar_catalogo($pdo);
         acrescentar_cursos_do_catalogo($pdo);
         $pronta = true;
@@ -150,6 +162,39 @@ function acrescentar_colunas(PDO $pdo, string $tabela, array $colunas): void
         if (!in_array($nome, $existentes, true)) {
             $pdo->exec('ALTER TABLE ' . $tabela . ' ADD COLUMN ' . $nome . ' ' . $tipo);
         }
+    }
+}
+
+// Bases anteriores ao perfil Formando: a tabela de utilizadores é refeita (o SQLite não altera uma restrição CHECK),
+// com as mesmas linhas. Nenhuma tabela tem chave estrangeira para utilizadores.
+function migrar_utilizadores_formando(PDO $pdo, string $tabela): void
+{
+    $sql = function () use ($pdo) { return (string) $pdo->query("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'utilizadores'")->fetchColumn(); };
+    if (strpos($sql(), "'formando'") !== false) {
+        return;
+    }
+    $comuns = 'id, email, nome, senha, papel, cliente_id, ativo, criado, ultimo_acesso';
+    $pdo->exec('PRAGMA foreign_keys = OFF');
+    $aberta = false;
+    try {
+        $pdo->exec('BEGIN IMMEDIATE');
+        $aberta = true;
+        if (strpos($sql(), "'formando'") === false) {
+            $pdo->exec('DROP TABLE IF EXISTS utilizadores_novo');
+            $pdo->exec(str_replace('CREATE TABLE IF NOT EXISTS utilizadores (', 'CREATE TABLE utilizadores_novo (', $tabela));
+            $pdo->exec("INSERT INTO utilizadores_novo ($comuns) SELECT $comuns FROM utilizadores");
+            $pdo->exec('DROP TABLE utilizadores');
+            $pdo->exec('ALTER TABLE utilizadores_novo RENAME TO utilizadores');
+        }
+        $pdo->exec('COMMIT');
+        $aberta = false;
+    } catch (Throwable $e) {
+        if ($aberta) {
+            $pdo->exec('ROLLBACK');
+        }
+        throw $e;
+    } finally {
+        $pdo->exec('PRAGMA foreign_keys = ON');
     }
 }
 
@@ -271,6 +316,11 @@ function utilizador(): ?array
 function eh_admin(): bool
 {
     return (utilizador()['papel'] ?? '') === 'admin';
+}
+
+function eh_formando(): bool
+{
+    return (utilizador()['papel'] ?? '') === 'formando';
 }
 
 function negar(): void

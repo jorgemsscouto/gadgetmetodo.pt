@@ -1425,3 +1425,48 @@ h2.calendario-mes {
 .campos-antecedencia { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; }
 .campos-antecedencia .campo { margin: 0; min-width: 220px; }
 .campos-antecedencia .campo-botao { min-width: 0; }
+
+/* Área do formando e presenças por sessão */
+
+.bloco-formando {
+  margin-top: 2rem;
+}
+
+.bloco-formando h2 {
+  margin-bottom: 0.25rem;
+}
+
+.acoes-presenca {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.acoes-presenca form {
+  margin: 0;
+}
+
+.grelha-presencas .c-sessao {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.grelha-presencas td.c-sessao input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: #6b7280;
+}
+
+.grelha-presencas td.pelo-formando input {
+  accent-color: var(--petroleo);
+}
+
+.grelha-presencas tfoot th,
+.grelha-presencas tfoot td {
+  font-weight: 600;
+}
+
+.grelha-presencas tbody th .texto-suave {
+  font-weight: 400;
+}
