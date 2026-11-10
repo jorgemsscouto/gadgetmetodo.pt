@@ -41,22 +41,33 @@ function etiqueta_origem(array $i): string
 
 function admin_calendario(): void
 {
+    // Duas vistas, como no seletor "Semana | Mês" do portal de referência: "Mês" (grelha com as sessões de cada dia)
+    // e "Lista" (edições próximas ou passadas)
+    $lista = ($_GET['vista'] ?? '') === 'lista';
     $passadas = ($_GET['ver'] ?? '') === 'passadas';
-    $formacoes = $passadas
-        ? consulta('SELECT * FROM formacoes WHERE inicio < ? ORDER BY inicio DESC', [date('Y-m-d 00:00:00')])
-        : consulta('SELECT * FROM formacoes WHERE inicio >= ? ORDER BY inicio', [date('Y-m-d 00:00:00')]);
+    $mes = mes_pedido();
+    $alternador = '<div class="alternador" role="group" aria-label="Vista do calendário">'
+        . '<a href="' . h(url('calendario', ['mes' => $mes])) . '"' . ($lista ? '' : ' aria-current="page"') . '>Mês</a>'
+        . '<a href="' . h(url('calendario', ['vista' => 'lista'])) . '"' . ($lista ? ' aria-current="page"' : '') . '>Lista</a></div>';
+    $conteudo = calendario_mensal($mes);
+    if ($lista) {
+        $formacoes = $passadas
+            ? consulta('SELECT * FROM formacoes WHERE inicio < ? ORDER BY inicio DESC', [date('Y-m-d 00:00:00')])
+            : consulta('SELECT * FROM formacoes WHERE inicio >= ? ORDER BY inicio', [date('Y-m-d 00:00:00')]);
+        $conteudo = '<h2 id="lista">' . ($passadas ? 'Edições passadas' : 'Próximas edições') . '</h2>'
+            . calendario($formacoes, function ($f) {
+                return '<a href="' . h(url('formacao', ['id' => $f['id']])) . '">Gerir e ver inscritos</a>'
+                    . ($f['estado'] !== 'cancelada' ? '<a href="' . h(url('inscrever', ['formacao' => $f['id']])) . '">Inscrever formando</a>' : '')
+                    . (!empty($f['reuniao']) ? '<a href="' . h($f['reuniao']) . '" target="_blank" rel="noopener">Abrir reunião</a>' : '');
+            });
+    }
     pagina_area('calendario', 'Calendário de formações', '
-      <div class="acoes" style="margin-top:0"><a class="botao" href="' . h(url('formacao')) . '">Nova formação</a>
-      <a class="botao botao-secundario" href="#lista">Ver em lista</a>
-      <a class="botao botao-secundario" href="' . h(url('calendario', $passadas ? [] : ['ver' => 'passadas'])) . '">' . ($passadas ? 'Ver próximas' : 'Ver formações passadas') . '</a>
-      <a class="botao botao-secundario" href="/formacoes/" target="_blank" rel="noopener">Ver página pública</a></div>
-      ' . calendario_mensal(mes_pedido()) . '
-      <h2 class="espaco-topo" id="lista">' . ($passadas ? 'Edições passadas' : 'Próximas edições') . '</h2>
-      ' . calendario($formacoes, function ($f) {
-          return '<a href="' . h(url('formacao', ['id' => $f['id']])) . '">Gerir e ver inscritos</a>'
-              . ($f['estado'] !== 'cancelada' ? '<a href="' . h(url('inscrever', ['formacao' => $f['id']])) . '">Inscrever formando</a>' : '')
-              . (!empty($f['reuniao']) ? '<a href="' . h($f['reuniao']) . '" target="_blank" rel="noopener">Abrir reunião</a>' : '');
-      }), 'Formação');
+      <div class="barra-calendario">' . $alternador . '
+        <div class="acoes"><a class="botao" href="' . h(url('formacao')) . '">Nova formação</a>
+        ' . ($lista ? '<a class="botao botao-secundario" href="' . h(url('calendario', $passadas ? ['vista' => 'lista'] : ['vista' => 'lista', 'ver' => 'passadas'])) . '">' . ($passadas ? 'Ver próximas' : 'Ver formações passadas') . '</a>' : '') . '
+        <a class="botao botao-secundario" href="/formacoes/" target="_blank" rel="noopener">Ver página pública</a></div>
+      </div>
+      ' . $conteudo, 'Formação');
 }
 
 function admin_formacao(): void

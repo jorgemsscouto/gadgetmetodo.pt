@@ -1899,3 +1899,183 @@ h2.calendario-mes {
   font-size: clamp(1.9rem, 3.4vw, 2.6rem);
   font-weight: 400;
 }
+
+/* Seletor de vista em pílula (Mês | Lista) */
+.alternador {
+  display: inline-flex;
+  gap: 4px;
+  margin: 4px 0 20px;
+  padding: 5px;
+  background: rgba(10, 15, 38, 0.06);
+  border-radius: 999px;
+}
+
+.alternador a {
+  padding: 9px 24px;
+  color: var(--marinho);
+  font-family: var(--fonte-titulos);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 999px;
+}
+
+.alternador a:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.alternador a[aria-current="page"] {
+  color: var(--branco);
+  background: var(--marinho);
+  box-shadow: 0 6px 14px rgba(10, 15, 38, 0.16);
+}
+
+/* Calendário compacto: o mês inteiro cabe no ecrã (a altura dos dias acompanha a altura da janela) */
+.barra-calendario {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-bottom: 14px;
+}
+
+.barra-calendario .alternador {
+  margin: 0;
+}
+
+.barra-calendario .acoes {
+  margin: 0;
+}
+
+.barra-calendario .botao {
+  min-height: 42px;
+  padding: 8px 18px;
+  font-size: 0.9rem;
+}
+
+.cal-mes {
+  margin: 0 0 24px;
+  padding: 12px 14px 10px;
+}
+
+.cal-cabecalho {
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.cal-cabecalho h2 {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0 8px;
+  font-size: 1.35rem;
+}
+
+.cal-seta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  color: var(--marinho);
+  font-size: 1.4rem;
+  line-height: 1;
+  text-decoration: none;
+  background: rgba(10, 15, 38, 0.06);
+  border-radius: 999px;
+}
+
+.cal-seta:hover {
+  background: rgba(10, 15, 38, 0.12);
+}
+
+.cal-hoje-ligacao {
+  flex: 0 0 auto;
+  padding: 7px 16px;
+  color: var(--marinho);
+  font-family: var(--fonte-titulos);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-decoration: none;
+  text-transform: uppercase;
+  background: rgba(10, 15, 38, 0.06);
+  border-radius: 999px;
+}
+
+.cal-tabela {
+  min-width: 640px;
+  border-spacing: 4px;
+}
+
+.cal-tabela th {
+  padding: 2px 4px;
+  font-size: 0.7rem;
+}
+
+.cal-tabela th abbr {
+  text-decoration: none;
+}
+
+.cal-tabela td {
+  height: clamp(50px, calc((100vh - 430px) / 6), 104px);
+  padding: 5px 7px;
+  border-radius: 12px;
+}
+
+.cal-dia {
+  margin-bottom: 3px;
+  font-size: 0.98rem;
+}
+
+.cal-sessao {
+  padding: 2px 7px;
+  font-size: 0.72rem;
+}
+
+.cal-tabela li + li {
+  margin-top: 3px;
+}
+
+.cal-nota {
+  margin: 6px 4px 0;
+  color: var(--cinzento);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 760px) {
+  .cal-tabela td {
+    height: auto;
+  }
+
+  .cal-cabecalho h2 {
+    order: 0;
+    flex-basis: auto;
+  }
+}
+
+.cal-tabela td {
+  height: clamp(44px, calc((100vh - 440px) / 6), 104px);
+  padding: 4px 6px;
+}
+
+.cal-dia {
+  margin-bottom: 2px;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.cal-sessao {
+  padding: 1px 7px;
+  line-height: 1.3;
+}
+
+@media (max-width: 760px) {
+  .cal-tabela td {
+    height: auto;
+    padding: 8px 10px;
+  }
+}

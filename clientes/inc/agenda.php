@@ -72,15 +72,16 @@ function calendario_mensal(string $mes): string
     $anterior = date('Y-m', strtotime('-1 month', $t0));
     $seguinte = date('Y-m', strtotime('+1 month', $t0));
     $nome = function (string $m) { return MESES_CALENDARIO[(int) substr($m, 5, 2)]; };
+    $curtos = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
     return '<section class="cal-mes" aria-labelledby="cal-titulo">
       <div class="cal-cabecalho">
-        <a class="botao botao-secundario" href="' . h(url('calendario', ['mes' => $anterior])) . '" aria-label="Mês anterior: ' . h($nome($anterior)) . '">&lsaquo; ' . h($nome($anterior)) . '</a>
+        <a class="cal-seta" href="' . h(url('calendario', ['mes' => $anterior])) . '" aria-label="Mês anterior: ' . h($nome($anterior)) . '">&lsaquo;</a>
         <h2 id="cal-titulo">' . h($nome($mes)) . ' de ' . h(substr($mes, 0, 4)) . '</h2>
-        <a class="botao botao-secundario" href="' . h(url('calendario', ['mes' => $seguinte])) . '" aria-label="Mês seguinte: ' . h($nome($seguinte)) . '">' . h($nome($seguinte)) . ' &rsaquo;</a>
-        ' . ($mes !== date('Y-m') ? '<a class="cal-hoje-ligacao" href="' . h(url('calendario')) . '">Ir para hoje</a>' : '') . '
+        ' . ($mes !== date('Y-m') ? '<a class="cal-hoje-ligacao" href="' . h(url('calendario')) . '">Hoje</a>' : '') . '
+        <a class="cal-seta" href="' . h(url('calendario', ['mes' => $seguinte])) . '" aria-label="Mês seguinte: ' . h($nome($seguinte)) . '">&rsaquo;</a>
       </div>
-      <p class="texto-suave">' . ($n_mes ? $n_mes . ' sessão(ões) neste mês.' : 'Sem sessões neste mês.') . ' Cada entrada é uma sessão (S2/6: sessão 2 de 6); abra-a para gerir a edição e os inscritos.</p>
-      <div class="tabela-rolante"><table class="cal-tabela"><thead><tr>' . implode('', array_map(function ($d) { return '<th scope="col">' . h(ucfirst($d)) . '</th>'; }, $semana)) . '</tr></thead><tbody>' . $corpo . '</tbody></table></div>
+      <div class="tabela-rolante"><table class="cal-tabela"><thead><tr>' . implode('', array_map(function ($d, $c) { return '<th scope="col"><abbr title="' . h(ucfirst($d)) . '">' . h($c) . '</abbr></th>'; }, $semana, $curtos)) . '</tr></thead><tbody>' . $corpo . '</tbody></table></div>
+      <p class="cal-nota">' . ($n_mes ? $n_mes . ' sessão(ões) neste mês.' : 'Sem sessões neste mês.') . ' Cada entrada é uma sessão (S2/6: sessão 2 de 6); abra-a para gerir a edição e os inscritos.</p>
     </section>';
 }
 
