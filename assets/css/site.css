@@ -2090,3 +2090,201 @@ body:not(.area) main .formulario {
   margin-inline: max(var(--gutter), calc((100vw - var(--largura)) / 2 - 24px));
   box-shadow: var(--sombra-forte);
 }
+
+/* ==========================================================================
+   Movimento e contraste (2026-11): opções do menu em pílula com transição,
+   sublinhado animado e opção atual em marinho; caixas com elevação, ícone
+   animado, brilho que segue o rato e entrada suave ao aparecerem no ecrã.
+   Tudo desligado com "reduzir movimento".
+   ========================================================================== */
+
+:root {
+  --curva: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Barra horizontal do site */
+.navegacao a {
+  font-weight: 600;
+  transition: background-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease, transform 0.22s var(--curva);
+}
+
+.navegacao a:hover,
+.navegacao a:focus-visible {
+  color: var(--marinho);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 16px rgba(10, 15, 38, 0.1);
+}
+
+.navegacao a[aria-current="page"] {
+  color: var(--branco);
+  background: var(--marinho);
+  box-shadow: 0 6px 16px rgba(10, 15, 38, 0.18);
+}
+
+@media (min-width: 1151px) {
+  .navegacao a {
+    position: relative;
+    padding: 9px 8px;
+    border-radius: 999px;
+  }
+
+  .navegacao a::after {
+    content: "";
+    position: absolute;
+    right: 12px;
+    bottom: 4px;
+    left: 12px;
+    height: 2px;
+    background: var(--petroleo);
+    border-radius: 2px;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.28s var(--curva);
+  }
+
+  .navegacao a:hover,
+  .navegacao a:focus-visible {
+    transform: translateY(-1px);
+  }
+
+  .navegacao a:hover::after,
+  .navegacao a:focus-visible::after {
+    transform: scaleX(1);
+  }
+
+  .navegacao a[aria-current="page"]::after {
+    display: none;
+  }
+}
+
+.botao {
+  transition: background-color 0.22s ease, border-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease, transform 0.22s var(--curva);
+}
+
+.botao:hover,
+.botao:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(10, 15, 38, 0.18);
+}
+
+/* Caixas de serviços, formação e catálogo */
+.cartao,
+.atalho,
+.cartao-curso,
+.caso,
+.destaque-formacoes {
+  transition: transform 0.35s var(--curva), box-shadow 0.35s var(--curva), border-color 0.35s ease;
+}
+
+a.cartao:hover,
+a.cartao:focus-visible,
+.atalho:hover,
+.atalho:focus-visible,
+.cartao-curso:hover,
+.caso:hover,
+.destaque-formacoes:hover {
+  box-shadow: 0 2px 6px rgba(10, 15, 38, 0.05), 0 24px 48px rgba(60, 45, 30, 0.16);
+  transform: translateY(-6px);
+}
+
+.cartao .icone,
+.atalho .seta-circulo {
+  transition: transform 0.35s var(--curva), background-color 0.35s ease;
+}
+
+a.cartao:hover .icone,
+a.cartao:focus-visible .icone {
+  transform: scale(1.08) rotate(-4deg);
+}
+
+.atalho:hover .seta-circulo,
+.atalho:focus-visible .seta-circulo {
+  background: var(--branco);
+  transform: translateX(4px);
+}
+
+.cartao .mais svg {
+  transition: transform 0.3s var(--curva);
+}
+
+a.cartao:hover .mais svg,
+a.cartao:focus-visible .mais svg {
+  transform: translateX(4px);
+}
+
+/* Brilho que segue o rato (posição em --mx e --my, definida em site.js) */
+html.js .efeito-luz:hover {
+  background-image: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 65%);
+}
+
+/* Entrada suave ao aparecer no ecrã (só com JavaScript; o conteúdo nunca fica escondido sem ele) */
+html.js .revelar {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.6s ease, transform 0.6s var(--curva);
+}
+
+html.js .revelar.visivel {
+  opacity: 1;
+  transform: none;
+}
+
+html.js .revelar.visivel:hover {
+  transition: opacity 0.6s ease, transform 0.35s var(--curva), box-shadow 0.35s var(--curva);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .revelar {
+    opacity: 1;
+    transform: none;
+  }
+
+  .navegacao a:hover,
+  .botao:hover,
+  a.cartao:hover,
+  .atalho:hover,
+  .cartao-curso:hover,
+  .caso:hover,
+  .destaque-formacoes:hover {
+    transform: none;
+  }
+}
+
+/* Nas larguras em que o menu completo já é justo, menos margem interior e texto médio, para caber numa linha */
+@media (min-width: 1151px) and (max-width: 1419px) {
+  .navegacao a {
+    padding: 9px 6px;
+    font-weight: 500;
+  }
+
+  .navegacao a::after {
+    right: 6px;
+    left: 6px;
+  }
+}
+
+/* Espaçamento vertical mais compacto (2026-11): mais conteúdo visível na primeira visualização */
+:root {
+  --secao: clamp(44px, 6vw, 80px);
+}
+
+.topo-pagina {
+  padding-block: clamp(18px, 2.4vw, 32px) clamp(14px, 2vw, 28px);
+}
+
+.topo-pagina .migalhas {
+  margin-bottom: clamp(12px, 1.6vw, 20px);
+}
+
+.topo-pagina + .secao,
+.topo-pagina + section {
+  padding-top: clamp(18px, 2.4vw, 32px);
+}
+
+.hero {
+  padding-block: clamp(40px, 6vw, 84px) clamp(36px, 5.5vw, 76px);
+}
+
+.atalhos-secao + .secao {
+  padding-top: clamp(36px, 4.5vw, 64px);
+}

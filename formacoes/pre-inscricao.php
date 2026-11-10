@@ -28,8 +28,8 @@
   <link rel="alternate" type="text/plain" href="/llms.txt" title="Resumo do site para modelos de linguagem">
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/css/site.css?v=952f7de72c">
-  <link rel="stylesheet" href="/assets/css/area.css?v=876eb9886f">
+  <link rel="stylesheet" href="/assets/css/site.css?v=da393c00c5">
+  <link rel="stylesheet" href="/assets/css/area.css?v=d59ae15651">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -324,6 +324,6 @@
       </div>
     </div>
   </footer>
-  <script src="/assets/js/site.js?v=bf11d8faff" defer></script>
+  <script src="/assets/js/site.js?v=028fd8355c" defer></script>
 </body>
 </html>

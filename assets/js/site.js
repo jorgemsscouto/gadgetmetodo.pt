@@ -58,3 +58,46 @@
     if (audio.error) falhou();
   });
 })();
+
+// Movimento nas caixas: brilho que segue o rato e entrada suave ao aparecerem no ecrã.
+// Desligado com "reduzir movimento"; sem este ficheiro, as caixas aparecem normalmente.
+(function () {
+  var reduzir = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var caixas = document.querySelectorAll(".cartao, .atalho, .cartao-curso, .caso, .destaque-formacoes");
+  if (!caixas.length || reduzir) return;
+
+  Array.prototype.forEach.call(caixas, function (caixa) {
+    caixa.classList.add("efeito-luz");
+  });
+
+  document.addEventListener("pointermove", function (e) {
+    var caixa = e.target && e.target.closest ? e.target.closest(".efeito-luz") : null;
+    if (!caixa) return;
+    var r = caixa.getBoundingClientRect();
+    caixa.style.setProperty("--mx", Math.round(e.clientX - r.left) + "px");
+    caixa.style.setProperty("--my", Math.round(e.clientY - r.top) + "px");
+  }, { passive: true });
+
+  if (!("IntersectionObserver" in window)) return;
+  var observador = new IntersectionObserver(function (entradas) {
+    entradas.forEach(function (entrada) {
+      if (!entrada.isIntersecting) return;
+      entrada.target.classList.add("visivel");
+      observador.unobserve(entrada.target);
+    });
+  }, { rootMargin: "0px 0px -40px 0px", threshold: 0.08 });
+
+  Array.prototype.forEach.call(caixas, function (caixa) {
+    // Pequeno desfasamento entre caixas da mesma grelha, para entrarem em sequência
+    var irmaos = caixa.parentElement ? Array.prototype.indexOf.call(caixa.parentElement.children, caixa) : 0;
+    caixa.style.transitionDelay = Math.min(irmaos, 5) * 70 + "ms";
+    caixa.classList.add("revelar");
+    observador.observe(caixa);
+    // Depois de entrar, o atraso deixa de se aplicar às animações do rato
+    caixa.addEventListener("transitionend", function limpar(ev) {
+      if (ev.propertyName !== "opacity") return;
+      caixa.style.transitionDelay = "";
+      caixa.removeEventListener("transitionend", limpar);
+    });
+  });
+})();

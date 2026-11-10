@@ -6,6 +6,19 @@ declare(strict_types=1);
 // Separadores da Configuração (só administração)
 const CONFIGURACAO = ['configuracao' => 'Visão geral', 'utilizadores' => 'Utilizadores', 'precos' => 'Preços', 'comunicacao' => 'Comunicação'];
 
+// Ícones do menu (traço simples, 24 x 24), como na barra lateral do portal de referência
+const ICONES_MENU = [
+    'painel' => '<rect width="7" height="9" x="3" y="3" rx="1.5"/><rect width="7" height="5" x="14" y="3" rx="1.5"/><rect width="7" height="9" x="14" y="12" rx="1.5"/><rect width="7" height="5" x="3" y="16" rx="1.5"/>',
+    'calendario' => '<path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+    'cursos' => '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>',
+    'inscricoes' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    'clientes' => '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2M10 6h4M10 10h4M10 14h4M10 18h4"/>',
+    'pedidos' => '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+    'configuracao' => '<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/>',
+    'conta' => '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+    'presencas' => '<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5M22 10v6"/>',
+];
+
 function menu_area(string $atual): string
 {
     $itens = eh_admin()
@@ -15,7 +28,10 @@ function menu_area(string $atual): string
     $atual = eh_admin() && isset(CONFIGURACAO[$atual]) ? 'configuracao' : $atual;
     $html = '';
     foreach ($itens as $p => $nome) {
-        $html .= '<li><a href="' . h(url($p)) . '"' . ($p === $atual ? ' aria-current="page"' : '') . '>' . h($nome) . '</a></li>';
+        $icone = $p === 'painel' && eh_formando() ? ICONES_MENU['presencas'] : (ICONES_MENU[$p] ?? '');
+        $html .= '<li><a href="' . h(url($p)) . '"' . ($p === $atual ? ' aria-current="page"' : '') . '>'
+            . ($icone !== '' ? '<svg class="menu-icone" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $icone . '</svg>' : '')
+            . '<span>' . h($nome) . '</span></a></li>';
     }
     return '<nav class="area-nav" aria-label="Área reservada"><div class="contentor"><ul>' . $html . '</ul></div></nav>';
 }

@@ -2079,3 +2079,85 @@ h2.calendario-mes {
     padding: 8px 10px;
   }
 }
+
+/* Barra lateral: ícones, mais contraste e animação ao passar o rato */
+.area-nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  transition: background-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.menu-icone {
+  flex: none;
+  opacity: 0.85;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.22s ease;
+}
+
+.area-nav a:hover,
+.area-nav a:focus-visible {
+  color: var(--marinho);
+  background: var(--branco);
+  box-shadow: 0 6px 16px rgba(10, 15, 38, 0.1);
+}
+
+.area-nav a:hover .menu-icone,
+.area-nav a:focus-visible .menu-icone {
+  opacity: 1;
+  transform: scale(1.12);
+}
+
+.area-nav a[aria-current="page"],
+.area-nav a[aria-current="page"]:hover {
+  color: var(--branco);
+  background: var(--marinho);
+  box-shadow: 0 8px 18px rgba(10, 15, 38, 0.2);
+}
+
+.area-nav a[aria-current="page"] .menu-icone {
+  opacity: 1;
+}
+
+@media (min-width: 1024px) {
+  .area-nav a:hover,
+  .area-nav a:focus-visible {
+    transform: translateX(5px);
+  }
+
+  .area-nav a[aria-current="page"]:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .menu-icone {
+    width: 18px;
+    height: 18px;
+  }
+
+  .area-nav a {
+    gap: 8px;
+  }
+}
+
+.numeros > div,
+.cartao-config,
+.cartao-curso {
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+}
+
+.numeros > div:has(a):hover,
+.cartao-config:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 2px 6px rgba(10, 15, 38, 0.05), 0 20px 40px rgba(60, 45, 30, 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .area-nav a:hover,
+  .area-nav a:focus-visible,
+  .numeros > div:has(a):hover,
+  .cartao-config:hover {
+    transform: none;
+  }
+}
