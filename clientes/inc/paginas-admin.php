@@ -49,7 +49,7 @@ function admin_calendario(): void
     $alternador = '<div class="alternador" role="group" aria-label="Vista do calendário">'
         . '<a href="' . h(url('calendario', ['mes' => $mes])) . '"' . ($lista ? '' : ' aria-current="page"') . '>Mês</a>'
         . '<a href="' . h(url('calendario', ['vista' => 'lista'])) . '"' . ($lista ? ' aria-current="page"' : '') . '>Lista</a></div>';
-    $conteudo = calendario_mensal($mes);
+    $conteudo = calendario_mensal($mes, false);
     if ($lista) {
         $formacoes = $passadas
             ? consulta('SELECT * FROM formacoes WHERE inicio < ? ORDER BY inicio DESC', [date('Y-m-d 00:00:00')])
@@ -62,7 +62,7 @@ function admin_calendario(): void
             });
     }
     pagina_area('calendario', 'Calendário de formações', '
-      <div class="barra-calendario">' . $alternador . '
+      <div class="barra-calendario' . ($lista ? '' : ' com-mes') . '">' . $alternador . ($lista ? '' : cabecalho_calendario($mes)) . '
         <div class="acoes"><a class="botao" href="' . h(url('formacao')) . '">Nova formação</a>
         ' . ($lista ? '<a class="botao botao-secundario" href="' . h(url('calendario', $passadas ? ['vista' => 'lista'] : ['vista' => 'lista', 'ver' => 'passadas'])) . '">' . ($passadas ? 'Ver próximas' : 'Ver formações passadas') . '</a>' : '') . '
         <a class="botao botao-secundario" href="/formacoes/" target="_blank" rel="noopener">Ver página pública</a></div>

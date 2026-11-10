@@ -670,14 +670,14 @@ function enviar_aviso(string $para, string $assunto, string $titulo, string $cor
         $m->isHTML(true);
         $f = "'Segoe UI', Helvetica, Arial, sans-serif";
         // Grafismo 2026-11: fundo areia, cartão creme arredondado, cabeçalho em gradiente marinho e petróleo, botões em pílula
-        $m->Body = '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;}</style></head><body style="margin:0;background:#F2EDE6;">'
+        $m->Body = '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;}@media (max-width:480px){.pad{padding-left:24px!important;padding-right:24px!important;}}</style></head><body style="margin:0;background:#F2EDE6;">'
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F2EDE6;"><tr><td align="center" style="padding:28px 14px;">'
             . '<table role="presentation" width="620" cellpadding="0" cellspacing="0" style="width:100%;max-width:620px;">'
             . '<tr><td style="padding:0 6px 14px;"><img src="' . h(endereco_site()) . '/assets/marca/logotipo.png" width="180" alt="Gadgetmetodo, Lda." style="display:block;width:180px;height:auto;border:0;"></td></tr>'
-            . '<tr><td style="padding:26px 32px;background:#0A0F26;background-image:linear-gradient(135deg,#0A0F26 0%,#13284A 55%,#003F46 100%);border-radius:24px 24px 0 0;">' . ($geral['cabecalho'] !== '' ? '<p style="margin:0 0 6px;font-family:' . $f . ';font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#8FD1CB;font-weight:700;">' . h($geral['cabecalho']) . '</p>' : '')
+            . '<tr><td class="pad" style="padding:28px 36px;background:#0A0F26;background-image:linear-gradient(135deg,#0A0F26 0%,#13284A 55%,#003F46 100%);border-radius:24px 24px 0 0;">' . ($geral['cabecalho'] !== '' ? '<p style="margin:0 0 6px;font-family:' . $f . ';font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#8FD1CB;font-weight:700;">' . h($geral['cabecalho']) . '</p>' : '')
             . '<p style="margin:0;font-family:' . $f . ';font-size:24px;line-height:1.25;color:#FFFFFF;font-weight:400;">' . h($titulo) . '</p></td></tr>'
-            . '<tr><td style="padding:28px 32px 30px;background:#FBF9F6;font-family:' . $f . ';font-size:15px;line-height:1.65;color:#333333;border-radius:0 0 24px 24px;">' . $corpo_html . '</td></tr>'
-            . ($geral['rodape'] !== '' ? '<tr><td style="padding:18px 10px 0;font-family:' . $f . ';font-size:12px;line-height:1.6;color:#687280;text-align:center;">' . rodape_com_ligacoes((string) $geral['rodape']) . '</td></tr>' : '')
+            . '<tr><td class="pad" style="padding:32px 36px;background:#FBF9F6;font-family:' . $f . ';font-size:15px;line-height:1.65;color:#333333;border-radius:0 0 24px 24px;">' . $corpo_html . '</td></tr>'
+            . ($geral['rodape'] !== '' ? '<tr><td class="pad" style="padding:18px 36px 0;font-family:' . $f . ';font-size:12px;line-height:1.6;color:#687280;text-align:center;">' . rodape_com_ligacoes((string) $geral['rodape']) . '</td></tr>' : '')
             . '</table></td></tr></table></body></html>';
         $m->AltBody = $titulo . "\n\n" . $corpo_texto . ($geral['rodape'] !== '' ? "\n\n--\n" . $geral['rodape'] : '') . "\n";
         $m->send();

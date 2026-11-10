@@ -32,7 +32,23 @@ function sessoes_entre(string $de, string $ate): array
 }
 
 // Grelha do mês, com navegação para o mês anterior e o seguinte
-function calendario_mensal(string $mes): string
+// Navegação do mês (mês anterior, título, "Hoje" e mês seguinte). Na página do calendário fica na barra de cima,
+// na mesma linha do seletor Mês | Lista e dos botões
+function cabecalho_calendario(string $mes): string
+{
+    $t0 = strtotime($mes . '-01');
+    $anterior = date('Y-m', strtotime('-1 month', $t0));
+    $seguinte = date('Y-m', strtotime('+1 month', $t0));
+    $nome = function (string $m) { return MESES_CALENDARIO[(int) substr($m, 5, 2)]; };
+    return '<div class="cal-cabecalho">
+        <a class="cal-seta" href="' . h(url('calendario', ['mes' => $anterior])) . '" aria-label="Mês anterior: ' . h($nome($anterior)) . '">&lsaquo;</a>
+        <h2 id="cal-titulo">' . h($nome($mes)) . ' de ' . h(substr($mes, 0, 4)) . '</h2>
+        ' . ($mes !== date('Y-m') ? '<a class="cal-hoje-ligacao" href="' . h(url('calendario')) . '">Hoje</a>' : '') . '
+        <a class="cal-seta" href="' . h(url('calendario', ['mes' => $seguinte])) . '" aria-label="Mês seguinte: ' . h($nome($seguinte)) . '">&rsaquo;</a>
+      </div>';
+}
+
+function calendario_mensal(string $mes, bool $com_cabecalho = true): string
 {
     $t0 = strtotime($mes . '-01');
     $ultimo = strtotime(date('Y-m-t', $t0));
@@ -69,17 +85,9 @@ function calendario_mensal(string $mes): string
             $corpo .= '</tr>';
         }
     }
-    $anterior = date('Y-m', strtotime('-1 month', $t0));
-    $seguinte = date('Y-m', strtotime('+1 month', $t0));
-    $nome = function (string $m) { return MESES_CALENDARIO[(int) substr($m, 5, 2)]; };
     $curtos = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
     return '<section class="cal-mes" aria-labelledby="cal-titulo">
-      <div class="cal-cabecalho">
-        <a class="cal-seta" href="' . h(url('calendario', ['mes' => $anterior])) . '" aria-label="Mês anterior: ' . h($nome($anterior)) . '">&lsaquo;</a>
-        <h2 id="cal-titulo">' . h($nome($mes)) . ' de ' . h(substr($mes, 0, 4)) . '</h2>
-        ' . ($mes !== date('Y-m') ? '<a class="cal-hoje-ligacao" href="' . h(url('calendario')) . '">Hoje</a>' : '') . '
-        <a class="cal-seta" href="' . h(url('calendario', ['mes' => $seguinte])) . '" aria-label="Mês seguinte: ' . h($nome($seguinte)) . '">&rsaquo;</a>
-      </div>
+      ' . ($com_cabecalho ? cabecalho_calendario($mes) : '') . '
       <div class="tabela-rolante"><table class="cal-tabela"><thead><tr>' . implode('', array_map(function ($d, $c) { return '<th scope="col"><abbr title="' . h(ucfirst($d)) . '">' . h($c) . '</abbr></th>'; }, $semana, $curtos)) . '</tr></thead><tbody>' . $corpo . '</tbody></table></div>
       <p class="cal-nota">' . ($n_mes ? $n_mes . ' sessão(ões) neste mês.' : 'Sem sessões neste mês.') . ' Cada entrada é uma sessão (S2/6: sessão 2 de 6); abra-a para gerir a edição e os inscritos.</p>
     </section>';

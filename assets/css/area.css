@@ -2183,3 +2183,128 @@ h2.calendario-mes {
 .cartoes-config > .cartao-config:nth-child(4n + 2) { background: rgba(223, 232, 220, 0.92); }
 .cartoes-config > .cartao-config:nth-child(4n + 3) { background: rgba(217, 227, 236, 0.92); }
 .cartoes-config > .cartao-config:nth-child(4n + 4) { background: rgba(214, 233, 231, 0.92); }
+
+/* ==========================================================================
+   Margens interiores uniformes (2026-11): as mesmas três medidas do site
+   (--pad-caixa, --pad-compacta e --pad-nota-*, definidas em site.css).
+   O calendário mensal mantém-se como está.
+   ========================================================================== */
+.area-conteudo .contentor > .formulario,
+.area-conteudo .contentor > .conteudo,
+.bloco-formando .conteudo,
+.partilha,
+.zona-perigo,
+.entrada-cartao {
+  padding: var(--pad-caixa);
+}
+
+/* Tabelas: as células já têm margem própria, por isso a caixa usa a medida compacta */
+.area-conteudo .contentor > .tabela-rolante {
+  padding: var(--pad-compacta);
+}
+
+.numeros > div,
+.cartao-config,
+.cartao-modulo,
+.cartao-curso,
+.ficha-curso,
+.modulo-publico,
+.nota-legal {
+  padding: var(--pad-compacta);
+}
+
+.evento {
+  padding: 16px var(--pad-compacta);
+}
+
+.cartao-email > summary {
+  padding: 18px var(--pad-compacta);
+}
+
+.cartao-email-corpo {
+  padding: 20px var(--pad-compacta) var(--pad-compacta);
+}
+
+.aviso,
+.resumo-formacao,
+.programa-corpo,
+.pre-email {
+  padding: var(--pad-nota-v) var(--pad-nota-h);
+}
+
+
+/* Barra do calendário numa só linha: Mês | Lista à esquerda, navegação do mês ao centro e botões à direita,
+   todos centrados na vertical. Abaixo de 1340 px, a navegação do mês passa para uma segunda linha, centrada. */
+.barra-calendario.com-mes {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.barra-calendario.com-mes .alternador {
+  justify-self: start;
+}
+
+.barra-calendario.com-mes .acoes {
+  justify-self: end;
+  flex-wrap: nowrap;
+}
+
+.barra-calendario .botao {
+  white-space: nowrap;
+}
+
+.barra-calendario .cal-cabecalho {
+  align-items: center;
+  margin: 0;
+}
+
+.barra-calendario .cal-cabecalho h2 {
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.barra-calendario .cal-seta {
+  margin-top: 0;
+}
+
+@media (max-width: 1339px) {
+  .barra-calendario.com-mes {
+    grid-template-columns: auto 1fr;
+  }
+
+  .barra-calendario.com-mes .cal-cabecalho {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .barra-calendario.com-mes {
+    grid-template-columns: 1fr;
+  }
+
+  .barra-calendario.com-mes .alternador,
+  .barra-calendario.com-mes .acoes {
+    justify-self: start;
+    flex-wrap: wrap;
+  }
+
+  .barra-calendario.com-mes .cal-cabecalho {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .barra-calendario.com-mes .cal-cabecalho {
+    justify-self: stretch;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .barra-calendario .cal-cabecalho h2 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+}

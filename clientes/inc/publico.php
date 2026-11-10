@@ -639,7 +639,7 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
     $rotulo_ver = $origem ? 'Ver o programa do curso' : ($percurso ? 'Ver os cursos do percurso' : 'Ver a área de formação');
     enviar_mensagem('preinscricao_recebida', (string) $p['email'], ['nome' => nome_curto((string) $p['nome']), 'curso' => $percurso ?: (string) $p['curso'],
         'no_curso' => $percurso ? 'no percurso ' . $percurso : 'n' . curso_com_artigo((string) $p['curso'])], [
-        ($nota ? '<p style="margin:0 0 16px;padding:12px 14px;background:#E8F1F1;border-left:3px solid #00636A;">' . h($nota) . '</p>' : '')
+        ($nota ? '<p style="margin:0 0 16px;padding:14px 20px;background:#E8F1F1;border-radius:12px;">' . h($nota) . '</p>' : '')
         . '<p style="margin:0 0 6px;"><strong>Dados da pré-inscrição</strong></p>' . $tabela_candidato
         . '<p style="margin:22px 0 0;">' . $botao($ver, $rotulo_ver) . ($origem ? $botao($site . link_ficha($origem), 'Ficha do curso (PDF)') : '') . '</p>',
         ($nota ? $nota . "\n\n" : '') . "Dados da pré-inscrição:\n" . $texto_candidato . "\n" . $rotulo_ver . ': ' . $ver

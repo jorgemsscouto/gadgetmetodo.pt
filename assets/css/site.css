@@ -2340,3 +2340,117 @@ html.js .revelar.visivel:hover {
   border-radius: var(--raio);
   box-shadow: var(--sombra);
 }
+
+/* Menu principal: mais espaço entre opções, letra ligeiramente mais pequena e contorno de foco discreto */
+@media (min-width: 1151px) {
+  .navegacao ul {
+    gap: 10px;
+  }
+
+  .navegacao a {
+    font-size: 0.86rem;
+  }
+
+  .navegacao a:focus-visible {
+    outline-width: 2px;
+    outline-offset: 1px;
+    border-radius: 999px;
+  }
+}
+
+
+/* Caixas pastel sobre secções escuras (página inicial e Sobre): o texto passa a escuro, para manter o contraste */
+:is(.fundo-escuro, .fundo-profundo) :is(.grelha > .cartao:not(.largo), .etapas > li, .principios > div, .lista-cursos > .cartao-curso) {
+  color: var(--antracite);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+:is(.fundo-escuro, .fundo-profundo) :is(.grelha > .cartao:not(.largo), .etapas > li, .principios > div, .lista-cursos > .cartao-curso) :is(h2, h3, h4, strong, a:not(.botao)) {
+  color: var(--marinho);
+}
+
+:is(.fundo-escuro, .fundo-profundo) :is(.grelha > .cartao:not(.largo), .etapas > li, .principios > div, .lista-cursos > .cartao-curso) p {
+  color: var(--antracite);
+}
+
+:is(.fundo-escuro, .fundo-profundo) :is(.grelha > .cartao:not(.largo), .etapas > li, .principios > div, .lista-cursos > .cartao-curso) .icone {
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--petroleo);
+}
+
+/* ==========================================================================
+   Margens interiores uniformes (2026-11). Três medidas para todas as caixas do
+   site e da área reservada, proporcionais à largura do ecrã:
+   --pad-caixa     caixas de conteúdo: cartões, resumos, formulários, destaques, casos (24 a 36 px)
+   --pad-compacta  caixas em grelhas e listas: atalhos, cursos, etapas, princípios, módulos, perguntas (20 a 28 px)
+   --pad-nota-*    avisos e notas curtas dentro de outras caixas (14 x 20 px)
+   Em ecrã largo, a margem nunca é inferior ao raio dos cantos (24 px).
+   ========================================================================== */
+:root {
+  --pad-caixa: clamp(24px, 2.6vw, 36px);
+  --pad-compacta: clamp(20px, 2vw, 28px);
+  --pad-nota-v: 14px;
+  --pad-nota-h: 20px;
+}
+
+.cartao,
+.resumo,
+body:not(.area) main .formulario,
+.destaque-formacoes,
+.audio-cartao {
+  padding: var(--pad-caixa);
+}
+
+.atalho,
+.cartao-curso,
+.ficha-curso,
+.etapas > li,
+.principios > div,
+.modulo-publico,
+.contactos-lista li,
+.nota-legal {
+  padding: var(--pad-compacta);
+}
+
+.atalho .seta-circulo {
+  top: calc(var(--pad-compacta) - 6px);
+  right: calc(var(--pad-compacta) - 6px);
+}
+
+/* Ficha de factos ao lado de um resumo: a mesma margem lateral do resumo */
+.factos > div {
+  padding: var(--pad-compacta) var(--pad-caixa);
+}
+
+.faq details {
+  padding-inline: var(--pad-compacta);
+}
+
+.aviso,
+.audio-erro {
+  padding: var(--pad-nota-v) var(--pad-nota-h);
+}
+
+/* Experiência: cada caso passa a cartão, com o texto afastado das bordas */
+.caso {
+  padding: var(--pad-caixa);
+  background: var(--creme-vidro);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--sombra);
+}
+
+.caso:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.caso + .caso {
+  margin-top: 20px;
+}
+
+/* Herói e chamada final (cartões escuros): no telemóvel, o texto fica à mesma distância da borda que nas outras caixas */
+@media (max-width: 760px) {
+  .hero > .contentor,
+  .chamada > .contentor {
+    padding-inline: var(--pad-caixa);
+  }
+}
