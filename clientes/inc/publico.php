@@ -615,7 +615,7 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
             if ((string) $val === '') {
                 continue;
             }
-            $html .= '<tr><td style="padding:7px 12px 7px 0;border-bottom:1px solid #E5E7EB;color:#687280;width:130px;vertical-align:top;">' . h($k) . '</td><td style="padding:7px 0;border-bottom:1px solid #E5E7EB;">' . nl2br(h((string) $val)) . '</td></tr>';
+            $html .= '<tr><td style="padding:7px 12px 7px 0;border-bottom:1px solid #E7DFD4;color:#687280;width:130px;vertical-align:top;">' . h($k) . '</td><td style="padding:7px 0;border-bottom:1px solid #E7DFD4;">' . nl2br(h((string) $val)) . '</td></tr>';
             $texto .= $k . ': ' . $val . "\n";
         }
         return [$html . '</table>', $texto];
@@ -623,7 +623,7 @@ function emails_pre_inscricao(int $id, bool $atualizada = false): void
     [$tabela_interna, $texto_interno] = $tabela($internos);
     [$tabela_candidato, $texto_candidato] = $tabela($dados);
     $botao = function (string $href, string $rotulo) {
-        return '<a href="' . h($href) . '" style="display:inline-block;margin:0 8px 8px 0;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">' . h($rotulo) . '</a>';
+        return '<a href="' . h($href) . '" style="display:inline-block;margin:0 8px 8px 0;padding:13px 26px;background:#0A0F26;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:999px;">' . h($rotulo) . '</a>';
     };
 
     enviar_mensagem('preinscricao_aviso', email_admin(), ['acao' => $atualizada ? 'Pré-inscrição atualizada' : 'Nova pré-inscrição pelo site', 'nome_completo' => $p['nome'], 'cliente' => $cliente,

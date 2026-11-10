@@ -283,7 +283,7 @@ function emails_nova_inscricao(int $id): void
         if ((string) $val === '') {
             continue;
         }
-        $tabela .= '<tr><td style="padding:7px 12px 7px 0;border-bottom:1px solid #E5E7EB;color:#687280;width:130px;vertical-align:top;">' . h($k) . '</td><td style="padding:7px 0;border-bottom:1px solid #E5E7EB;">' . nl2br(h((string) $val)) . '</td></tr>';
+        $tabela .= '<tr><td style="padding:7px 12px 7px 0;border-bottom:1px solid #E7DFD4;color:#687280;width:130px;vertical-align:top;">' . h($k) . '</td><td style="padding:7px 0;border-bottom:1px solid #E7DFD4;">' . nl2br(h((string) $val)) . '</td></tr>';
         $texto .= $k . ': ' . $val . "\n";
     }
     $tabela .= '</table>';

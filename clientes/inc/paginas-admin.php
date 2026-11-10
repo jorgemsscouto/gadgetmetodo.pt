@@ -1168,7 +1168,7 @@ function enviar_acesso(array $u, string $senha): bool
     $cliente = $u['papel'] === 'cliente' ? (string) (linha_bd('SELECT nome FROM clientes WHERE id = ?', [(int) $u['cliente_id']])['nome'] ?? '') : PAPEIS[$u['papel']];
     $tabela = '';
     foreach (['Endereço' => $endereco, 'Email' => $u['email'], 'Palavra-passe' => $senha] as $k => $v) {
-        $tabela .= '<tr><td style="padding:7px 12px 7px 0;border-bottom:1px solid #E5E7EB;color:#687280;width:130px;">' . h($k) . '</td><td style="padding:7px 0;border-bottom:1px solid #E5E7EB;font-weight:700;">' . h($v) . '</td></tr>';
+        $tabela .= '<tr><td style="padding:7px 12px 7px 0;border-bottom:1px solid #E7DFD4;color:#687280;width:130px;">' . h($k) . '</td><td style="padding:7px 0;border-bottom:1px solid #E7DFD4;font-weight:700;">' . h($v) . '</td></tr>';
     }
     return enviar_mensagem('acesso', (string) $u['email'], ['nome' => nome_curto((string) $u['nome']), 'nome_completo' => $u['nome'], 'email' => $u['email'], 'cliente' => $cliente], [
         '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:0 0 4px;">' . $tabela . '</table>'

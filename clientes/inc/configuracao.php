@@ -156,7 +156,7 @@ function admin_comunicacao(): void
             $para = (string) utilizador()['email'];
             $nota = 'Email de teste com dados de exemplo. No envio real, aqui entram: ' . lcfirst(EMAILS[$tipo]['dados'] ?: 'os dados do envio.');
             $ok = enviar_mensagem($tipo, $para, exemplos_email($tipo), [
-                '<p style="margin:0 0 14px;padding:12px 14px;color:#687280;background:#F5F7F8;border:1px dashed #C9CED8;">' . h($nota) . '</p>', '[' . $nota . ']',
+                '<p style="margin:0 0 14px;padding:12px 14px;color:#687280;background:#F2EDE6;border:1px dashed #C9CED8;border-radius:12px;">' . h($nota) . '</p>', '[' . $nota . ']',
             ], ['teste' => true]);
             aviso_envio($ok, 'Email de teste "' . h(EMAILS[$tipo]['nome']) . '" enviado para ' . h($para) . '.');
             redirecionar('comunicacao', ['aberto' => $tipo], 'email-' . $tipo);
