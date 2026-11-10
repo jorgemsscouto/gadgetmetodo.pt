@@ -2177,3 +2177,9 @@ h2.calendario-mes {
   font-size: 0.9rem;
   white-space: nowrap;
 }
+
+/* Cartões da Configuração na paleta pastel do painel */
+.cartoes-config > .cartao-config:nth-child(4n + 1) { background: rgba(235, 227, 214, 0.92); }
+.cartoes-config > .cartao-config:nth-child(4n + 2) { background: rgba(223, 232, 220, 0.92); }
+.cartoes-config > .cartao-config:nth-child(4n + 3) { background: rgba(217, 227, 236, 0.92); }
+.cartoes-config > .cartao-config:nth-child(4n + 4) { background: rgba(214, 233, 231, 0.92); }

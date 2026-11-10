@@ -2288,3 +2288,55 @@ html.js .revelar.visivel:hover {
 .atalhos-secao + .secao {
   padding-top: clamp(36px, 4.5vw, 64px);
 }
+
+/* Paleta pastel nas caixas lado a lado (a mesma dos números do painel): areia, salva, azul-névoa e verde-água,
+   em rotação. Não se aplica ao calendário. */
+:root {
+  --pastel-1: rgba(235, 227, 214, 0.92);
+  --pastel-2: rgba(223, 232, 220, 0.92);
+  --pastel-3: rgba(217, 227, 236, 0.92);
+  --pastel-4: rgba(214, 233, 231, 0.92);
+}
+
+.grelha > .cartao:not(.largo):nth-child(4n + 1),
+.etapas > li:nth-child(4n + 1),
+.principios > div:nth-child(4n + 1),
+.lista-cursos > .cartao-curso:nth-child(4n + 1) { background: var(--pastel-1); }
+
+.grelha > .cartao:not(.largo):nth-child(4n + 2),
+.etapas > li:nth-child(4n + 2),
+.principios > div:nth-child(4n + 2),
+.lista-cursos > .cartao-curso:nth-child(4n + 2) { background: var(--pastel-2); }
+
+.grelha > .cartao:not(.largo):nth-child(4n + 3),
+.etapas > li:nth-child(4n + 3),
+.principios > div:nth-child(4n + 3),
+.lista-cursos > .cartao-curso:nth-child(4n + 3) { background: var(--pastel-3); }
+
+.grelha > .cartao:not(.largo):nth-child(4n + 4),
+.etapas > li:nth-child(4n + 4),
+.principios > div:nth-child(4n + 4),
+.lista-cursos > .cartao-curso:nth-child(4n + 4) { background: var(--pastel-4); }
+
+.etapas > li,
+.lista-cursos > .cartao-curso {
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--sombra);
+}
+
+.grelha > .cartao .icone {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+/* Princípios: de linhas separadas a mosaicos */
+.principios {
+  gap: 14px;
+  border-top: 0;
+}
+
+.principios > div {
+  padding: 22px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
