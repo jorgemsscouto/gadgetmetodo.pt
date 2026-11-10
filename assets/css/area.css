@@ -1883,3 +1883,14 @@ h2.calendario-mes {
 .lista-simples li + li {
   margin-top: 10px;
 }
+
+/* Sem filetes laterais nos blocos arredondados: no estilo 2026-11 o destaque faz-se pela cor de fundo */
+.partilha,
+.resumo-formacao,
+.nota-legal {
+  border-left: 0;
+}
+
+.aviso {
+  border-left-width: 1px;
+}
