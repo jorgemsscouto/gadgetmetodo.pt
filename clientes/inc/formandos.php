@@ -82,7 +82,7 @@ function enviar_ligacao_senha(array $u, string $curso = ''): bool
     ], [
         '<p style="margin:0 0 6px;"><strong>Nome de utilizador:</strong> ' . h((string) $u['email']) . '</p>'
         . '<p style="margin:0 0 18px;"><strong>Ligação válida até:</strong> ' . h($quando) . '</p>'
-        . '<p style="margin:0 0 4px;"><a href="' . h($link) . '" style="display:inline-block;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">Definir a palavra-passe</a></p>',
+        . '<p style="margin:0 0 4px;"><a href="' . h($link) . '" style="display:inline-block;padding:13px 26px;background:#0A0F26;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:999px;">Definir a palavra-passe</a></p>',
         'Nome de utilizador: ' . $u['email'] . "\nDefinir a palavra-passe (ligação válida até " . $quando . '): ' . $link,
     ]);
 }

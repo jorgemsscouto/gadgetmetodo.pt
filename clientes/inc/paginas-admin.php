@@ -1172,7 +1172,7 @@ function enviar_acesso(array $u, string $senha): bool
     }
     return enviar_mensagem('acesso', (string) $u['email'], ['nome' => nome_curto((string) $u['nome']), 'nome_completo' => $u['nome'], 'email' => $u['email'], 'cliente' => $cliente], [
         '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:0 0 4px;">' . $tabela . '</table>'
-        . '<p style="margin:22px 0 0;"><a href="' . h($endereco) . '" style="display:inline-block;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">Entrar na área reservada</a></p>',
+        . '<p style="margin:22px 0 0;"><a href="' . h($endereco) . '" style="display:inline-block;padding:13px 26px;background:#0A0F26;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:999px;">Entrar na área reservada</a></p>',
         'Endereço: ' . $endereco . "\nEmail: " . $u['email'] . "\nPalavra-passe: " . $senha,
     ]);
 }

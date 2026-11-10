@@ -4,6 +4,15 @@ Website institucional da **Gadgetmetodo, Lda.**: consultoria em organização e 
 
 Site estático em HTML e CSS, sem dependências nem passo de compilação. Funciona em qualquer alojamento que sirva ficheiros (alojamento partilhado, GitHub Pages, Netlify, Cloudflare Pages ou outro).
 
+## Design (estilo 2026-11)
+
+O site, a área reservada, os emails e os PDF seguem o mesmo estilo, inspirado no portal EXORYA e adaptado à marca Gadgetmetodo (marinho, petróleo e profundo, Montserrat e Inter): fundo neutro quente (areia) com gradientes suaves, cartões creme muito arredondados e translúcidos, mosaicos em tons pastel (areia, salva e azul-névoa), botões em pílula marinho, títulos grandes e leves com realce em petróleo e herói em gradiente marinho e petróleo.
+
+- **Site:** camada "Estilo 2026-11" no fim de `assets/css/site.css` (tokens em `:root`, como `--areia`, `--creme`, `--salvia`, `--azul-pastel`, `--raio-grande` e `--fundo-gradiente`). A página inicial tem três atalhos em mosaico pastel (pedir proposta, formação e catálogo) e o título com realce (`<span class="destaque">`).
+- **Área reservada:** barra lateral com a marca e o menu em pílulas nos ecrãs largos (no telemóvel, o menu fica em cima e desliza na horizontal), cabeçalho com o nome, o perfil e as iniciais, números em mosaico pastel, calendário com fins de semana em azul-névoa e página de entrada com cartão de marca e cartão de sessão (camada no fim de `assets/css/area.css`; estrutura em `pagina_area()` e `pagina_entrada()`, `clientes/inc/vistas.php`).
+- **Emails:** fundo areia, logótipo, cabeçalho em gradiente, cartão creme com cantos arredondados e botões em pílula (`enviar_aviso()` em `clientes/inc/nucleo.php` e `formulario/modelos.php`). Os clientes de email que não suportam cantos arredondados ou gradientes mostram cantos retos e o marinho liso.
+- **PDF:** a ficha de curso e a tabela de preços (FPDF, `clientes/inc/ficha-pdf.php`) desenham os blocos preenchidos com cantos arredondados, os números em círculo e usam tons quentes; o Catálogo de Serviços (`ferramentas/catalogo.css`) tem fundo quente, cartões arredondados, mosaicos pastel e capa em gradiente.
+
 ## Estrutura
 
 | Caminho | Conteúdo |

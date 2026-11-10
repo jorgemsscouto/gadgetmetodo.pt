@@ -34,8 +34,9 @@ class FichaPdf extends FPDF
 {
     const CORES = [
         'marinho' => [10, 15, 38], 'petroleo' => [0, 99, 106], 'profundo' => [0, 63, 70], 'texto' => [43, 47, 54],
-        'suave' => [104, 114, 128], 'linha' => [229, 231, 235], 'nevoa' => [245, 247, 248], 'tinta' => [232, 241, 241],
-        'claro' => [143, 195, 198], 'cinza' => [201, 206, 216], 'branco' => [255, 255, 255], 'zebra' => [250, 251, 251],
+        // Estilo 2026-11: tons neutros quentes (névoa e linhas em areia) e petróleo pastel, como no site
+        'suave' => [104, 114, 128], 'linha' => [231, 223, 212], 'nevoa' => [244, 239, 232], 'tinta' => [214, 233, 231],
+        'claro' => [143, 209, 203], 'cinza' => [201, 206, 216], 'branco' => [255, 255, 255], 'zebra' => [250, 247, 243],
         'seg0' => [107, 143, 148], 'seg1' => [68, 115, 122], 'seg2' => [47, 93, 100],
     ];
     const LARGURA = 170; // largura útil: A4 (210 mm) menos 20 mm de cada lado
@@ -57,6 +58,53 @@ class FichaPdf extends FPDF
         $this->SetAutoPageBreak(true, 22);
         $this->cMargin = 0;
         $this->AliasNbPages('{nb}');
+    }
+
+    // Blocos preenchidos com cantos arredondados (estilo 2026-11): os pequenos quadrados numerados passam a círculos e
+    // os filetes finos de destaque ficam recolhidos para caberem na curva do bloco por baixo
+    public function Rect($x, $y, $w, $h, $style = '')
+    {
+        if (strpos((string) $style, 'F') !== false && $w <= 1.5 && $h >= 10) {
+            $recuo = min(3.5, $h / 4);
+            parent::Rect($x, $y + $recuo, $w, $h - 2 * $recuo, $style);
+            return;
+        }
+        if (strpos((string) $style, 'F') === false || $w < 1.5) {
+            parent::Rect($x, $y, $w, $h, $style);
+            return;
+        }
+        if ($h <= 1.2) {
+            $recuo = min(3.5, $w / 4);
+            parent::Rect($x + $recuo, $y, $w - 2 * $recuo, $h, $style);
+            return;
+        }
+        $this->retangulo_arredondado($x, $y, $w, $h, min(3.5, $w / 2, $h / 2), $style);
+    }
+
+    public function retangulo_arredondado(float $x, float $y, float $w, float $h, float $r, string $style = 'F'): void
+    {
+        $k = $this->k;
+        $hp = $this->h;
+        $op = $style === 'F' ? 'f' : (in_array($style, ['FD', 'DF'], true) ? 'B' : 'S');
+        $c = 4 / 3 * (sqrt(2) - 1);
+        $arco = function ($x1, $y1, $x2, $y2, $x3, $y3) use ($k, $hp) {
+            $this->_out(sprintf('%.2F %.2F %.2F %.2F %.2F %.2F c', $x1 * $k, ($hp - $y1) * $k, $x2 * $k, ($hp - $y2) * $k, $x3 * $k, ($hp - $y3) * $k));
+        };
+        $this->_out(sprintf('%.2F %.2F m', ($x + $r) * $k, ($hp - $y) * $k));
+        $xc = $x + $w - $r;
+        $yc = $y + $r;
+        $this->_out(sprintf('%.2F %.2F l', $xc * $k, ($hp - $y) * $k));
+        $arco($xc + $r * $c, $yc - $r, $xc + $r, $yc - $r * $c, $xc + $r, $yc);
+        $yc = $y + $h - $r;
+        $this->_out(sprintf('%.2F %.2F l', ($x + $w) * $k, ($hp - $yc) * $k));
+        $arco($xc + $r, $yc + $r * $c, $xc + $r * $c, $yc + $r, $xc, $yc + $r);
+        $xc = $x + $r;
+        $this->_out(sprintf('%.2F %.2F l', $xc * $k, ($hp - ($y + $h)) * $k));
+        $arco($xc - $r * $c, $yc + $r, $xc - $r, $yc + $r * $c, $xc - $r, $yc);
+        $yc = $y + $r;
+        $this->_out(sprintf('%.2F %.2F l', $x * $k, ($hp - $yc) * $k));
+        $arco($xc - $r, $yc - $r * $c, $xc - $r * $c, $yc - $r, $xc, $yc - $r);
+        $this->_out($op);
     }
 
     public function cor(string $nome, string $onde = 'T'): void

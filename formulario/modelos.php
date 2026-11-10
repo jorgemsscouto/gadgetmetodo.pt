@@ -7,8 +7,10 @@ const COR_MARINHO = '#0A0F26';
 const COR_PETROLEO = '#00636A';
 const COR_TEXTO = '#333333';
 const COR_SUAVE = '#687280';
-const COR_LINHA = '#E5E7EB';
-const COR_FUNDO = '#F5F7F8';
+const COR_LINHA = '#E7DFD4';
+const COR_FUNDO = '#F2EDE6';
+const COR_CREME = '#FBF9F6';
+const COR_PASTEL = '#EBE3D6';
 const FONTE = "'Segoe UI', Helvetica, Arial, sans-serif";
 
 function h(string $texto): string
@@ -51,7 +53,7 @@ function email_confirmacao_html(array $d): string
         ['Proposta à medida', 'Apresentamos uma proposta com âmbito, entregáveis, calendário e investimento claros.'],
     ] as $i => [$titulo, $texto]) {
         $passos .= '<tr><td style="padding:0 16px 18px 0;vertical-align:top;width:36px;">'
-            . '<div style="width:32px;height:32px;line-height:32px;text-align:center;background:' . COR_MARINHO . ';color:#FFFFFF;border-radius:8px;font-family:' . $f . ';font-size:13px;font-weight:700;">0' . ($i + 1) . '</div></td>'
+            . '<div style="width:32px;height:32px;line-height:32px;text-align:center;background:' . COR_MARINHO . ';color:#FFFFFF;border-radius:999px;font-family:' . $f . ';font-size:13px;font-weight:700;">0' . ($i + 1) . '</div></td>'
             . '<td style="padding:0 0 18px;vertical-align:top;font-family:' . $f . ';font-size:14px;line-height:1.55;color:' . COR_TEXTO . ';"><strong style="color:' . COR_MARINHO . ';">' . $titulo . '.</strong> ' . $texto . '</td></tr>';
     }
 
@@ -67,20 +69,20 @@ function email_confirmacao_html(array $d): string
         . '<body style="margin:0;padding:0;background:' . COR_FUNDO . ';">'
         . '<div style="display:none;max-height:0;overflow:hidden;">Recebemos o seu ' . $tipo . ' (Ref. ' . $ref . '). Entraremos em contacto brevemente.</div>'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' . COR_FUNDO . ';"><tr><td align="center" style="padding:32px 16px;">'
-        . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#FFFFFF;border:1px solid ' . COR_LINHA . ';">'
+        . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:' . COR_CREME . ';border-radius:24px;">'
         // Cabeçalho
         . '<tr><td style="padding:32px 40px 24px;border-bottom:1px solid ' . COR_LINHA . ';">'
         . '<img src="' . $site . '/assets/marca/logotipo.png" width="200" alt="Gadgetmetodo, Lda." style="display:block;width:200px;height:auto;border:0;"></td></tr>'
         // Corpo
         . '<tr><td style="padding:40px 40px 8px;">'
         . '<p style="margin:0 0 12px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:' . COR_PETROLEO . ';font-weight:700;">Confirmação de receção</p>'
-        . ($t['titulo'] !== '' ? '<h1 style="margin:0 0 24px;font-family:' . $f . ';font-size:24px;line-height:1.3;color:' . COR_MARINHO . ';font-weight:700;">' . h($t['titulo']) . '</h1>' : '')
+        . ($t['titulo'] !== '' ? '<h1 style="margin:0 0 24px;font-family:' . $f . ';font-size:28px;line-height:1.2;color:' . COR_MARINHO . ';font-weight:400;">' . h($t['titulo']) . '</h1>' : '')
         . html_paragrafos($t['texto'], $paragrafo) . '<div style="height:8px;line-height:8px;">&nbsp;</div>'
         // Catálogo
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px;background:' . COR_FUNDO . ';"><tr><td style="padding:22px 24px;">'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px;background:' . COR_PASTEL . ';border-radius:20px;"><tr><td style="padding:24px 26px;">'
         . '<p style="margin:0 0 6px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:' . COR_PETROLEO . ';font-weight:700;">Catálogo de Serviços 2026</p>'
         . '<p style="margin:0 0 16px;font-family:' . $f . ';font-size:14px;line-height:1.55;color:' . COR_TEXTO . ';">Enquanto analisamos o seu pedido, conheça em detalhe as nossas áreas de serviço, a forma como trabalhamos e exemplos de intervenção.</p>'
-        . '<a href="' . h($d['link_catalogo']) . '" style="display:inline-block;padding:12px 20px;background:' . COR_MARINHO . ';color:#FFFFFF;text-decoration:none;font-family:' . $f . ';font-size:14px;font-weight:700;border-radius:8px;">Abrir o catálogo (PDF)</a>'
+        . '<a href="' . h($d['link_catalogo']) . '" style="display:inline-block;padding:13px 26px;background:#0A0F26;color:#FFFFFF;text-decoration:none;font-family:' . $f . ';font-size:14px;font-weight:700;border-radius:999px;">Abrir o catálogo (PDF)</a>'
         . '</td></tr></table>'
         // Resumo
         . '<p style="margin:0 0 4px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:' . COR_SUAVE . ';font-weight:700;">Resumo do pedido</p>'
@@ -92,7 +94,7 @@ function email_confirmacao_html(array $d): string
         . $assinatura
         . '</td></tr>'
         // Rodapé institucional
-        . '<tr><td style="padding:28px 40px;background:' . COR_MARINHO . ';">'
+        . '<tr><td style="padding:28px 40px;background:' . COR_MARINHO . ';background-image:linear-gradient(135deg,#0A0F26 0%,#13284A 55%,#003F46 100%);border-radius:0 0 24px 24px;">'
         . '<p style="margin:0 0 6px;font-family:' . $f . ';font-size:13px;color:#FFFFFF;font-weight:700;">Gadgetmetodo, Lda.</p>'
         . '<p style="margin:0;font-family:' . $f . ';font-size:12px;line-height:1.7;color:#C9CED8;">Rua das Cruzes, 625 · 4100-195 Porto · Portugal<br>'
         . '+351 915 416 112 · <a href="mailto:info@gadgetmetodo.pt" style="color:#C9CED8;">info@gadgetmetodo.pt</a> · <a href="' . $site . '" style="color:#C9CED8;">www.gadgetmetodo.pt</a></p>'
@@ -159,14 +161,14 @@ function email_interno_html(array $d): string
     return '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><title>' . h($d['tipo']) . '</title></head>'
         . '<body style="margin:0;padding:0;background:' . COR_FUNDO . ';">'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' . COR_FUNDO . ';"><tr><td align="center" style="padding:24px 16px;">'
-        . '<table role="presentation" width="640" cellpadding="0" cellspacing="0" style="width:100%;max-width:640px;background:#FFFFFF;border:1px solid ' . COR_LINHA . ';">'
-        . '<tr><td style="padding:24px 32px;background:' . COR_MARINHO . ';">'
+        . '<table role="presentation" width="640" cellpadding="0" cellspacing="0" style="width:100%;max-width:640px;background:' . COR_CREME . ';border-radius:24px;">'
+        . '<tr><td style="padding:24px 32px;background:' . COR_MARINHO . ';background-image:linear-gradient(135deg,#0A0F26 0%,#13284A 55%,#003F46 100%);border-radius:24px 24px 0 0;">'
         . '<p style="margin:0 0 4px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8FC3C6;font-weight:700;">Novo pedido pelo website</p>'
         . '<p style="margin:0;font-family:' . $f . ';font-size:20px;color:#FFFFFF;font-weight:700;">' . h($d['tipo']) . ' · ' . h($d['referencia']) . '</p></td></tr>'
         . '<tr><td style="padding:24px 32px 8px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">' . $linhas . '</table></td></tr>'
         . '<tr><td style="padding:16px 32px 8px;"><p style="margin:0 0 8px;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:' . COR_SUAVE . ';font-weight:700;">Mensagem</p>'
-        . '<div style="padding:16px 18px;background:' . COR_FUNDO . ';font-family:' . $f . ';font-size:14px;line-height:1.6;color:' . COR_TEXTO . ';">' . nl2br(h($d['mensagem'])) . '</div></td></tr>'
-        . '<tr><td style="padding:20px 32px 32px;"><a href="mailto:' . h($d['email']) . '?subject=' . $assunto_resposta . '" style="display:inline-block;padding:12px 20px;background:' . COR_PETROLEO . ';color:#FFFFFF;text-decoration:none;font-family:' . $f . ';font-size:14px;font-weight:700;border-radius:8px;">Responder ao pedido</a>'
+        . '<div style="padding:16px 18px;background:' . COR_FUNDO . ';border-radius:16px;font-family:' . $f . ';font-size:14px;line-height:1.6;color:' . COR_TEXTO . ';">' . nl2br(h($d['mensagem'])) . '</div></td></tr>'
+        . '<tr><td style="padding:20px 32px 32px;"><a href="mailto:' . h($d['email']) . '?subject=' . $assunto_resposta . '" style="display:inline-block;padding:13px 26px;background:#0A0F26;color:#FFFFFF;text-decoration:none;font-family:' . $f . ';font-size:14px;font-weight:700;border-radius:999px;">Responder ao pedido</a>'
         . '<p style="margin:16px 0 0;font-family:' . $f . ';font-size:12px;color:' . COR_SUAVE . ';">O remetente recebeu uma confirmação automática com a referência ' . h($d['referencia']) . ' e o catálogo de serviços. As aberturas do catálogo ficam registadas na <a href="' . h($d['registos']) . '" style="color:' . COR_PETROLEO . ';">área reservada</a>. Responder a este email envia a resposta diretamente para o remetente.</p></td></tr>'
         . '</table></td></tr></table></body></html>';
 }

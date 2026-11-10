@@ -1737,3 +1737,335 @@ a.cartao:hover .mais svg {
   background: #fdecec;
   border-radius: 10px;
 }
+
+/* ==========================================================================
+   Estilo 2026-11: fundo neutro quente com gradientes suaves, cartões muito
+   arredondados e translúcidos, mosaicos em tons pastel, botões em pílula e
+   títulos grandes e leves (inspirado no portal EXORYA, com a paleta e a marca
+   Gadgetmetodo: marinho, petróleo e profundo).
+   ========================================================================== */
+
+:root {
+  --areia: #f2ede6;
+  --areia-escura: #e7dfd4;
+  --creme: #fbf9f6;
+  --creme-vidro: rgba(251, 249, 246, 0.86);
+  --azul-nevoa: #dce4ea;
+  --salvia: #dfe8dc;
+  --petroleo-pastel: #d6e9e7;
+  --areia-pastel: #ebe3d6;
+  --azul-pastel: #d9e3ec;
+  --linha-suave: rgba(10, 15, 38, 0.08);
+  --nevoa: #f6f2ec;
+  --petroleo-tinta: #e3efed;
+  --raio: 24px;
+  --raio-pequeno: 16px;
+  --raio-grande: 32px;
+  --sombra: 0 1px 2px rgba(10, 15, 38, 0.03), 0 12px 32px rgba(60, 45, 30, 0.07);
+  --sombra-forte: 0 2px 4px rgba(10, 15, 38, 0.04), 0 20px 48px rgba(60, 45, 30, 0.12);
+  --fundo-gradiente:
+    radial-gradient(1100px 620px at 100% 0%, rgba(220, 228, 234, 0.95), rgba(220, 228, 234, 0) 62%),
+    radial-gradient(900px 560px at 0% 38%, rgba(234, 214, 194, 0.42), rgba(234, 214, 194, 0) 64%),
+    radial-gradient(800px 500px at 80% 92%, rgba(214, 233, 231, 0.55), rgba(214, 233, 231, 0) 60%);
+}
+
+body {
+  background-color: var(--areia);
+  background-image: var(--fundo-gradiente);
+  background-repeat: no-repeat;
+}
+
+/* Títulos grandes e leves; o realce fica em petróleo */
+h1,
+h2 {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 4.6vw, 3.6rem);
+  line-height: 1.08;
+}
+
+h2 {
+  line-height: 1.14;
+}
+
+h3 {
+  font-weight: 600;
+}
+
+.destaque {
+  color: var(--petroleo);
+  font-weight: inherit;
+}
+
+.fundo-escuro .destaque {
+  color: #8fd1cb;
+}
+
+.sobretitulo {
+  font-weight: 600;
+  letter-spacing: 0.22em;
+}
+
+/* Cabeçalho em vidro */
+.cabecalho {
+  background: rgba(242, 237, 230, 0.78);
+  border-bottom: 1px solid var(--linha-suave);
+  backdrop-filter: saturate(150%) blur(14px);
+}
+
+.navegacao a {
+  border-radius: 999px;
+}
+
+/* Botões em pílula */
+.botao {
+  min-height: 50px;
+  padding: 12px 26px;
+  background: var(--marinho);
+  border-color: var(--marinho);
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(10, 15, 38, 0.14);
+  letter-spacing: 0.01em;
+}
+
+.botao:hover,
+.botao:focus-visible {
+  background: var(--profundo);
+  border-color: var(--profundo);
+}
+
+.botao-secundario {
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--marinho);
+  border-color: var(--linha-suave);
+  box-shadow: none;
+}
+
+.botao-secundario:hover,
+.botao-secundario:focus-visible {
+  background: var(--creme);
+  color: var(--marinho);
+  border-color: rgba(10, 15, 38, 0.18);
+}
+
+/* Secções sobre o fundo contínuo; os blocos destacam-se como cartões */
+.secao-nevoa,
+.topo-pagina {
+  background: transparent;
+  border-bottom: 0;
+}
+
+.topo-pagina h1 {
+  max-width: 22ch;
+}
+
+/* Cartões translúcidos e muito arredondados */
+.cartao,
+.resumo,
+.caso,
+.perfil,
+.audio-cartao,
+.faq details,
+.formulario,
+.contactos-lista {
+  border-radius: var(--raio);
+}
+
+.cartao {
+  background: var(--creme-vidro);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--sombra);
+}
+
+a.cartao:hover,
+a.cartao:focus-visible {
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--sombra-forte);
+  transform: translateY(-3px);
+}
+
+/* Mosaicos pastel nas grelhas de serviços (como os atalhos do portal) */
+.grelha-3 > .cartao:nth-child(3n + 1) { background: rgba(235, 227, 214, 0.9); }
+.grelha-3 > .cartao:nth-child(3n + 2) { background: rgba(223, 232, 220, 0.9); }
+.grelha-3 > .cartao:nth-child(3n + 3) { background: rgba(217, 227, 236, 0.9); }
+.grelha-3 > .cartao.largo { background: var(--creme-vidro); }
+
+.cartao .icone,
+.icone {
+  border-radius: 999px;
+}
+
+.grelha-3 > .cartao .icone {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.resumo {
+  background: var(--creme-vidro);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--sombra);
+}
+
+.destaque-formacoes {
+  background: linear-gradient(120deg, var(--petroleo-pastel), var(--azul-pastel));
+  border-left: 0;
+  border-radius: var(--raio-grande);
+  box-shadow: var(--sombra);
+}
+
+/* Herói: cartão arredondado em gradiente marinho e petróleo, com brilhos suaves */
+.hero {
+  margin: clamp(12px, 2vw, 24px) max(var(--gutter), calc((100vw - var(--largura)) / 2 - 24px)) 0;
+  border-radius: var(--raio-grande);
+  background:
+    radial-gradient(700px 420px at 85% 15%, rgba(0, 99, 106, 0.55), rgba(0, 99, 106, 0) 65%),
+    radial-gradient(600px 400px at 10% 100%, rgba(143, 209, 203, 0.18), rgba(143, 209, 203, 0) 60%),
+    linear-gradient(135deg, var(--marinho) 0%, #13284a 55%, var(--profundo) 100%);
+  box-shadow: var(--sombra-forte);
+}
+
+.hero h1 {
+  font-weight: 400;
+}
+
+.botao-claro {
+  background: var(--creme);
+  color: var(--marinho);
+  border-color: var(--creme);
+}
+
+.hero .botao-secundario,
+.fundo-escuro .botao-secundario {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--branco);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+/* Atalhos em mosaico pastel (página inicial) */
+.atalhos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 16px;
+  margin-top: clamp(16px, 2vw, 24px);
+}
+
+.atalho {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 150px;
+  padding: 22px 24px;
+  color: var(--marinho);
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.atalho:nth-child(1) { background: var(--areia-pastel); }
+.atalho:nth-child(2) { background: var(--salvia); }
+.atalho:nth-child(3) { background: var(--azul-pastel); }
+
+.atalho:hover,
+.atalho:focus-visible {
+  box-shadow: var(--sombra-forte);
+  transform: translateY(-3px);
+}
+
+.atalho strong {
+  font-family: var(--fonte-titulos);
+  font-size: 1.45rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.atalho span {
+  color: var(--antracite);
+  font-size: 0.95rem;
+}
+
+.atalho .seta-circulo {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+}
+
+/* Formulários: campos arredondados sobre creme */
+.formulario {
+  background: var(--creme-vidro);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--sombra);
+}
+
+.campo input[type="text"],
+.campo input[type="email"],
+.campo input[type="tel"],
+.campo input[type="password"],
+.campo input[type="date"],
+.campo input[type="time"],
+.campo input[type="number"],
+.campo input[type="search"],
+.campo select,
+.campo textarea {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(10, 15, 38, 0.12);
+  border-radius: var(--raio-pequeno);
+}
+
+/* Perguntas frequentes em cartões */
+.faq details {
+  background: var(--creme-vidro);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--sombra);
+}
+
+/* Rodapé marinho com cantos superiores arredondados */
+.rodape {
+  margin-top: clamp(32px, 5vw, 64px);
+  border-radius: var(--raio-grande) var(--raio-grande) 0 0;
+}
+
+.chamada {
+  border-radius: var(--raio-grande);
+}
+
+.atalhos-secao {
+  padding-block: 0;
+}
+
+.atalhos-secao .atalhos {
+  margin-top: 20px;
+}
+
+.factos {
+  gap: 0;
+  background: var(--creme);
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--sombra);
+}
+
+.factos > div {
+  background: transparent;
+  box-shadow: inset -1px -1px 0 var(--linha-suave);
+}
+
+.atalho .seta-circulo svg {
+  width: 18px;
+  height: 18px;
+}
+
+.chamada {
+  margin-inline: max(var(--gutter), calc((100vw - var(--largura)) / 2 - 24px));
+  box-shadow: var(--sombra-forte);
+}

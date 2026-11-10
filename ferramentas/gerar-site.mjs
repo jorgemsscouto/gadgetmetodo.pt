@@ -402,12 +402,22 @@ pagina({
             <li>Organizar</li>
             <li>Fazer acontecer</li>
           </ul>
-          <h1 id="titulo-principal">Consultoria em organização, métodos e inteligência artificial para empresas</h1>
+          <h1 id="titulo-principal">Consultoria em organização, métodos e <span class="destaque">inteligência artificial</span> para empresas</h1>
           <p class="lead">A Gadgetmetodo, Lda. é uma consultora do Porto que ajuda empresas a simplificar processos, adotar a inteligência artificial (IA) com critério e cumprir as exigências de proteção de dados, do diagnóstico à implementação.</p>
           <div class="acoes">
             <a class="botao botao-claro" href="/contactos/#formulario">Pedir proposta ${seta}</a>
             <a class="botao botao-secundario" href="/servicos/">Conhecer os serviços</a>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="atalhos-secao" aria-label="Atalhos">
+      <div class="contentor">
+        <div class="atalhos">
+          <a class="atalho" href="/contactos/#formulario"><span class="seta-circulo">${seta}</span><strong>Pedir proposta</strong><span>formulário simples, também por voz</span></a>
+          <a class="atalho" href="/formacoes/"><span class="seta-circulo">${seta}</span><strong>Formação</strong><span>cursos, datas e inscrição online</span></a>
+          <a class="atalho" href="/catalogo/"><span class="seta-circulo">${seta}</span><strong>Catálogo</strong><span>os serviços em PDF</span></a>
         </div>
       </div>
     </section>
@@ -1542,7 +1552,7 @@ pagina({
               'Inclui também a metodologia em quatro fases, os modelos de colaboração, exemplos de intervenção por setor e os contactos.',
             ], 'O que contém o catálogo?')}
             <div class="acoes" style="margin-top:24px">
-              <a class="botao" href="${CATALOGO_PDF}">${icone('file-text')} Descarregar o catálogo (PDF, 1,1 MB)</a>
+              <a class="botao" href="${CATALOGO_PDF}">${icone('file-text')} Descarregar o catálogo (PDF, 1,2 MB)</a>
               <a class="botao botao-secundario" href="/contactos/#formulario">Pedir proposta</a>
             </div>
             <h2 class="espaco-topo" style="font-size:1.3rem">Conteúdo</h2>

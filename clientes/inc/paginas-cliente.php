@@ -288,7 +288,7 @@ function emails_nova_inscricao(int $id): void
     }
     $tabela .= '</table>';
     $botao = function (string $href, string $rotulo) {
-        return '<p style="margin:22px 0 0;"><a href="' . h($href) . '" style="display:inline-block;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">' . h($rotulo) . '</a></p>';
+        return '<p style="margin:22px 0 0;"><a href="' . h($href) . '" style="display:inline-block;padding:13px 26px;background:#0A0F26;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:999px;">' . h($rotulo) . '</a></p>';
     };
 
     $vars = ['formando' => $i['formando'], 'cliente' => $i['cliente'], 'formacao' => $i['titulo'], 'data' => data_hora($i['inicio'], false),
@@ -539,7 +539,7 @@ function bloco_reuniao(array $i): array
     $nome = stripos((string) $i['reuniao'], 'meet.google.com') !== false ? 'Google Meet' : 'reunião online';
     return [
         '<p style="margin:0 0 6px;"><strong>Sessões online (' . h($nome) . '):</strong> <a href="' . h($i['reuniao']) . '" style="color:#00636A;">' . h($i['reuniao']) . '</a></p>'
-        . '<p style="margin:0 0 18px;"><a href="' . h($i['reuniao']) . '" style="display:inline-block;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">Entrar na sessão</a></p>',
+        . '<p style="margin:0 0 18px;"><a href="' . h($i['reuniao']) . '" style="display:inline-block;padding:13px 26px;background:#0A0F26;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:999px;">Entrar na sessão</a></p>',
         "\n\nSessões online (" . $nome . '): ' . $i['reuniao'],
     ];
 }
@@ -573,7 +573,7 @@ function enviar_convite(string $tipo, string $nome, string $email, string $mensa
     $u = utilizador();
     return enviar_mensagem($tipo, $email, ['nome' => nome_curto($nome)] + $vars, [
         '<div style="margin:0 0 4px;">' . $resumo_html . '</div>'
-        . '<p style="margin:22px 0 0;"><a href="' . h($link) . '" style="display:inline-block;padding:11px 20px;background:#00636A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;">' . h($botao) . '</a></p>'
+        . '<p style="margin:22px 0 0;"><a href="' . h($link) . '" style="display:inline-block;padding:13px 26px;background:#0A0F26;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:999px;">' . h($botao) . '</a></p>'
         . '<p style="margin:18px 0 0;color:#687280;font-size:13px;">Se o botão não funcionar, copie este endereço para o navegador: ' . h($link) . '</p>',
         $resumo_texto . "\n\n" . $botao . ': ' . $link,
     ], ['texto' => $mensagem, 'responder_a' => (string) ($u['email'] ?? email_admin()), 'cc' => email_admin()]);

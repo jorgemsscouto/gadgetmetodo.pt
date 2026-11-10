@@ -450,6 +450,46 @@ svg { display: block; }
 .tabela-cursos td.lab { color: var(--petroleo); font-weight: 700; }
 .formacao .pequeno { margin: 0; line-height: 1.5; }
 
+/* Estilo 2026-11 (alinhado com o site): fundo neutro quente com brilhos suaves, cartões muito arredondados,
+   mosaicos pastel, marcadores em círculo e títulos mais leves */
+:root {
+  --linha: #e7dfd4;
+  --nevoa: #f1ebe3;
+  --tinta: #d6e9e7;
+  --areia-pastel: #ebe3d6;
+  --salvia: #dfe8dc;
+  --azul-pastel: #d9e3ec;
+}
+.pagina {
+  background-color: #f6f2ec;
+  background-image:
+    radial-gradient(420mm 220mm at 100% 0%, rgba(220, 228, 234, 0.9), rgba(220, 228, 234, 0) 60%),
+    radial-gradient(300mm 180mm at 0% 100%, rgba(234, 214, 194, 0.35), rgba(234, 214, 194, 0) 60%);
+}
+.titulo-acao { font-weight: 500; letter-spacing: -0.012em; }
+.tracker::before { border-radius: 50%; }
+.icone { border-radius: 50%; }
+.bloco, .q, .formacao, .passo, .modulos div, .areas div, .fase, .insight, .nota-abertura, .perfil-cartao {
+  border-radius: 5mm;
+}
+.bloco, .modulos div, .areas div, .nota-abertura {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(255, 255, 255, 0.85);
+}
+.tres .bloco:nth-child(3n + 1) { background: rgba(235, 227, 214, 0.9); }
+.tres .bloco:nth-child(3n + 2) { background: rgba(223, 232, 220, 0.9); }
+.tres .bloco:nth-child(3n + 3) { background: rgba(217, 227, 236, 0.9); }
+.formacao, .q { background: rgba(255, 255, 255, 0.72); }
+.tabela .num { border-radius: 50%; }
+.cta { border-radius: 6mm; }
+/* Capa e contracapa: fundo marinho em gradiente, como o herói do site */
+.pagina.capa, .pagina.contracapa {
+  background-color: var(--marinho);
+  background-image:
+    radial-gradient(260mm 180mm at 88% 12%, rgba(0, 99, 106, 0.55), rgba(0, 99, 106, 0) 65%),
+    linear-gradient(135deg, #0a0f26 0%, #13284a 55%, #003f46 100%);
+}
+
 </style>
 </head>
 <body>

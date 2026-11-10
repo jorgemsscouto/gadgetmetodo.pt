@@ -63,21 +63,35 @@ function documento(string $titulo, string $corpo): void
     exit;
 }
 
+// Iniciais do utilizador para o círculo do cabeçalho ("Ana Martins" dá "AM")
+function iniciais(string $nome): string
+{
+    $partes = preg_split('/\s+/u', trim($nome)) ?: [];
+    $primeira = $partes[0] ?? '';
+    $ultima = count($partes) > 1 ? $partes[count($partes) - 1] : '';
+    return mb_strtoupper(mb_substr($primeira, 0, 1) . mb_substr($ultima, 0, 1));
+}
+
+// Página da área: barra lateral com a marca e o menu (em cima, nos ecrãs estreitos), cabeçalho com o utilizador e conteúdo
 function pagina_area(string $atual, string $titulo, string $conteudo, string $sobretitulo = ''): void
 {
     $u = utilizador();
-    $quem = h($u['nome']) . ' · ' . h($u['papel'] === 'cliente' ? (string) $u['cliente_nome'] : PAPEIS[$u['papel']]);
-    $cabecalho = '<header class="cabecalho"><div class="contentor">
+    $perfil = $u['papel'] === 'cliente' ? (string) $u['cliente_nome'] : PAPEIS[$u['papel']];
+    documento($titulo, '<div class="area-app">
+  <aside class="area-lateral">
     <a class="marca" href="/"><img src="/assets/marca/logotipo.svg" alt="Gadgetmetodo, Lda." width="234" height="42"></a>
-    <div class="area-utilizador"><span>' . $quem . '</span><a class="botao botao-secundario" href="' . h(url('sair')) . '">Terminar sessão</a></div>
-  </div></header>';
-    documento($titulo, $cabecalho . menu_area($atual) . '
-  <main class="secao area-conteudo"><div class="contentor">
-    ' . submenu_configuracao($atual) . avisos() . '
-    ' . ($sobretitulo ? '<span class="sobretitulo">' . h($sobretitulo) . '</span>' : '') . '
-    <h1>' . h($titulo) . '</h1>
-    ' . $conteudo . '
-  </div></main>');
+    ' . menu_area($atual) . '
+  </aside>
+  <div class="area-principal">
+    <header class="area-topo"><div class="area-utilizador"><span class="area-quem"><strong>' . h($u['nome']) . '</strong><small>' . h($perfil) . '</small></span><span class="area-avatar" aria-hidden="true">' . h(iniciais((string) $u['nome'])) . '</span><a class="botao botao-secundario" href="' . h(url('sair')) . '">Terminar sessão</a></div></header>
+    <main class="secao area-conteudo"><div class="contentor">
+      ' . submenu_configuracao($atual) . avisos() . '
+      ' . ($sobretitulo ? '<span class="sobretitulo">' . h($sobretitulo) . '</span>' : '') . '
+      <h1>' . h($titulo) . '</h1>
+      ' . $conteudo . '
+    </div></main>
+  </div>
+</div>');
 }
 
 function pagina_entrada(string $erro = ''): void
@@ -86,16 +100,23 @@ function pagina_entrada(string $erro = ''): void
     documento('Entrar', '<header class="cabecalho"><div class="contentor"><a class="marca" href="/"><img src="/assets/marca/logotipo.svg" alt="Gadgetmetodo, Lda." width="234" height="42"></a></div></header>
   <main class="secao"><div class="contentor estreito">
     ' . avisos() . '
-    <span class="sobretitulo">Área reservada</span>
-    <h1>Entrar</h1>
-    <p class="texto-suave">Acesso reservado a clientes, formandos e à equipa da Gadgetmetodo. Os formandos recebem por email, quando a inscrição é confirmada, a ligação para definir a palavra-passe. Para obter acesso, contacte <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</p>
-    ' . ($primeiro ? '<div class="aviso aviso-info">Primeiro acesso: entre com o email info@gadgetmetodo.pt e a palavra-passe da área reservada (<code>./configurar-formulario.sh --acesso</code>). Fica criada a conta de administração.</div>' : '') . '
-    <form method="post" action="' . h(url('entrar')) . '" class="formulario" style="max-width:440px">' . campo_csrf() . '
-      <div class="campo"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="username" required></div>
-      <div class="campo"><label for="senha">Palavra-passe</label><input id="senha" name="senha" type="password" autocomplete="current-password" required>
-      ' . ($erro ? '<p class="erro-campo">' . h($erro) . '</p>' : '') . '</div>
-      <div><button class="botao" type="submit">Entrar</button></div>
-    </form>
+    <div class="entrada-cartao-marca">
+      <span class="sobretitulo">Gadgetmetodo · Simplificar, organizar, fazer acontecer</span>
+      <h1>Área reservada</h1>
+      <p>Formações, inscrições, presenças e documentos dos clientes e formandos num só lugar.</p>
+    </div>
+    <div class="entrada-cartao">
+      <span class="sobretitulo">Área reservada</span>
+      <h2>Iniciar sessão</h2>
+      ' . ($primeiro ? '<div class="aviso aviso-info">Primeiro acesso: entre com o email info@gadgetmetodo.pt e a palavra-passe da área reservada (<code>./configurar-formulario.sh --acesso</code>). Fica criada a conta de administração.</div>' : '') . '
+      <form method="post" action="' . h(url('entrar')) . '" class="formulario">' . campo_csrf() . '
+        <div class="campo"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="username" required></div>
+        <div class="campo"><label for="senha">Palavra-passe</label><input id="senha" name="senha" type="password" autocomplete="current-password" required>
+        ' . ($erro ? '<p class="erro-campo">' . h($erro) . '</p>' : '') . '</div>
+        <div><button class="botao" type="submit">Entrar</button></div>
+      </form>
+      <p class="entrada-nota">Acesso reservado a clientes, formandos e à equipa da Gadgetmetodo. Os formandos recebem por email, quando a inscrição é confirmada, a ligação para definir a palavra-passe. Para obter acesso, contacte <a href="mailto:info@gadgetmetodo.pt">info@gadgetmetodo.pt</a>.</p>
+    </div>
   </div></main>');
 }
 
