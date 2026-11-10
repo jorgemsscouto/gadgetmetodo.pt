@@ -628,6 +628,19 @@ function enviar_mensagem(string $tipo, string $para, array $vars, array $meio = 
         $html, $txt, (string) ($op['responder_a'] ?? ($interno ? '' : email_admin())), implode(',', $bcc), (string) ($op['cc'] ?? ''));
 }
 
+// Rodapé dos emails: o email, o site e o telefone passam a ligações num verde-água suave (sem isto, os programas de
+// email criam-nas sozinhos, com a sua própria cor)
+function rodape_com_ligacoes(string $texto): string
+{
+    $estilo = 'color:#36706B;text-decoration:none;';
+    $html = nl2br(h($texto), false);
+    $html = (string) preg_replace('/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/', '<a href="mailto:$0" style="' . $estilo . '">$0</a>', $html);
+    $html = (string) preg_replace('/(?<![\/@.\w])www\.[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?:\/[^\s<]*)?/', '<a href="https://$0" style="' . $estilo . '">$0</a>', $html);
+    return (string) preg_replace_callback('/\+351[\s\x{00A0}]?\d{3}[\s\x{00A0}]?\d{3}[\s\x{00A0}]?\d{3}/u', function ($m) use ($estilo) {
+        return '<a href="tel:+' . preg_replace('/\D/', '', $m[0]) . '" style="' . $estilo . '">' . $m[0] . '</a>';
+    }, $html);
+}
+
 // Email com o grafismo da área (cabeçalho, corpo e rodapé). $cc e $bcc aceitam vários endereços separados por vírgula.
 function enviar_aviso(string $para, string $assunto, string $titulo, string $corpo_html, string $corpo_texto, string $responder_a = '', string $bcc = '', string $cc = ''): bool
 {
@@ -657,14 +670,14 @@ function enviar_aviso(string $para, string $assunto, string $titulo, string $cor
         $m->isHTML(true);
         $f = "'Segoe UI', Helvetica, Arial, sans-serif";
         // Grafismo 2026-11: fundo areia, cartão creme arredondado, cabeçalho em gradiente marinho e petróleo, botões em pílula
-        $m->Body = '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#F2EDE6;">'
+        $m->Body = '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;}</style></head><body style="margin:0;background:#F2EDE6;">'
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F2EDE6;"><tr><td align="center" style="padding:28px 14px;">'
             . '<table role="presentation" width="620" cellpadding="0" cellspacing="0" style="width:100%;max-width:620px;">'
             . '<tr><td style="padding:0 6px 14px;"><img src="' . h(endereco_site()) . '/assets/marca/logotipo.png" width="180" alt="Gadgetmetodo, Lda." style="display:block;width:180px;height:auto;border:0;"></td></tr>'
             . '<tr><td style="padding:26px 32px;background:#0A0F26;background-image:linear-gradient(135deg,#0A0F26 0%,#13284A 55%,#003F46 100%);border-radius:24px 24px 0 0;">' . ($geral['cabecalho'] !== '' ? '<p style="margin:0 0 6px;font-family:' . $f . ';font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#8FD1CB;font-weight:700;">' . h($geral['cabecalho']) . '</p>' : '')
             . '<p style="margin:0;font-family:' . $f . ';font-size:24px;line-height:1.25;color:#FFFFFF;font-weight:400;">' . h($titulo) . '</p></td></tr>'
             . '<tr><td style="padding:28px 32px 30px;background:#FBF9F6;font-family:' . $f . ';font-size:15px;line-height:1.65;color:#333333;border-radius:0 0 24px 24px;">' . $corpo_html . '</td></tr>'
-            . ($geral['rodape'] !== '' ? '<tr><td style="padding:18px 10px 0;font-family:' . $f . ';font-size:12px;line-height:1.6;color:#687280;text-align:center;">' . nl2br(h($geral['rodape']), false) . '</td></tr>' : '')
+            . ($geral['rodape'] !== '' ? '<tr><td style="padding:18px 10px 0;font-family:' . $f . ';font-size:12px;line-height:1.6;color:#687280;text-align:center;">' . rodape_com_ligacoes((string) $geral['rodape']) . '</td></tr>' : '')
             . '</table></td></tr></table></body></html>';
         $m->AltBody = $titulo . "\n\n" . $corpo_texto . ($geral['rodape'] !== '' ? "\n\n--\n" . $geral['rodape'] : '') . "\n";
         $m->send();

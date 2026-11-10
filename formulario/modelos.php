@@ -65,7 +65,7 @@ function email_confirmacao_html(array $d): string
     $assinatura = trim($t['assinatura']) === '' ? '' : '<p style="margin:0 0 40px;font-family:' . $f . ';font-size:15px;line-height:1.6;color:' . COR_TEXTO . ';">' . h(array_shift($linhas_assinatura))
         . ($linhas_assinatura ? '<br><strong style="color:' . COR_MARINHO . ';">' . implode('<br>', array_map('h', $linhas_assinatura)) . '</strong>' : '') . '</p>';
 
-    return '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Confirmação de receção</title></head>'
+    return '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Confirmação de receção</title><style>a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;}</style></head>'
         . '<body style="margin:0;padding:0;background:' . COR_FUNDO . ';">'
         . '<div style="display:none;max-height:0;overflow:hidden;">Recebemos o seu ' . $tipo . ' (Ref. ' . $ref . '). Entraremos em contacto brevemente.</div>'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' . COR_FUNDO . ';"><tr><td align="center" style="padding:32px 16px;">'
@@ -97,12 +97,12 @@ function email_confirmacao_html(array $d): string
         . '<tr><td style="padding:28px 40px;background:' . COR_MARINHO . ';background-image:linear-gradient(135deg,#0A0F26 0%,#13284A 55%,#003F46 100%);border-radius:0 0 24px 24px;">'
         . '<p style="margin:0 0 6px;font-family:' . $f . ';font-size:13px;color:#FFFFFF;font-weight:700;">Gadgetmetodo, Lda.</p>'
         . '<p style="margin:0;font-family:' . $f . ';font-size:12px;line-height:1.7;color:#C9CED8;">Rua das Cruzes, 625 · 4100-195 Porto · Portugal<br>'
-        . '+351 915 416 112 · <a href="mailto:info@gadgetmetodo.pt" style="color:#C9CED8;">info@gadgetmetodo.pt</a> · <a href="' . $site . '" style="color:#C9CED8;">www.gadgetmetodo.pt</a></p>'
+        . '<a href="tel:+351915416112" style="color:#8FD1CB;text-decoration:none;">+351 915 416 112</a> · <a href="mailto:info@gadgetmetodo.pt" style="color:#8FD1CB;text-decoration:none;">info@gadgetmetodo.pt</a> · <a href="' . $site . '" style="color:#8FD1CB;text-decoration:none;">www.gadgetmetodo.pt</a></p>'
         . '<p style="margin:14px 0 0;font-family:' . $f . ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8FC3C6;">Simplificar · Organizar · Fazer acontecer</p>'
         . '</td></tr></table>'
         // Nota legal
         . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;"><tr><td style="padding:20px 8px 0;font-family:' . $f . ';font-size:11px;line-height:1.6;color:' . COR_SUAVE . ';">'
-        . 'Esta mensagem foi enviada automaticamente em resposta a um pedido submetido em www.gadgetmetodo.pt. Se não fez este pedido, pode ignorá-la. '
+        . 'Esta mensagem foi enviada automaticamente em resposta a um pedido submetido em <a href="' . $site . '" style="color:#36706B;text-decoration:none;">www.gadgetmetodo.pt</a>. Se não fez este pedido, pode ignorá-la. '
         . 'Se abrir o catálogo através desta mensagem, a data e hora do acesso ficam registadas e associadas ao seu pedido, para acompanhamento. '
         . 'Os seus dados são tratados de acordo com a nossa <a href="' . $site . '/privacidade/" style="color:' . COR_SUAVE . ';">política de privacidade</a>. '
         . 'A informação contida nesta mensagem é confidencial e destina-se exclusivamente ao seu destinatário.'
@@ -158,7 +158,7 @@ function email_interno_html(array $d): string
     }
     $assunto_resposta = rawurlencode('Re: ' . $d['tipo'] . ' [' . $d['referencia'] . ']');
 
-    return '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><title>' . h($d['tipo']) . '</title></head>'
+    return '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><title>' . h($d['tipo']) . '</title><style>a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;}</style></head>'
         . '<body style="margin:0;padding:0;background:' . COR_FUNDO . ';">'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' . COR_FUNDO . ';"><tr><td align="center" style="padding:24px 16px;">'
         . '<table role="presentation" width="640" cellpadding="0" cellspacing="0" style="width:100%;max-width:640px;background:' . COR_CREME . ';border-radius:24px;">'

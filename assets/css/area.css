@@ -2161,3 +2161,19 @@ h2.calendario-mes {
     transform: none;
   }
 }
+
+/* Visão geral da Configuração: botões a toda a largura, com a mesma altura e sem quebra de linha, alinhados pela base */
+.cartao-config .acoes-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.cartao-config .acoes-formulario .botao {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
