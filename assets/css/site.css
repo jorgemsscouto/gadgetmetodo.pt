@@ -2001,8 +2001,10 @@ a.cartao:focus-visible {
   border-radius: 999px;
 }
 
-/* Formulários: campos arredondados sobre creme */
-.formulario {
+/* Formulários: os formulários principais das páginas públicas são cartões creme, com margem interior;
+   na área reservada, os formulários dentro de outros blocos não levam fundo próprio */
+body:not(.area) main .formulario {
+  padding: clamp(20px, 3.5vw, 40px);
   background: var(--creme-vidro);
   border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow: var(--sombra);
@@ -2023,11 +2025,30 @@ a.cartao:focus-visible {
   border-radius: var(--raio-pequeno);
 }
 
-/* Perguntas frequentes em cartões */
+/* Perguntas frequentes em cartões separados, com margem interior; o ícone é um círculo */
+.faq {
+  display: grid;
+  gap: 12px;
+  border-top: 0;
+}
+
 .faq details {
+  padding: 0 clamp(18px, 2.4vw, 28px);
   background: var(--creme-vidro);
   border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow: var(--sombra);
+}
+
+.faq summary {
+  padding-block: 20px;
+}
+
+.faq summary::after {
+  border-radius: 999px;
+}
+
+.faq .resposta {
+  padding-right: 8px;
 }
 
 /* Rodapé marinho com cantos superiores arredondados */
