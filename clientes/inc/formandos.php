@@ -172,16 +172,18 @@ function pagina_definir_senha(): void
     }
     documento('Definir a palavra-passe', $cabecalho . '<main class="secao"><div class="contentor estreito">
     ' . avisos() . '
+    <div class="entrada-cartao">
     <span class="sobretitulo">Área do formando</span>
     <h1>Definir a palavra-passe</h1>
     <p class="texto-suave">' . h(nome_curto((string) $u['nome'])) . ', escolha a palavra-passe da sua área de formando. O nome de utilizador é o seu email: <strong>' . h((string) $u['email']) . '</strong>.</p>
-    <form method="post" action="' . h(url('senha', ['t' => $t])) . '" class="formulario" style="max-width:440px">' . campo_csrf() . '
+    <form method="post" action="' . h(url('senha', ['t' => $t])) . '" class="formulario">' . campo_csrf() . '
       <input type="text" name="utilizador" value="' . h((string) $u['email']) . '" autocomplete="username" hidden>
       ' . campo('nova', 'Palavra-passe (mínimo 10 caracteres)', '', 'password', 'required minlength="10" autocomplete="new-password"') . '
       ' . campo('repetir', 'Repetir a palavra-passe', '', 'password', 'required minlength="10" autocomplete="new-password"') . '
       ' . ($erro ? '<p class="erro-campo">' . h($erro) . '</p>' : '') . '
       <div><button class="botao" type="submit">Guardar e entrar</button></div>
     </form>
+    </div>
   </div></main>');
 }
 
