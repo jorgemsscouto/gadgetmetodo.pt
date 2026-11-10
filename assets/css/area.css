@@ -1470,3 +1470,39 @@ h2.calendario-mes {
 .grelha-presencas tbody th .texto-suave {
   font-weight: 400;
 }
+
+/* Calendário mensal (administração): grelha de segunda a domingo, uma entrada por sessão */
+
+.cal-mes { margin: 8px 0 32px; }
+.cal-cabecalho { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 8px; }
+.cal-cabecalho h2 { flex: 1 1 auto; margin: 0; text-align: center; font-size: 1.6rem; font-weight: 500; }
+.cal-hoje-ligacao { flex-basis: 100%; text-align: center; font-weight: 600; }
+.cal-tabela { width: 100%; min-width: 760px; table-layout: fixed; border-collapse: separate; border-spacing: 6px; }
+.cal-tabela th { padding: 4px 6px; color: var(--cinzento); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-align: center; text-transform: uppercase; border: 0; }
+.cal-tabela td { height: 112px; padding: 8px; vertical-align: top; background: #fbfaf8; border: 1px solid var(--cinzento-claro); border-radius: 14px; }
+.cal-tabela td.cal-fora { background: transparent; opacity: 0.55; }
+.cal-tabela td.cal-hoje { border: 2px solid var(--petroleo); }
+.cal-dia { display: block; margin-bottom: 6px; color: var(--marinho); font-size: 1.05rem; font-weight: 500; }
+.cal-semana { display: none; }
+.cal-tabela ul { margin: 0; padding: 0; list-style: none; }
+.cal-tabela li + li { margin-top: 4px; }
+.cal-sessao { display: block; padding: 4px 8px; overflow: hidden; color: var(--marinho); font-size: 0.78rem; line-height: 1.35; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; border-radius: 999px; background: #e9eef0; }
+.cal-sessao:hover, .cal-sessao:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 1px; }
+.cal-hora { font-weight: 700; }
+.cal-c1 { background: #dcefed; }
+.cal-c2 { background: #dfe6f3; }
+.cal-c3 { background: #f6e7d6; }
+.cal-c4 { background: #e7e1f0; }
+.cal-c5 { background: #e3eedd; }
+.cal-outro { background: #efe6ec; }
+.cal-cancelada { opacity: 0.6; text-decoration: line-through; }
+
+@media (max-width: 760px) {
+  .cal-tabela, .cal-tabela tbody, .cal-tabela tr, .cal-tabela td { display: block; min-width: 0; }
+  .cal-tabela thead, .cal-tabela td.cal-vazio:not(.cal-hoje), .cal-tabela td.cal-fora { display: none; }
+  .cal-cabecalho { justify-content: space-between; }
+  .cal-cabecalho h2 { order: -1; flex-basis: 100%; }
+  .cal-tabela td { height: auto; margin-bottom: 8px; }
+  .cal-semana { display: inline; }
+  .cal-sessao { white-space: normal; border-radius: 10px; }
+}

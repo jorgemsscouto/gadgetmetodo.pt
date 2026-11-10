@@ -362,7 +362,7 @@ function presencas_edicao_html(array $f): string
         } else {
             $acesso = '<span class="texto-suave">' . ($i['ultimo_acesso'] ? 'Entrou em ' . h(data_hora($i['ultimo_acesso'], false)) : 'Com acesso') . '</span>';
         }
-        $linhas .= '<tr><th scope="row"><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a><input type="hidden" name="mostradas[' . (int) $i['id'] . ']" value="1"><br>' . $acesso . '</th>' . $celulas . '</tr>';
+        $linhas .= '<tr><th scope="row"><a href="' . h(url('formando', ['i' => $i['id']])) . '">' . h($i['formando']) . '</a><input type="hidden" name="mostradas[' . (int) $i['id'] . ']" value="1"><br>' . $acesso . '</th>' . $celulas . '</tr>';
     }
     $rodape = '';
     foreach ($totais as $t) {

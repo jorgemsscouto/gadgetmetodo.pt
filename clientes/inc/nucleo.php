@@ -108,6 +108,8 @@ function bd(): ?PDO
             tipo_cliente TEXT, ferramentas TEXT)");
         // curso_id: curso associado (à partida, o aconselhado pelo diagnóstico); curso_origem: curso da ligação de onde veio o candidato
         acrescentar_colunas($pdo, 'preinscricoes', ['respostas' => 'TEXT', 'inscricao_id' => 'INTEGER', 'tipo_cliente' => 'TEXT', 'ferramentas' => 'TEXT', 'curso_origem' => 'INTEGER']);
+        // Edição a que a pré-inscrição ficou associada quando foi agendada uma edição do curso (clientes/inc/agenda.php)
+        acrescentar_colunas($pdo, 'preinscricoes', ['formacao_id' => 'INTEGER']);
         $pdo->exec('CREATE INDEX IF NOT EXISTS preinscricoes_curso ON preinscricoes (curso_id)');
         // Tabela de preços (administração): linhas (cursos), modalidades (colunas) e preço de cada linha em cada modalidade,
         // em cêntimos e sem IVA (sem valor, "sob consulta"). As linhas com "legado" são da 1.ª versão (uma lista simples

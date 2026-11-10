@@ -17,6 +17,7 @@ function botao_apagar(string $tipo, $id, string $rotulo, string $classe = 'botao
 function apagar_formacao_completa(int $id): void
 {
     executar('UPDATE preinscricoes SET inscricao_id = NULL WHERE inscricao_id IN (SELECT id FROM inscricoes WHERE formacao_id = ?)', [$id]);
+    executar('UPDATE preinscricoes SET formacao_id = NULL WHERE formacao_id = ?', [$id]);
     executar('DELETE FROM inscricoes WHERE formacao_id = ?', [$id]);
     executar('DELETE FROM sessoes WHERE formacao_id = ?', [$id]);
     executar('DELETE FROM lembretes WHERE formacao_id = ?', [$id]);
