@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Formação em inteligência artificial | Gadgetmetodo, Lda.</title>
-  <meta name="description" content="Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com quatro cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.">
+  <meta name="description" content="Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com cinco cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
   <link rel="canonical" href="https://www.gadgetmetodo.pt/formacoes/">
   <meta name="theme-color" content="#0A0F26">
@@ -14,7 +14,7 @@
   <meta property="og:locale" content="pt_PT">
   <meta property="og:site_name" content="Gadgetmetodo, Lda.">
   <meta property="og:title" content="Formação em inteligência artificial | Gadgetmetodo, Lda.">
-  <meta property="og:description" content="Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com quatro cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.">
+  <meta property="og:description" content="Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com cinco cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.">
   <meta property="og:url" content="https://www.gadgetmetodo.pt/formacoes/">
   <meta property="og:image" content="https://www.gadgetmetodo.pt/assets/img/partilha.png">
   <meta property="og:image:width" content="1200">
@@ -28,7 +28,7 @@
   <link rel="alternate" type="text/plain" href="/llms.txt" title="Resumo do site para modelos de linguagem">
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/css/site.css?v=6fd714153f">
+  <link rel="stylesheet" href="/assets/css/site.css?v=f42d3f1e61">
   <link rel="stylesheet" href="/assets/css/area.css?v=5a6052b3cc">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
@@ -142,6 +142,14 @@
             "@type": "Offer",
             "itemOffered": {
               "@type": "Service",
+              "@id": "https://www.gadgetmetodo.pt/servicos/sites-seo-geo-aeo/#servico",
+              "name": "Sites com SEO, GEO e AEO"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
               "@id": "https://www.gadgetmetodo.pt/formacoes/#servico",
               "name": "Formação"
             }
@@ -153,8 +161,8 @@
               "@id": "https://www.gadgetmetodo.pt/formacoes/#percurso",
               "name": "IA Generativa no Trabalho: do primeiro uso à liderança da implementação",
               "url": "https://www.gadgetmetodo.pt/formacoes/",
-              "description": "Percurso de quatro cursos abertos de seis horas sobre inteligência artificial generativa no trabalho, com inscrição online.",
-              "timeToComplete": "PT24H"
+              "description": "Percurso de cinco cursos abertos de seis horas sobre inteligência artificial generativa no trabalho, com inscrição online.",
+              "timeToComplete": "PT30H"
             }
           },
           {
@@ -183,7 +191,7 @@
       "@id": "https://www.gadgetmetodo.pt/formacoes/#pagina",
       "url": "https://www.gadgetmetodo.pt/formacoes/",
       "name": "Formação em inteligência artificial",
-      "description": "Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com quatro cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.",
+      "description": "Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com cinco cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.",
       "inLanguage": "pt-PT",
       "isPartOf": {
         "@id": "https://www.gadgetmetodo.pt/#website"
@@ -191,7 +199,7 @@
       "about": {
         "@id": "https://www.gadgetmetodo.pt/#organizacao"
       },
-      "dateModified": "2026-10-20",
+      "dateModified": "2026-11-10",
       "primaryImageOfPage": {
         "@type": "ImageObject",
         "url": "https://www.gadgetmetodo.pt/assets/img/partilha.png"
@@ -263,7 +271,7 @@
         <div class="duas-colunas texto-largo">
           <div class="resumo">
           <h2>Que formação oferece a Gadgetmetodo?</h2>
-          <p>A Gadgetmetodo, Lda. dá formação em inteligência artificial (IA) a empresas e profissionais em dois formatos: cursos abertos, com inscrição individual, organizados no percurso IA Generativa no Trabalho (quatro cursos de seis horas, da iniciação à liderança da implementação); e programas à medida, como o <a href="/formacoes/ai-essentials/">AI Essentials</a>, para administrações e equipas.</p>
+          <p>A Gadgetmetodo, Lda. dá formação em inteligência artificial (IA) a empresas e profissionais em dois formatos: cursos abertos, com inscrição individual, organizados no percurso IA Generativa no Trabalho (cinco cursos de seis horas, da iniciação à implementação de casos práticos); e programas à medida, como o <a href="/formacoes/ai-essentials/">AI Essentials</a>, para administrações e equipas.</p>
           <p>Cada curso tem uma página com o programa, os temas e os casos práticos de cada sessão, uma ficha para descarregar em PDF e a inscrição online. Sem datas agendadas, a pré-inscrição garante o convite quando forem marcadas.</p>
         </div>
           <nav class="atalhos-formacao" aria-label="Nesta página">
@@ -319,11 +327,11 @@
         <div class="faq">
           <details>
             <summary>Como está organizado o percurso IA Generativa no Trabalho?</summary>
-            <div class="resposta"><p>Tem quatro cursos sequenciais, cada um com seis sessões de 60 minutos (24 horas no total): Curso 1, Iniciação à IA Generativa no Trabalho; Curso 2, Produtividade com IA Generativa; Curso 3, IA nos Processos da Organização; Curso 4, Liderança e Implementação de IA. Todas as sessões terminam num Laboratório de Casos Práticos, que passa de 10 para 40 minutos por sessão ao longo do percurso. A ferramenta de referência é o Claude (Anthropic); os conceitos são transferíveis para outros assistentes de IA generativa.</p></div>
+            <div class="resposta"><p>Tem cinco cursos sequenciais, cada um com seis sessões de 60 minutos (30 horas no total): Curso 1, Iniciação à IA Generativa no Trabalho; Curso 2, Produtividade com IA Generativa; Curso 3, IA nos Processos da Organização; Curso 4, Liderança e Implementação de IA; Curso 5, Implementação de Casos Práticos, em que cada formando põe em funcionamento um caso real da sua organização. Todas as sessões terminam num Laboratório de Casos Práticos, que passa de 10 para 40 minutos por sessão ao longo do percurso. A ferramenta de referência é o Claude (Anthropic); os conceitos são transferíveis para outros assistentes de IA generativa.</p></div>
           </details>
           <details>
             <summary>Por que curso devo começar?</summary>
-            <div class="resposta"><p>Não precisa de escolher sozinho: a inscrição e a pré-inscrição incluem um diagnóstico com 10 perguntas sobre a forma como usa a IA, e a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado ao seu ponto de partida antes de confirmar a inscrição. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital.</p></div>
+            <div class="resposta"><p>Não precisa de escolher sozinho: a inscrição e a pré-inscrição incluem um diagnóstico com 10 perguntas sobre a forma como usa a IA, e a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado ao seu ponto de partida antes de confirmar a inscrição. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4; no Curso 5, o Curso 4 ou experiência equivalente na definição de casos de uso de IA. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital; o Curso 5, para quem já tem um caso de uso para pôr em funcionamento.</p></div>
           </details>
           <details>
             <summary>Como me inscrevo e o que é a pré-inscrição?</summary>
@@ -331,11 +339,11 @@
           </details>
           <details>
             <summary>Que requisitos técnicos são necessários?</summary>
-            <div class="resposta"><p>Um computador por formando, com navegador atualizado, e conta própria no Claude. Nos Cursos 1 e 2, o plano gratuito é suficiente para a maioria dos exercícios; nos Cursos 3 e 4 é necessário um plano pago (Pro, Max, Team ou Enterprise), porque as sessões sobre conectores, tarefas agendadas e agentes usam funcionalidades que não estão disponíveis, ou estão limitadas, no plano gratuito. As turmas têm 8 a 14 formandos, em modalidade presencial ou à distância síncrona.</p></div>
+            <div class="resposta"><p>Um computador por formando, com navegador atualizado, e conta própria no Claude. Nos Cursos 1 e 2, o plano gratuito é suficiente para a maioria dos exercícios; nos Cursos 3, 4 e 5 é necessário um plano pago (Pro, Max, Team ou Enterprise), porque as sessões sobre conectores, tarefas agendadas e agentes usam funcionalidades que não estão disponíveis, ou estão limitadas, no plano gratuito. As turmas têm 8 a 14 formandos, em modalidade presencial ou à distância síncrona.</p></div>
           </details>
           <details>
             <summary>Como é feita a avaliação?</summary>
-            <div class="resposta"><p>Combina avaliação prática, teste e participação, e o peso da prática cresce de curso para curso: 40% no Curso 1, 60% no Curso 2, 70% no Curso 3 e 85% no Curso 4, onde inclui um projeto final e não há teste. A aprovação exige 50% e presença em 5 das 6 sessões; no Curso 4, 50% e a entrega do projeto final.</p></div>
+            <div class="resposta"><p>Combina avaliação prática, teste e participação, e o peso da prática cresce de curso para curso: 40% no Curso 1, 60% no Curso 2, 70% no Curso 3 e 85% nos Cursos 4 e 5, sem teste: no Curso 4 inclui um projeto final e no Curso 5 a implementação de um caso real. A aprovação exige 50% e presença em 5 das 6 sessões; no Curso 4, 50% e a entrega do projeto final; no Curso 5, 50% e a apresentação do caso implementado.</p></div>
           </details>
           <details>
             <summary>Que relação tem esta formação com o Regulamento da IA?</summary>
@@ -378,6 +386,7 @@
             <li><a href="/servicos/inteligencia-artificial/">Inteligência artificial e transformação digital</a></li>
             <li><a href="/servicos/protecao-de-dados-e-conformidade/">Proteção de dados e conformidade</a></li>
             <li><a href="/servicos/estrategia-e-gestao/">Estratégia e gestão</a></li>
+            <li><a href="/servicos/sites-seo-geo-aeo/">Sites com SEO, GEO e AEO</a></li>
             <li><a href="/formacoes/">Formação</a></li>
           </ul>
         </div>

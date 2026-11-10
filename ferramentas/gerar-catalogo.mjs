@@ -15,7 +15,7 @@ function icone(nome) {
 }
 const check = lista => `<ul class="check">${lista.map(i => `<li>${i}</li>`).join('')}</ul>`;
 
-const TOTAL = 16;
+const TOTAL = 17;
 let n = 0;
 function pagina({ classe = '', seccao = '', corpo, sem_rodape = false }) {
   n += 1;
@@ -63,12 +63,20 @@ const SERVICOS = [
     entregaveis: ['Plano estratégico com iniciativas e responsáveis', 'Análise de vendas e margens por canal', 'Sistema de objetivos e indicadores', 'Regulamento de incentivos', 'Relatórios para a administração'],
   },
   {
-    num: '05', nome: 'Formação', icone: 'graduation-cap', formacao: true,
+    num: '05', nome: 'Sites com SEO, GEO e AEO', icone: 'globe',
+    titulo: 'Um site que é encontrado, compreendido e citado, na pesquisa tradicional e nas respostas de IA',
+    resumo: 'Melhoramos sites existentes e criamos sites novos em três frentes: desempenho técnico (velocidade, acessibilidade e segurança), otimização para motores de pesquisa (SEO, Search Engine Optimization) e preparação para a pesquisa com inteligência artificial (IA): GEO (Generative Engine Optimization), para os conteúdos serem citados nas respostas geradas por IA, e AEO (Answer Engine Optimization), para responderem diretamente às perguntas de quem procura.',
+    questoes: ['Porque é que o site não aparece quando os clientes procuram os nossos serviços?', 'A empresa aparece nas respostas de assistentes como o ChatGPT, o Gemini ou o Copilot?', 'O site é rápido, acessível e fácil de atualizar?', 'Que contactos e pedidos traz o site?'],
+    inclui: ['Diagnóstico técnico e de conteúdos', 'Estratégia de pesquisa a partir das perguntas dos clientes', 'SEO técnico e de conteúdos', 'Dados estruturados (schema.org)', 'GEO: conteúdos factuais e citáveis, com autoria, datas e fontes', 'AEO: respostas diretas às perguntas frequentes', 'Criação de sites novos rápidos e acessíveis', 'Medição de resultados'],
+    entregaveis: ['Relatório de diagnóstico com prioridades', 'Plano de conteúdos orientado às perguntas dos clientes', 'Site melhorado ou site novo publicado', 'Medição configurada e relatório de resultados', 'Guia para manter os conteúdos atualizados'],
+  },
+  {
+    num: '06', nome: 'Formação', icone: 'graduation-cap', formacao: true,
     titulo: 'Formação em IA para quem usa, aplica e lidera: cursos abertos e programas à medida',
-    resumo: 'A formação da Gadgetmetodo tem dois formatos: o percurso IA Generativa no Trabalho, com quatro cursos abertos de seis horas, da iniciação à liderança da implementação, e programas à medida, como o AI Essentials, para administrações e equipas. Os cursos podem também ser organizados só para uma empresa.',
+    resumo: 'A formação da Gadgetmetodo tem dois formatos: o percurso IA Generativa no Trabalho, com cinco cursos abertos de seis horas, da iniciação à implementação de casos práticos, e programas à medida, como o AI Essentials, para administrações e equipas. Os cursos podem também ser organizados só para uma empresa.',
     questoes: ['Por que curso deve começar cada pessoa, e até onde pode ir?', 'Como passar do uso individual da IA para os processos da equipa?', 'Que regras e cuidados são necessários com dados e resultados?'],
     funciona: ['Inscrição online em cada curso; sem datas, pré-inscrição com convite quando forem marcadas', 'Diagnóstico na inscrição: a Gadgetmetodo indica o curso adequado a cada formando', 'Página e ficha em PDF de cada curso, com programa, casos práticos e avaliação', 'Evidência documentada da formação realizada'],
-    entregaveis: ['Percurso de quatro cursos com diagnóstico de nível', 'Ficha de cada curso com programa e avaliação', 'Programas à medida para administrações e equipas', 'Evidência documentada da formação realizada'],
+    entregaveis: ['Percurso de cinco cursos com diagnóstico de nível', 'Ficha de cada curso com programa e avaliação', 'Programas à medida para administrações e equipas', 'Evidência documentada da formação realizada'],
   },
 ];
 
@@ -120,9 +128,9 @@ function paginaFormacao(s) {
       <h3 class="rotulo">Como funciona</h3>${check(s.funciona)}
     </div>
     <div class="col-dir">
-      <h3 class="rotulo">Percurso ${CURSOS.comum.percurso.split(':')[0]}: 4 cursos de 6 sessões de 60 minutos</h3>
+      <h3 class="rotulo">Percurso ${CURSOS.comum.percurso.split(':')[0]}: ${CURSOS.cursos.length} cursos de 6 sessões de 60 minutos</h3>
       <table class="tabela tabela-cursos">
-        <thead><tr><th>Curso</th><th>Objetivo</th><th>Prática por sessão</th></tr></thead>
+        <thead><tr><th>Curso</th><th>Objetivo</th><th>Prática por<br>sessão</th></tr></thead>
         <tbody>${cursos}</tbody>
       </table>
       <h3 class="rotulo mt">AI Essentials: programa à medida em cinco módulos</h3>
@@ -184,8 +192,8 @@ paginas.push(pagina({
 /* 2. Índice */
 const INDICE = [
   ['Síntese', 3], ['O nosso ponto de vista', 4], ['Mapa de serviços', 5],
-  ['Organização e Métodos', 6], ['Inteligência artificial e transformação digital', 7], ['Proteção de dados e conformidade', 8], ['Estratégia e gestão', 9], ['Formação', 10],
-  ['A Metodologia', 11], ['Modelos de colaboração e princípios', 12], ['Experiência', 13], ['Equipa', 14], ['Como iniciar', 15],
+  ['Organização e Métodos', 6], ['Inteligência artificial e transformação digital', 7], ['Proteção de dados e conformidade', 8], ['Estratégia e gestão', 9], ['Sites com SEO, GEO e AEO', 10], ['Formação', 11],
+  ['A Metodologia', 12], ['Modelos de colaboração e princípios', 13], ['Experiência', 14], ['Equipa', 15], ['Como iniciar', 16],
 ];
 paginas.push(pagina({
   seccao: 'Índice',
@@ -211,7 +219,7 @@ paginas.push(pagina({
   <h1 class="titulo-acao">Ajudamos empresas a simplificar processos, adotar a inteligência artificial com critério e proteger os dados, do diagnóstico à implementação</h1>
   <div class="tres">
     <div class="bloco"><span class="icone">${icone('building-2')}</span><h3>Quem somos</h3><p>Consultora com sede no Porto, especializada em Organização e Métodos (O&amp;M), inteligência artificial (IA) aplicada à gestão, proteção de dados e apoio estratégico a administrações.</p></div>
-    <div class="bloco"><span class="icone">${icone('layers')}</span><h3>O que fazemos</h3><p>Cinco áreas complementares: Organização e Métodos; IA e transformação digital; proteção de dados e conformidade; estratégia e gestão; formação, com cursos abertos de IA generativa e programas à medida.</p></div>
+    <div class="bloco"><span class="icone">${icone('layers')}</span><h3>O que fazemos</h3><p>Seis áreas complementares: Organização e Métodos; IA e transformação digital; proteção de dados e conformidade; estratégia e gestão; sites com SEO, GEO e AEO; formação, com cursos abertos de IA generativa e programas à medida.</p></div>
     <div class="bloco"><span class="icone">${icone('route')}</span><h3>Como trabalhamos</h3><p>Quatro fases (diagnóstico, desenho, implementação e acompanhamento), por projeto de âmbito fechado ou em acompanhamento continuado, com propostas à medida.</p></div>
   </div>
   <dl class="factos">
@@ -250,22 +258,22 @@ paginas.push(pagina({
 }));
 
 /* 5. Mapa de serviços */
-const FORMATO = ['Projeto de âmbito fechado', 'Projeto por fases ou acompanhamento continuado', 'Encarregado de Proteção de Dados (DPO) externo ou projeto de conformidade', 'Projeto ou conselho continuado à administração', 'Cursos abertos com inscrição online ou programas à medida, presenciais ou à distância'];
-const PARA = ['Simplificar a estrutura e os processos, clarificar responsabilidades e preparar certificações', 'Escolher e implementar casos de uso de IA com retorno, integrados nos sistemas existentes', 'Cumprir o Regulamento Geral sobre a Proteção de Dados (RGPD), a Diretiva NIS2 e o DORA e governar o uso de IA com proporcionalidade', 'Transformar a estratégia em objetivos, indicadores e incentivos por equipa', 'Preparar pessoas, equipas e administração para usar, aplicar e liderar a IA com responsabilidade'];
+const FORMATO = ['Projeto de âmbito fechado', 'Projeto por fases ou acompanhamento continuado', 'Encarregado de Proteção de Dados (DPO) externo ou projeto de conformidade', 'Projeto ou conselho continuado à administração', 'Projeto de melhoria ou de criação de site, com medição de resultados', 'Cursos abertos com inscrição online ou programas à medida, presenciais ou à distância'];
+const PARA = ['Simplificar a estrutura e os processos, clarificar responsabilidades e preparar certificações', 'Escolher e implementar casos de uso de IA com retorno, integrados nos sistemas existentes', 'Cumprir o Regulamento Geral sobre a Proteção de Dados (RGPD), a Diretiva NIS2 e o DORA e governar o uso de IA com proporcionalidade', 'Transformar a estratégia em objetivos, indicadores e incentivos por equipa', 'Ser encontrado e citado na pesquisa no Google e nos assistentes de IA, com um site rápido e acessível', 'Preparar pessoas, equipas e administração para usar, aplicar e liderar a IA com responsabilidade'];
 paginas.push(pagina({
   seccao: 'Mapa de serviços',
   corpo: `
-  <h1 class="titulo-acao">Cinco áreas complementares, que podem ser contratadas isoladamente ou combinadas num único projeto</h1>
+  <h1 class="titulo-acao">Seis áreas complementares, que podem ser contratadas isoladamente ou combinadas num único projeto</h1>
   <table class="tabela mapa">
     <thead><tr><th style="width:24%">Área</th><th style="width:31%">Para que serve</th><th style="width:27%">Principais entregáveis</th><th>Formato típico</th></tr></thead>
     <tbody>${SERVICOS.map((s, i) => `<tr><th><span class="icone pequeno-ic">${icone(s.icone)}</span><span><small>${s.num}</small>${s.nome}</span></th><td>${PARA[i]}</td><td>${s.entregaveis.slice(0, 3).join('; ')}</td><td>${FORMATO[i]}</td></tr>`).join('')}</tbody>
   </table>`,
 }));
 
-/* 6 a 10. Serviços */
+/* 6 a 11. Serviços */
 for (const s of SERVICOS) paginas.push(paginaServico(s));
 
-/* 11. A Metodologia */
+/* 12. A Metodologia */
 const FASES = [
   ['Diagnóstico', 'Levantamento de processos, sistemas, equipas, dados e riscos. Prioridades com maior retorno.', ['Relatório de diagnóstico', 'Prioridades e oportunidades']],
   ['Desenho', 'Modelo organizacional, processos, arquitetura de sistemas e regras de governação.', ['Solução desenhada', 'Plano de ação com calendário']],
@@ -284,7 +292,7 @@ paginas.push(pagina({
   <p class="nota-pag">O âmbito, os entregáveis e o calendário de cada fase são fixados na proposta. A proteção de dados e a gestão da mudança atravessam todas as fases.</p>`,
 }));
 
-/* 12. Modelos e princípios */
+/* 13. Modelos e princípios */
 paginas.push(pagina({
   seccao: 'Modelos de colaboração e princípios',
   corpo: `
@@ -303,7 +311,7 @@ paginas.push(pagina({
   </dl>`,
 }));
 
-/* 13. Experiência */
+/* 14. Experiência */
 const CASOS = [
   ['shirt', 'Têxtil e vestuário', 'Digitalização do desenvolvimento de produto numa confeção de malhas circulares', 'Implementação de prototipagem 3D de vestuário, com bibliotecas de tecidos e avatares, integração com moldes digitais, formação e acompanhamento.', 'Menos tempo, custo e desperdício nas amostras; melhor comunicação entre comercial, desenvolvimento e produção.'],
   ['file-text', 'Tecnologia e gestão documental', 'Estratégia de IA e proteção de dados numa empresa de serviços tecnológicos', 'Conselho à administração em inovação e tecnologia, funções de DPO, roteiro de IA, governação com RGPD e NIS2 e formação AI Essentials, ao longo de dois anos.', 'Casos de uso com maior retorno, IA integrada na oferta e conformidade demonstrável.'],
@@ -323,7 +331,7 @@ paginas.push(pagina({
   <p class="nota-pag">Por confidencialidade, os clientes não são identificados.</p>`,
 }));
 
-/* 14. Equipa */
+/* 15. Equipa */
 paginas.push(pagina({
   seccao: 'Equipa',
   corpo: `
@@ -346,7 +354,7 @@ paginas.push(pagina({
   <div class="areas" style="margin-top:0">${SERVICOS.map(s => `<div><span class="icone">${icone(s.icone)}</span><br>${s.nome}</div>`).join('')}</div>`,
 }));
 
-/* 15. Como iniciar */
+/* 16. Como iniciar */
 const PASSOS = [
   ['Pedido', 'Pelo formulário em gadgetmetodo.pt, por email ou por telefone.'],
   ['Primeira conversa', 'Objetivos, contexto, prioridades e prazos.'],
@@ -371,7 +379,7 @@ paginas.push(pagina({
   </div>`,
 }));
 
-/* 16. Contracapa */
+/* 17. Contracapa */
 paginas.push(pagina({
   classe: 'contracapa', sem_rodape: true,
   corpo: `

@@ -10,27 +10,41 @@ const MODALIDADES_INICIAIS = [
     ['etiqueta' => 'Particulares', 'titulo' => 'Turma aberta', 'descricao' => 'Inscrição individual numa turma de 10 pessoas. A turma arranca quando reunir 10 inscritos. Preço por pessoa e por curso.', 'coluna' => 'Particulares', 'detalhe' => 'por pessoa', 'valor' => 14634],
     ['etiqueta' => 'Individual', 'titulo' => 'One-to-one', 'descricao' => 'Formação personalizada, só com o formador e um formando, com o programa do curso adaptado à sua realidade. Preço por curso.', 'coluna' => 'One-to-one', 'detalhe' => 'por formando', 'valor' => 55900],
 ];
-const NIVEIS_INICIAIS = ['Iniciação', 'Intermédio', 'Avançado', 'Especialização'];
+const NIVEIS_INICIAIS = ['Iniciação', 'Intermédio', 'Avançado', 'Especialização', 'Implementação'];
+// Cursos com preço inicial nas modalidades (os seguintes, como o Curso 5, começam "Sob consulta")
+const CURSOS_COM_PRECO_INICIAL = 4;
 const TEXTOS_PRECOS = [
     'sobretitulo' => 'IA Generativa no Trabalho: do primeiro uso à liderança da implementação',
     'titulo' => 'Preços por curso',
-    'subtitulo' => 'Percurso de 4 cursos · 6 sessões síncronas de 60 minutos por curso',
-    'factos' => [['Cursos', '4 níveis sequenciais'], ['Duração', '6 horas por curso, 24 horas no total'], ['Modalidades', 'Empresas, particulares e one-to-one'], ['Formato', 'Sessões síncronas, com casos práticos']],
+    'subtitulo' => 'Percurso de 5 cursos · 6 sessões síncronas de 60 minutos por curso',
+    'factos' => [['Cursos', '5 níveis sequenciais'], ['Duração', '6 horas por curso, 30 horas no total'], ['Modalidades', 'Empresas, particulares e one-to-one'], ['Formato', 'Sessões síncronas, com casos práticos']],
     'titulo_modalidades' => 'Modalidades',
     'titulo_tabela' => 'Preços por curso',
     'coluna_linhas' => 'Curso',
-    'nota_tabela' => 'Preços por curso de 6 horas. Todos os valores são apresentados sem IVA incluído; acresce IVA à taxa legal em vigor.',
+    'nota_tabela' => 'Preços por curso de 6 horas. Todos os valores são apresentados sem IVA incluído; acresce IVA à taxa legal em vigor. Os preços podem ser alterados sem aviso prévio.',
+    'titulo_servicos' => 'Consultoria e outros serviços',
+    'coluna_servicos' => 'Serviço',
+    'nota_servicos' => 'Valores sem IVA; acresce IVA à taxa legal em vigor. Sem valor indicado, o preço é dado sob consulta, depois de conhecido o âmbito do trabalho. Os preços podem ser alterados sem aviso prévio.',
     'titulo_condicoes' => 'Condições',
-    'condicoes' => "Os preços são por curso. Cada curso pode ser adquirido isoladamente, respeitando os pré-requisitos: Curso 1 sem pré-requisitos; Curso 2 exige o Curso 1 ou utilização regular demonstrada; Cursos 3 e 4 exigem o curso anterior.\n"
+    'condicoes' => "Os preços são por curso. Cada curso pode ser adquirido isoladamente, respeitando os pré-requisitos: Curso 1 sem pré-requisitos; Curso 2 exige o Curso 1 ou utilização regular demonstrada; Cursos 3, 4 e 5 exigem o curso anterior.\n"
         . "Turma aberta para particulares: só arranca com 10 inscritos. Até lá, a inscrição fica registada e o formando é informado da data de início.\n"
         . "Turma fechada para empresas: até 10 participantes, 100% remota, em sessões síncronas de 60 minutos com datas acordadas com a empresa.\n"
-        . "Cada formando precisa de computador com navegador atualizado e conta própria no Claude. Os Cursos 3 e 4 exigem plano pago do Claude (Pro, Max, Team ou Enterprise), cujo custo não está incluído nos preços.\n"
+        . "Cada formando precisa de computador com navegador atualizado e conta própria no Claude. Os Cursos 3, 4 e 5 exigem plano pago do Claude (Pro, Max, Team ou Enterprise), cujo custo não está incluído nos preços.\n"
         . 'O preço inclui as 6 sessões, os materiais de apoio, os casos práticos e a avaliação.',
     'texto_programa' => 'Programa detalhado de cada curso nas respetivas fichas de curso e em:',
-    'nota_documento' => 'Documento informativo de {data}. Os preços podem ser revistos; prevalece a versão publicada no site à data da inscrição.',
+    'nota_documento' => 'Documento informativo de {data}. Prevalece a versão em vigor à data da inscrição ou da adjudicação.',
     'data_documento' => '',
 ];
 const MAX_MODALIDADES_PDF = 4; // colunas de preços que cabem na tabela A4
+// Consultoria e outros serviços: linhas iniciais, sem preço (sob consulta), para a Gadgetmetodo preencher
+const SERVICOS_INICIAIS = [
+    ['Consultoria em Organização e Métodos', 'Diagnóstico, processos, procedimentos, auditorias e planos de melhoria', 'por hora'],
+    ['Consultoria em inteligência artificial e transformação digital', 'Estratégia de IA, casos de uso, integrações, automação e indicadores', 'por hora'],
+    ['Consultoria em proteção de dados e conformidade', 'Encarregado de Proteção de Dados (DPO), RGPD, NIS2 e DORA', 'por hora'],
+    ['Consultoria em estratégia e gestão', 'Alinhamento estratégico, objetivos e indicadores, apoio à administração', 'por hora'],
+    ['Sites: melhoria de site existente', 'Auditoria e melhoria de desempenho, acessibilidade, SEO, GEO e AEO', 'por hora'],
+    ['Sites: criação de site novo', 'Site rápido e acessível, com conteúdos preparados para SEO, GEO e AEO', 'por projeto'],
+];
 
 function textos_precos(): array
 {
@@ -41,6 +55,12 @@ function textos_precos(): array
 // Na primeira abertura desta versão: a tabela da versão anterior (uma lista simples) fica só para consulta
 // e a tabela nova começa com as modalidades, os cursos ativos e os preços da tabela de referência
 function semear_precos(): void
+{
+    semear_precos_v2();
+    semear_precos_v3();
+}
+
+function semear_precos_v2(): void
 {
     if (definicao(bd(), 'precos_v2') !== null) {
         return;
@@ -60,8 +80,48 @@ function semear_precos(): void
         $id = executar("INSERT INTO precos (categoria, designacao, detalhe, iva, ativo, ordem, atualizado, legado) VALUES ('', ?, ?, '', 1, ?, ?, 0)",
             [$c['nome'], trim((NIVEIS_INICIAIS[$n] ?? '') . ' · 6 horas', ' ·'), ($n + 1) * 10, agora()]);
         foreach ($colunas as [$coluna, $valor]) {
-            executar('INSERT INTO precos_valores (preco_id, coluna_id, valor) VALUES (?, ?, ?)', [$id, $coluna, $valor]);
+            executar('INSERT INTO precos_valores (preco_id, coluna_id, valor) VALUES (?, ?, ?)', [$id, $coluna, $n < CURSOS_COM_PRECO_INICIAL ? $valor : null]);
         }
+    }
+    $pdo->commit();
+}
+
+// Curso 5, consultoria e outros serviços (sob consulta) e textos atualizados para 5 cursos; corre uma vez
+function semear_precos_v3(): void
+{
+    if (definicao(bd(), 'precos_v3') !== null) {
+        return;
+    }
+    $pdo = bd();
+    $pdo->beginTransaction();
+    definir($pdo, 'precos_v3', agora());
+    $curso5 = linha_bd("SELECT nome FROM cursos WHERE chave = 'ia-generativa-5'");
+    if ($curso5 && !linha_bd("SELECT id FROM precos WHERE legado = 0 AND tabela = 'cursos' AND designacao = ?", [$curso5['nome']])) {
+        $ordem = (int) (linha_bd("SELECT MAX(ordem) AS m FROM precos WHERE legado = 0 AND tabela = 'cursos'")['m'] ?? 0) + 10;
+        $id = executar("INSERT INTO precos (categoria, designacao, detalhe, iva, ativo, ordem, atualizado, legado, tabela) VALUES ('', ?, ?, '', 1, ?, ?, 0, 'cursos')",
+            [$curso5['nome'], 'Implementação · 6 horas', $ordem, agora()]);
+        foreach (modalidades_precos() as $m) {
+            executar('INSERT INTO precos_valores (preco_id, coluna_id, valor) VALUES (?, ?, NULL)', [$id, $m['id']]);
+        }
+    }
+    if (!linha_bd("SELECT id FROM precos WHERE legado = 0 AND tabela = 'servicos' LIMIT 1")) {
+        foreach (SERVICOS_INICIAIS as $n => [$designacao, $descricao, $unidade]) {
+            executar("INSERT INTO precos (categoria, designacao, descricao, unidade, valor, iva, ativo, ordem, atualizado, legado, tabela) VALUES ('', ?, ?, ?, NULL, '', 1, ?, ?, 0, 'servicos')",
+                [$designacao, $descricao, $unidade, ($n + 1) * 10, agora()]);
+        }
+    }
+    // Textos guardados com a versão de 4 cursos: atualizados (o que tiver sido reescrito à mão fica como está)
+    $guardados = json_decode((string) definicao($pdo, 'precos_textos'), true);
+    if (is_array($guardados)) {
+        $trocas = ['Percurso de 4 cursos' => 'Percurso de 5 cursos', '4 níveis sequenciais' => '5 níveis sequenciais', '24 horas no total' => '30 horas no total',
+            'Cursos 3 e 4 exigem o curso anterior' => 'Cursos 3, 4 e 5 exigem o curso anterior', 'Os Cursos 3 e 4 exigem plano pago' => 'Os Cursos 3, 4 e 5 exigem plano pago',
+            'Os preços podem ser revistos; prevalece a versão publicada no site à data da inscrição.' => 'Prevalece a versão em vigor à data da inscrição ou da adjudicação.'];
+        $json = strtr((string) json_encode($guardados, JSON_UNESCAPED_UNICODE), $trocas);
+        $guardados = json_decode($json, true);
+        if (isset($guardados['nota_tabela']) && strpos($guardados['nota_tabela'], 'sem aviso prévio') === false) {
+            $guardados['nota_tabela'] = rtrim($guardados['nota_tabela']) . ' Os preços podem ser alterados sem aviso prévio.';
+        }
+        definir($pdo, 'precos_textos', (string) json_encode($guardados, JSON_UNESCAPED_UNICODE));
     }
     $pdo->commit();
 }
@@ -92,7 +152,13 @@ function euros(int $centimos, bool $simbolo = true): string
 
 function lista_precos(bool $so_ativos = false): array
 {
-    return consulta('SELECT * FROM precos WHERE legado = 0' . ($so_ativos ? ' AND ativo = 1' : '') . ' ORDER BY ordem, id');
+    return consulta("SELECT * FROM precos WHERE legado = 0 AND tabela = 'cursos'" . ($so_ativos ? ' AND ativo = 1' : '') . ' ORDER BY ordem, id');
+}
+
+// Consultoria e outros serviços: designação, descrição, unidade (por hora, por projeto...) e um preço
+function lista_servicos(bool $so_ativos = false): array
+{
+    return consulta("SELECT * FROM precos WHERE legado = 0 AND tabela = 'servicos'" . ($so_ativos ? ' AND ativo = 1' : '') . ' ORDER BY ordem, id');
 }
 
 function modalidades_precos(bool $so_ativas = false): array
@@ -146,6 +212,7 @@ function admin_precos(): void
     $erros = [];
     $env_linhas = null;
     $env_modalidades = null;
+    $env_servicos = null;
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $acao = (string) ($_POST['acao'] ?? '');
         // "Acrescentar linha" sem JavaScript: grava e volta com uma linha em branco nessa tabela
@@ -190,7 +257,7 @@ function admin_precos(): void
                         continue;
                     }
                     if ($nova) {
-                        $pid = executar("INSERT INTO precos (categoria, designacao, detalhe, iva, ativo, ordem, atualizado, legado) VALUES ('', ?, ?, '', ?, ?, ?, 0)",
+                        $pid = executar("INSERT INTO precos (categoria, designacao, detalhe, iva, ativo, ordem, atualizado, legado, tabela) VALUES ('', ?, ?, '', ?, ?, ?, 0, 'cursos')",
                             [$d['designacao'], $d['detalhe'], $d['ativo'], $d['ordem'], agora()]);
                     } else {
                         $pid = (int) $id;
@@ -268,6 +335,48 @@ function admin_precos(): void
             definir(bd(), 'precos_textos', (string) json_encode($t, JSON_UNESCAPED_UNICODE));
             aviso('Textos do documento guardados.');
             redirecionar('precos');
+        } elseif ($acao === 'servicos') {
+            $existentes = array_column(lista_servicos(), null, 'id');
+            $env_servicos = [];
+            $n = 0;
+            foreach (linhas_enviadas('servicos', $existentes) as $id => $l) {
+                $id = (string) $id;
+                $n++;
+                $d = ['designacao' => limpar_texto_preco($l['designacao'] ?? '', 160), 'descricao' => limpar_texto_preco($l['descricao'] ?? '', 300),
+                      'unidade' => limpar_texto_preco($l['unidade'] ?? '', 40), 'texto' => limpar_texto_preco($l['valor'] ?? '', 20),
+                      'ordem' => max(0, min(9999, (int) ($l['ordem'] ?? 0))), 'ativo' => empty($l['ativo']) ? 0 : 1, 'apagar' => !empty($l['apagar'])];
+                $d['valor'] = centimos($d['texto']);
+                $onde = preg_match('/^nova/', $id) ? 'Serviço novo' : 'Serviço ' . $n;
+                if (!$d['apagar'] && $d['valor'] === false) {
+                    $erros[] = $onde . ': o preço "' . $d['texto'] . '" não é válido (por exemplo, 85 ou 92,50).';
+                }
+                if (!$d['apagar'] && $d['designacao'] === '') {
+                    $erros[] = $onde . ': indique a designação.';
+                }
+                $env_servicos[$id] = $d;
+            }
+            if (!$erros) {
+                $pdo = bd();
+                $pdo->beginTransaction();
+                foreach ($env_servicos as $id => $d) {
+                    $nova = (bool) preg_match('/^nova/', (string) $id);
+                    if ($d['apagar']) {
+                        if (!$nova) {
+                            executar("DELETE FROM precos WHERE id = ? AND tabela = 'servicos'", [(int) $id]);
+                        }
+                        continue;
+                    }
+                    $v = [$d['designacao'], $d['descricao'], $d['unidade'], $d['valor'], $d['ativo'], $d['ordem'], agora()];
+                    if ($nova) {
+                        executar("INSERT INTO precos (categoria, designacao, descricao, unidade, valor, ativo, ordem, atualizado, iva, legado, tabela) VALUES ('', ?, ?, ?, ?, ?, ?, ?, '', 0, 'servicos')", $v);
+                    } else {
+                        executar("UPDATE precos SET designacao = ?, descricao = ?, unidade = ?, valor = ?, ativo = ?, ordem = ?, atualizado = ? WHERE id = ? AND tabela = 'servicos'", array_merge($v, [(int) $id]));
+                    }
+                }
+                $pdo->commit();
+                aviso('Consultoria e outros serviços guardados.');
+                redirecionar('precos', $volta, 'servicos');
+            }
         } elseif ($acao === 'apagar_legado') {
             executar('DELETE FROM precos WHERE legado = 1');
             aviso('Tabela anterior apagada.');
@@ -354,6 +463,40 @@ function admin_precos(): void
         $corpo_m .= $linha_modalidade((string) $id, [], (int) ($proxima_m / 10) + $k);
     }
 
+    // 2. Consultoria e outros serviços: designação e descrição, unidade e um preço
+    $servicos = lista_servicos();
+    $linha_servico = function (string $id, array $p, int $n) use ($env_servicos) {
+        $e = $env_servicos[$id] ?? null;
+        $nova = (bool) preg_match('/^nova/', $id);
+        $nome = 'servicos[' . $id . ']';
+        $rotulo = $nova ? 'serviço novo' : 'serviço ' . $n;
+        $campo = function (string $c) use ($e, $p) { return $e !== null ? (string) ($e[$c] ?? '') : (string) ($p[$c] ?? ''); };
+        $valor = $e !== null ? (string) $e['texto'] : (($p['valor'] ?? null) === null ? '' : euros((int) $p['valor'], false));
+        $ativo = $e !== null ? $e['ativo'] : (int) ($p['ativo'] ?? 1);
+        return '<tr' . ($nova ? ' class="linha-nova"' : '') . '>'
+            . '<td class="n">' . ($nova ? '+' : $n) . '</td>'
+            . '<td><input type="text" name="' . $nome . '[designacao]" value="' . h($campo('designacao')) . '" maxlength="160" aria-label="Serviço, ' . $rotulo . '"' . ($nova ? ' placeholder="Designação do serviço"' : ' required') . '>'
+            . '<input type="text" name="' . $nome . '[descricao]" value="' . h($campo('descricao')) . '" maxlength="300" class="descricao" placeholder="Descrição (opcional)" aria-label="Descrição, ' . $rotulo . '"></td>'
+            . '<td><input type="text" name="' . $nome . '[unidade]" value="' . h($campo('unidade')) . '" maxlength="40" placeholder="por hora" aria-label="Unidade, ' . $rotulo . '"></td>'
+            . '<td><input type="text" name="' . $nome . '[valor]" value="' . h($valor) . '" inputmode="decimal" maxlength="20" placeholder="Sob consulta" class="valor" aria-label="Preço sem IVA, ' . $rotulo . '"></td>'
+            . '<td class="centro"><input type="checkbox" name="' . $nome . '[ativo]" value="1"' . ($ativo ? ' checked' : '') . ' aria-label="Incluir no PDF, ' . $rotulo . '"></td>'
+            . '<td><input type="number" name="' . $nome . '[ordem]" value="' . h($nova && $e === null ? (string) ($n * 10) : $campo('ordem')) . '" min="0" max="9999" class="ordem" aria-label="Ordem, ' . $rotulo . '"></td>'
+            . '<td class="centro">' . ($nova ? '' : '<input type="checkbox" name="' . $nome . '[apagar]" value="1" aria-label="Apagar, ' . $rotulo . '">') . '</td>'
+            . '</tr>';
+    };
+    $corpo_s = '';
+    foreach ($servicos as $n => $p) {
+        $corpo_s .= $linha_servico((string) $p['id'], $p, $n + 1);
+    }
+    $proxima_s = ($servicos ? max(array_map('intval', array_column($servicos, 'ordem'))) : 0) + 10;
+    $novas_s = array_values(array_filter(array_keys((array) $env_servicos), function ($k) { return (bool) preg_match('/^nova/', (string) $k); }));
+    if (!$novas_s && (!$servicos || ($_GET['nova'] ?? '') === 'servicos')) {
+        $novas_s = ['nova'];
+    }
+    foreach ($novas_s as $k => $id) {
+        $corpo_s .= $linha_servico((string) $id, [], (int) ($proxima_s / 10) + $k);
+    }
+
     // Tabela da versão anterior (lista simples), guardada só para consulta
     $legado = consulta('SELECT * FROM precos WHERE legado = 1 ORDER BY ordem, id');
     $html_legado = $legado ? '<details class="programa espaco-topo"><summary>Tabela anterior (' . count($legado) . ' linhas, só para consulta)</summary><div class="programa-corpo">
@@ -387,7 +530,18 @@ function admin_precos(): void
         <div class="acoes-formulario"><button class="botao" type="submit">Guardar alterações</button> <button class="botao botao-secundario" type="submit" name="acrescentar" value="1" data-acrescentar>Acrescentar linha</button></div>
       </form>
 
-      <h2 class="espaco-topo" id="modalidades">2. Modalidades</h2>
+      <h2 class="espaco-topo" id="servicos">2. ' . h($textos['titulo_servicos'] ?: 'Consultoria e outros serviços') . '</h2>
+      <p class="texto-suave">Valores por hora de consultoria em cada área do site e outros serviços (por exemplo, sites com SEO, GEO e AEO), sem IVA. Sem preço, aparece "Sob consulta". No PDF, ficam numa tabela própria, a seguir aos preços dos cursos.</p>
+      <form method="post" class="formulario" action="' . h(url('precos')) . '">' . campo_csrf() . '<input type="hidden" name="acao" value="servicos">
+        <div class="tabela-rolante"><table class="tabela-precos tabela-editavel">
+          <thead><tr><th scope="col" class="c-n">#</th><th scope="col">' . h($textos['coluna_servicos'] ?: 'Serviço') . ' e descrição</th><th scope="col">Unidade</th><th scope="col" class="c-preco">Preço sem IVA</th><th scope="col" class="c-pdf">No PDF</th><th scope="col" class="c-ordem">Ordem</th><th scope="col" class="c-apagar">Apagar</th></tr></thead>
+          <tbody>' . $corpo_s . '</tbody>
+        </table></div>
+        <template data-modelo>' . $linha_servico('nova__N__', [], (int) ($proxima_s / 10)) . '</template>
+        <div class="acoes-formulario"><button class="botao" type="submit">Guardar serviços</button> <button class="botao botao-secundario" type="submit" name="acrescentar" value="1" data-acrescentar>Acrescentar linha</button></div>
+      </form>
+
+      <h2 class="espaco-topo" id="modalidades">3. Modalidades</h2>
       <p class="texto-suave">Cada modalidade é uma coluna de preços e um cartão na secção "' . h($textos['titulo_modalidades']) . '" do PDF (no máximo ' . MAX_MODALIDADES_PDF . ' no PDF).</p>
       <form method="post" class="formulario" action="' . h(url('precos')) . '">' . campo_csrf() . '<input type="hidden" name="acao" value="modalidades">
         <div class="tabela-rolante"><table class="tabela-precos tabela-modalidades tabela-editavel">
@@ -398,7 +552,7 @@ function admin_precos(): void
         <div class="acoes-formulario"><button class="botao" type="submit">Guardar modalidades</button> <button class="botao botao-secundario" type="submit" name="acrescentar" value="1" data-acrescentar>Acrescentar modalidade</button></div>
       </form>
 
-      <h2 class="espaco-topo" id="textos">3. Textos do documento</h2>
+      <h2 class="espaco-topo" id="textos">4. Textos do documento</h2>
       <form method="post" class="formulario" action="' . h(url('precos')) . '">' . campo_csrf() . '<input type="hidden" name="acao" value="textos">
         ' . campo('sobretitulo', 'Sobretítulo (faixa do título)', (string) $textos['sobretitulo'], 'text', 'maxlength="400"') . '
         <div class="campos-2">' . campo('titulo', 'Título', (string) $textos['titulo'], 'text', 'maxlength="400"') . campo('data_documento', 'Data do documento (em branco: data da exportação)', (string) $textos['data_documento'], 'date') . '</div>
@@ -409,6 +563,9 @@ function admin_precos(): void
         <div class="campos-2">' . campo('coluna_linhas', 'Cabeçalho da 1.ª coluna da tabela', (string) $textos['coluna_linhas'], 'text', 'maxlength="400"')
           . campo('titulo_condicoes', 'Título da secção das condições', (string) $textos['titulo_condicoes'], 'text', 'maxlength="400"') . '</div>
         ' . campo('nota_tabela', 'Nota por baixo da tabela', (string) $textos['nota_tabela'], 'textarea', 'maxlength="400" rows="2"') . '
+        <div class="campos-2">' . campo('titulo_servicos', 'Título da secção de consultoria e outros serviços', (string) $textos['titulo_servicos'], 'text', 'maxlength="400"')
+          . campo('coluna_servicos', 'Cabeçalho da 1.ª coluna dessa tabela', (string) $textos['coluna_servicos'], 'text', 'maxlength="400"') . '</div>
+        ' . campo('nota_servicos', 'Nota por baixo da tabela de consultoria e outros serviços', (string) $textos['nota_servicos'], 'textarea', 'maxlength="400" rows="2"') . '
         ' . campo('condicoes', 'Condições (uma por linha)', (string) $textos['condicoes'], 'textarea', 'maxlength="3000" rows="7"') . '
         <div class="campos-2">' . campo('texto_programa', 'Texto antes do endereço do site', (string) $textos['texto_programa'], 'textarea', 'maxlength="400" rows="2"')
           . campo('nota_documento', 'Nota final ({data} é substituído pela data do documento)', (string) $textos['nota_documento'], 'textarea', 'maxlength="400" rows="2"') . '</div>
@@ -630,6 +787,74 @@ function precos_pdf(): void
             $pdf->MultiCell($W, 4, pdf_txt((string) $t['nota_tabela']), 0, 'L');
         }
         $pdf->Ln(8);
+    }
+
+    // Consultoria e outros serviços: designação e descrição, unidade e preço
+    $servicos = lista_servicos(true);
+    if ($servicos) {
+        $pdf->seccao(++$n, (string) ($t['titulo_servicos'] ?: 'Consultoria e outros serviços'), 50);
+        $wu = 30.0;
+        $wv = 30.0;
+        $w1 = $W - $wu - $wv;
+        $cab = function () use ($pdf, $t, $L, $W, $w1, $wu) {
+            $y = $pdf->GetY() + 1;
+            $pdf->cor('nevoa', 'F');
+            $pdf->Rect($L, $y, $W, 9, 'F');
+            $pdf->fonte('intersemi', '', 7.6, 'marinho');
+            $pdf->Text($L + 3, $y + 5.9, pdf_txt((string) ($t['coluna_servicos'] ?: 'Serviço')));
+            $pdf->Text($L + $w1, $y + 5.9, pdf_txt('Unidade'));
+            $s = pdf_txt('Preço sem IVA');
+            $pdf->Text($L + $W - 3 - $pdf->GetStringWidth($s), $y + 5.9, $s);
+            $pdf->SetY($y + 9);
+        };
+        $cab();
+        foreach ($servicos as $k => $p) {
+            $pdf->SetFont('intersemi', '', 8.8);
+            $hn = $pdf->linhas($w1 - 16, pdf_txt((string) $p['designacao'])) * 4.4;
+            $pdf->SetFont('inter', '', 7.4);
+            $hd = $p['descricao'] ? $pdf->linhas($w1 - 16, pdf_txt((string) $p['descricao'])) * 3.8 + 0.6 : 0;
+            $h = max(12.0, $hn + $hd + 4.4);
+            if (!$pdf->cabe($h)) {
+                $pdf->AddPage();
+                $cab();
+            }
+            $y = $pdf->GetY();
+            $meio = $y + $h / 2;
+            $pdf->cor('petroleo', 'F');
+            $pdf->Rect($L + 3, $meio - 3.3, 6.6, 6.6, 'F');
+            $pdf->fonte('montserrat', 'B', 8.4, 'branco');
+            $num = (string) ($k + 1);
+            $pdf->Text($L + 6.3 - $pdf->GetStringWidth($num) / 2, $meio + 1.1, $num);
+            $yt = $meio - ($hn + $hd) / 2;
+            $pdf->fonte('intersemi', '', 8.8, 'marinho');
+            $pdf->SetXY($L + 13.5, $yt);
+            $pdf->MultiCell($w1 - 16, 4.4, pdf_txt((string) $p['designacao']), 0, 'L');
+            if ($p['descricao']) {
+                $pdf->fonte('inter', '', 7.4, 'suave');
+                $pdf->SetXY($L + 13.5, $yt + $hn + 0.6);
+                $pdf->MultiCell($w1 - 16, 3.8, pdf_txt((string) $p['descricao']), 0, 'L');
+            }
+            $pdf->fonte('inter', '', 8.4, 'texto');
+            $pdf->Text($L + $w1, $meio + 1.3, pdf_txt((string) $p['unidade']));
+            if ($p['valor'] === null) {
+                $pdf->fonte('inter', '', 8, 'suave');
+                $s = pdf_txt('Sob consulta');
+            } else {
+                $pdf->fonte('inter', 'B', 10.4, 'marinho');
+                $s = pdf_txt(euros((int) $p['valor']));
+            }
+            $pdf->Text($L + $W - 3 - $pdf->GetStringWidth($s), $meio + 1.4, $s);
+            $pdf->cor('linha', 'D');
+            $pdf->Line($L, $y + $h, $L + $W, $y + $h);
+            $pdf->SetY($y + $h);
+        }
+        if ($t['nota_servicos']) {
+            $pdf->Ln(4);
+            $pdf->fonte('inter', '', 7.6, 'suave');
+            $pdf->SetX($L);
+            $pdf->MultiCell($W, 4, pdf_txt((string) $t['nota_servicos']), 0, 'L');
+        }
+        $pdf->Ln(6);
     }
 
     // Condições: uma por linha, com marcador

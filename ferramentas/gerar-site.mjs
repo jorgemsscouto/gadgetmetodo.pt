@@ -6,8 +6,8 @@ import path from 'path';
 
 const OUT = process.argv[2];
 const URL_BASE = 'https://www.gadgetmetodo.pt';
-const HOJE = '2026-10-20';
-const HOJE_TXT = '20 de outubro de 2026';
+const HOJE = '2026-11-10';
+const HOJE_TXT = '10 de novembro de 2026';
 const EMAIL = 'info@gadgetmetodo.pt';
 const TEL = '+351 915 416 112';
 const TEL_LINK = 'tel:+351915416112';
@@ -48,6 +48,7 @@ const SERVICOS = [
   { url: '/servicos/inteligencia-artificial/', nome: 'Inteligência artificial e transformação digital', icone: 'sparkles', curto: 'Estratégia de IA, casos de uso com retorno, arquitetura de sistemas e integrações, automação e painéis de indicadores.' },
   { url: '/servicos/protecao-de-dados-e-conformidade/', nome: 'Proteção de dados e conformidade', icone: 'shield-check', curto: 'Funções de Encarregado de Proteção de Dados, RGPD, NIS2, resiliência operacional digital (DORA) e governação da IA, com equilíbrio entre conformidade e operação.' },
   { url: '/servicos/estrategia-e-gestao/', nome: 'Estratégia e gestão', icone: 'compass', curto: 'Alinhamento estratégico, objetivos e indicadores, modelos de incentivos e apoio à administração em inovação e tecnologia.' },
+  { url: '/servicos/sites-seo-geo-aeo/', nome: 'Sites com SEO, GEO e AEO', icone: 'globe', curto: 'Melhoria de sites existentes e criação de sites novos, rápidos e acessíveis, preparados para a pesquisa no Google e para as respostas dos assistentes de IA.' },
   { url: '/formacoes/', chave: 'formacao', nome: 'Formação', icone: 'graduation-cap', curto: 'Percurso IA Generativa no Trabalho, com cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.' },
 ];
 
@@ -83,7 +84,7 @@ const ORG = {
     name: 'Serviços da Gadgetmetodo, Lda.',
     itemListElement: [
       ...SERVICOS.map(s => ({ '@type': 'Offer', itemOffered: { '@type': 'Service', '@id': URL_BASE + s.url + '#servico', name: s.nome } })),
-      { '@type': 'Offer', itemOffered: { '@type': 'EducationalOccupationalProgram', '@id': URL_BASE + '/formacoes/#percurso', name: 'IA Generativa no Trabalho: do primeiro uso à liderança da implementação', url: URL_BASE + '/formacoes/', description: 'Percurso de quatro cursos abertos de seis horas sobre inteligência artificial generativa no trabalho, com inscrição online.', timeToComplete: 'PT24H' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'EducationalOccupationalProgram', '@id': URL_BASE + '/formacoes/#percurso', name: 'IA Generativa no Trabalho: do primeiro uso à liderança da implementação', url: URL_BASE + '/formacoes/', description: 'Percurso de cinco cursos abertos de seis horas sobre inteligência artificial generativa no trabalho, com inscrição online.', timeToComplete: 'PT30H' } },
       { '@type': 'Offer', itemOffered: { '@type': 'Course', '@id': URL_BASE + AI_ESSENTIALS.url + '#curso', name: 'AI Essentials' } },
     ],
   },
@@ -365,12 +366,12 @@ const FAQ_SERVICOS = [
 ];
 // Formação: respostas baseadas no catálogo de cursos (clientes/inc/catalogo/ia-generativa.json)
 const FAQ_FORMACAO = [
-  ['Que formação oferece a Gadgetmetodo?', 'Dois formatos. <a href="/formacoes/">Cursos abertos</a> a particulares e a empresas, com inscrição individual, organizados no percurso IA Generativa no Trabalho: quatro cursos de seis horas, da iniciação à liderança da implementação. E <a href="/formacoes/ai-essentials/">programas à medida</a>, como o AI Essentials, organizados na empresa para administrações e equipas.'],
-  ['Como está organizado o percurso IA Generativa no Trabalho?', 'Tem quatro cursos sequenciais, cada um com seis sessões de 60 minutos (24 horas no total): Curso 1, Iniciação à IA Generativa no Trabalho; Curso 2, Produtividade com IA Generativa; Curso 3, IA nos Processos da Organização; Curso 4, Liderança e Implementação de IA. Todas as sessões terminam num Laboratório de Casos Práticos, que passa de 10 para 40 minutos por sessão ao longo do percurso. A ferramenta de referência é o Claude (Anthropic); os conceitos são transferíveis para outros assistentes de IA generativa.'],
-  ['Por que curso devo começar?', 'Não precisa de escolher sozinho: a inscrição e a pré-inscrição incluem um diagnóstico com 10 perguntas sobre a forma como usa a IA, e a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado ao seu ponto de partida antes de confirmar a inscrição. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital.'],
+  ['Que formação oferece a Gadgetmetodo?', 'Dois formatos. <a href="/formacoes/">Cursos abertos</a> a particulares e a empresas, com inscrição individual, organizados no percurso IA Generativa no Trabalho: cinco cursos de seis horas, da iniciação à implementação de casos práticos. E <a href="/formacoes/ai-essentials/">programas à medida</a>, como o AI Essentials, organizados na empresa para administrações e equipas.'],
+  ['Como está organizado o percurso IA Generativa no Trabalho?', 'Tem cinco cursos sequenciais, cada um com seis sessões de 60 minutos (30 horas no total): Curso 1, Iniciação à IA Generativa no Trabalho; Curso 2, Produtividade com IA Generativa; Curso 3, IA nos Processos da Organização; Curso 4, Liderança e Implementação de IA; Curso 5, Implementação de Casos Práticos, em que cada formando põe em funcionamento um caso real da sua organização. Todas as sessões terminam num Laboratório de Casos Práticos, que passa de 10 para 40 minutos por sessão ao longo do percurso. A ferramenta de referência é o Claude (Anthropic); os conceitos são transferíveis para outros assistentes de IA generativa.'],
+  ['Por que curso devo começar?', 'Não precisa de escolher sozinho: a inscrição e a pré-inscrição incluem um diagnóstico com 10 perguntas sobre a forma como usa a IA, e a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado ao seu ponto de partida antes de confirmar a inscrição. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4; no Curso 5, o Curso 4 ou experiência equivalente na definição de casos de uso de IA. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital; o Curso 5, para quem já tem um caso de uso para pôr em funcionamento.'],
   ['Como me inscrevo e o que é a pré-inscrição?', 'Na <a href="/formacoes/">área de formação</a>, cada curso tem um botão de inscrição. Pode inscrever-se como particular ou em nome de uma empresa. Se já houver datas, inscreve-se numa edição do curso, sem precisar de conta; a inscrição inclui sempre todas as sessões do curso (não há inscrições em sessões avulsas) e fica pendente até ser confirmada por email. Se ainda não houver datas, faz a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a>: recebe logo uma confirmação por email e, quando as datas forem marcadas, o convite para a inscrição. A pré-inscrição não obriga a inscrever-se.'],
-  ['Que requisitos técnicos são necessários?', 'Um computador por formando, com navegador atualizado, e conta própria no Claude. Nos Cursos 1 e 2, o plano gratuito é suficiente para a maioria dos exercícios; nos Cursos 3 e 4 é necessário um plano pago (Pro, Max, Team ou Enterprise), porque as sessões sobre conectores, tarefas agendadas e agentes usam funcionalidades que não estão disponíveis, ou estão limitadas, no plano gratuito. As turmas têm 8 a 14 formandos, em modalidade presencial ou à distância síncrona.'],
-  ['Como é feita a avaliação?', 'Combina avaliação prática, teste e participação, e o peso da prática cresce de curso para curso: 40% no Curso 1, 60% no Curso 2, 70% no Curso 3 e 85% no Curso 4, onde inclui um projeto final e não há teste. A aprovação exige 50% e presença em 5 das 6 sessões; no Curso 4, 50% e a entrega do projeto final.'],
+  ['Que requisitos técnicos são necessários?', 'Um computador por formando, com navegador atualizado, e conta própria no Claude. Nos Cursos 1 e 2, o plano gratuito é suficiente para a maioria dos exercícios; nos Cursos 3, 4 e 5 é necessário um plano pago (Pro, Max, Team ou Enterprise), porque as sessões sobre conectores, tarefas agendadas e agentes usam funcionalidades que não estão disponíveis, ou estão limitadas, no plano gratuito. As turmas têm 8 a 14 formandos, em modalidade presencial ou à distância síncrona.'],
+  ['Como é feita a avaliação?', 'Combina avaliação prática, teste e participação, e o peso da prática cresce de curso para curso: 40% no Curso 1, 60% no Curso 2, 70% no Curso 3 e 85% nos Cursos 4 e 5, sem teste: no Curso 4 inclui um projeto final e no Curso 5 a implementação de um caso real. A aprovação exige 50% e presença em 5 das 6 sessões; no Curso 4, 50% e a entrega do projeto final; no Curso 5, 50% e a apresentação do caso implementado.'],
   ['Que relação tem esta formação com o Regulamento da IA?', 'O artigo 4.º do Regulamento (UE) 2024/1689 (Regulamento da IA), aplicável desde 2 de fevereiro de 2025 e reescrito pelo Regulamento (UE) 2026/1744, em vigor desde 27 de julho de 2026, exige que as organizações que fornecem ou utilizam sistemas de IA adotem medidas para apoiar o desenvolvimento da literacia em IA do seu pessoal. O percurso pode integrar essas medidas e produz evidência documentada da formação realizada. Não constitui, por si só, garantia de conformidade legal.'],
   ['Onde encontro o programa detalhado de cada curso?', 'Cada curso tem uma página com o objetivo, o programa sessão a sessão, os temas, os casos práticos, a avaliação e as próximas datas, e uma ficha em PDF para descarregar, imprimir ou enviar. Estão todas na <a href="/formacoes/">área de formação</a>.'],
   ['É possível organizar a formação só para a minha empresa?', 'Sim. Qualquer curso do percurso, ou o programa AI Essentials, pode ser organizado na sua empresa, com datas, duração, modalidade e exemplos ajustados ao setor e às funções do grupo. <a href="/contactos/#formulario">Peça uma proposta</a>.'],
@@ -439,11 +440,11 @@ pagina({
         <div class="cabeca-secao">
           <span class="sobretitulo">Serviços</span>
           <h2 id="servicos">O que fazemos</h2>
-          <p>Cinco áreas complementares, que podem ser contratadas isoladamente ou combinadas num único projeto.</p>
+          <p>Seis áreas complementares, que podem ser contratadas isoladamente ou combinadas num único projeto.</p>
         </div>
         <div class="grelha grelha-3">
           ${SERVICOS.map(cartaoServico).join('\n          ')}
-          <a class="cartao" href="/abordagem/">
+          <a class="cartao largo" href="/abordagem/">
             <span class="icone">${icone('search')}</span>
             <h3>Não sabe por onde começar?</h3>
             <p>Comece por um diagnóstico. Identificamos prioridades, riscos e oportunidades antes de qualquer investimento.</p>
@@ -460,7 +461,7 @@ pagina({
           <div>
             <span class="sobretitulo">Formação</span>
             <h2 id="formacao-inicio">IA Generativa no Trabalho: do primeiro uso à liderança da implementação</h2>
-            <p class="mb-0">Quatro cursos sequenciais de seis horas, com casos práticos em todas as sessões, inscrição ou pré-inscrição online e ficha de cada curso em PDF. Também organizamos o programa AI Essentials à medida, na sua empresa.</p>
+            <p class="mb-0">Cinco cursos sequenciais de seis horas, com casos práticos em todas as sessões, inscrição ou pré-inscrição online e ficha de cada curso em PDF. Também organizamos o programa AI Essentials à medida, na sua empresa.</p>
           </div>
           <a class="botao" href="/formacoes/">${icone('graduation-cap')} Ver a área de formação</a>
         </div>
@@ -552,10 +553,10 @@ pagina({
 pagina({
   url: '/servicos/',
   titulo: 'Serviços de consultoria',
-  descricao: 'Organização e métodos, inteligência artificial e transformação digital, proteção de dados e conformidade, estratégia e gestão, e formação em inteligência artificial.',
+  descricao: 'Organização e métodos, inteligência artificial e transformação digital, proteção de dados e conformidade, estratégia e gestão, sites com SEO, GEO e AEO e formação em IA.',
   tipo: 'CollectionPage',
   prioridade: '0.9',
-  llms: 'Visão geral das cinco áreas de serviço.',
+  llms: 'Visão geral das seis áreas de serviço.',
   trilho: [['/', 'Início'], ['/servicos/', 'Serviços']],
   schemaExtra: [{
     '@type': 'ItemList',
@@ -565,12 +566,12 @@ pagina({
     __mainEntity: true,
   }],
   corpo: `
-    ${topoPagina({ trilho: [['/', 'Início'], ['/servicos/', 'Serviços']], h1: 'Serviços de consultoria', lead: 'Cinco áreas complementares para organizar a empresa, adotar a inteligência artificial com critério, proteger dados e transformar a estratégia em resultados.' })}
+    ${topoPagina({ trilho: [['/', 'Início'], ['/servicos/', 'Serviços']], h1: 'Serviços de consultoria', lead: 'Seis áreas complementares para organizar a empresa, adotar a inteligência artificial com critério, proteger dados, ser encontrado na pesquisa e transformar a estratégia em resultados.' })}
 
     <section class="secao">
       <div class="contentor">
         ${resumo([
-          'A Gadgetmetodo, Lda. presta serviços em cinco áreas: Organização e Métodos (O&amp;M); inteligência artificial (IA) e transformação digital; proteção de dados e conformidade (RGPD, NIS2, DORA e governação da IA); estratégia e gestão; e formação, com cursos abertos de IA generativa e o programa AI Essentials à medida. As áreas podem ser contratadas isoladamente ou combinadas num único projeto, com uma equipa e um plano de ação comuns.',
+          'A Gadgetmetodo, Lda. presta serviços em seis áreas: Organização e Métodos (O&amp;M); inteligência artificial (IA) e transformação digital; proteção de dados e conformidade (RGPD, NIS2, DORA e governação da IA); estratégia e gestão; sites com SEO, GEO e AEO, preparados para a pesquisa no Google e nos assistentes de IA; e formação, com cursos abertos de IA generativa e o programa AI Essentials à medida. As áreas podem ser contratadas isoladamente ou combinadas num único projeto, com uma equipa e um plano de ação comuns.',
         ], 'Que serviços presta a Gadgetmetodo?')}
         <div class="grelha grelha-3 espaco-topo">
           ${SERVICOS.map(cartaoServico).join('\n          ')}
@@ -885,6 +886,49 @@ paginaServico({
 });
 
 paginaServico({
+  s: SERVICOS[4],
+  pergunta: 'O que inclui o serviço de sites com SEO, GEO e AEO?',
+  titulo: 'Sites com desempenho, SEO, GEO e AEO',
+  descricao: 'Melhoria de sites existentes e criação de sites novos, rápidos e acessíveis, preparados para a pesquisa no Google (SEO) e nos assistentes de IA (GEO e AEO).',
+  h1: 'Sites preparados para a nova forma de procurar: SEO, GEO e AEO',
+  lead: 'Cada vez mais pessoas procuram respostas, e não apenas páginas: no Google, nos resumos gerados por inteligência artificial e em assistentes como o ChatGPT, o Gemini, o Copilot ou o Perplexity. Melhoramos sites existentes e criamos sites novos para serem encontrados, compreendidos e citados.',
+  llms: 'Melhoria de sites existentes e criação de sites novos com desempenho, SEO, GEO e AEO.',
+  resumoTxt: [
+    'A Gadgetmetodo, Lda. melhora sites existentes e cria sites novos em três frentes: desempenho técnico (velocidade, acessibilidade e segurança); otimização para motores de pesquisa (SEO, Search Engine Optimization); e preparação para a pesquisa com inteligência artificial (IA), com GEO (Generative Engine Optimization), para os conteúdos serem compreendidos e citados nas respostas geradas por IA, e AEO (Answer Engine Optimization), para responderem diretamente às perguntas de quem procura.',
+    'O trabalho começa por um diagnóstico do site e da procura no setor e termina com indicadores para acompanhar os resultados. O próprio site da Gadgetmetodo segue estas práticas: dados estruturados, resumo para modelos de linguagem (llms.txt) e aviso automático aos motores de pesquisa em cada publicação.',
+  ],
+  inclui: [
+    'Diagnóstico técnico e de conteúdos: velocidade (Core Web Vitals), acessibilidade, indexação e segurança',
+    'Estratégia de pesquisa: perguntas reais dos clientes, termos de pesquisa e intenção de quem procura',
+    'SEO técnico e de conteúdos: estrutura, títulos, descrições, ligações internas e mapa do site',
+    'Dados estruturados (schema.org) da empresa, dos serviços, dos produtos e das perguntas frequentes',
+    'GEO: conteúdos claros, factuais e citáveis, com autoria, datas e fontes, e resumo do site para modelos de linguagem (llms.txt)',
+    'AEO: respostas diretas às perguntas frequentes, em blocos curtos e bem identificados',
+    'Criação de sites novos rápidos, acessíveis e fáceis de manter, sem dependências desnecessárias',
+    'Medição com o Google Search Console e o Bing Webmaster Tools, e acompanhamento da presença nas respostas de IA',
+  ],
+  quando: [
+    'O site é lento, pouco visível no Google ou difícil de atualizar',
+    'Os clientes já procuram com assistentes de IA e a empresa não aparece nas respostas',
+    'O site não explica com clareza o que a empresa faz, para quem e onde',
+    'A empresa vai lançar um site novo ou renovar o atual',
+    'É preciso medir os contactos e pedidos que o site traz',
+  ],
+  entregaveis: [
+    'Relatório de diagnóstico com as prioridades de melhoria',
+    'Plano de conteúdos orientado às perguntas dos clientes',
+    'Site melhorado ou site novo publicado, com dados estruturados',
+    'Medição configurada e relatório de resultados',
+    'Guia para manter os conteúdos atualizados',
+  ],
+  faq: [
+    ['Qual a diferença entre SEO, GEO e AEO?', 'SEO (Search Engine Optimization) prepara o site para ser bem posicionado nos resultados dos motores de pesquisa. GEO (Generative Engine Optimization) prepara os conteúdos para serem compreendidos e citados nas respostas geradas por inteligência artificial, como os resumos do Google ou os assistentes ChatGPT, Gemini, Copilot e Perplexity. AEO (Answer Engine Optimization) organiza a informação em respostas diretas a perguntas concretas, que os motores de pesquisa e os assistentes podem apresentar tal como estão.'],
+    ['É possível garantir o primeiro lugar no Google ou a citação nas respostas de IA?', 'Não. Os resultados dependem dos critérios de cada plataforma, que mudam com frequência, e da concorrência. O que o trabalho assegura é um site tecnicamente sólido, conteúdos claros e verificáveis e a medição dos resultados, para decidir com base em dados.'],
+    ['É preciso fazer um site novo?', 'Depende do diagnóstico. Muitas vezes, melhorar o desempenho, a estrutura e os conteúdos do site atual é suficiente; quando a base técnica limita os resultados, propomos um site novo, rápido e fácil de manter.'],
+  ],
+});
+
+paginaServico({
   s: AI_ESSENTIALS,
   trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], [AI_ESSENTIALS.url, 'AI Essentials para empresas']],
   pergunta: 'O que é a formação AI Essentials?',
@@ -926,7 +970,7 @@ paginaServico({
           <div>
             <span class="sobretitulo">Cursos abertos</span>
             <h2 id="proximas-sessoes">Prefere um curso aberto, com inscrição individual?</h2>
-            <p class="mb-0">O percurso IA Generativa no Trabalho tem quatro cursos sequenciais, da iniciação à liderança da implementação, com inscrição online e um diagnóstico curto de utilização de IA.</p>
+            <p class="mb-0">O percurso IA Generativa no Trabalho tem cinco cursos sequenciais, da iniciação à implementação de casos práticos, com inscrição online e um diagnóstico curto de utilização de IA.</p>
           </div>
           <a class="botao" href="/formacoes/">${icone('calendar-days')} Ver a área de formação</a>
         </div>
@@ -1155,7 +1199,7 @@ const CASOS = [
     contexto: 'Empresa de tecnologia que pretende adotar a IA com ambição estratégica, dentro de um quadro sólido de proteção de dados, privacidade e conformidade regulatória.',
     ambito: ['Conselho à administração para inovação e tecnologia (board advisor)', 'Funções de Encarregado de Proteção de Dados (DPO)', 'Estratégia de IA alinhada com a oferta da empresa e roteiro de adoção', 'Diagnóstico de tecnologia, sistemas e integrações', 'Governação da IA com RGPD e NIS2, incluindo contratos com clientes e subcontratantes', 'Formação AI Essentials em cinco módulos', 'Acompanhamento regular ao longo de dois anos'],
     objetivos: ['Identificar os casos de uso de IA com maior retorno', 'Integrar a IA nos produtos e serviços da empresa', 'Avaliar o impacto da IA no RGPD e nas transferências internacionais de dados', 'Alinhar a IA com a NIS2 e a segurança da informação'],
-    servicos: [1, 2, 3, 4],
+    servicos: [1, 2, 3, 5],
   },
   {
     id: 'turismo', icone: 'wine', setor: 'Turismo premium',
@@ -1163,7 +1207,7 @@ const CASOS = [
     contexto: 'Agência de enoturismo especializada em itinerários personalizados e de gama alta.',
     ambito: ['Diagnóstico de campanhas, gestão de clientes (CRM) e website', 'Mapeamento da jornada do cliente, da inspiração à reserva', 'Fluxos automáticos com IA: nutrição de contactos, seguimento e recomendações', 'Comunicação multicanal automatizada', 'Definição de indicadores e painéis em tempo real', 'Formação prática da equipa'],
     objetivos: ['Escalar a personalização mantendo o toque humano', 'Otimizar campanhas e investimento digital', 'Medir com rigor o impacto das ações de marketing', 'Preparar um roteiro tecnológico alinhado com o posicionamento da marca'],
-    servicos: [1, 4],
+    servicos: [1, 5],
   },
   {
     id: 'retalho', icone: 'shopping-bag', setor: 'Retalho especializado',
@@ -1469,7 +1513,7 @@ const CATALOGO_PDF = '/catalogo-servicos-2026.pdf';
 pagina({
   url: '/catalogo/',
   titulo: 'Catálogo de Serviços 2026 (PDF)',
-  descricao: 'Descarregue o Catálogo de Serviços 2026 da Gadgetmetodo, Lda.: áreas de serviço, formação, metodologia, exemplos de intervenção e contactos, em 16 páginas (PDF).',
+  descricao: 'Descarregue o Catálogo de Serviços 2026 da Gadgetmetodo, Lda.: áreas de serviço, formação, metodologia, exemplos de intervenção e contactos, em 17 páginas (PDF).',
   prioridade: '0.7',
   llms: 'Página de download do Catálogo de Serviços 2026 em PDF.',
   trilho: [['/', 'Início'], ['/catalogo/', 'Catálogo de serviços']],
@@ -1477,7 +1521,7 @@ pagina({
     '@type': 'DigitalDocument',
     '@id': URL_BASE + '/catalogo/#catalogo',
     name: 'Catálogo de Serviços 2026',
-    description: 'Catálogo da Gadgetmetodo, Lda. com as cinco áreas de serviço (incluindo a formação: percurso IA Generativa no Trabalho e programa AI Essentials à medida), a metodologia em quatro fases, os modelos de colaboração, exemplos de intervenção e contactos.',
+    description: 'Catálogo da Gadgetmetodo, Lda. com as seis áreas de serviço (incluindo a formação: percurso IA Generativa no Trabalho e programa AI Essentials à medida), a metodologia em quatro fases, os modelos de colaboração, exemplos de intervenção e contactos.',
     url: URL_BASE + CATALOGO_PDF,
     encodingFormat: 'application/pdf',
     inLanguage: 'pt-PT',
@@ -1487,14 +1531,14 @@ pagina({
     __mainEntity: true,
   }],
   corpo: `
-    ${topoPagina({ trilho: [['/', 'Início'], ['/catalogo/', 'Catálogo de serviços']], h1: 'Catálogo de Serviços 2026', lead: 'As cinco áreas de serviço da Gadgetmetodo, a forma como trabalhamos e exemplos de intervenção, num documento de 16 páginas.' })}
+    ${topoPagina({ trilho: [['/', 'Início'], ['/catalogo/', 'Catálogo de serviços']], h1: 'Catálogo de Serviços 2026', lead: 'As seis áreas de serviço da Gadgetmetodo, a forma como trabalhamos e exemplos de intervenção, num documento de 17 páginas.' })}
 
     <section class="secao">
       <div class="contentor">
         <div class="duas-colunas">
           <div>
             ${resumo([
-              'O Catálogo de Serviços 2026 da Gadgetmetodo, Lda. apresenta, em 16 páginas, as cinco áreas de serviço (Organização e Métodos, inteligência artificial e transformação digital, proteção de dados e conformidade, estratégia e gestão, e formação), as questões a que cada uma responde, o que inclui e os entregáveis habituais. Na formação, resume o percurso IA Generativa no Trabalho, com quatro cursos abertos, e o programa AI Essentials à medida.',
+              'O Catálogo de Serviços 2026 da Gadgetmetodo, Lda. apresenta, em 17 páginas, as seis áreas de serviço (Organização e Métodos, inteligência artificial e transformação digital, proteção de dados e conformidade, estratégia e gestão, sites com SEO, GEO e AEO, e formação), as questões a que cada uma responde, o que inclui e os entregáveis habituais. Na formação, resume o percurso IA Generativa no Trabalho, com cinco cursos abertos, e o programa AI Essentials à medida.',
               'Inclui também a metodologia em quatro fases, os modelos de colaboração, exemplos de intervenção por setor e os contactos.',
             ], 'O que contém o catálogo?')}
             <div class="acoes" style="margin-top:24px">
@@ -1504,7 +1548,7 @@ pagina({
             <h2 class="espaco-topo" style="font-size:1.3rem">Conteúdo</h2>
             ${listaCheck([
               'Síntese e ponto de vista sobre organização, tecnologia e conformidade',
-              'Mapa das cinco áreas de serviço',
+              'Mapa das seis áreas de serviço',
               'Uma página por área: questões, o que inclui e entregáveis',
               'A Metodologia em quatro fases e modelos de colaboração',
               'Exemplos de intervenção na indústria, tecnologia, turismo e retalho',
@@ -1531,9 +1575,9 @@ pagina({
   estilos: [CSS_AREA],
   tipo: 'CollectionPage',
   titulo: 'Formação em inteligência artificial',
-  descricao: 'Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com quatro cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.',
+  descricao: 'Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com cinco cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.',
   prioridade: '0.9',
-  llms: 'Área de formação: percurso IA Generativa no Trabalho (4 cursos com página, ficha em PDF, inscrição e pré-inscrição online), calendário e programa AI Essentials à medida.',
+  llms: 'Área de formação: percurso IA Generativa no Trabalho (5 cursos com página, ficha em PDF, inscrição e pré-inscrição online), calendário e programa AI Essentials à medida.',
   trilho: [['/', 'Início'], ['/formacoes/', 'Formação']],
   corpo: `
     ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Formação']], h1: 'Formação', lead: 'Cursos abertos de inteligência artificial generativa, com inscrição online, e programas à medida para administrações e equipas.', atualizado: false })}
@@ -1542,7 +1586,7 @@ pagina({
       <div class="contentor">
         <div class="duas-colunas texto-largo">
           ${resumo([
-            'A Gadgetmetodo, Lda. dá formação em inteligência artificial (IA) a empresas e profissionais em dois formatos: cursos abertos, com inscrição individual, organizados no percurso IA Generativa no Trabalho (quatro cursos de seis horas, da iniciação à liderança da implementação); e programas à medida, como o <a href="/formacoes/ai-essentials/">AI Essentials</a>, para administrações e equipas.',
+            'A Gadgetmetodo, Lda. dá formação em inteligência artificial (IA) a empresas e profissionais em dois formatos: cursos abertos, com inscrição individual, organizados no percurso IA Generativa no Trabalho (cinco cursos de seis horas, da iniciação à implementação de casos práticos); e programas à medida, como o <a href="/formacoes/ai-essentials/">AI Essentials</a>, para administrações e equipas.',
             'Cada curso tem uma página com o programa, os temas e os casos práticos de cada sessão, uma ficha para descarregar em PDF e a inscrição online. Sem datas agendadas, a pré-inscrição garante o convite quando forem marcadas.',
           ], 'Que formação oferece a Gadgetmetodo?')}
           <nav class="atalhos-formacao" aria-label="Nesta página">

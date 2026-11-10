@@ -282,7 +282,8 @@ svg { display: block; }
 .tabela tbody th { color: var(--marinho); font-family: "Montserrat", Arial, sans-serif; font-size: 9.8pt; font-weight: 600; }
 .mapa tbody th { display: flex; gap: 3mm; align-items: center; }
 .mapa tbody th small { display: block; color: var(--petroleo); font-size: 7pt; font-weight: 700; }
-.mapa td { font-size: 9.8pt; }
+.mapa td { font-size: 9pt; }
+.mapa th, .mapa td { padding-top: 1.7mm; padding-bottom: 1.7mm; }
 .pequeno-ic { width: 8mm; height: 8mm; }
 .tabela .num {
   display: inline-flex; align-items: center; justify-content: center;
@@ -431,10 +432,13 @@ svg { display: block; }
 
 /* Formação: percurso de cursos abertos */
 
-.tabela-cursos th, .tabela-cursos td { padding-top: 2mm; padding-bottom: 2mm; }
-.tabela-cursos tbody th { width: 31%; font-size: 9.2pt; }
+.tabela-cursos th, .tabela-cursos td { padding-top: 1.5mm; padding-bottom: 1.5mm; }
+.tabela-cursos tbody th { width: 27%; font-size: 9pt; }
 .tabela-cursos tbody th .num { background: var(--petroleo); }
-.tabela-cursos td { font-size: 8.9pt; }
-.tabela-cursos td.lab, .tabela-cursos thead th:last-child { width: 12%; padding-right: 0; text-align: right; white-space: nowrap; }
+.tabela-cursos td { font-size: 8.5pt; line-height: 1.4; }
+.formacao .col-dir .rotulo.mt { margin-top: 4mm; }
+.tabela-cursos td.lab, .tabela-cursos thead th:last-child { width: 10%; padding-right: 0; text-align: right; }
+.tabela-cursos td.lab { white-space: nowrap; }
+.formacao .grelha-servico { grid-template-columns: 1fr 1.6fr; gap: 10mm; }
 .tabela-cursos td.lab { color: var(--petroleo); font-weight: 700; }
 .formacao .pequeno { margin: 0; line-height: 1.5; }

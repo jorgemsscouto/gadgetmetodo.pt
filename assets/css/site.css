@@ -726,6 +726,10 @@ strong {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
 }
 
+.grelha > .largo {
+  grid-column: 1 / -1;
+}
+
 .cartao {
   position: relative;
   display: flex;

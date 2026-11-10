@@ -250,7 +250,10 @@ function curso_indicado(array $respostas, ?array $curso): ?array
         return null;
     }
     [$nivel, $motivo] = colocacao($respostas);
-    return ['curso' => $lista[(int) round($nivel * (count($lista) - 1) / 3)], 'motivo' => $motivo];
+    // Os níveis 0 a 3 correspondem aos quatro primeiros cursos do percurso (Cursos 1 a 4); o Curso 5, de implementação
+    // de casos práticos, não é aconselhado pelo diagnóstico. Percursos mais curtos repartem os níveis pelos cursos que têm.
+    $i = count($lista) >= 4 ? $nivel : (int) round($nivel * (count($lista) - 1) / 3);
+    return ['curso' => $lista[$i], 'motivo' => $motivo];
 }
 
 // Recomendação a mostrar numa inscrição: a de módulos só no AI Essentials (cita os seus módulos); nos cursos de

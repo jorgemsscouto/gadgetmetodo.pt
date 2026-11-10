@@ -31,13 +31,16 @@ function definir(PDO $pdo, string $chave, string $valor): void
 }
 
 // Carrega os cursos do catálogo (ficheiro de dados) para a base de dados
-function carregar_catalogo(PDO $pdo): int
+function carregar_catalogo(PDO $pdo, ?array $so_chaves = null): int
 {
     $cat = catalogo();
     $comum = $cat['comum'] ?? [];
     $agora = date('Y-m-d H:i:s');
     $n = 0;
     foreach ($cat['cursos'] ?? [] as $c) {
+        if ($so_chaves !== null && !in_array($c['chave'] ?? '', $so_chaves, true)) {
+            continue;
+        }
         $c += $comum;
         $pdo->prepare('INSERT INTO cursos (chave, nome, tipologia, descricao, publico, duracao, diagnostico, ativo, criado, percurso, unidade, objetivo, prerequisitos, resultado, estrutura, avaliacao, requisitos, enquadramento, investimento)
             VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
@@ -88,6 +91,42 @@ function aplicar_catalogo(PDO $pdo): void
         carregar_catalogo($pdo);
         definir($pdo, 'catalogo', $versao);
     }
+}
+
+// Cursos acrescentados ao catálogo depois da primeira carga (por exemplo, o Curso 5): entram uma vez, sem repor o
+// catálogo nem mexer na agenda e nas inscrições; se depois forem apagados na administração, não voltam. As descrições
+// dos cursos do mesmo percurso passam a indicar o novo número de cursos (só se não tiverem sido reescritas).
+function acrescentar_cursos_do_catalogo(PDO $pdo): void
+{
+    $cat = catalogo();
+    $versao = (string) ($cat['versao'] ?? '');
+    if ($versao === '' || definicao($pdo, 'catalogo') !== $versao) {
+        return;
+    }
+    $novos = [];
+    foreach ($cat['cursos'] ?? [] as $c) {
+        $chave = (string) ($c['chave'] ?? '');
+        if ($chave === '' || definicao($pdo, 'curso_acrescentado_' . $chave) !== null) {
+            continue;
+        }
+        $st = $pdo->prepare('SELECT 1 FROM cursos WHERE chave = ?');
+        $st->execute([$chave]);
+        if (!$st->fetchColumn()) {
+            $novos[] = $c;
+        }
+        definir($pdo, 'curso_acrescentado_' . $chave, date('Y-m-d H:i:s'));
+    }
+    if (!$novos) {
+        return;
+    }
+    $pdo->beginTransaction();
+    carregar_catalogo($pdo, array_column($novos, 'chave'));
+    $total = count($cat['cursos']);
+    foreach ($cat['cursos'] as $c) {
+        $pdo->prepare("UPDATE cursos SET descricao = REPLACE(REPLACE(descricao, ' de ' || ? || ' do percurso', ' de ' || ? || ' do percurso'), ?, ?) WHERE chave = ?")
+            ->execute([$total - 1, $total, ($total - 1) * 6 . ' horas no total (' . ($total - 1) . ' cursos', $total * 6 . ' horas no total (' . $total . ' cursos', $c['chave'] ?? '']);
+    }
+    $pdo->commit();
 }
 
 function catalogo_pendente(): bool

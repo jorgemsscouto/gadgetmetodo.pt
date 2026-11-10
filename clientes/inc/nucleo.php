@@ -113,6 +113,8 @@ function bd(): ?PDO
             valor INTEGER, iva TEXT NOT NULL DEFAULT '23', ativo INTEGER NOT NULL DEFAULT 1, ordem INTEGER NOT NULL DEFAULT 0, atualizado TEXT NOT NULL,
             detalhe TEXT, legado INTEGER NOT NULL DEFAULT 0)");
         acrescentar_colunas($pdo, 'precos', ['detalhe' => 'TEXT', 'legado' => 'INTEGER NOT NULL DEFAULT 0']);
+        // "cursos": linhas da tabela por modalidades; "servicos": consultoria e outros serviços (unidade e um preço)
+        acrescentar_colunas($pdo, 'precos', ['tabela' => "TEXT NOT NULL DEFAULT 'cursos'"]);
         $pdo->exec('CREATE TABLE IF NOT EXISTS precos_colunas (
             id INTEGER PRIMARY KEY AUTOINCREMENT, etiqueta TEXT NOT NULL, titulo TEXT, descricao TEXT, coluna TEXT NOT NULL, detalhe TEXT,
             ordem INTEGER NOT NULL DEFAULT 0, ativo INTEGER NOT NULL DEFAULT 1, atualizado TEXT NOT NULL)');
@@ -134,6 +136,7 @@ function bd(): ?PDO
         $pdo->prepare('DELETE FROM lembretes WHERE criado < ?')->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
         $pdo->prepare('DELETE FROM preinscricoes WHERE criado < ?')->execute([date('Y-m-d H:i:s', time() - DIAS_PREINSCRICOES * 86400)]);
         aplicar_catalogo($pdo);
+        acrescentar_cursos_do_catalogo($pdo);
         $pronta = true;
     }
     return $pdo;
