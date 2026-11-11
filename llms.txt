@@ -13,32 +13,64 @@ Factos essenciais:
 - Website: https://www.gadgetmetodo.pt
 - Assinatura: Simplificar. Organizar. Fazer acontecer.
 - Clientes: sobretudo pequenas e médias empresas (PME) e respetivas administrações, em setores como têxtil e vestuário, tecnologia e gestão documental, turismo e retalho
-- Metodologia: diagnóstico, desenho, implementação e acompanhamento
 - Modelos de colaboração: projeto de âmbito fechado, acompanhamento continuado (por exemplo board advisor ou DPO externo) e formação
-- Gestor de projeto: Jorge Sá Couto (licenciatura em Engenharia Informática, Universidade NOVA de Lisboa; MBA em Gestão, ISCTE; certificado The Business of AI: Strategies for Leaders, London Business School; Certificado de Competências Pedagógicas)
 - Idioma: português de Portugal
+
+Áreas de serviço (seis):
+
+1. Organização e Métodos: diagnóstico organizacional, redesenho de processos, normas e procedimentos, auditorias internas e planos de melhoria
+2. Inteligência artificial e transformação digital: estratégia de IA, casos de uso, arquitetura de sistemas e integrações, automação de marketing, painéis de indicadores
+3. Proteção de dados e conformidade: DPO externo, RGPD, Diretiva NIS2, DORA (Regulamento (UE) 2022/2554), contratos com subcontratantes e governação da IA
+4. Estratégia e gestão: alinhamento estratégico, objetivos e indicadores (KPI), modelos de incentivos e conselho à administração
+5. Sites com SEO, GEO e AEO: melhoria de sites existentes e criação de sites novos com desempenho, otimização para motores de pesquisa (SEO), para motores generativos (GEO) e para motores de resposta (AEO), dados estruturados e medição de resultados
+6. Formação: percurso IA Generativa no Trabalho e programa AI Essentials
+
+Formação em inteligência artificial:
+
+- Percurso IA Generativa no Trabalho: cinco cursos abertos de seis horas, com calendário de edições, inscrição no curso completo (todas as sessões) e pré-inscrição online. Curso 1: Iniciação à IA Generativa no Trabalho; Curso 2: Produtividade com IA Generativa; Curso 3: IA nos Processos da Organização; Curso 4: Liderança e Implementação de IA; Curso 5: Implementação de Casos Práticos. Cada curso tem página própria com programa, temas e casos práticos por sessão, e ficha em PDF.
+- AI Essentials: programa à medida, em cinco módulos, sobre IA para administrações e equipas.
+
+Metodologia em quatro fases:
+
+1. Diagnóstico: levantamento da situação atual (processos, sistemas, equipas, dados e riscos) e identificação das prioridades e oportunidades com maior retorno
+2. Desenho: definição da solução (modelo organizacional, processos, arquitetura de sistemas, regras de governação) e plano de ação com responsáveis, calendário e indicadores
+3. Implementação: execução com as equipas (parametrização de ferramentas, procedimentos, formação e gestão da mudança)
+4. Acompanhamento: medição de resultados com indicadores, ajustes ao plano e apoio regular à administração para consolidar a mudança
+
+Experiência por setor (exemplos de intervenção, sem identificação de clientes):
+
+- Têxtil e vestuário: digitalização do desenvolvimento de produto numa confeção de malhas circulares, com prototipagem 3D de vestuário, formação e acompanhamento
+- Tecnologia e gestão documental: estratégia de IA e proteção de dados numa empresa de serviços tecnológicos, com arquitetura de sistemas e funções de DPO (governação RGPD e NIS2)
+- Turismo premium: inteligência artificial e automação de marketing numa agência de enoturismo de gama alta, com painéis de indicadores e formação das equipas comerciais
+- Retalho omnicanal: plano estratégico de recuperação de margem num retalhista de tecnologia com loja online, lojas físicas, vendas a empresas e assistência técnica
+
+Gestor de projeto e consultor: Jorge Sá Couto. Acompanha os projetos da Gadgetmetodo do diagnóstico à implementação, com foco na ligação entre organização, tecnologia e proteção de dados. Formação e certificações: licenciatura em Engenharia Informática (Universidade NOVA de Lisboa); frequência do curso de Economia (Universidade de Coimbra); MBA em Gestão (ISCTE - Instituto Universitário de Lisboa); certificado The Business of AI: Strategies for Leaders (London Business School); Certificado de Competências Pedagógicas (CCP) de formador.
 
 ## Serviços
 
 - [Visão geral dos serviços](https://www.gadgetmetodo.pt/servicos/): as seis áreas e como se combinam
-- [Organização e Métodos](https://www.gadgetmetodo.pt/servicos/organizacao-e-metodos/): diagnóstico organizacional, redesenho de processos, normas e procedimentos, auditorias internas e planos de melhoria
-- [Inteligência artificial e transformação digital](https://www.gadgetmetodo.pt/servicos/inteligencia-artificial/): estratégia de IA, casos de uso, arquitetura de sistemas e integrações, automação de marketing, painéis de indicadores
-- [Proteção de dados e conformidade](https://www.gadgetmetodo.pt/servicos/protecao-de-dados-e-conformidade/): DPO externo, RGPD, Diretiva NIS2, DORA (Regulamento (UE) 2022/2554, resiliência operacional digital do setor financeiro), contratos com subcontratantes e governação da IA
-- [Estratégia e gestão](https://www.gadgetmetodo.pt/servicos/estrategia-e-gestao/): alinhamento estratégico, objetivos e indicadores (KPI), modelos de incentivos e conselho à administração
-- [Sites com SEO, GEO e AEO](https://www.gadgetmetodo.pt/servicos/sites-seo-geo-aeo/): melhoria de sites existentes e criação de sites novos com desempenho, otimização para motores de pesquisa (SEO), para motores generativos (GEO) e para motores de resposta (AEO), dados estruturados e medição de resultados
-- [Formação](https://www.gadgetmetodo.pt/formacoes/): área de formação com o percurso IA Generativa no Trabalho (cinco cursos de seis horas, da iniciação à implementação de casos práticos), calendário de edições, inscrição no curso completo (todas as sessões) e pré-inscrição online; cada curso tem página própria com programa, temas e casos práticos por sessão e ficha em PDF
+- [Organização e Métodos](https://www.gadgetmetodo.pt/servicos/organizacao-e-metodos/): diagnóstico organizacional, processos, procedimentos, auditorias e planos de melhoria
+- [Inteligência artificial e transformação digital](https://www.gadgetmetodo.pt/servicos/inteligencia-artificial/): estratégia e implementação de IA, arquitetura de sistemas, automação e análise de dados
+- [Proteção de dados e conformidade](https://www.gadgetmetodo.pt/servicos/protecao-de-dados-e-conformidade/): DPO externo, RGPD, NIS2, DORA, contratos de subcontratação e governação da IA
+- [Estratégia e gestão](https://www.gadgetmetodo.pt/servicos/estrategia-e-gestao/): planeamento estratégico, objetivos e indicadores, incentivos e apoio à administração
+- [Sites com SEO, GEO e AEO](https://www.gadgetmetodo.pt/servicos/sites-seo-geo-aeo/): melhoria e criação de sites com desempenho, SEO, GEO e AEO
+
+## Formação
+
+- [Área de formação](https://www.gadgetmetodo.pt/formacoes/): percurso IA Generativa no Trabalho, comparação dos cinco cursos, calendário de edições, inscrição e pré-inscrição, com ligação para a página e a ficha em PDF de cada curso
 - [AI Essentials para empresas](https://www.gadgetmetodo.pt/formacoes/ai-essentials/): programa à medida em cinco módulos sobre IA para administrações e equipas
 
 ## Empresa
 
 - [A Metodologia](https://www.gadgetmetodo.pt/abordagem/): metodologia em quatro fases, princípios e modelos de colaboração
-- [Experiência](https://www.gadgetmetodo.pt/experiencia/): exemplos de intervenção por setor, sem identificação de clientes
-- [Sobre](https://www.gadgetmetodo.pt/sobre/): quem somos, identidade e perfil do gestor de projeto
-- [Perguntas frequentes](https://www.gadgetmetodo.pt/perguntas-frequentes/): respostas sobre a empresa, os serviços e o funcionamento dos projetos
+- [Experiência](https://www.gadgetmetodo.pt/experiencia/): exemplos de intervenção por setor, com âmbito e objetivos
+- [Sobre](https://www.gadgetmetodo.pt/sobre/): quem somos, identidade, dados da empresa e perfil do gestor de projeto
+- [Perguntas frequentes](https://www.gadgetmetodo.pt/perguntas-frequentes/): respostas sobre a empresa, os serviços, a formação e o funcionamento dos projetos
 - [Catálogo de serviços](https://www.gadgetmetodo.pt/catalogo/): página de download do Catálogo de Serviços 2026 (PDF, 17 páginas)
 - [Contactos](https://www.gadgetmetodo.pt/contactos/): formulário de pedido de orçamento ou informações, morada, telefone e email
 
 ## Optional
 
 - [Catálogo de Serviços 2026 (PDF)](https://www.gadgetmetodo.pt/catalogo-servicos-2026.pdf): as seis áreas de serviço (incluindo a formação), metodologia, exemplos de intervenção e contactos, em 17 páginas
+- [Mapa do site](https://www.gadgetmetodo.pt/sitemap.xml): todas as páginas institucionais; as páginas dos cursos estão em https://www.gadgetmetodo.pt/formacoes/sitemap.php
 - [Política de privacidade](https://www.gadgetmetodo.pt/privacidade/): tratamento de dados pessoais; o site não usa cookies nem ferramentas de análise

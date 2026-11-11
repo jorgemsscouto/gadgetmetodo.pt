@@ -31,4 +31,7 @@ Allow: /
 Disallow: /formulario/
 Disallow: /clientes/
 
+# O Brave Search não usa um nome de agente próprio: segue as regras definidas para o Googlebot.
+
 Sitemap: https://www.gadgetmetodo.pt/sitemap.xml
+Sitemap: https://www.gadgetmetodo.pt/formacoes/sitemap.php

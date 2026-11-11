@@ -113,7 +113,8 @@ echo "Publicação concluída. Verifique em https://www.gadgetmetodo.pt"
 
 # Avisa o Bing e outros motores aderentes ao IndexNow das páginas do sitemap (não bloqueia em caso de falha)
 CHAVE_INDEXNOW="3c88a8903774d00a271eaa88a1eaeeb1"
-URLS=$(grep -o '<loc>[^<]*</loc>' sitemap.xml | sed 's#</*loc>##g' | sed 's/.*/"&"/' | paste -sd, -)
+# Inclui as páginas dos cursos, lidas do sitemap dinâmico já publicado
+URLS=$( { grep -o '<loc>[^<]*</loc>' sitemap.xml; curl -s --max-time 20 https://www.gadgetmetodo.pt/formacoes/sitemap.php | grep -o '<loc>[^<]*</loc>'; } | sed 's#</*loc>##g' | sed 's/.*/"&"/' | paste -sd, -)
 if curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.indexnow.org/indexnow" \
   -H "Content-Type: application/json; charset=utf-8" \
   -d "{\"host\":\"www.gadgetmetodo.pt\",\"key\":\"$CHAVE_INDEXNOW\",\"keyLocation\":\"https://www.gadgetmetodo.pt/$CHAVE_INDEXNOW.txt\",\"urlList\":[$URLS]}" | grep -qE "^20[02]$"; then

@@ -49,6 +49,10 @@ O site, a área reservada, os emails e os PDF seguem o mesmo estilo, inspirado n
 - `robots.txt` aberto aos rastreadores de pesquisa e de IA (OpenAI, Anthropic, Perplexity, Google, Microsoft e Apple). Os robôs de treino de modelos também estão permitidos, por decisão de visibilidade da marca; estão num grupo separado para poderem ser fechados sem perder presença nas respostas.
 - `llms.txt` com o resumo da empresa e as ligações principais. É uma convenção proposta e ainda sem adoção garantida pelos grandes motores; não tem custo nem risco.
 - `sitemap.xml` com data de atualização e datas visíveis "Atualizado em" nas páginas.
+- `formacoes/sitemap.php`: mapa do site das páginas dos cursos (`/formacoes/curso.php?c=N`), gerado a partir da base de dados, porque essas páginas não têm endereço fixo para o `sitemap.xml`. Está referido no `robots.txt` e entra no aviso IndexNow do `publicar.sh`.
+- Endereço canónico `https://www.gadgetmetodo.pt`: o `.htaccess` redireciona `gadgetmetodo.pt` (sem www) com 301; os subdomínios alertas e certidoes não são afetados.
+- O Brave Search (usado pela pesquisa web do Claude) não tem um nome de agente próprio no `robots.txt`: segue as regras do Googlebot. Também não tem consola de webmaster; aceita pedidos de indexação em search.brave.com/submit-url.
+- A página inicial não tem `FAQPage`: as três perguntas que mostra repetem-se na página de perguntas frequentes, que já tem a marcação (o Google pede uma só marcação por pergunta repetida).
 - Sem cookies, sem ferramentas de análise e sem conteúdos de terceiros.
 
 ## Publicação

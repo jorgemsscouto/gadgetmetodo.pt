@@ -34,12 +34,15 @@ DirectoryIndex index.html index.php
   Redirect 301 /servicos/formacao-ai-essentials/ /formacoes/ai-essentials/
 </IfModule>
 
-# Redirecionar para https://www.gadgetmetodo.pt
-# Ativar só depois de o certificado SSL estar ativo e se o alojamento não fizer já este redirecionamento.
-# RewriteEngine On
-# RewriteCond %{HTTPS} off [OR]
-# RewriteCond %{HTTP_HOST} !^www\. [NC]
-# RewriteRule ^ https://www.gadgetmetodo.pt%{REQUEST_URI} [L,R=301]
+# Endereço canónico: gadgetmetodo.pt (sem www) passa para https://www.gadgetmetodo.pt, para os motores de pesquisa
+# não verem o site duplicado. Só afeta o domínio sem www (os subdomínios alertas e certidoes ficam como estão) e deixa
+# passar a validação do certificado. O https vem do alojamento (nginx à frente), por isso não se testa aqui %{HTTPS}.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^gadgetmetodo\.pt$ [NC]
+  RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+  RewriteRule ^ https://www.gadgetmetodo.pt%{REQUEST_URI} [L,R=301]
+</IfModule>
 
 <IfModule mod_mime.c>
   AddType application/manifest+json .webmanifest
