@@ -1043,13 +1043,13 @@ function admin_utilizadores(): void
         $nome = texto('nome', 120);
         $email = texto('email', 160);
         $papel = papel_enviado();
-        $cliente_id = $papel === 'cliente' ? (int) ($_POST['cliente_id'] ?? 0) : null;
+        [$cliente_id, $erro_cliente] = cliente_do_utilizador($papel, $clientes);
         $senha = (string) ($_POST['senha'] ?? '');
         $erro = '';
         if ($nome === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $erro = 'Indique o nome e um email válido.';
-        } elseif ($papel === 'cliente' && !isset($clientes[$cliente_id])) {
-            $erro = 'Escolha o cliente deste utilizador.';
+        } elseif ($erro_cliente !== '') {
+            $erro = $erro_cliente;
         } elseif ($senha !== '' && strlen($senha) < 10) {
             $erro = 'A palavra-passe tem de ter pelo menos 10 caracteres.';
         } elseif (($existente = linha_bd('SELECT id, papel FROM utilizadores WHERE email = ?', [$email])) && ($existente['papel'] !== 'formando' || $papel === 'formando')) {
@@ -1068,6 +1068,9 @@ function admin_utilizadores(): void
             aviso('Este email já tinha acesso de formando: a conta passou ao perfil ' . h(PAPEIS[$papel]) . ' e mantém as formações e as presenças.', 'info');
         } else {
             executar('INSERT INTO utilizadores (email, nome, senha, papel, cliente_id, criado) VALUES (?, ?, ?, ?, ?, ?)', [$email, $nome, password_hash($senha, PASSWORD_DEFAULT), $papel, $cliente_id, agora()]);
+        }
+        if ($papel === 'formando' && $cliente_id) {
+            aviso_formando_associado($email, $cliente_id);
         }
         aviso('Utilizador criado. Dados de acesso para comunicar a ' . h($nome) . ':<br>Endereço: <strong>' . h(endereco_site()) . '/clientes/</strong><br>Email: <strong>' . h($email) . '</strong><br>Palavra-passe: <strong class="senha">' . h($senha) . '</strong><br>' . ($gerada ? 'Esta palavra-passe não volta a ser mostrada.' : ''));
         if (!empty($_POST['enviar_acesso'])) {
@@ -1088,13 +1091,13 @@ function admin_utilizadores(): void
     pagina_area('utilizadores', 'Utilizadores', '
       <div class="conteudo tabela-rolante"><table data-filtros><thead><tr><th>Nome</th><th>Email</th><th data-filtro="lista">Perfil</th><th data-filtro="lista">Cliente</th><th data-filtro="lista">Estado</th><th>Último acesso</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
       <h2 class="espaco-topo" id="novo">Novo utilizador</h2>
-      <p class="texto-suave">Perfil Gadgetmetodo: vê e gere tudo. Perfil Cliente: vê as formações e as inscrições do seu cliente. Perfil Formando: vê as suas formações confirmadas (pelo email das inscrições) e regista a presença em cada sessão; é criado automaticamente quando uma inscrição com email é confirmada.</p>
+      <p class="texto-suave">Perfil Gadgetmetodo: vê e gere tudo. Perfil Cliente: vê as formações e as inscrições do seu cliente. Perfil Formando: vê as suas formações confirmadas (pelo email das inscrições) e regista a presença em cada sessão; é criado automaticamente quando uma inscrição com email é confirmada. Pode ser associado à empresa cliente que o inscreve: as suas inscrições ainda sem cliente passam a ser dessa empresa, que as vê na área reservada (as já associadas a outro cliente ficam como estão).</p>
       <p class="texto-suave">Cliente que também é formando (por exemplo, a sócia-gerente inscrita numa formação da empresa): não precisa de outra conta. Se houver inscrições confirmadas com o email do utilizador Cliente, ele passa a ter também "As minhas formações", onde regista só a sua própria presença, com as mesmas regras do Formando, e aparece nesta lista como "Cliente + Formando". Ao confirmar uma inscrição com o email de um utilizador que já existe (Cliente ou Gadgetmetodo), não é criada outra conta e o perfil mantém-se. Os emails comparam-se sem distinguir maiúsculas de minúsculas.</p>
       <form method="post" class="formulario">' . campo_csrf() . '<div class="campos-2">
         ' . campo('nome', 'Nome *', '', 'text', 'required maxlength="120"') . '
         ' . campo('email', 'Email (é o nome de utilizador) *', '', 'email', 'required maxlength="160" autocomplete="off"') . '
         ' . campo_select('papel', 'Perfil *', PAPEIS, 'cliente') . '
-        ' . campo_select('cliente_id', 'Cliente (perfil Cliente)', $clientes, $pre, 'Escolha o cliente') . '
+        ' . campo_select('cliente_id', 'Cliente (obrigatório no perfil Cliente; no Formando, a empresa a que pertence)', $clientes, $pre, 'Escolha o cliente') . '
         ' . campo('senha', 'Palavra-passe', '', 'text', 'minlength="10" autocomplete="new-password" placeholder="Vazio: é gerada automaticamente"') . '
       </div>
       <label class="opcao consentimento"><input type="checkbox" name="enviar_acesso" value="1"> <span>Enviar os dados de acesso por email ao utilizador, com a palavra-passe (texto em <a href="' . h(url('comunicacao', ['aberto' => 'acesso'])) . '#email-acesso">Comunicação</a>)</span></label>
@@ -1127,13 +1130,13 @@ function admin_utilizador(): void
         $nome = texto('nome', 120);
         $email = texto('email', 160);
         $papel = papel_enviado();
-        $cliente_id = $papel === 'cliente' ? (int) ($_POST['cliente_id'] ?? 0) : null;
+        [$cliente_id, $erro_cliente] = cliente_do_utilizador($papel, $clientes);
         $ativo = isset($_POST['ativo']) ? 1 : 0;
         $erro = '';
         if ($nome === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $erro = 'Indique o nome e um email válido.';
-        } elseif ($papel === 'cliente' && !isset($clientes[$cliente_id])) {
-            $erro = 'Escolha o cliente deste utilizador.';
+        } elseif ($erro_cliente !== '') {
+            $erro = $erro_cliente;
         } elseif ($eu && ($papel !== 'admin' || !$ativo)) {
             $erro = 'Não pode retirar o seu próprio acesso de administração.';
         } elseif (linha_bd('SELECT id FROM utilizadores WHERE email = ? AND id != ?', [$email, $id])) {
@@ -1144,6 +1147,9 @@ function admin_utilizador(): void
         } else {
             executar('UPDATE utilizadores SET nome = ?, email = ?, papel = ?, cliente_id = ?, ativo = ? WHERE id = ?', [$nome, $email, $papel, $cliente_id, $ativo, $id]);
             aviso('Utilizador atualizado.');
+            if ($papel === 'formando' && $cliente_id) {
+                aviso_formando_associado($email, $cliente_id);
+            }
         }
         redirecionar('utilizador', ['id' => $id]);
     }
@@ -1152,7 +1158,7 @@ function admin_utilizador(): void
         ' . campo('nome', 'Nome *', $u['nome'], 'text', 'required maxlength="120"') . '
         ' . campo('email', 'Email *', $u['email'], 'email', 'required maxlength="160"') . '
         ' . campo_select('papel', 'Perfil *', PAPEIS, $u['papel']) . '
-        ' . campo_select('cliente_id', 'Cliente (perfil Cliente)', $clientes, $u['cliente_id'], 'Escolha o cliente') . '
+        ' . campo_select('cliente_id', 'Cliente (obrigatório no perfil Cliente; no Formando, a empresa a que pertence)', $clientes, $u['cliente_id'], $u['papel'] === 'formando' ? 'Sem empresa' : 'Escolha o cliente') . '
       </div>
       <label class="opcao consentimento"><input type="checkbox" name="ativo" value="1"' . ($u['ativo'] ? ' checked' : '') . '> Acesso ativo</label>
       <div><button class="botao" type="submit">Guardar alterações</button></div></form>

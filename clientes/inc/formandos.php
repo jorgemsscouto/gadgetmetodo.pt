@@ -26,6 +26,47 @@ function sql_inscricoes_do_email(string $colunas): string
         . " AND i.estado = 'confirmada' AND f.estado != 'cancelada'";
 }
 
+// Formando associado a uma empresa cliente: as suas inscrições ainda sem cliente (pelo email) passam a ser dessa empresa,
+// que as vê na área reservada. As inscrições já associadas a outro cliente ficam como estão. Devolve [associadas, de outro cliente].
+function associar_inscricoes_do_formando(string $email, int $cliente_id): array
+{
+    if (trim($email) === '' || $cliente_id <= 0) {
+        return [0, 0];
+    }
+    $associadas = 0;
+    foreach (consulta('SELECT id FROM inscricoes WHERE cliente_id IS NULL AND ' . sprintf(SQL_EMAIL_IGUAL, 'email'), [$email]) as $l) {
+        executar('UPDATE inscricoes SET cliente_id = ? WHERE id = ? AND cliente_id IS NULL', [$cliente_id, $l['id']]);
+        $associadas++;
+    }
+    $outras = (int) (linha_bd('SELECT COUNT(*) AS n FROM inscricoes WHERE cliente_id IS NOT NULL AND cliente_id != ? AND ' . sprintf(SQL_EMAIL_IGUAL, 'email'), [$cliente_id, $email])['n'] ?? 0);
+    return [$associadas, $outras];
+}
+
+// Aviso depois de associar um formando a uma empresa cliente
+function aviso_formando_associado(string $email, int $cliente_id): void
+{
+    [$associadas, $outras] = associar_inscricoes_do_formando($email, $cliente_id);
+    $cliente = (string) (linha_bd('SELECT nome FROM clientes WHERE id = ?', [$cliente_id])['nome'] ?? '');
+    if ($associadas || $outras) {
+        aviso(($associadas ? $associadas . ' inscrição(ões) deste formando, ainda sem cliente, ficaram associadas a ' . h($cliente) . '.' : '')
+            . ($outras ? ' ' . $outras . ' inscrição(ões) já associadas a outro cliente ficaram como estavam.' : ''), 'info');
+    }
+}
+
+// Cliente gravado no utilizador: obrigatório no perfil Cliente (acesso aos dados desse cliente), opcional no Formando
+// (empresa a que pertence) e nunca no Gadgetmetodo. Devolve [cliente_id ou null, erro].
+function cliente_do_utilizador(string $papel, array $clientes): array
+{
+    $id = (int) ($_POST['cliente_id'] ?? 0);
+    if ($papel === 'cliente') {
+        return isset($clientes[$id]) ? [$id, ''] : [null, 'Escolha o cliente deste utilizador.'];
+    }
+    if ($papel === 'formando' && $id) {
+        return isset($clientes[$id]) ? [$id, ''] : [null, 'O cliente escolhido não existe.'];
+    }
+    return [null, ''];
+}
+
 // Utilizador com este email (qualquer perfil) ou null
 function utilizador_por_email(string $email): ?array
 {

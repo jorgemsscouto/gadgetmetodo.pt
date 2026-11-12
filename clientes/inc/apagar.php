@@ -131,17 +131,21 @@ function pedido_apagar(string $tipo, string $id): ?array
             if (!$c = linha_bd('SELECT * FROM clientes WHERE id = ?', [$n])) {
                 return null;
             }
-            $u = contar('SELECT COUNT(*) AS n FROM utilizadores WHERE cliente_id = ?', [$n]);
+            // Os utilizadores Cliente deste cliente são apagados; os formandos associados à empresa mantêm a conta, sem a associação
+            $u = contar("SELECT COUNT(*) AS n FROM utilizadores WHERE cliente_id = ? AND papel = 'cliente'", [$n]);
+            $fo = contar("SELECT COUNT(*) AS n FROM utilizadores WHERE cliente_id = ? AND papel != 'cliente'", [$n]);
             $ins = contar('SELECT COUNT(*) AS n FROM inscricoes WHERE cliente_id = ?', [$n]);
             return [
                 'titulo' => 'Apagar o cliente ' . $c['nome'],
                 'apaga' => array_values(array_filter(['O cliente ' . $c['nome'] . ', com o NIF, os contactos e as notas.', $u ? $u . ' utilizador(es) deste cliente, que deixam de ter acesso à área reservada.' : ''])),
-                'mantem' => $ins ? [$ins . ' inscrição(ões) deste cliente, com o nome do cliente guardado na própria inscrição.'] : [],
+                'mantem' => array_values(array_filter([$ins ? $ins . ' inscrição(ões) deste cliente, com o nome do cliente guardado na própria inscrição.' : '',
+                    $fo ? $fo . ' formando(s) associado(s) a este cliente, que mantêm o acesso, sem a associação.' : ''])),
                 'alternativa' => $u ? 'Em alternativa, desative os utilizadores do cliente: deixam de entrar e os dados ficam guardados.' : '',
                 'voltar' => url('cliente', ['id' => $n]), 'depois' => ['clientes', []], 'menu' => 'clientes',
                 'executar' => function () use ($n, $c) {
                     executar("UPDATE inscricoes SET empresa = CASE WHEN COALESCE(empresa, '') = '' THEN ? ELSE empresa END, cliente_id = NULL WHERE cliente_id = ?", [$c['nome'], $n]);
-                    executar('DELETE FROM utilizadores WHERE cliente_id = ?', [$n]);
+                    executar("DELETE FROM utilizadores WHERE cliente_id = ? AND papel = 'cliente'", [$n]);
+                    executar('UPDATE utilizadores SET cliente_id = NULL WHERE cliente_id = ?', [$n]);
                     executar('DELETE FROM clientes WHERE id = ?', [$n]);
                 },
             ];
