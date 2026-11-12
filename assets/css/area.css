@@ -2399,3 +2399,46 @@ table[data-filtros] th[aria-sort="descending"] .ordenar::after {
 table[data-filtros] tr[hidden] {
   display: none;
 }
+
+/* Diagnósticos: lista de escolha dos utilizadores, dados do diagnóstico e secção de conhecimentos no formulário */
+.tabela-escolha th[data-sem-filtro],
+.tabela-escolha td:first-child {
+  width: 44px;
+  text-align: center;
+}
+
+.tabela-escolha input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--marinho);
+}
+
+.tabela-escolha label {
+  cursor: pointer;
+}
+
+.factos-area {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.factos-area > div {
+  padding: var(--pad-nota-v) var(--pad-nota-h);
+  background: var(--creme-vidro);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 16px;
+}
+
+.factos-area dt {
+  color: var(--cinzento);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.factos-area dd {
+  margin: 4px 0 0;
+  color: var(--marinho);
+}

@@ -229,7 +229,7 @@ function formacoes_publico(): array
             . ($crescente
                 ? ' A prática no Laboratório de Casos Práticos passa de ' . reset($labs) . ' para ' . end($labs) . ' minutos por sessão ao longo do percurso.' : '')
             . (count($publicos) === 1 ? ' Destinatários: ' . rtrim(lcfirst((string) reset($publicos)), '.') . '.' : '')
-            . (com_nivel(['curso_id' => $lista[0]['id']]) ? ' Não sabe por qual começar? A inscrição e a pré-inscrição incluem um diagnóstico com 10 perguntas: a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado antes de confirmar a inscrição.' : '');
+            . (com_nivel(['curso_id' => $lista[0]['id']]) ? ' Não sabe por qual começar? A inscrição e a pré-inscrição incluem um diagnóstico com 20 perguntas (utilização e conhecimentos de IA): a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado antes de confirmar a inscrição.' : '');
         $html .= '<section class="secao secao-nevoa secao-percurso" aria-labelledby="' . $id . '"><div class="contentor">
           <div class="cabeca-secao"><span class="sobretitulo">Cursos abertos · Percurso</span><h2 id="' . $id . '">' . h($titulo) . '</h2>' . ($sub !== '' ? '<p class="lead-secao">' . h(ucfirst($sub)) . '</p>' : '') . '<p>' . h($intro) . '</p></div>
           <div class="lista-cursos">' . implode('', array_map('cartao_curso', $lista)) . '</div>';
@@ -713,7 +713,7 @@ function curso_publico(): array
           <aside class="ficha-curso">
             ' . ($factos ? '<dl>' . implode('', array_map(function ($k, $x) { return '<dt>' . h($k) . '</dt><dd>' . h($x) . '</dd>'; }, array_keys($factos), $factos)) . '</dl>' : '') . '
             ' . ($c['diagnostico'] ? '<p class="texto-suave">' . (com_nivel(['curso_id' => $c['id']])
-                ? 'A inscrição e a pré-inscrição incluem um diagnóstico com 10 perguntas: a Gadgetmetodo analisa as respostas e indica o curso do percurso mais adequado ao ponto de partida do formando antes de confirmar a inscrição.'
+                ? 'A inscrição e a pré-inscrição incluem um diagnóstico com 20 perguntas (utilização e conhecimentos de IA): a Gadgetmetodo analisa as respostas e indica o curso do percurso mais adequado ao ponto de partida do formando antes de confirmar a inscrição.'
                 : 'A inscrição inclui um diagnóstico curto de utilização de inteligência artificial, para ajustar a formação ao ponto de partida de cada formando.') . '</p>' : '') . '
             <p class="cartao-curso-datas' . ($op['sessoes'] ? ' com-datas' : '') . '">' . h($op['nota']) . '</p>
             <div class="ficha-acoes">

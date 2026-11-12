@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 
-const TIPOS_APAGAR = ['inscricao', 'preinscricao', 'formacao', 'curso', 'modulo', 'cliente', 'utilizador', 'pedido'];
+const TIPOS_APAGAR = ['inscricao', 'preinscricao', 'formacao', 'curso', 'modulo', 'cliente', 'utilizador', 'pedido', 'diagnostico'];
 
 // Ligação "Apagar..." para a página de confirmação
 function botao_apagar(string $tipo, $id, string $rotulo, string $classe = 'botao botao-secundario botao-apagar'): string
@@ -106,6 +106,7 @@ function pedido_apagar(string $tipo, string $id): ?array
                     executar('DELETE FROM preinscricoes WHERE curso_id = ?', [$n]);
                     executar('UPDATE preinscricoes SET curso_origem = NULL WHERE curso_origem = ?', [$n]);
                     executar('DELETE FROM modulos WHERE curso_id = ?', [$n]);
+                    executar('UPDATE diagnosticos SET curso_id = NULL WHERE curso_id = ?', [$n]);
                     executar('DELETE FROM cursos WHERE id = ?', [$n]);
                 },
             ];
@@ -160,7 +161,22 @@ function pedido_apagar(string $tipo, string $id): ?array
                 'mantem' => ['As inscrições feitas por este utilizador.'],
                 'alternativa' => 'Em alternativa, desative o utilizador: deixa de entrar e os dados ficam guardados.',
                 'voltar' => url('utilizador', ['id' => $n]), 'depois' => ['utilizadores', []], 'menu' => 'utilizadores',
-                'executar' => function () use ($n) { executar('DELETE FROM utilizadores WHERE id = ?', [$n]); },
+                'executar' => function () use ($n) {
+                    // Os diagnósticos enviados ficam (com o nome e o email), sem a ligação ao utilizador
+                    executar('UPDATE diagnosticos SET utilizador_id = NULL WHERE utilizador_id = ?', [$n]);
+                    executar('DELETE FROM utilizadores WHERE id = ?', [$n]);
+                },
+            ];
+        case 'diagnostico':
+            if (!$d = linha_bd('SELECT d.*, c.nome AS curso FROM diagnosticos d LEFT JOIN cursos c ON c.id = d.curso_id WHERE d.id = ?', [$n])) {
+                return null;
+            }
+            return [
+                'titulo' => 'Apagar o diagnóstico de ' . $d['nome'],
+                'apaga' => ['O diagnóstico enviado a ' . $d['nome'] . ' (' . $d['email'] . ')' . ($d['curso'] ? ' para o ' . $d['curso'] : '') . ($d['respondido'] !== null ? ', com as respostas e o resultado.' : '. A ligação enviada deixa de funcionar.')],
+                'mantem' => [], 'alternativa' => '',
+                'voltar' => url('diagnostico', ['id' => $n]), 'depois' => ['diagnosticos', []], 'menu' => 'diagnosticos',
+                'executar' => function () use ($n) { executar('DELETE FROM diagnosticos WHERE id = ?', [$n]); },
             ];
         case 'pedido':
             $p = null;

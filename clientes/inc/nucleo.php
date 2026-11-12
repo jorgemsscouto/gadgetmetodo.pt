@@ -141,11 +141,18 @@ function bd(): ?PDO
         $pdo->exec('CREATE TABLE IF NOT EXISTS presencas (
             id INTEGER PRIMARY KEY AUTOINCREMENT, inscricao_id INTEGER NOT NULL REFERENCES inscricoes(id) ON DELETE CASCADE,
             sessao INTEGER NOT NULL, registado TEXT NOT NULL, origem TEXT NOT NULL, utilizador_id INTEGER, UNIQUE (inscricao_id, sessao))');
-        // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação; as pré-inscrições, 12 meses depois do registo
+        // Diagnósticos enviados pela administração (menu Diagnósticos): ligação de resposta por email, sem sessão
+        $pdo->exec('CREATE TABLE IF NOT EXISTS diagnosticos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, utilizador_id INTEGER, nome TEXT NOT NULL, email TEXT NOT NULL, curso_id INTEGER,
+            token TEXT, validade TEXT, enviado TEXT NOT NULL, enviado_por INTEGER, respondido TEXT, respostas TEXT,
+            ferramentas TEXT, pontuacao INTEGER, nivel TEXT)');
+        // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação; as pré-inscrições, 12 meses depois do registo;
+        // os diagnósticos enviados pela administração, 2 anos depois do envio
         $pdo->prepare('DELETE FROM inscricoes WHERE formacao_id IN (SELECT id FROM formacoes WHERE inicio < ?)')
             ->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
         $pdo->prepare('DELETE FROM lembretes WHERE criado < ?')->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
         $pdo->prepare('DELETE FROM preinscricoes WHERE criado < ?')->execute([date('Y-m-d H:i:s', time() - DIAS_PREINSCRICOES * 86400)]);
+        $pdo->prepare('DELETE FROM diagnosticos WHERE enviado < ?')->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
         // Contas de formando sem nenhuma inscrição (apagadas com as inscrições, 2 anos depois da formação)
         $pdo->prepare("DELETE FROM utilizadores WHERE papel = 'formando' AND criado < ? AND NOT EXISTS (SELECT 1 FROM inscricoes i WHERE TRIM(i.email) = TRIM(utilizadores.email) COLLATE NOCASE)")
             ->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);

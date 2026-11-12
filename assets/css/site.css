@@ -2454,3 +2454,12 @@ body:not(.area) main .formulario,
     padding-inline: var(--pad-caixa);
   }
 }
+
+/* Diagnóstico: início das perguntas de conhecimento */
+.diag-secao {
+  margin: 8px 0 0;
+  padding: var(--pad-nota-v) var(--pad-nota-h);
+  color: var(--marinho);
+  background: var(--pastel-4);
+  border-radius: 16px;
+}

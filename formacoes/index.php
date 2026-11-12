@@ -29,8 +29,8 @@
   <link rel="alternate" type="text/plain" href="/llms.txt" title="Resumo do site para modelos de linguagem">
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/css/site.css?v=94d7b0bb23">
-  <link rel="stylesheet" href="/assets/css/area.css?v=7847beffaa">
+  <link rel="stylesheet" href="/assets/css/site.css?v=fe6ea68666">
+  <link rel="stylesheet" href="/assets/css/area.css?v=60a1489ebd">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -205,7 +205,7 @@
       "about": {
         "@id": "https://www.gadgetmetodo.pt/#organizacao"
       },
-      "dateModified": "2026-11-10",
+      "dateModified": "2026-11-12",
       "primaryImageOfPage": {
         "@type": "ImageObject",
         "url": "https://www.gadgetmetodo.pt/assets/img/partilha.png"
@@ -337,7 +337,7 @@
           </details>
           <details>
             <summary>Por que curso devo começar?</summary>
-            <div class="resposta"><p>Não precisa de escolher sozinho: a inscrição e a pré-inscrição incluem um diagnóstico com 10 perguntas sobre a forma como usa a IA, e a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado ao seu ponto de partida antes de confirmar a inscrição. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4; no Curso 5, o Curso 4 ou experiência equivalente na definição de casos de uso de IA. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital; o Curso 5, para quem já tem um caso de uso para pôr em funcionamento.</p></div>
+            <div class="resposta"><p>Não precisa de escolher sozinho: a inscrição e a pré-inscrição incluem um diagnóstico com 20 perguntas sobre a forma como usa a IA e sobre os seus conhecimentos, e a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado ao seu ponto de partida antes de confirmar a inscrição. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4; no Curso 5, o Curso 4 ou experiência equivalente na definição de casos de uso de IA. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital; o Curso 5, para quem já tem um caso de uso para pôr em funcionamento.</p></div>
           </details>
           <details>
             <summary>Como me inscrevo e o que é a pré-inscrição?</summary>

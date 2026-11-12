@@ -825,6 +825,7 @@ function admin_preinscricao(): void
           <div><span class="texto-suave">Nível</span>' . nivel_etiqueta($a['nivel']) . '</div>
           <div><span class="texto-suave">Pontuação</span><span><strong>' . (int) $a['pontuacao'] . '</strong> em ' . $a['maximo'] . '</span></div>
           <div><span class="texto-suave">Uso responsável</span><span><strong>' . (int) $a['responsavel'] . '</strong> em 9</span></div>
+          ' . bloco_conhecimento($a) . '
         </div>
         ' . ($rec ? '<p><strong>Recomendação:</strong> ' . h($rec) . '</p>' : '') . '
         <details class="programa"><summary>Ver as respostas</summary><div class="programa-corpo conteudo tabela-rolante">' . tabela_diagnostico(['respostas' => json_encode($respostas)]) . '</div></details>' : '');

@@ -12,6 +12,7 @@ const ICONES_MENU = [
     'calendario' => '<path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
     'cursos' => '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>',
     'inscricoes' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    'diagnosticos' => '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
     'clientes' => '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2M10 6h4M10 10h4M10 14h4M10 18h4"/>',
     'pedidos' => '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
     'configuracao' => '<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/>',
@@ -22,7 +23,7 @@ const ICONES_MENU = [
 function menu_area(string $atual): string
 {
     $itens = eh_admin()
-        ? ['painel' => 'Painel', 'calendario' => 'Calendário', 'cursos' => 'Cursos', 'inscricoes' => 'Inscrições', 'clientes' => 'Clientes', 'pedidos' => 'Pedidos do site', 'configuracao' => 'Configuração', 'conta' => 'A minha conta']
+        ? ['painel' => 'Painel', 'calendario' => 'Calendário', 'cursos' => 'Cursos', 'inscricoes' => 'Inscrições', 'diagnosticos' => 'Diagnósticos', 'clientes' => 'Clientes', 'pedidos' => 'Pedidos do site', 'configuracao' => 'Configuração', 'conta' => 'A minha conta']
         : (eh_formando() ? ['painel' => 'As minhas formações', 'conta' => 'A minha conta']
             : ['painel' => 'Painel', 'calendario' => 'Formações', 'inscricoes' => 'Inscrições'] + (tambem_formando() ? ['presencas' => 'As minhas formações'] : []) + ['conta' => 'A minha conta']);
     $atual = eh_admin() && isset(CONFIGURACAO[$atual]) ? 'configuracao' : $atual;

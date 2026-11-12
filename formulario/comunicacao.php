@@ -63,6 +63,16 @@ const EMAILS = [
         'texto' => 'Foi registada uma pré-inscrição. Está em Inscrições, na área reservada, com o estado "Pré-inscrição": aí confirma o curso aconselhado pelo diagnóstico (ou associa outro) e inscreve o candidato numa edição já agendada ou numa edição nova.',
         'fecho' => '',
     ],
+    'diagnostico_aviso' => [
+        'grupo' => 'admin', 'nome' => 'Diagnóstico respondido',
+        'quando' => 'Quando um utilizador responde ao diagnóstico enviado em Diagnósticos.',
+        'dados' => 'Resultado, curso aconselhado e botão para as respostas na área reservada.',
+        'desativavel' => true, 'variaveis' => ['formando', 'email', 'curso'],
+        'assunto' => 'Diagnóstico respondido: {formando}',
+        'titulo' => 'Diagnóstico respondido',
+        'texto' => '{formando} respondeu ao diagnóstico de IA enviado para o {curso}.',
+        'fecho' => '',
+    ],
     'cancelamento_aviso' => [
         'grupo' => 'admin', 'nome' => 'Inscrição cancelada pelo cliente',
         'quando' => 'Quando um utilizador de um cliente cancela uma inscrição na área reservada.',
@@ -199,6 +209,16 @@ const EMAILS = [
         'titulo' => 'Acesso à área reservada',
         'texto' => "{nome},\n\nSeguem os dados para entrar na área reservada da Gadgetmetodo, onde pode consultar as formações, inscrever formandos e acompanhar as inscrições.",
         'fecho' => 'Por segurança, altere a palavra-passe no primeiro acesso, em "A minha conta". Se não esperava este email, responda a informar-nos.',
+    ],
+    'diagnostico_convite' => [
+        'grupo' => 'utilizadores', 'nome' => 'Diagnóstico de IA',
+        'quando' => 'Na área reservada, em Diagnósticos, ao enviar o diagnóstico a um utilizador e no botão "Reenviar a ligação".',
+        'dados' => 'Curso, data-limite e botão para responder. A ligação é pessoal, válida 30 dias e só pode ser usada uma vez; não é preciso entrar na área reservada.',
+        'desativavel' => false, 'variaveis' => ['nome', 'nome_completo', 'email', 'curso', 'no_curso', 'validade'],
+        'assunto' => 'Diagnóstico de IA antes da formação',
+        'titulo' => 'Diagnóstico de inteligência artificial',
+        'texto' => "{nome},\n\nPara prepararmos a formação {no_curso} de acordo com o seu ponto de partida, pedimos-lhe que responda a um diagnóstico sobre a forma como usa a inteligência artificial e sobre alguns conceitos essenciais.\n\nSão 20 perguntas, cerca de seis minutos. Pode responder até {validade}.",
+        'fecho' => 'Se tiver alguma dúvida, responda a este email.',
     ],
     'acesso_formando' => [
         'grupo' => 'utilizadores', 'nome' => 'Acesso do formando',

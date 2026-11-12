@@ -17,6 +17,7 @@ require __DIR__ . '/inc/configuracao.php';
 require __DIR__ . '/inc/formandos.php';
 require __DIR__ . '/inc/inscritos.php';
 require __DIR__ . '/inc/agenda.php';
+require __DIR__ . '/inc/diagnosticos.php';
 
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
@@ -59,6 +60,11 @@ if ($p === 'senha') {
     pagina_definir_senha();
 }
 
+// Ligação enviada por email para responder ao diagnóstico (não precisa de sessão iniciada)
+if ($p === 'responder') {
+    pagina_responder_diagnostico();
+}
+
 if (!utilizador()) {
     pagina_entrada();
 }
@@ -75,7 +81,7 @@ $comuns = ['inscrever' => 'pagina_inscrever', 'inscricao' => 'pagina_inscricao',
 $rotas = eh_admin()
     ? ['painel' => 'admin_painel', 'calendario' => 'admin_calendario', 'formacao' => 'admin_formacao', 'cursos' => 'admin_cursos', 'curso' => 'admin_curso', 'inscricoes' => 'admin_inscricoes',
        'preinscricao' => 'admin_preinscricao', 'clientes' => 'admin_clientes', 'cliente' => 'admin_cliente', 'utilizadores' => 'admin_utilizadores', 'utilizador' => 'admin_utilizador',
-       'pedidos' => 'admin_pedidos', 'configuracao' => 'admin_configuracao', 'precos' => 'admin_precos', 'comunicacao' => 'admin_comunicacao', 'apagar' => 'admin_apagar', 'formando' => 'admin_formando'] + $comuns
+       'pedidos' => 'admin_pedidos', 'configuracao' => 'admin_configuracao', 'precos' => 'admin_precos', 'comunicacao' => 'admin_comunicacao', 'apagar' => 'admin_apagar', 'formando' => 'admin_formando', 'diagnosticos' => 'admin_diagnosticos', 'diagnostico' => 'admin_diagnostico'] + $comuns
     : (eh_formando()
         ? ['painel' => 'formando_painel', 'conta' => 'pagina_conta']
         : ['painel' => 'cliente_painel', 'calendario' => 'cliente_formacoes', 'inscricoes' => 'cliente_inscricoes'] + (tambem_formando() ? ['presencas' => 'formando_painel'] : []) + $comuns);

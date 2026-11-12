@@ -165,6 +165,11 @@
       var nome = th.textContent.trim();
       var celula = document.createElement('th');
       var campo;
+      // Colunas sem filtro nem ordenação (por exemplo, a das caixas de escolha)
+      if (th.hasAttribute('data-sem-filtro')) {
+        filtros.appendChild(celula);
+        return null;
+      }
       if (th.getAttribute('data-filtro') === 'lista') {
         campo = document.createElement('select');
         var todas = document.createElement('option');
@@ -188,6 +193,12 @@
       }
       campo.setAttribute('aria-label', 'Filtrar por ' + nome.toLowerCase());
       campo.addEventListener('input', aplicar);
+      // Numa tabela dentro de um formulário, Enter no filtro não envia o formulário
+      campo.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+        }
+      });
       celula.appendChild(campo);
       filtros.appendChild(celula);
       return campo;
@@ -206,7 +217,7 @@
     limpar.textContent = 'Limpar filtros';
     limpar.hidden = true;
     limpar.addEventListener('click', function () {
-      campos.forEach(function (c) { c.value = ''; });
+      campos.forEach(function (c) { if (c) { c.value = ''; } });
       aplicar();
     });
     barra.appendChild(contador);
@@ -219,7 +230,7 @@
       var visiveis = 0;
       linhas.forEach(function (linha) {
         var mostra = campos.every(function (campo, i) {
-          if (campo.value === '') {
+          if (!campo || campo.value === '') {
             return true;
           }
           return campo.tagName === 'SELECT'
@@ -229,13 +240,16 @@
         linha.hidden = !mostra;
         visiveis += mostra ? 1 : 0;
       });
-      campos.forEach(function (c) { ativos += c.value !== '' ? 1 : 0; });
+      campos.forEach(function (c) { ativos += c && c.value !== '' ? 1 : 0; });
       contador.textContent = ativos ? visiveis + ' de ' + linhas.length + ' registos' : linhas.length + ' registos';
       limpar.hidden = !ativos;
     }
 
     // Ordenação: clicar no cabeçalho ordena por essa coluna; de novo, inverte; à terceira, volta à ordem inicial
     cabecalhos.forEach(function (th, i) {
+      if (th.hasAttribute('data-sem-filtro')) {
+        return;
+      }
       var botao = document.createElement('button');
       botao.type = 'button';
       botao.className = 'ordenar';
@@ -263,6 +277,18 @@
         linhas.forEach(function (l) { corpo.appendChild(l); });
       });
     });
+    // "Escolher todos": marca ou desmarca as caixas das linhas visíveis (as escondidas pelos filtros ficam como estão)
+    var todos = tabela.querySelector('thead input.marcar-todos');
+    if (todos) {
+      todos.addEventListener('change', function () {
+        linhas.forEach(function (l) {
+          var caixa = l.querySelector('input[type=checkbox]');
+          if (caixa && !l.hidden) {
+            caixa.checked = todos.checked;
+          }
+        });
+      });
+    }
     tabela.setAttribute('data-tabela', String(t));
     aplicar();
   });

@@ -170,18 +170,24 @@ function bloco_diagnostico_form(array $f, array $v, int $numero, string $quem): 
         return '';
     }
     $nivel = com_nivel($f);
+    $n = count(perguntas_diagnostico()) + 1;
+    return '<h2 class="mb-0 espaco-topo">' . $numero . '. Diagnóstico de utilização de IA</h2>
+        <p class="texto-suave mb-0">' . $n . ' perguntas, cerca de seis minutos. ' . h($quem) . ' As ' . count(DIAGNOSTICO_V2) . ' primeiras descrevem a utilização da IA (não há respostas certas); as ' . count(DIAGNOSTICO_CONHECIMENTO) . ' seguintes avaliam conhecimentos. ' . ($nivel
+            ? 'A Gadgetmetodo analisa as respostas para indicar o curso do percurso mais adequado ao ponto de partida do formando e para ajustar os exemplos e os exercícios ao grupo.'
+            : 'As respostas servem para ajustar os exemplos e os exercícios ao ponto de partida do grupo.') . '</p>
+        ' . campos_diagnostico($v['diag'], $nivel) . '
+        ' . campo_ferramentas($v, $n);
+}
+
+// Última pergunta do diagnóstico: as ferramentas de IA que utiliza (não pontuada)
+function campo_ferramentas(array $v, int $n): string
+{
     $ferramentas = '';
     foreach (array_merge(FERRAMENTAS_IA, ['Outra']) as $nome) {
         $marcada = $nome === 'Outra' ? !empty($v['outra_marcada']) : in_array($nome, $v['ferramentas'] ?? [], true);
         $ferramentas .= '<label class="opcao"><input type="checkbox" name="ferramentas[]" value="' . h($nome) . '"' . ($marcada ? ' checked' : '') . '> ' . h($nome) . '</label>';
     }
-    $n = count(perguntas_diagnostico()) + 1;
-    return '<h2 class="mb-0 espaco-topo">' . $numero . '. Diagnóstico de utilização de IA</h2>
-        <p class="texto-suave mb-0">' . $n . ' perguntas, cerca de três minutos. ' . h($quem) . ' Não há respostas certas: ' . ($nivel
-            ? 'a Gadgetmetodo analisa-as para indicar o curso do percurso mais adequado ao ponto de partida do formando e para ajustar os exemplos e os exercícios ao grupo.'
-            : 'servem para ajustar os exemplos e os exercícios ao ponto de partida do grupo.') . '</p>
-        ' . campos_diagnostico($v['diag'], $nivel) . '
-        <fieldset class="campo-grupo diag-pergunta"><legend>' . $n . '. Que ferramentas de IA utiliza?</legend>
+    return '<fieldset class="campo-grupo diag-pergunta"><legend>' . $n . '. Que ferramentas de IA utiliza?</legend>
           <p class="ajuda">Pode escolher várias. Se ainda não utiliza nenhuma, deixe em branco.</p>
           <div class="opcoes opcoes-linha">' . $ferramentas . '</div>
           ' . campo('ferramenta_outra', 'Se escolheu "Outra", indique qual', (string) ($v['ferramenta_outra'] ?? ''), 'text', 'maxlength="80"') . '
@@ -453,6 +459,7 @@ function pagina_inscricao(): void
         <div><span class="texto-suave">Nível</span>' . nivel_etiqueta($i['nivel']) . '</div>
         <div><span class="texto-suave">Pontuação</span><span><strong>' . (int) $i['pontuacao'] . '</strong> em ' . avaliar_diagnostico((array) json_decode((string) $i['respostas'], true))['maximo'] . '</span></div>
         <div><span class="texto-suave">Uso responsável</span><span><strong>' . (int) $i['responsavel'] . '</strong> em 9</span></div>
+        ' . bloco_conhecimento(avaliar_diagnostico((array) json_decode((string) $i['respostas'], true))) . '
       </div>
       ' . ($admin && ($rec = recomendacao_de($i)) ? '<p><strong>Recomendação:</strong> ' . h($rec) . '</p>' : '') . '
       <div class="conteudo tabela-rolante">' . tabela_diagnostico($i) . '</div>' : '') . '
