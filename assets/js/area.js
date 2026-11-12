@@ -130,3 +130,140 @@
     aplicar();
   });
 })();
+
+// Listas com filtros e ordenação (tabelas com data-filtros, por exemplo Clientes e Utilizadores): uma linha de filtros por
+// baixo dos cabeçalhos (texto ou lista, conforme data-filtro="lista" no cabeçalho) e ordenação ao clicar no cabeçalho
+// (ascendente e descendente). O valor de ordenação de uma célula pode vir em data-valor (datas, números). Sem JavaScript,
+// a tabela aparece completa, pela ordem do servidor.
+(function () {
+  var tabelas = document.querySelectorAll('table[data-filtros]');
+  if (!tabelas.length) {
+    return;
+  }
+  var semAcentos = function (t) {
+    return (t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  };
+  var comparar = new Intl.Collator('pt-PT', { numeric: true, sensitivity: 'base' }).compare;
+
+  tabelas.forEach(function (tabela, t) {
+    var cabecalhos = Array.prototype.slice.call(tabela.querySelectorAll('thead tr:first-child th'));
+    var corpo = tabela.tBodies[0];
+    var linhas = Array.prototype.slice.call(corpo.rows);
+    var original = linhas.slice();
+    var valor = function (linha, i) {
+      var c = linha.cells[i];
+      return c ? (c.hasAttribute('data-valor') ? c.getAttribute('data-valor') : c.textContent) : '';
+    };
+    var texto = function (linha, i) {
+      return linha.cells[i] ? semAcentos(linha.cells[i].textContent) : '';
+    };
+
+    // Linha dos filtros
+    var filtros = document.createElement('tr');
+    filtros.className = 'linha-filtros';
+    var campos = cabecalhos.map(function (th, i) {
+      var nome = th.textContent.trim();
+      var celula = document.createElement('th');
+      var campo;
+      if (th.getAttribute('data-filtro') === 'lista') {
+        campo = document.createElement('select');
+        var todas = document.createElement('option');
+        todas.value = '';
+        todas.textContent = 'Todos';
+        campo.appendChild(todas);
+        var vistos = {};
+        linhas.map(function (l) { return l.cells[i] ? l.cells[i].textContent.trim() : ''; })
+          .filter(function (v) { if (vistos[v]) { return false; } vistos[v] = true; return true; })
+          .sort(comparar)
+          .forEach(function (v) {
+            var o = document.createElement('option');
+            o.value = v;
+            o.textContent = v === '' ? '(vazio)' : v;
+            campo.appendChild(o);
+          });
+      } else {
+        campo = document.createElement('input');
+        campo.type = 'search';
+        campo.placeholder = 'Filtrar';
+      }
+      campo.setAttribute('aria-label', 'Filtrar por ' + nome.toLowerCase());
+      campo.addEventListener('input', aplicar);
+      celula.appendChild(campo);
+      filtros.appendChild(celula);
+      return campo;
+    });
+    tabela.tHead.appendChild(filtros);
+
+    // Contador e "Limpar filtros", por cima da tabela
+    var barra = document.createElement('div');
+    barra.className = 'barra-filtros';
+    var contador = document.createElement('p');
+    contador.className = 'texto-suave';
+    contador.setAttribute('aria-live', 'polite');
+    var limpar = document.createElement('button');
+    limpar.type = 'button';
+    limpar.className = 'botao botao-secundario botao-pequeno';
+    limpar.textContent = 'Limpar filtros';
+    limpar.hidden = true;
+    limpar.addEventListener('click', function () {
+      campos.forEach(function (c) { c.value = ''; });
+      aplicar();
+    });
+    barra.appendChild(contador);
+    barra.appendChild(limpar);
+    var envolvente = tabela.closest('.tabela-rolante') || tabela;
+    envolvente.parentNode.insertBefore(barra, envolvente);
+
+    function aplicar() {
+      var ativos = 0;
+      var visiveis = 0;
+      linhas.forEach(function (linha) {
+        var mostra = campos.every(function (campo, i) {
+          if (campo.value === '') {
+            return true;
+          }
+          return campo.tagName === 'SELECT'
+            ? (linha.cells[i] ? linha.cells[i].textContent.trim() : '') === campo.value
+            : texto(linha, i).indexOf(semAcentos(campo.value)) !== -1;
+        });
+        linha.hidden = !mostra;
+        visiveis += mostra ? 1 : 0;
+      });
+      campos.forEach(function (c) { ativos += c.value !== '' ? 1 : 0; });
+      contador.textContent = ativos ? visiveis + ' de ' + linhas.length + ' registos' : linhas.length + ' registos';
+      limpar.hidden = !ativos;
+    }
+
+    // Ordenação: clicar no cabeçalho ordena por essa coluna; de novo, inverte; à terceira, volta à ordem inicial
+    cabecalhos.forEach(function (th, i) {
+      var botao = document.createElement('button');
+      botao.type = 'button';
+      botao.className = 'ordenar';
+      while (th.firstChild) {
+        botao.appendChild(th.firstChild);
+      }
+      th.appendChild(botao);
+      botao.addEventListener('click', function () {
+        var atual = th.getAttribute('aria-sort');
+        var proximo = atual === 'ascending' ? 'descending' : atual === 'descending' ? null : 'ascending';
+        cabecalhos.forEach(function (outro) { outro.removeAttribute('aria-sort'); });
+        if (proximo) {
+          th.setAttribute('aria-sort', proximo);
+          linhas.sort(function (a, b) {
+            var va = valor(a, i).trim();
+            var vb = valor(b, i).trim();
+            if (va === '' || vb === '') {
+              return va === vb ? 0 : va === '' ? 1 : -1; // vazios sempre no fim
+            }
+            return proximo === 'ascending' ? comparar(va, vb) : comparar(vb, va);
+          });
+        } else {
+          linhas = original.slice();
+        }
+        linhas.forEach(function (l) { corpo.appendChild(l); });
+      });
+    });
+    tabela.setAttribute('data-tabela', String(t));
+    aplicar();
+  });
+})();

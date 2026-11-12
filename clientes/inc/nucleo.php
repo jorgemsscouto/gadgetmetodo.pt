@@ -147,7 +147,7 @@ function bd(): ?PDO
         $pdo->prepare('DELETE FROM lembretes WHERE criado < ?')->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
         $pdo->prepare('DELETE FROM preinscricoes WHERE criado < ?')->execute([date('Y-m-d H:i:s', time() - DIAS_PREINSCRICOES * 86400)]);
         // Contas de formando sem nenhuma inscrição (apagadas com as inscrições, 2 anos depois da formação)
-        $pdo->prepare("DELETE FROM utilizadores WHERE papel = 'formando' AND criado < ? AND NOT EXISTS (SELECT 1 FROM inscricoes i WHERE i.email = utilizadores.email COLLATE NOCASE)")
+        $pdo->prepare("DELETE FROM utilizadores WHERE papel = 'formando' AND criado < ? AND NOT EXISTS (SELECT 1 FROM inscricoes i WHERE TRIM(i.email) = TRIM(utilizadores.email) COLLATE NOCASE)")
             ->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
         aplicar_catalogo($pdo);
         acrescentar_cursos_do_catalogo($pdo);

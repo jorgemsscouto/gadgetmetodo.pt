@@ -53,7 +53,7 @@ function estado_acesso_formando(string $email): array
     if (trim($email) === '') {
         return ['sem_email', 'Sem email', null];
     }
-    $u = linha_bd('SELECT * FROM utilizadores WHERE email = ?', [$email]);
+    $u = utilizador_por_email($email);
     if (!$u) {
         return ['sem_conta', 'Sem acesso', null];
     }
@@ -160,7 +160,7 @@ function admin_formando(): void
         pagina_erro('Formando não encontrado', 'O formando pedido não existe.');
     }
     $email = trim((string) $base['email']);
-    $lista = $email !== '' ? consulta(SQL_INSCRICOES_FORMANDO . ' WHERE i.email = ? COLLATE NOCASE ORDER BY f.inicio DESC, i.id DESC', [$email]) : [$base];
+    $lista = $email !== '' ? consulta(SQL_INSCRICOES_FORMANDO . ' WHERE ' . sprintf(SQL_EMAIL_IGUAL, 'i.email') . ' ORDER BY f.inicio DESC, i.id DESC', [$email]) : [$base];
     $ids = array_map('intval', array_column($lista, 'id'));
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $acao = (string) ($_POST['acao'] ?? '');

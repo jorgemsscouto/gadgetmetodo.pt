@@ -988,7 +988,7 @@ function admin_clientes(): void
         $linhas .= '<tr><td><a href="' . h(url('cliente', ['id' => $c['id']])) . '">' . h($c['nome']) . '</a></td><td>' . h(TIPOS_CLIENTE[$c['tipo']] ?? '') . '</td><td>' . h($c['nif']) . '</td><td>' . h($c['contacto']) . '<br><span class="texto-suave">' . h($c['email']) . '</span></td><td>' . (int) $c['n_utilizadores'] . '</td><td>' . (int) $c['n_inscricoes'] . '</td></tr>';
     }
     pagina_area('clientes', 'Clientes', '
-      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Cliente</th><th>Tipo</th><th>NIF</th><th>Contacto</th><th>Utilizadores</th><th>Inscrições</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há clientes.</p>') . '
+      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros><thead><tr><th>Cliente</th><th data-filtro="lista">Tipo</th><th>NIF</th><th>Contacto</th><th>Utilizadores</th><th>Inscrições</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há clientes.</p>') . '
       <h2 class="espaco-topo">Novo cliente</h2>
       ' . form_cliente([]), 'Gestão');
 }
@@ -1076,15 +1076,20 @@ function admin_utilizadores(): void
         redirecionar('utilizadores');
     }
     $lista = consulta('SELECT u.*, c.nome AS cliente FROM utilizadores u LEFT JOIN clientes c ON c.id = u.cliente_id ORDER BY u.papel, c.nome, u.nome');
+    // Emails com inscrições confirmadas próprias: os utilizadores Cliente com um destes emails também são formandos
+    $formandos = array_flip(array_column(consulta('SELECT DISTINCT LOWER(TRIM(i.email)) AS e FROM inscricoes i JOIN formacoes f ON f.id = i.formacao_id'
+        . " WHERE i.estado = 'confirmada' AND f.estado != 'cancelada' AND TRIM(COALESCE(i.email, '')) != ''"), 'e'));
     $linhas = '';
     foreach ($lista as $u) {
-        $linhas .= '<tr><td><a href="' . h(url('utilizador', ['id' => $u['id']])) . '">' . h($u['nome']) . '</a></td><td>' . h($u['email']) . '</td><td>' . h(PAPEIS[$u['papel']]) . '</td><td>' . h($u['cliente']) . '</td><td>' . ($u['ativo'] ? etiqueta('Ativo', 'ok') : etiqueta('Inativo')) . '</td><td>' . h(data_hora($u['ultimo_acesso'])) . '</td></tr>';
+        $perfil = PAPEIS[$u['papel']] . ($u['papel'] === 'cliente' && isset($formandos[strtolower(trim((string) $u['email']))]) ? ' + Formando' : '');
+        $linhas .= '<tr><td><a href="' . h(url('utilizador', ['id' => $u['id']])) . '">' . h($u['nome']) . '</a></td><td>' . h($u['email']) . '</td><td>' . h($perfil) . '</td><td>' . h($u['cliente']) . '</td><td>' . ($u['ativo'] ? etiqueta('Ativo', 'ok') : etiqueta('Inativo')) . '</td><td data-valor="' . h((string) $u['ultimo_acesso']) . '">' . h(data_hora($u['ultimo_acesso'])) . '</td></tr>';
     }
     $pre = (int) ($_GET['cliente'] ?? 0);
     pagina_area('utilizadores', 'Utilizadores', '
-      <div class="conteudo tabela-rolante"><table><thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Cliente</th><th>Estado</th><th>Último acesso</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
+      <div class="conteudo tabela-rolante"><table data-filtros><thead><tr><th>Nome</th><th>Email</th><th data-filtro="lista">Perfil</th><th data-filtro="lista">Cliente</th><th data-filtro="lista">Estado</th><th>Último acesso</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
       <h2 class="espaco-topo" id="novo">Novo utilizador</h2>
-      <p class="texto-suave">Perfil Gadgetmetodo: vê e gere tudo. Perfil Cliente: vê apenas as formações e as inscrições do seu cliente. Perfil Formando: vê as suas formações confirmadas (pelo email das inscrições) e regista a presença em cada sessão; é criado automaticamente quando uma inscrição com email é confirmada.</p>
+      <p class="texto-suave">Perfil Gadgetmetodo: vê e gere tudo. Perfil Cliente: vê as formações e as inscrições do seu cliente. Perfil Formando: vê as suas formações confirmadas (pelo email das inscrições) e regista a presença em cada sessão; é criado automaticamente quando uma inscrição com email é confirmada.</p>
+      <p class="texto-suave">Cliente que também é formando (por exemplo, a sócia-gerente inscrita numa formação da empresa): não precisa de outra conta. Se houver inscrições confirmadas com o email do utilizador Cliente, ele passa a ter também "As minhas formações", onde regista só a sua própria presença, com as mesmas regras do Formando, e aparece nesta lista como "Cliente + Formando". Ao confirmar uma inscrição com o email de um utilizador que já existe (Cliente ou Gadgetmetodo), não é criada outra conta e o perfil mantém-se. Os emails comparam-se sem distinguir maiúsculas de minúsculas.</p>
       <form method="post" class="formulario">' . campo_csrf() . '<div class="campos-2">
         ' . campo('nome', 'Nome *', '', 'text', 'required maxlength="120"') . '
         ' . campo('email', 'Email (é o nome de utilizador) *', '', 'email', 'required maxlength="160" autocomplete="off"') . '

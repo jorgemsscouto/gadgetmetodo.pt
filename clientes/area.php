@@ -1,6 +1,7 @@
 <?php
 // Área de clientes: entrada, sessão e encaminhamento para as páginas de cada perfil.
-// Perfil Gadgetmetodo (admin): vê e gere tudo. Perfil Cliente: vê apenas os dados do seu cliente.
+// Perfil Gadgetmetodo (admin): vê e gere tudo. Perfil Cliente: vê apenas os dados do seu cliente e, se tiver inscrições
+// confirmadas com o seu email, também "As minhas formações" (as do perfil Formando). Perfil Formando: as suas formações.
 
 declare(strict_types=1);
 
@@ -77,7 +78,7 @@ $rotas = eh_admin()
        'pedidos' => 'admin_pedidos', 'configuracao' => 'admin_configuracao', 'precos' => 'admin_precos', 'comunicacao' => 'admin_comunicacao', 'apagar' => 'admin_apagar', 'formando' => 'admin_formando'] + $comuns
     : (eh_formando()
         ? ['painel' => 'formando_painel', 'conta' => 'pagina_conta']
-        : ['painel' => 'cliente_painel', 'calendario' => 'cliente_formacoes', 'inscricoes' => 'cliente_inscricoes', 'presencas' => 'formando_painel'] + $comuns);
+        : ['painel' => 'cliente_painel', 'calendario' => 'cliente_formacoes', 'inscricoes' => 'cliente_inscricoes'] + (tambem_formando() ? ['presencas' => 'formando_painel'] : []) + $comuns);
 
 if (!isset($rotas[$p])) {
     negar();

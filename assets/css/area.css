@@ -2308,3 +2308,94 @@ h2.calendario-mes {
     font-size: 1.1rem;
   }
 }
+
+/* Listas com filtros e ordenação (Clientes e Utilizadores; assets/js/area.js) */
+.barra-filtros {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+}
+
+.barra-filtros p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+table[data-filtros] th .ordenar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  text-transform: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+table[data-filtros] th .ordenar::after {
+  content: "";
+  width: 0;
+  height: 0;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+  border-top: 5px solid currentColor;
+  opacity: 0.25;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+table[data-filtros] th .ordenar:hover::after,
+table[data-filtros] th .ordenar:focus-visible::after {
+  opacity: 0.6;
+}
+
+table[data-filtros] th[aria-sort] .ordenar {
+  color: var(--marinho);
+}
+
+table[data-filtros] th[aria-sort="ascending"] .ordenar::after {
+  opacity: 1;
+  transform: rotate(180deg);
+}
+
+table[data-filtros] th[aria-sort="descending"] .ordenar::after {
+  opacity: 1;
+}
+
+.linha-filtros th {
+  padding-top: 0;
+  padding-bottom: 10px;
+  font-weight: 400;
+}
+
+.linha-filtros input,
+.linha-filtros select {
+  width: 100%;
+  min-width: 90px;
+  padding: 6px 10px;
+  color: var(--antracite);
+  font: inherit;
+  font-size: 0.85rem;
+  letter-spacing: 0;
+  text-transform: none;
+  background: var(--branco);
+  border: 1px solid var(--cinzento-claro);
+  border-radius: 999px;
+}
+
+.linha-filtros input:focus,
+.linha-filtros select:focus {
+  border-color: var(--petroleo);
+  outline: 2px solid rgba(0, 99, 106, 0.18);
+  outline-offset: 0;
+}
+
+.barra-filtros [hidden],
+table[data-filtros] tr[hidden] {
+  display: none;
+}

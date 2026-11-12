@@ -10,6 +10,28 @@ const PRESENCA_ANTES = 2 * 3600;            // o registo de presença abre 2 hor
 const PRESENCA_DEPOIS = 86400;              // e fecha 1 dia depois do fim da sessão
 const VALIDADE_LIGACAO_SENHA = 7 * 86400;   // ligação para definir a palavra-passe
 
+// Os emails das inscrições e dos utilizadores comparam-se sem distinguir maiúsculas de minúsculas e sem os espaços do
+// início e do fim. SQL_EMAIL_IGUAL recebe o nome da coluna e um parâmetro (?) com o outro email.
+const SQL_EMAIL_IGUAL = 'TRIM(%s) = TRIM(?) COLLATE NOCASE';
+
+function mesmo_email(string $a, string $b): bool
+{
+    return trim($a) !== '' && strcasecmp(trim($a), trim($b)) === 0;
+}
+
+// Inscrições confirmadas de um email em edições não canceladas: o que dá acesso a "As minhas formações"
+function sql_inscricoes_do_email(string $colunas): string
+{
+    return 'SELECT ' . $colunas . ' FROM inscricoes i JOIN formacoes f ON f.id = i.formacao_id WHERE ' . sprintf(SQL_EMAIL_IGUAL, 'i.email')
+        . " AND i.estado = 'confirmada' AND f.estado != 'cancelada'";
+}
+
+// Utilizador com este email (qualquer perfil) ou null
+function utilizador_por_email(string $email): ?array
+{
+    return trim($email) === '' ? null : linha_bd('SELECT * FROM utilizadores WHERE ' . sprintf(SQL_EMAIL_IGUAL, 'email'), [$email]);
+}
+
 /* Sessões e presenças */
 
 // Sessões de uma edição (número, total, início, fim e nome), a partir de uma inscrição ou da própria edição
@@ -96,7 +118,9 @@ function garantir_acesso_formando(array $i): string
         return 'sem_email';
     }
     $curso = (string) ($i['titulo'] ?? '');
-    $u = linha_bd('SELECT * FROM utilizadores WHERE email = ?', [$email]);
+    $u = utilizador_por_email($email);
+    // Já existe um utilizador Cliente ou Gadgetmetodo com este email: não cria outro nem muda o perfil. O Cliente passa a
+    // ver a formação em "As minhas formações", associada pelo email.
     if ($u && $u['papel'] !== 'formando') {
         return 'outro_perfil';
     }
@@ -129,7 +153,7 @@ function acesso_apos_confirmacao(int $inscricao_id): ?array
         case 'falhou':
             return ['O acesso de ' . $quem . ' à área do formando foi criado, mas o email com a ligação não foi enviado. Pode reenviá-la em Configuração, Utilizadores.', 'erro'];
         case 'outro_perfil':
-            return (linha_bd('SELECT papel FROM utilizadores WHERE email = ?', [(string) $i['email']])['papel'] ?? '') === 'cliente'
+            return (utilizador_por_email((string) $i['email'])['papel'] ?? '') === 'cliente'
                 ? [$quem . ' já tem acesso à área reservada com o perfil Cliente: vê esta formação e regista as presenças em "As minhas formações".', 'info'] : null;
         case 'sem_email':
             return [$quem . ' não tem email: não tem acesso à área do formando. As presenças marcam-se na edição, em "Presenças".', 'info'];
@@ -195,18 +219,31 @@ function rota_formando(): string
     return eh_formando() ? 'painel' : 'presencas';
 }
 
-// Utilizador Cliente com inscrições confirmadas como formando (pelo email): vê também "As minhas formações"
+// Email com inscrições confirmadas próprias (em edições não canceladas)
+function tem_inscricoes_proprias(string $email): bool
+{
+    return trim($email) !== '' && (bool) linha_bd(sql_inscricoes_do_email('1 AS x') . ' LIMIT 1', [$email]);
+}
+
+// Utilizador Cliente que também é formando (tem inscrições confirmadas com o seu email): além da vista do cliente, tem
+// "As minhas formações", com as mesmas regras de presença do perfil Formando. Não é um perfil: decorre das inscrições.
 function tambem_formando(): bool
 {
+    static $cache = [];
     $u = utilizador();
-    return $u && $u['papel'] === 'cliente'
-        && (bool) linha_bd("SELECT 1 AS x FROM inscricoes WHERE email = ? COLLATE NOCASE AND estado = 'confirmada' LIMIT 1", [$u['email']]);
+    if (!$u || $u['papel'] !== 'cliente') {
+        return false;
+    }
+    if (!isset($cache[$u['id']])) {
+        $cache[$u['id']] = tem_inscricoes_proprias((string) $u['email']);
+    }
+    return $cache[$u['id']];
 }
 
 // Inscrições confirmadas do formando (pelo email da conta), da edição mais recente para a mais antiga
 function inscricoes_do_formando(array $u): array
 {
-    $ids = consulta("SELECT i.id FROM inscricoes i JOIN formacoes f ON f.id = i.formacao_id WHERE i.email = ? COLLATE NOCASE AND i.estado = 'confirmada' AND f.estado != 'cancelada' ORDER BY f.inicio DESC, i.id DESC", [$u['email']]);
+    $ids = consulta(sql_inscricoes_do_email('i.id') . ' ORDER BY f.inicio DESC, i.id DESC', [$u['email']]);
     return array_map(function ($l) { return linha_bd(SQL_INSCRICAO, [$l['id']]); }, $ids);
 }
 
@@ -217,7 +254,9 @@ function formando_painel(): void
         $id = (int) ($_POST['inscricao'] ?? 0);
         $n = (int) ($_POST['sessao'] ?? 0);
         $i = linha_bd(SQL_INSCRICAO, [$id]);
-        $minha = $i && strcasecmp((string) $i['email'], (string) $u['email']) === 0 && $i['estado'] === 'confirmada' && $i['estado_formacao'] !== 'cancelada';
+        // Só a própria presença: a inscrição tem de ser do email do utilizador (também para um Cliente que é formando,
+        // que nunca regista a presença de outros inscritos do seu cliente)
+        $minha = $i && mesmo_email((string) $i['email'], (string) $u['email']) && $i['estado'] === 'confirmada' && $i['estado_formacao'] !== 'cancelada';
         $s = $minha ? (sessoes_da_inscricao($i)[$n - 1] ?? null) : null;
         if (!$s) {
             aviso('Sessão não encontrada.', 'erro');
@@ -328,7 +367,7 @@ function presencas_edicao_html(array $f): string
 {
     $sessoes = sessoes_edicao($f);
     $lista = consulta("SELECT i.id, i.formando, i.email, u.id AS uid, u.papel, u.token_senha, u.token_validade, u.ultimo_acesso FROM inscricoes i
-        LEFT JOIN utilizadores u ON u.email = i.email COLLATE NOCASE WHERE i.formacao_id = ? AND i.estado = 'confirmada' ORDER BY i.formando COLLATE NOCASE", [$f['id']]);
+        LEFT JOIN utilizadores u ON TRIM(u.email) = TRIM(i.email) COLLATE NOCASE WHERE i.formacao_id = ? AND i.estado = 'confirmada' ORDER BY i.formando COLLATE NOCASE", [$f['id']]);
     if (!$lista) {
         return '';
     }
