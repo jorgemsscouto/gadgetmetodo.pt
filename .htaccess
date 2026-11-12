@@ -34,12 +34,22 @@ DirectoryIndex index.html index.php
   Redirect 301 /servicos/formacao-ai-essentials/ /formacoes/ai-essentials/
 </IfModule>
 
-# Endereço canónico: gadgetmetodo.pt (sem www) passa para https://www.gadgetmetodo.pt, para os motores de pesquisa
+# Endereço canónico: gadgetmetodo.pt (sem www, em http ou https) passa para https://www.gadgetmetodo.pt, para os motores de pesquisa
 # não verem o site duplicado. Só afeta o domínio sem www (os subdomínios alertas e certidoes ficam como estão) e deixa
 # passar a validação do certificado. O https vem do alojamento (nginx à frente), por isso não se testa aqui %{HTTPS}.
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteCond %{HTTP_HOST} ^gadgetmetodo\.pt$ [NC]
+  RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+  RewriteRule ^ https://www.gadgetmetodo.pt%{REQUEST_URI} [L,R=301]
+
+  # http em www.gadgetmetodo.pt passa para https. Como o https termina no nginx do alojamento, só redireciona quando
+  # nenhum dos sinais de ligação cifrada está presente; assim nunca cria um ciclo de redirecionamentos.
+  RewriteCond %{HTTP_HOST} ^www\.gadgetmetodo\.pt$ [NC]
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{ENV:HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !^https$ [NC]
+  RewriteCond %{HTTP:X-Forwarded-SSL} !=on
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
   RewriteRule ^ https://www.gadgetmetodo.pt%{REQUEST_URI} [L,R=301]
 </IfModule>

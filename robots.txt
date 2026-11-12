@@ -33,5 +33,5 @@ Disallow: /clientes/
 
 # O Brave Search não usa um nome de agente próprio: segue as regras definidas para o Googlebot.
 
+# O sitemap.xml é um índice: inclui as páginas institucionais e as páginas dos cursos.
 Sitemap: https://www.gadgetmetodo.pt/sitemap.xml
-Sitemap: https://www.gadgetmetodo.pt/formacoes/sitemap.php

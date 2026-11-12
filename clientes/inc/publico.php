@@ -765,7 +765,10 @@ function curso_publico(): array
     $json = json_encode($curso_ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_PRETTY_PRINT);
     return [
         'titulo' => $c['nome'] . ' | Formação | Gadgetmetodo, Lda.',
-        'descricao' => resumir((string) ($c['descricao'] ?: $c['nome'] . ': programa, módulos, temas e próximas edições.'), 155),
+        // A duração total abre a descrição: distingue cursos com o mesmo texto em formatos diferentes (ex.: 6 h e 2 h),
+        // para cada página ter uma descrição única nos motores de pesquisa
+        'descricao' => resumir(($total_horas > 0 ? 'Formação de ' . rtrim(rtrim(number_format($total_horas, 1, ',', ''), '0'), ',') . ($total_horas == 1 ? ' hora' : ' horas') . '. ' : '')
+            . (string) ($c['descricao'] ?: $c['nome'] . ': programa, módulos, temas e próximas edições.'), 155),
         'canonical' => SITE_CANONICO . link_curso_publico($c),
         'jsonld' => "  <script type=\"application/ld+json\">\n" . $json . "\n  </script>\n",
         'conteudo' => $html,

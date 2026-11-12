@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-site-verification" content="T-qA5H44j2vhQVk4bXzkT5a7o4SyuFCCZq0zogR4iLs">
   <title>Pré-inscrição em curso | Gadgetmetodo, Lda.</title>
   <meta name="description" content="Pré-inscrição nos cursos da Gadgetmetodo, Lda.: responda ao diagnóstico, receba a indicação do curso mais adequado e o convite quando houver datas.">
   <meta name="robots" content="noindex, follow">

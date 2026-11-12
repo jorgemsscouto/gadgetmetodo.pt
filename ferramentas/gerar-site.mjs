@@ -12,6 +12,9 @@ const EMAIL = 'info@gadgetmetodo.pt';
 const TEL = '+351 915 416 112';
 const TEL_LINK = 'tel:+351915416112';
 const TEL_HTML = TEL.replace(/ /g, '&nbsp;');
+// Verificação da propriedade na Google Search Console: não remover (a Google volta a verificá-la periodicamente).
+// O ficheiro alternativo google2a5c5131b587a11f.html está na raiz do site.
+const GOOGLE_VERIFICACAO = 'T-qA5H44j2vhQVk4bXzkT5a7o4SyuFCCZq0zogR4iLs';
 const MORADA = { rua: 'Rua das Cruzes, 625', cp: '4100-195', local: 'Porto', pais: 'Portugal' };
 const MAPA = 'https://www.openstreetmap.org/search?query=Rua%20das%20Cruzes%20625%2C%204100-195%20Porto';
 const ICONES = 'node_modules/lucide-static/icons/';
@@ -300,6 +303,7 @@ function pagina({ url, titulo, descricao, h1Schema, tipo = 'WebPage', trilho, co
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-site-verification" content="${GOOGLE_VERIFICACAO}">
   <title>${cabeca.titulo}</title>
   <meta name="description" content="${cabeca.descricao}">
   <meta name="robots" content="${url === '/404.html' || !indexar ? 'noindex, follow' : 'index, follow, max-snippet:-1, max-image-preview:large'}">
@@ -1798,7 +1802,8 @@ pagina({
   `,
 });
 
-/* Mapa do site */
+/* Mapa do site: /sitemap.xml é um índice com as páginas institucionais (sitemap-paginas.xml, gerado aqui) e as páginas
+   dos cursos (formacoes/sitemap.php, lidas da base de dados no servidor). É o único endereço a submeter na Search Console. */
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${paginas.map(p => `  <url>
@@ -1813,5 +1818,16 @@ ${paginas.map(p => `  <url>
   </url>
 </urlset>
 `;
-fs.writeFileSync(path.join(OUT, 'sitemap.xml'), sitemap);
+fs.writeFileSync(path.join(OUT, 'sitemap-paginas.xml'), sitemap);
+fs.writeFileSync(path.join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>${URL_BASE}/sitemap-paginas.xml</loc>
+    <lastmod>${HOJE}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${URL_BASE}/formacoes/sitemap.php</loc>
+  </sitemap>
+</sitemapindex>
+`);
 console.log(paginas.length, 'páginas');

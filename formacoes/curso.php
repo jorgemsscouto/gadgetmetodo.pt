@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-site-verification" content="T-qA5H44j2vhQVk4bXzkT5a7o4SyuFCCZq0zogR4iLs">
   <title><?= h($pagina['titulo']) ?></title>
   <meta name="description" content="<?= h($pagina['descricao']) ?>">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">

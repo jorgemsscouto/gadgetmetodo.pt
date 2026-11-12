@@ -72,5 +72,5 @@ Gestor de projeto e consultor: Jorge Sá Couto. Acompanha os projetos da Gadgetm
 ## Optional
 
 - [Catálogo de Serviços 2026 (PDF)](https://www.gadgetmetodo.pt/catalogo-servicos-2026.pdf): as seis áreas de serviço (incluindo a formação), metodologia, exemplos de intervenção e contactos, em 17 páginas
-- [Mapa do site](https://www.gadgetmetodo.pt/sitemap.xml): todas as páginas institucionais; as páginas dos cursos estão em https://www.gadgetmetodo.pt/formacoes/sitemap.php
+- [Mapa do site](https://www.gadgetmetodo.pt/sitemap.xml): índice com as páginas institucionais e as páginas de cada curso
 - [Política de privacidade](https://www.gadgetmetodo.pt/privacidade/): tratamento de dados pessoais; o site não usa cookies nem ferramentas de análise
