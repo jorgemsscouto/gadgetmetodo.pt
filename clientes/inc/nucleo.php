@@ -145,7 +145,9 @@ function bd(): ?PDO
         $pdo->exec('CREATE TABLE IF NOT EXISTS diagnosticos (
             id INTEGER PRIMARY KEY AUTOINCREMENT, utilizador_id INTEGER, nome TEXT NOT NULL, email TEXT NOT NULL, curso_id INTEGER,
             token TEXT, validade TEXT, enviado TEXT NOT NULL, enviado_por INTEGER, respondido TEXT, respostas TEXT,
-            ferramentas TEXT, pontuacao INTEGER, nivel TEXT)');
+            ferramentas TEXT, pontuacao INTEGER, nivel TEXT, cursos TEXT)');
+        // Vários cursos por diagnóstico: ids em JSON (curso_id fica com o primeiro)
+        acrescentar_colunas($pdo, 'diagnosticos', ['cursos' => 'TEXT']);
         // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação; as pré-inscrições, 12 meses depois do registo;
         // os diagnósticos enviados pela administração, 2 anos depois do envio
         $pdo->prepare('DELETE FROM inscricoes WHERE formacao_id IN (SELECT id FROM formacoes WHERE inicio < ?)')

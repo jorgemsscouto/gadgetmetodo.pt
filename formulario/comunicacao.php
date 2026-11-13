@@ -70,7 +70,7 @@ const EMAILS = [
         'desativavel' => true, 'variaveis' => ['formando', 'email', 'curso'],
         'assunto' => 'Diagnóstico respondido: {formando}',
         'titulo' => 'Diagnóstico respondido',
-        'texto' => '{formando} respondeu ao diagnóstico de IA enviado para o {curso}.',
+        'texto' => '{formando} respondeu ao diagnóstico de IA pedido para: {curso}.',
         'fecho' => '',
     ],
     'cancelamento_aviso' => [
@@ -212,12 +212,12 @@ const EMAILS = [
     ],
     'diagnostico_convite' => [
         'grupo' => 'utilizadores', 'nome' => 'Diagnóstico de IA',
-        'quando' => 'Na área reservada, em Diagnósticos, ao enviar o diagnóstico a um utilizador e no botão "Reenviar a ligação".',
-        'dados' => 'Curso, data-limite e botão para responder. A ligação é pessoal, válida 30 dias e só pode ser usada uma vez; não é preciso entrar na área reservada.',
+        'quando' => 'Na área reservada, em Diagnósticos, ao enviar o diagnóstico a um utilizador (para um ou vários cursos) e no botão "Reenviar a ligação".',
+        'dados' => 'Curso ou cursos, data-limite e botão para responder. A ligação é pessoal, válida 30 dias e só pode ser usada uma vez; não é preciso entrar na área reservada.',
         'desativavel' => false, 'variaveis' => ['nome', 'nome_completo', 'email', 'curso', 'no_curso', 'validade'],
         'assunto' => 'Diagnóstico de IA antes da formação',
         'titulo' => 'Diagnóstico de inteligência artificial',
-        'texto' => "{nome},\n\nPara prepararmos a formação {no_curso} de acordo com o seu ponto de partida, pedimos-lhe que responda a um diagnóstico sobre a forma como usa a inteligência artificial e sobre alguns conceitos essenciais.\n\nSão 20 perguntas, cerca de seis minutos. Pode responder até {validade}.",
+        'texto' => "{nome},\n\nPara prepararmos a formação {no_curso} de acordo com o seu ponto de partida, pedimos-lhe que responda a um diagnóstico sobre a forma como usa a inteligência artificial e sobre alguns conceitos essenciais.\n\n**Pedimos-lhe que responda sem recorrer a ferramentas de IA nem a pesquisas**: o objetivo é conhecer o seu ponto de partida, não acertar em todas as perguntas.\n\nSão 20 perguntas, cerca de seis minutos. Pode responder até {validade}.",
         'fecho' => 'Se tiver alguma dúvida, responda a este email.',
     ],
     'acesso_formando' => [

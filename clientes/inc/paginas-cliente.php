@@ -172,7 +172,7 @@ function bloco_diagnostico_form(array $f, array $v, int $numero, string $quem): 
     $nivel = com_nivel($f);
     $n = count(perguntas_diagnostico()) + 1;
     return '<h2 class="mb-0 espaco-topo">' . $numero . '. Diagnóstico de utilização de IA</h2>
-        <p class="texto-suave mb-0">' . $n . ' perguntas, cerca de seis minutos. ' . h($quem) . ' As ' . count(DIAGNOSTICO_V2) . ' primeiras descrevem a utilização da IA (não há respostas certas); as ' . count(DIAGNOSTICO_CONHECIMENTO) . ' seguintes avaliam conhecimentos. ' . ($nivel
+        <p class="texto-suave mb-0">' . $n . ' perguntas, cerca de seis minutos. ' . h($quem) . ' <strong>' . h(DIAGNOSTICO_SEM_IA) . '</strong> As ' . count(DIAGNOSTICO_V2) . ' primeiras descrevem a utilização da IA (não há respostas certas); as ' . count(DIAGNOSTICO_CONHECIMENTO) . ' seguintes avaliam conhecimentos. ' . ($nivel
             ? 'A Gadgetmetodo analisa as respostas para indicar o curso do percurso mais adequado ao ponto de partida do formando e para ajustar os exemplos e os exercícios ao grupo.'
             : 'As respostas servem para ajustar os exemplos e os exercícios ao ponto de partida do grupo.') . '</p>
         ' . campos_diagnostico($v['diag'], $nivel) . '

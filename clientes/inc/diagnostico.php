@@ -52,6 +52,9 @@ const DIAGNOSTICO_V2 = [
     ],
 ];
 
+// Pedido feito em todos os sítios onde se responde ao diagnóstico (email, página de resposta e formulários de inscrição)
+const DIAGNOSTICO_SEM_IA = 'Responda sem recorrer a ferramentas de IA nem a pesquisas: o objetivo é conhecer o seu ponto de partida, não acertar em todas as perguntas.';
+
 // Conhecimento: 10 perguntas com uma resposta melhor (3 pontos); as outras valem 0 ou 1 (parcialmente certa)
 const DIAGNOSTICO_CONHECIMENTO = [
     'k_funcionamento' => [

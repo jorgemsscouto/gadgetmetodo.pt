@@ -2442,3 +2442,8 @@ table[data-filtros] tr[hidden] {
   margin: 4px 0 0;
   color: var(--marinho);
 }
+
+/* Diagnóstico: pedido para responder sem recorrer a IA, no cabeçalho da página de resposta */
+.diag-sem-ia {
+  margin: 18px 0 28px;
+}
