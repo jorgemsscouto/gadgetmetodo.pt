@@ -131,10 +131,11 @@
   });
 })();
 
-// Listas com filtros e ordenação (tabelas com data-filtros, por exemplo Clientes e Utilizadores): uma linha de filtros por
-// baixo dos cabeçalhos (texto ou lista, conforme data-filtro="lista" no cabeçalho) e ordenação ao clicar no cabeçalho
-// (ascendente e descendente). O valor de ordenação de uma célula pode vir em data-valor (datas, números). Sem JavaScript,
-// a tabela aparece completa, pela ordem do servidor.
+// Listas com filtros e ordenação (tabelas com data-filtros, por exemplo Clientes, Utilizadores e Diagnósticos): uma linha
+// de filtros por baixo dos cabeçalhos (texto ou lista, conforme data-filtro="lista" no cabeçalho), ordenação ao clicar no
+// cabeçalho (ascendente e descendente) e o botão "Colunas" para mostrar ou esconder colunas. O valor de ordenação de uma
+// célula pode vir em data-valor (datas, números). As colunas escondidas continuam a contar para os filtros e para a
+// ordenação, e a escolha fica guardada neste navegador. Sem JavaScript, a tabela aparece completa, pela ordem do servidor.
 (function () {
   var tabelas = document.querySelectorAll('table[data-filtros]');
   if (!tabelas.length) {
@@ -220,8 +221,103 @@
       campos.forEach(function (c) { if (c) { c.value = ''; } });
       aplicar();
     });
+    // Colunas visíveis: uma caixa por coluna (a das caixas de escolha fica sempre); fica pelo menos uma coluna à vista
+    var chave = 'gm-colunas:' + (new URLSearchParams(location.search).get('p') || location.pathname) + ':' + t;
+    var ocultas = [];
+    try {
+      ocultas = JSON.parse(window.localStorage.getItem(chave) || '[]');
+    } catch (e) {
+      ocultas = [];
+    }
+    if (!Array.isArray(ocultas)) {
+      ocultas = [];
+    }
+    var menu = document.createElement('details');
+    menu.className = 'colunas-menu';
+    var resumo = document.createElement('summary');
+    resumo.className = 'botao botao-secundario botao-pequeno';
+    resumo.textContent = 'Colunas';
+    menu.appendChild(resumo);
+    var listaColunas = document.createElement('div');
+    listaColunas.className = 'colunas-lista';
+    listaColunas.setAttribute('role', 'group');
+    listaColunas.setAttribute('aria-label', 'Colunas visíveis');
+    var caixasColunas = [];
+
+    function mostrarColuna(i, mostrar) {
+      var celulas = [cabecalhos[i], filtros.cells[i]];
+      linhas.forEach(function (l) { celulas.push(l.cells[i]); });
+      celulas.forEach(function (c) {
+        if (c) {
+          c.classList.toggle('col-oculta', !mostrar);
+        }
+      });
+    }
+
+    function atualizarColunas() {
+      ocultas = caixasColunas.filter(function (x) { return !x.caixa.checked; }).map(function (x) { return x.i; });
+      var visiveis = caixasColunas.filter(function (x) { return x.caixa.checked; });
+      caixasColunas.forEach(function (x) { x.caixa.disabled = visiveis.length === 1 && x.caixa.checked; });
+      resumo.textContent = ocultas.length ? 'Colunas (' + ocultas.length + ' escondida' + (ocultas.length > 1 ? 's' : '') + ')' : 'Colunas';
+      try {
+        window.localStorage.setItem(chave, JSON.stringify(ocultas));
+      } catch (e) {
+        // sem armazenamento local, a escolha vale só nesta página
+      }
+    }
+
+    cabecalhos.forEach(function (th, i) {
+      if (th.hasAttribute('data-sem-filtro')) {
+        return;
+      }
+      var rotulo = document.createElement('label');
+      var caixa = document.createElement('input');
+      caixa.type = 'checkbox';
+      caixa.checked = ocultas.indexOf(i) === -1;
+      caixa.addEventListener('change', function () {
+        mostrarColuna(i, caixa.checked);
+        atualizarColunas();
+      });
+      rotulo.appendChild(caixa);
+      rotulo.appendChild(document.createTextNode(' ' + th.textContent.trim()));
+      listaColunas.appendChild(rotulo);
+      caixasColunas.push({ i: i, caixa: caixa });
+    });
+    // Nunca esconder todas: se a escolha guardada as esconder, mostram-se todas
+    if (caixasColunas.length && caixasColunas.every(function (x) { return !x.caixa.checked; })) {
+      caixasColunas.forEach(function (x) { x.caixa.checked = true; });
+    }
+    var mostrarTodas = document.createElement('button');
+    mostrarTodas.type = 'button';
+    mostrarTodas.className = 'colunas-todas';
+    mostrarTodas.textContent = 'Mostrar todas';
+    mostrarTodas.addEventListener('click', function () {
+      caixasColunas.forEach(function (x) {
+        x.caixa.checked = true;
+        mostrarColuna(x.i, true);
+      });
+      atualizarColunas();
+    });
+    listaColunas.appendChild(mostrarTodas);
+    menu.appendChild(listaColunas);
+    document.addEventListener('click', function (e) {
+      if (menu.open && !menu.contains(e.target)) {
+        menu.open = false;
+      }
+    });
+    menu.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && menu.open) {
+        menu.open = false;
+        resumo.focus();
+      }
+    });
+
+    var acoesBarra = document.createElement('div');
+    acoesBarra.className = 'barra-filtros-acoes';
+    acoesBarra.appendChild(limpar);
+    acoesBarra.appendChild(menu);
     barra.appendChild(contador);
-    barra.appendChild(limpar);
+    barra.appendChild(acoesBarra);
     var envolvente = tabela.closest('.tabela-rolante') || tabela;
     envolvente.parentNode.insertBefore(barra, envolvente);
 
@@ -290,6 +386,8 @@
       });
     }
     tabela.setAttribute('data-tabela', String(t));
+    caixasColunas.forEach(function (x) { mostrarColuna(x.i, x.caixa.checked); });
+    atualizarColunas();
     aplicar();
   });
 })();
