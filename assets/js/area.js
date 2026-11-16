@@ -135,7 +135,7 @@
 // de filtros por baixo dos cabeçalhos (texto ou lista, conforme data-filtro="lista" no cabeçalho), ordenação ao clicar no
 // cabeçalho (ascendente e descendente) e o botão "Colunas" para mostrar ou esconder colunas. O valor de ordenação de uma
 // célula pode vir em data-valor (datas, números). As colunas escondidas continuam a contar para os filtros e para a
-// ordenação, e a escolha fica guardada neste navegador. Sem JavaScript, a tabela aparece completa, pela ordem do servidor.
+// ordenação, e a escolha fica guardada neste navegador, pelo nome da tabela (valor de data-filtros) e das colunas. Sem JavaScript, a tabela aparece completa, pela ordem do servidor.
 (function () {
   var tabelas = document.querySelectorAll('table[data-filtros]');
   if (!tabelas.length) {
@@ -222,7 +222,7 @@
       aplicar();
     });
     // Colunas visíveis: uma caixa por coluna (a das caixas de escolha fica sempre); fica pelo menos uma coluna à vista
-    var chave = 'gm-colunas:' + (new URLSearchParams(location.search).get('p') || location.pathname) + ':' + t;
+    var chave = 'gm-colunas2:' + (new URLSearchParams(location.search).get('p') || location.pathname) + ':' + (tabela.getAttribute('data-filtros') || String(t));
     var ocultas = [];
     try {
       ocultas = JSON.parse(window.localStorage.getItem(chave) || '[]');
@@ -255,7 +255,7 @@
     }
 
     function atualizarColunas() {
-      ocultas = caixasColunas.filter(function (x) { return !x.caixa.checked; }).map(function (x) { return x.i; });
+      ocultas = caixasColunas.filter(function (x) { return !x.caixa.checked; }).map(function (x) { return x.nome; });
       var visiveis = caixasColunas.filter(function (x) { return x.caixa.checked; });
       caixasColunas.forEach(function (x) { x.caixa.disabled = visiveis.length === 1 && x.caixa.checked; });
       resumo.textContent = ocultas.length ? 'Colunas (' + ocultas.length + ' escondida' + (ocultas.length > 1 ? 's' : '') + ')' : 'Colunas';
@@ -273,7 +273,8 @@
       var rotulo = document.createElement('label');
       var caixa = document.createElement('input');
       caixa.type = 'checkbox';
-      caixa.checked = ocultas.indexOf(i) === -1;
+      var nome = th.textContent.trim();
+      caixa.checked = ocultas.indexOf(nome) === -1;
       caixa.addEventListener('change', function () {
         mostrarColuna(i, caixa.checked);
         atualizarColunas();
@@ -281,7 +282,7 @@
       rotulo.appendChild(caixa);
       rotulo.appendChild(document.createTextNode(' ' + th.textContent.trim()));
       listaColunas.appendChild(rotulo);
-      caixasColunas.push({ i: i, caixa: caixa });
+      caixasColunas.push({ i: i, nome: nome, caixa: caixa });
     });
     // Nunca esconder todas: se a escolha guardada as esconder, mostram-se todas
     if (caixasColunas.length && caixasColunas.every(function (x) { return !x.caixa.checked; })) {

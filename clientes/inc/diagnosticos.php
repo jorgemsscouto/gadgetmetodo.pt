@@ -154,13 +154,14 @@ function admin_diagnosticos(): void
             <fieldset class="campo-grupo escolha-cursos"><legend>Cursos *</legend>
               <p class="ajuda">Escolha um ou vários. Cada pessoa recebe um só diagnóstico, com os cursos escolhidos indicados no email.</p>
               <div class="opcoes opcoes-grelha">' . $opcoes . '</div></fieldset>
-            <div class="conteudo tabela-rolante"><table data-filtros class="tabela-escolha"><thead><tr><th data-sem-filtro><input type="checkbox" class="marcar-todos" aria-label="Escolher todos os utilizadores visíveis"></th><th>Nome</th><th>Email</th><th data-filtro="lista">Perfil</th><th data-filtro="lista">Cliente</th><th>Último diagnóstico</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
+            <div class="conteudo tabela-rolante"><table data-filtros="escolha" class="tabela-escolha"><thead><tr><th data-sem-filtro><input type="checkbox" class="marcar-todos" aria-label="Escolher todos os utilizadores visíveis"></th><th>Nome</th><th>Email</th><th data-filtro="lista">Perfil</th><th data-filtro="lista">Cliente</th><th>Último diagnóstico</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
             <div><button class="botao" type="submit">Enviar diagnóstico</button></div>
           </form>'
         : '<p class="texto-suave">Ainda não há utilizadores com o perfil Formando ou Cliente. Crie-os em Configuração, Utilizadores.</p>';
 
     // Diagnósticos enviados
-    $enviados = consulta('SELECT * FROM diagnosticos ORDER BY enviado DESC');
+    // Cliente: o associado ao utilizador que recebeu o diagnóstico (empresa do Formando ou cliente do utilizador Cliente)
+    $enviados = consulta('SELECT d.*, c.nome AS cliente FROM diagnosticos d LEFT JOIN utilizadores u ON u.id = d.utilizador_id LEFT JOIN clientes c ON c.id = u.cliente_id ORDER BY d.enviado DESC');
     $linhas = '';
     foreach ($enviados as $d) {
         [$estado, $tipo] = estado_diagnostico($d);
@@ -171,17 +172,17 @@ function admin_diagnosticos(): void
             $ind = aconselhado_do_diagnostico($d, $r);
             $aconselhado = $ind ? $ind['curso']['nome'] . ($ind['pedido'] ? '' : ' (não pedido)') : '';
         }
-        $linhas .= '<tr><td><a href="' . h(url('diagnostico', ['id' => $d['id']])) . '">' . h($d['nome']) . '</a></td><td>' . h($d['email']) . '</td><td>' . h(nomes_cursos_diagnostico($d)) . '</td>'
+        $linhas .= '<tr><td><a href="' . h(url('diagnostico', ['id' => $d['id']])) . '">' . h($d['nome']) . '</a></td><td>' . h($d['email']) . '</td><td>' . h((string) $d['cliente']) . '</td><td>' . h(nomes_cursos_diagnostico($d)) . '</td>'
             . '<td data-valor="' . h($d['enviado']) . '">' . h(data_hora($d['enviado'], false)) . '</td><td>' . etiqueta($estado, $tipo) . '</td>'
             . '<td data-valor="' . h((string) $d['pontuacao']) . '">' . h($resultado) . '</td><td>' . h($aconselhado) . '</td></tr>';
     }
     pagina_area('diagnosticos', 'Diagnósticos', '
       <p class="texto-suave">Envie o diagnóstico de IA antes da formação: escolha um ou vários cursos e os utilizadores. Cada pessoa recebe por email uma só ligação pessoal, válida 30 dias e de uso único, e responde sem precisar de entrar na área reservada. São ' . (count(DIAGNOSTICO) + 1) . ' perguntas: ' . count(DIAGNOSTICO_V2) . ' sobre a utilização da IA, ' . count(DIAGNOSTICO_CONHECIMENTO) . ' de conhecimentos e as ferramentas usadas. O resultado e o curso aconselhado só aparecem aqui.</p>
-      <h2 class="espaco-topo">Enviar o diagnóstico</h2>
-      ' . $envio . '
-      <h2 class="espaco-topo">Diagnósticos enviados</h2>
-      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros><thead><tr><th>Nome</th><th>Email</th><th>Cursos</th><th>Enviado</th><th data-filtro="lista">Estado</th><th>Resultado</th><th data-filtro="lista">Curso aconselhado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>'
-        : '<p class="texto-suave">Ainda não foi enviado nenhum diagnóstico.</p>'), 'Formação');
+      <h2 class="espaco-topo" id="enviados">Diagnósticos enviados</h2>
+      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="enviados"><thead><tr><th>Nome</th><th>Email</th><th data-filtro="lista">Cliente</th><th>Cursos</th><th>Enviado</th><th data-filtro="lista">Estado</th><th>Resultado</th><th data-filtro="lista">Curso aconselhado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>'
+        : '<p class="texto-suave">Ainda não foi enviado nenhum diagnóstico.</p>') . '
+      <h2 class="espaco-topo" id="enviar">Enviar o diagnóstico</h2>
+      ' . $envio, 'Formação');
 }
 
 function admin_diagnostico(): void
