@@ -230,6 +230,26 @@ const EMAILS = [
         'texto' => "{nome},\n\nA sua inscrição {no_curso} está confirmada. Na área do formando pode consultar as datas das sessões e registar a sua presença em cada uma, com o botão \"Estou presente\".\n\nPara entrar, defina a sua palavra-passe no botão abaixo. A ligação é válida até {validade}.",
         'fecho' => 'Depois de definir a palavra-passe, entre em www.gadgetmetodo.pt/clientes/ com o seu email. Se não esperava este email, responda a informar-nos.',
     ],
+    'dados_certificado' => [
+        'grupo' => 'clientes', 'nome' => 'Pedido de dados para o certificado',
+        'quando' => 'No botão "Pedir os dados por email" dos certificados de uma edição, para os formandos escolhidos.',
+        'dados' => 'Botão para a área do formando, onde se preenche a ficha (nome completo, número e validade do Cartão de Cidadão).',
+        'desativavel' => false, 'variaveis' => ['nome', 'formando', 'formacao', 'horario'],
+        'assunto' => 'Dados para o certificado: {formacao}',
+        'titulo' => 'Dados para o certificado',
+        'texto' => "{nome},\n\nPara emitirmos o seu certificado de frequência da formação **{formacao}**, pedimos que complete a ficha de formando na sua área de formando, com o **nome completo** e o **número e a validade do Cartão de Cidadão**, tal como devem constar do certificado.",
+        'fecho' => 'Os dados servem apenas para a emissão do certificado. Se ainda não definiu a palavra-passe da área do formando, use a ligação que lhe enviámos ou responda a este email para receber uma nova.',
+    ],
+    'certificado' => [
+        'grupo' => 'clientes', 'nome' => 'Certificado de frequência',
+        'quando' => 'No botão "Emitir e enviar" dos certificados de uma edição, para os formandos escolhidos com a ficha completa.',
+        'dados' => 'O certificado em PDF, em anexo. Fica também disponível na área do formando.',
+        'desativavel' => false, 'variaveis' => ['nome', 'formando', 'formacao', 'horario'],
+        'assunto' => 'Certificado de frequência: {formacao}',
+        'titulo' => 'Certificado de frequência',
+        'texto' => "{nome},\n\nObrigado pela sua participação na formação **{formacao}**. Enviamos em anexo o seu certificado de frequência, que pode também descarregar a qualquer momento na sua área de formando.",
+        'fecho' => 'Se algum dado do certificado estiver incorreto, responda a este email.',
+    ],
 ];
 
 const CAMPOS_EMAIL = ['ativo', 'assunto', 'titulo', 'texto', 'fecho', 'copia'];

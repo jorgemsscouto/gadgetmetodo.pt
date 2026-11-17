@@ -124,6 +124,9 @@ function admin_formacao(): void
     if ($post && in_array($acao, ['presencas', 'acessos'], true) && $f) {
         tratar_presencas_edicao($f);
     }
+    if ($post && in_array($acao, ['cert_pedir', 'cert_emitir', 'cert_enviar'], true) && $f) {
+        tratar_certificados_edicao($f);
+    }
     if ($post && in_array($acao, ['pre_convidar_edicao', 'pre_convidar_todas_edicao'], true) && $f) {
         tratar_preinscritos_edicao($f);
     }
@@ -227,6 +230,7 @@ function admin_formacao(): void
             . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Formando</th><th>Função</th><th>Cliente</th><th>Nível de IA</th><th>Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições nesta formação.</p>');
         $inscritos .= $linhas ? lembretes_edicao(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]), $confirmadas) : '';
         $inscritos .= $confirmadas ? presencas_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id])) : '';
+        $inscritos .= $confirmadas ? certificados_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id])) : '';
         $inscritos .= preinscritos_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]));
         $inscritos .= juntar_edicoes_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]));
         $inscritos .= '<p class="espaco-topo">' . botao_apagar('formacao', $id, 'Apagar esta edição') . '</p>';

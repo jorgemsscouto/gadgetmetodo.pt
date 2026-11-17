@@ -148,6 +148,18 @@ function bd(): ?PDO
             ferramentas TEXT, pontuacao INTEGER, nivel TEXT, cursos TEXT)');
         // Vários cursos por diagnóstico: ids em JSON (curso_id fica com o primeiro)
         acrescentar_colunas($pdo, 'diagnosticos', ['cursos' => 'TEXT']);
+        // Certificados de frequência (clientes/inc/certificados.php). Ficha do formando para o certificado, pelo email:
+        // nome completo e número e validade do Cartão de Cidadão, preenchidos na área do formando ou pela administração
+        $pdo->exec('CREATE TABLE IF NOT EXISTS fichas_certificado (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE COLLATE NOCASE, nome_completo TEXT NOT NULL,
+            cc_numero TEXT NOT NULL, cc_validade TEXT NOT NULL, atualizado TEXT NOT NULL, atualizado_por INTEGER)');
+        // Certificado emitido para uma inscrição: número sequencial por ano ("001/2026") e os dados com que foi emitido
+        $pdo->exec('CREATE TABLE IF NOT EXISTS certificados (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, inscricao_id INTEGER NOT NULL UNIQUE REFERENCES inscricoes(id) ON DELETE CASCADE,
+            ano INTEGER NOT NULL, numero INTEGER NOT NULL, emitido TEXT NOT NULL, nome TEXT NOT NULL, cc_numero TEXT NOT NULL,
+            cc_validade TEXT NOT NULL, presencas INTEGER NOT NULL, sessoes INTEGER NOT NULL, enviado TEXT, UNIQUE (ano, numero))');
+        // Data do último pedido, por email, dos dados para o certificado
+        acrescentar_colunas($pdo, 'inscricoes', ['dados_pedidos' => 'TEXT']);
         // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação; as pré-inscrições, 12 meses depois do registo;
         // os diagnósticos enviados pela administração, 2 anos depois do envio
         $pdo->prepare('DELETE FROM inscricoes WHERE formacao_id IN (SELECT id FROM formacoes WHERE inicio < ?)')
@@ -158,6 +170,9 @@ function bd(): ?PDO
         // Contas de formando sem nenhuma inscrição (apagadas com as inscrições, 2 anos depois da formação)
         $pdo->prepare("DELETE FROM utilizadores WHERE papel = 'formando' AND criado < ? AND NOT EXISTS (SELECT 1 FROM inscricoes i WHERE TRIM(i.email) = TRIM(utilizadores.email) COLLATE NOCASE)")
             ->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
+        // Fichas para o certificado sem nenhuma inscrição com o mesmo email (apagadas com as inscrições, 2 anos depois da formação)
+        $pdo->exec('DELETE FROM fichas_certificado WHERE NOT EXISTS (SELECT 1 FROM inscricoes i WHERE TRIM(i.email) = TRIM(fichas_certificado.email) COLLATE NOCASE)');
+        $pdo->exec('DELETE FROM certificados WHERE inscricao_id NOT IN (SELECT id FROM inscricoes)');
         aplicar_catalogo($pdo);
         acrescentar_cursos_do_catalogo($pdo);
         $pronta = true;
@@ -611,7 +626,8 @@ function email_admin(): string
 // Envia um email do catálogo (formulario/comunicacao.php) com o assunto, o título, o texto e o fecho configurados.
 // $meio são os dados próprios do envio (HTML e texto), entre o texto e o fecho. Os emails para clientes levam a
 // assinatura e respondem para a administração; os avisos internos levam a cópia oculta geral.
-// Opções: texto (substitui o texto configurado, mantendo a saudação), responder_a, cc, teste (envia mesmo desativado e sem cópias).
+// Opções: texto (substitui o texto configurado, mantendo a saudação), responder_a, cc, teste (envia mesmo desativado e sem cópias),
+// anexos (lista de [nome do ficheiro, conteúdo, tipo MIME]).
 function enviar_mensagem(string $tipo, string $para, array $vars, array $meio = ['', ''], array $op = []): bool
 {
     $com = comunicacao();
@@ -634,7 +650,7 @@ function enviar_mensagem(string $tipo, string $para, array $vars, array $meio = 
     // Os emails de teste vão só para quem os pede, sem cópias
     $bcc = !empty($op['teste']) ? [] : array_merge($interno ? (lista_emails($com['geral']['bcc']) ?: []) : [], lista_emails($e['copia']) ?: []);
     return enviar_aviso($para, (!empty($op['teste']) ? '[Teste] ' : '') . assunto_email($e['assunto'], $vars), substituir_variaveis($e['titulo'], $vars) ?: EMAILS[$tipo]['nome'],
-        $html, $txt, (string) ($op['responder_a'] ?? ($interno ? '' : email_admin())), implode(',', $bcc), (string) ($op['cc'] ?? ''));
+        $html, $txt, (string) ($op['responder_a'] ?? ($interno ? '' : email_admin())), implode(',', $bcc), (string) ($op['cc'] ?? ''), (array) ($op['anexos'] ?? []));
 }
 
 // Rodapé dos emails: o email, o site e o telefone passam a ligações num verde-água suave (sem isto, os programas de
@@ -650,8 +666,9 @@ function rodape_com_ligacoes(string $texto): string
     }, $html);
 }
 
-// Email com o grafismo da área (cabeçalho, corpo e rodapé). $cc e $bcc aceitam vários endereços separados por vírgula.
-function enviar_aviso(string $para, string $assunto, string $titulo, string $corpo_html, string $corpo_texto, string $responder_a = '', string $bcc = '', string $cc = ''): bool
+// Email com o grafismo da área (cabeçalho, corpo e rodapé). $cc e $bcc aceitam vários endereços separados por vírgula;
+// $anexos é uma lista de [nome do ficheiro, conteúdo, tipo MIME].
+function enviar_aviso(string $para, string $assunto, string $titulo, string $corpo_html, string $corpo_texto, string $responder_a = '', string $bcc = '', string $cc = '', array $anexos = []): bool
 {
     $cfg = cfg();
     if (empty($cfg['remetente_email'])) {
@@ -674,6 +691,9 @@ function enviar_aviso(string $para, string $assunto, string $titulo, string $cor
             if (strcasecmp($e, $para) !== 0) {
                 $m->addBCC($e);
             }
+        }
+        foreach ($anexos as [$nome_anexo, $conteudo_anexo, $tipo_anexo]) {
+            $m->addStringAttachment((string) $conteudo_anexo, (string) $nome_anexo, 'base64', (string) $tipo_anexo);
         }
         $m->Subject = $assunto;
         $m->isHTML(true);

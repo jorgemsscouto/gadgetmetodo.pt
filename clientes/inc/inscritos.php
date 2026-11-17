@@ -162,8 +162,17 @@ function admin_formando(): void
     $email = trim((string) $base['email']);
     $lista = $email !== '' ? consulta(SQL_INSCRICOES_FORMANDO . ' WHERE ' . sprintf(SQL_EMAIL_IGUAL, 'i.email') . ' ORDER BY f.inicio DESC, i.id DESC', [$email]) : [$base];
     $ids = array_map('intval', array_column($lista, 'id'));
+    $ficha_erros = [[], []];
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $acao = (string) ($_POST['acao'] ?? '');
+        if ($acao === 'ficha_certificado' && $email !== '') {
+            $ficha_erros = ler_ficha_certificado();
+            if (!$ficha_erros[1]) {
+                gravar_ficha_certificado($email, $ficha_erros[0], (int) utilizador()['id']);
+                aviso('Dados para o certificado guardados.');
+                redirecionar('formando', ['i' => $base['id']], 'certificado');
+            }
+        }
         $iid = (int) ($_POST['inscricao'] ?? 0);
         if ($acao === 'presencas' && in_array($iid, $ids, true)) {
             $i = $lista[array_search($iid, $ids, true)];
@@ -196,7 +205,9 @@ function admin_formando(): void
             }
             redirecionar('formando', ['i' => $base['id']]);
         }
-        redirecionar('formando', ['i' => $base['id']]);
+        if ($acao !== 'ficha_certificado') {
+            redirecionar('formando', ['i' => $base['id']]);
+        }
     }
     [$estado, $texto_acesso, $u] = estado_acesso_formando($email);
     $tem_confirmada = (bool) array_filter($lista, function ($x) { return $x['estado'] === 'confirmada'; });
@@ -245,6 +256,6 @@ function admin_formando(): void
       <div class="conteudo"><table class="tabela-ficha"><tbody>' . $ficha . '</tbody></table></div>
       <h2 class="espaco-topo">Cursos e presenças (' . count($lista) . ')</h2>
       <p class="texto-suave">A administração marca ou retira presenças em qualquer momento; as marcadas aqui não enviam email ao formando.</p>
-      ' . $cursos . '
+      ' . $cursos . ficha_certificado_admin_html($email, (int) $base['id'], ...$ficha_erros) . '
       <p class="espaco-topo"><a href="' . h(url('inscricoes')) . '">Voltar aos formandos</a></p>', 'Formando');
 }

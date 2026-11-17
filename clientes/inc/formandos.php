@@ -291,6 +291,10 @@ function inscricoes_do_formando(array $u): array
 function formando_painel(): void
 {
     $u = utilizador();
+    $ficha_erros = [[], []];
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['acao'] ?? '') === 'ficha_certificado') {
+        $ficha_erros = tratar_ficha_formando($u);
+    }
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['acao'] ?? '') === 'presenca') {
         $id = (int) ($_POST['inscricao'] ?? 0);
         $n = (int) ($_POST['sessao'] ?? 0);
@@ -322,7 +326,8 @@ function formando_painel(): void
         redirecionar(rota_formando(), [], 'inscricao-' . $id);
     }
     $blocos = '';
-    foreach (inscricoes_do_formando($u) as $i) {
+    $inscricoes = inscricoes_do_formando($u);
+    foreach ($inscricoes as $i) {
         $sessoes = sessoes_da_inscricao($i);
         $presencas = presencas_inscricao((int) $i['id']);
         $online = ($i['modalidade'] ?? '') !== 'presencial' && !empty($i['reuniao']);
@@ -349,6 +354,8 @@ function formando_painel(): void
           <div class="conteudo tabela-rolante"><table class="tabela-presencas"><thead><tr><th>Sessão</th><th>Data</th><th>Presença</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
         </section>';
     }
+    // Ficha para o certificado e certificados emitidos, antes das formações
+    $blocos = bloco_certificado_formando($u, $inscricoes, ...$ficha_erros) . $blocos;
     pagina_area(rota_formando(), 'As minhas formações', ($blocos !== '' ? '<p class="texto-suave">Em cada sessão, registe a presença com o botão "Estou presente", disponível de 2 horas antes do início até 1 dia depois do fim. Recebe a confirmação por email.</p>' . $blocos
         : '<p class="texto-suave">Ainda não tem formações confirmadas. Quando a sua inscrição for confirmada, a formação aparece aqui.</p>'), 'Área do formando');
 }
