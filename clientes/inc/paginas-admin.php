@@ -127,7 +127,7 @@ function admin_formacao(): void
     if ($post && in_array($acao, ['cert_pedir', 'cert_emitir', 'cert_enviar'], true) && $f) {
         tratar_certificados_edicao($f);
     }
-    if ($post && in_array($acao, ['pre_convidar_edicao', 'pre_convidar_todas_edicao'], true) && $f) {
+    if ($post && in_array($acao, ['pre_convidar_edicao', 'pre_convidar_todas_edicao', 'pre_inscrever_sem_emails'], true) && $f) {
         tratar_preinscritos_edicao($f);
     }
     if ($post && $acao === 'lembrete' && $f) {
@@ -749,19 +749,18 @@ function admin_preinscricao(): void
                     $f = linha_bd('SELECT * FROM formacoes WHERE id = ?', [gravar_sessao(...$nova)]);
                     associar_preinscricoes((int) $f['id']);
                 }
-                $r = gravar_inscricao($f, ['cliente_id' => null, 'utilizador_id' => utilizador()['id'], 'origem' => 'site', 'tipo_cliente' => $p['tipo_cliente'], 'empresa' => $p['empresa'], 'nif' => null,
-                    'contacto_nome' => $p['nome'], 'contacto_email' => $p['email'], 'contacto_telefone' => $p['telefone'],
-                    'formando' => $formando, 'email' => $email, 'funcao' => '', 'ferramentas' => $p['ferramentas'] ? explode(', ', (string) $p['ferramentas']) : [], 'expectativas' => ''], $respostas, true);
+                $r = inscrever_preinscricao($p, $f, $formando, $email, $estado);
                 if ($r['erro']) {
                     $erros[] = $r['erro'];
                 } else {
-                    executar('UPDATE inscricoes SET estado = ? WHERE id = ?', [$estado, $r['id']]);
-                    executar("UPDATE preinscricoes SET estado = 'inscrita', inscricao_id = ? WHERE id = ?", [$r['id'], $id]);
+                    // "Sem emails": nem a confirmação nem a ligação da área do formando (enviam-se depois na edição)
+                    $sem_emails = !empty($_POST['sem_emails']);
                     $i = linha_bd(SQL_INSCRICAO, [$r['id']]);
-                    $avisado = $estado === 'confirmada' && !empty($_POST['avisar']) && ($contacto = contacto_inscricao($i)) && avisar_estado_inscricao($i, 'confirmada', $contacto);
+                    $avisado = !$sem_emails && $estado === 'confirmada' && !empty($_POST['avisar']) && ($contacto = contacto_inscricao($i)) && avisar_estado_inscricao($i, 'confirmada', $contacto);
                     aviso('Inscrição de ' . h($formando) . ' registada: ' . h(horario($f)) . ($nova ? ' (formação nova criada no calendário)' : '') . '.'
-                        . ($avisado ? ' Confirmação enviada por email para ' . h((string) $p['email']) . '.' : ''));
-                    if ($estado === 'confirmada' && ($acesso = acesso_apos_confirmacao((int) $r['id']))) {
+                        . ($avisado ? ' Confirmação enviada por email para ' . h((string) $p['email']) . '.' : '')
+                        . ($sem_emails ? ' Não foi enviado nenhum email.' : ''));
+                    if (!$sem_emails && $estado === 'confirmada' && ($acesso = acesso_apos_confirmacao((int) $r['id']))) {
                         aviso(...$acesso);
                     }
                     redirecionar('inscricao', ['id' => $r['id']]);
@@ -856,6 +855,7 @@ function admin_preinscricao(): void
             ' . campo_select('estado_inscricao', 'Estado da inscrição', ['confirmada' => 'Confirmada', 'pendente' => 'Pendente'], (string) $v['estado_inscricao']) . '
           </div>
           <label class="opcao consentimento"><input type="checkbox" name="avisar" value="1" checked> <span>Enviar a confirmação por email ao candidato, com as datas, o local e a ligação das sessões online (só quando o estado é Confirmada)</span></label>
+          <label class="opcao consentimento"><input type="checkbox" name="sem_emails" value="1"> <span>Inscrever sem enviar nenhum email (nem a confirmação, nem a ligação para a área do formando). Os emails, o acesso à área do formando e o diagnóstico enviam-se depois, na edição e em Diagnósticos.</span></label>
           <div><button class="botao" type="submit">Inscrever</button></div>
         </form>';
     }

@@ -135,10 +135,53 @@ function preinscritos_edicao(int $formacao_id): array
     return consulta("SELECT * FROM preinscricoes WHERE formacao_id = ? AND estado IN ('nova', 'convidada') ORDER BY estado = 'nova' DESC, criado", [$formacao_id]);
 }
 
-// Ações da edição: convite a uma pré-inscrição ou a todas as novas
+// Converte uma pré-inscrição numa inscrição na edição $f, com o diagnóstico da pré-inscrição. Não envia emails.
+// Devolve ['erro' => '', 'id' => …] ou ['erro' => mensagem].
+function inscrever_preinscricao(array $p, array $f, string $formando, string $email, string $estado): array
+{
+    $respostas = json_decode((string) $p['respostas'], true);
+    $r = gravar_inscricao($f, ['cliente_id' => null, 'utilizador_id' => utilizador()['id'], 'origem' => 'site', 'tipo_cliente' => $p['tipo_cliente'], 'empresa' => $p['empresa'], 'nif' => null,
+        'contacto_nome' => $p['nome'], 'contacto_email' => $p['email'], 'contacto_telefone' => $p['telefone'],
+        'formando' => $formando, 'email' => $email, 'funcao' => '', 'ferramentas' => $p['ferramentas'] ? explode(', ', (string) $p['ferramentas']) : [], 'expectativas' => ''],
+        is_array($respostas) ? $respostas : [], true);
+    if ($r['erro'] === '') {
+        executar('UPDATE inscricoes SET estado = ? WHERE id = ?', [$estado, $r['id']]);
+        executar("UPDATE preinscricoes SET estado = 'inscrita', inscricao_id = ? WHERE id = ?", [$r['id'], $p['id']]);
+    }
+    return $r;
+}
+
+// Inscreve nesta edição, confirmadas e sem enviar nenhum email, as pré-inscrições escolhidas
+function inscrever_preinscritos_sem_emails(array $f): void
+{
+    $ids = array_map('intval', array_filter((array) ($_POST['pre'] ?? []), 'is_numeric'));
+    $lista = array_values(array_filter(preinscritos_edicao((int) $f['id']), function ($p) use ($ids) { return in_array((int) $p['id'], $ids, true); }));
+    if (!$lista) {
+        aviso('Escolha as pré-inscrições a inscrever.', 'erro');
+        redirecionar('formacao', ['id' => $f['id']], 'preinscritos');
+    }
+    $feitas = 0;
+    $falhas = [];
+    foreach ($lista as $p) {
+        $r = inscrever_preinscricao($p, $f, (string) $p['nome'], trim((string) $p['email']), 'confirmada');
+        if ($r['erro'] === '') {
+            $feitas++;
+        } else {
+            $falhas[] = $p['nome'] . ' (' . rtrim($r['erro'], '.') . ')';
+        }
+    }
+    aviso(($feitas ? $feitas . ' pré-inscrição(ões) inscrita(s) nesta edição, confirmada(s), sem enviar nenhum email. Para os avisar, use "Enviar a ligação da reunião", os lembretes, "Criar o acesso e enviar a ligação" (Presenças) e Diagnósticos.' : 'Nenhuma pré-inscrição inscrita.')
+        . ($falhas ? ' Não inscritas: ' . h(implode('; ', $falhas)) . '.' : ''), $falhas ? ($feitas ? 'info' : 'erro') : 'ok');
+    redirecionar('formacao', ['id' => $f['id']], 'preinscritos');
+}
+
+// Ações da edição: convite a uma pré-inscrição ou a todas as novas; inscrever as escolhidas sem emails
 function tratar_preinscritos_edicao(array $f): void
 {
     $acao = (string) ($_POST['acao'] ?? '');
+    if ($acao === 'pre_inscrever_sem_emails') {
+        inscrever_preinscritos_sem_emails($f);
+    }
     $c = curso((int) $f['curso_id']);
     $todas = preinscritos_edicao((int) $f['id']);
     $lista = $acao === 'pre_convidar_edicao'
@@ -173,7 +216,7 @@ function preinscritos_edicao_html(array $f): string
     $novas = count(array_filter($lista, function ($p) { return $p['estado'] === 'nova'; }));
     $linhas = '';
     foreach ($lista as $p) {
-        $linhas .= '<tr><td><a href="' . h(url('preinscricao', ['id' => $p['id']])) . '"><strong>' . h($p['nome']) . '</strong></a>' . ($p['tipo_cliente'] === 'particular' ? '<br>' . etiqueta('Particular') : ($p['empresa'] ? '<br>' . h($p['empresa']) : ''))
+        $linhas .= '<tr><td class="c-sessao"><input type="checkbox" form="pre-sem-emails" name="pre[]" value="' . (int) $p['id'] . '" aria-label="Escolher ' . h($p['nome']) . '"></td><td><a href="' . h(url('preinscricao', ['id' => $p['id']])) . '"><strong>' . h($p['nome']) . '</strong></a>' . ($p['tipo_cliente'] === 'particular' ? '<br>' . etiqueta('Particular') : ($p['empresa'] ? '<br>' . h($p['empresa']) : ''))
             . ((int) $p['formandos'] > 1 ? '<br><span class="texto-suave">' . (int) $p['formandos'] . ' formandos previstos</span>' : '') . '</td>'
             . '<td>' . h($p['email']) . ($p['telefone'] ? '<br><span class="texto-suave">' . h($p['telefone']) . '</span>' : '') . '</td>'
             . '<td>' . ($c ? diagnostico_preinscricao($p, $c) : '') . '</td>'
@@ -185,5 +228,7 @@ function preinscritos_edicao_html(array $f): string
     return '<h2 class="espaco-topo" id="preinscritos">Pré-inscritos (' . count($lista) . ')</h2>
       <p class="texto-suave">Pré-inscrições ' . h(curso_com_artigo((string) ($c['nome'] ?? $f['titulo']))) . ' associadas a esta edição quando foi agendada. "Inscrever" converte a pré-inscrição numa inscrição nesta edição; "Enviar convite" leva o candidato às datas e à inscrição no site.' . ($aberta ? '' : ' Para enviar convites, abra as inscrições desta edição.') . '</p>'
       . ($aberta && $novas > 1 ? '<form method="post" class="espaco-topo-curto">' . campo_csrf() . '<input type="hidden" name="acao" value="pre_convidar_todas_edicao"><button class="botao" type="submit">Enviar convite às ' . $novas . ' pré-inscrições novas</button></form>' : '')
-      . '<div class="conteudo tabela-rolante"><table><thead><tr><th>Candidato</th><th>Contacto</th><th>Diagnóstico</th><th>Estado</th><th>Ações</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>';
+      . '<div class="conteudo tabela-rolante"><table><thead><tr><th class="c-sessao"><span class="visualmente-oculto">Escolher</span></th><th>Candidato</th><th>Contacto</th><th>Diagnóstico</th><th>Estado</th><th>Ações</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>'
+      . '<form method="post" id="pre-sem-emails" class="espaco-topo-curto">' . campo_csrf() . '<input type="hidden" name="acao" value="pre_inscrever_sem_emails"><button class="botao botao-secundario" type="submit">Inscrever os escolhidos sem enviar emails</button>
+        <p class="ajuda">Inscreve nesta edição, como confirmadas, as pré-inscrições escolhidas (com o nome, o email e o diagnóstico da pré-inscrição), sem enviar nenhum email: nem confirmação, nem acesso à área do formando, nem diagnóstico. Depois, envie o que precisar com as funcionalidades da edição (ligação da reunião, lembretes, "Criar o acesso e enviar a ligação" nas Presenças) e em Diagnósticos.</p></form>';
 }
