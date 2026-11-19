@@ -31,11 +31,23 @@
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
 
-  // Valores propostos para cada linha: uma sessão por semana a partir da data e do horário gerais
-  function valores(n) {
+  // "18:30" mais 1,5 horas = "20:00" (vazio se não houver hora)
+  function somar(hora, horas) {
+    if (!hora || !horas) {
+      return '';
+    }
+    var p = hora.split(':');
+    var min = (parseInt(p[0], 10) * 60 + parseInt(p[1], 10) + Math.round(parseFloat(horas) * 60)) % 1440;
+    return String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(min % 60).padStart(2, '0');
+  }
+
+  // Valores propostos para cada linha: uma sessão por semana a partir da data e da hora gerais; o fim é a hora de
+  // início mais a duração da sessão no formato (sem duração, a hora de fim geral)
+  function valores(n, linha) {
     var dia = new Date(data.value + 'T12:00:00');
     dia.setDate(dia.getDate() + 7 * n);
-    return [texto(dia), inicio ? inicio.value : '', fim ? fim.value : ''];
+    var h = inicio ? inicio.value : '';
+    return { data: texto(dia), inicio: h, fim: somar(h, linha.getAttribute('data-horas')) || (fim ? fim.value : '') };
   }
 
   // Preenche as linhas do curso; sem "forcar", só mexe nos campos vazios ou propostos antes (o que foi escrito à mão fica)
@@ -45,10 +57,10 @@
       return;
     }
     bloco.querySelectorAll('tr[data-linha-curso]').forEach(function (linha, n) {
-      var v = valores(n);
-      linha.querySelectorAll('input').forEach(function (c, i) {
+      var v = valores(n, linha);
+      linha.querySelectorAll('input[data-campo]').forEach(function (c) {
         if (forcar || c.value === '' || c.dataset.proposta === '1') {
-          c.value = v[i];
+          c.value = v[c.getAttribute('data-campo')];
           c.dataset.proposta = '1';
         }
       });
@@ -62,9 +74,9 @@
       return;
     }
     bloco.querySelectorAll('tr[data-linha-curso]').forEach(function (linha, n) {
-      var v = valores(n);
-      linha.querySelectorAll('input').forEach(function (c, i) {
-        if (c.value !== '' && c.value === v[i]) {
+      var v = valores(n, linha);
+      linha.querySelectorAll('input[data-campo]').forEach(function (c) {
+        if (c.value !== '' && c.value === v[c.getAttribute('data-campo')]) {
           c.dataset.proposta = '1';
         }
       });
@@ -80,6 +92,15 @@
   document.addEventListener('input', function (e) {
     if (e.target.closest && e.target.closest('.sessoes-curso')) {
       e.target.dataset.proposta = '';
+    }
+  });
+  // Ao escolher um formato proposto, aplica-o logo (volta ao formulário com as sessões desse formato, sem gravar)
+  document.addEventListener('change', function (e) {
+    if (e.target.matches && e.target.matches('select[data-formato]') && e.target.value !== 'outro') {
+      var botao = e.target.closest('.sessoes-curso').querySelector('[data-aplicar-formato]');
+      if (botao) {
+        botao.click();
+      }
     }
   });
   document.addEventListener('click', function (e) {

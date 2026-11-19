@@ -157,7 +157,10 @@ function admin_formacao(): void
     }
     if ($post && $acao === '') {
         [$d, $curso_id, $erros] = ler_sessao();
-        if (!$erros) {
+        // "Aplicar o formato": volta ao formulário com as sessões do novo formato, sem gravar
+        $aplicar = !empty($_POST['aplicar_formato']);
+        $erros = $aplicar ? [] : $erros;
+        if (!$erros && !$aplicar) {
             $id = gravar_sessao($d, $curso_id, $f ? $id : 0);
             $associadas = $f ? 0 : associar_preinscricoes($id);
             aviso($f ? 'Formação atualizada.' : 'Formação criada e visível para os clientes e na área de formação do site.'
@@ -178,7 +181,8 @@ function admin_formacao(): void
     $antiga = !empty($v['modulo_id']) && ($m = linha_bd('SELECT * FROM modulos WHERE id = ?', [(int) $v['modulo_id']]))
         ? '<div class="aviso aviso-info">Esta formação foi criada só para "' . h(rotulo_modulo($m)) . '". As inscrições são agora sempre no curso completo, com todas as sessões: ao guardar, a formação passa a ter as datas de todas as sessões indicadas abaixo.</div>' : '';
     // Edição com datas só para parte das sessões do curso (por exemplo, juntada a partir de formações agendadas sessão a sessão)
-    $n_mods = count(modulos_curso((int) ($v['curso_id'] ?? 0)));
+    // Sessões previstas: as do formato gravado na edição ou, sem formato, uma por tema do curso
+    $n_mods = count(duracoes_formato((string) ($v['formato'] ?? '')) ?: modulos_curso((int) ($v['curso_id'] ?? 0)));
     $incompleta = $id && !$antiga && $n_mods > 1 && max(1, count($datas)) < $n_mods
         ? '<div class="aviso aviso-info">Esta edição tem data para ' . max(1, count($datas)) . ' das ' . $n_mods . ' sessões do curso. Indique as datas das restantes na lista abaixo e guarde.</div>' : '';
     $form = ($erros ? '<div class="aviso aviso-erro">' . h(implode(' ', $erros)) . '</div>' : '') . $antiga . $incompleta . '
@@ -193,7 +197,7 @@ function admin_formacao(): void
           ' . campo_select('estado', 'Estado *', ESTADOS_FORMACAO, $v['estado']) . '
           ' . campo_select('formador_id', 'Formador (assina os certificados)', array_map(function ($x) { return $x['nome'] . ($x['ccp'] ? ' · CCP ' . $x['ccp'] : ''); }, formadores()), (string) ($v['formador_id'] ?? ''), 'Por indicar (' . CERTIFICADO_FORMADOR . ')') . '
         </div>
-        ' . campos_sessoes_curso($selecionado, sessoes_do_formulario((int) $id)) . '
+        ' . campos_sessoes_curso($selecionado, sessoes_do_formulario((int) $id), formato_do_formulario((int) $id)) . '
         <div class="campo"><label for="c-reuniao">Ligação da reunião online (Google Meet)</label><input id="c-reuniao" name="reuniao" type="url" value="' . h((string) $v['reuniao']) . '" maxlength="300" placeholder="https://meet.google.com/abc-defg-hij" aria-describedby="ajuda-reuniao">
           <p class="ajuda" id="ajuda-reuniao">Só é enviada às inscrições confirmadas (no email de confirmação e na área reservada); nunca aparece na página pública. Para a criar: ' . $atalhos . '</p></div>
         ' . campo('notas', 'Notas internas', (string) $v['notas'], 'textarea', 'maxlength="2000"') . '
@@ -377,10 +381,18 @@ function ler_sessao(): array
     if (!$curso_id) {
         $erros[] = 'Escolha o curso.';
     }
-    // Cursos com várias sessões: uma linha por sessão (as linhas sem data são ignoradas)
+    // Cursos com vários temas: formato das sessões e uma linha por sessão (as linhas sem data são ignoradas)
     $d['sessoes'] = [];
+    $d['formato'] = null;
     if ($curso_id && count(modulos_curso($curso_id)) > 1) {
-        $ids = array_map('intval', array_column(modulos_curso($curso_id), 'id'));
+        $mods = modulos_curso($curso_id);
+        $ids = array_map('intval', array_column($mods, 'id'));
+        $duracoes = isset($_POST['formato'][$curso_id]) ? duracoes_formato(formato_enviado($curso_id)) : duracoes_formato(formato_por_tema($mods));
+        if (!$duracoes) {
+            $erros[] = 'Indique o formato das sessões: as durações em horas, separadas por "+" (por exemplo, 2 + 1,5 + 2,5).';
+            $duracoes = duracoes_formato(formato_por_tema($mods));
+        }
+        $d['formato'] = formato_de_duracoes($duracoes);
         foreach (array_values(array_filter((array) ($_POST['sessoes'][$curso_id] ?? []), 'is_array')) as $n => $l) {
             $data = trim((string) ($l['data'] ?? ''));
             if ($data === '') {
@@ -396,8 +408,11 @@ function ler_sessao(): array
                 $erros[] = 'Sessão da linha ' . ($n + 1) . ': a hora de fim tem de ser posterior à de início.';
                 continue;
             }
-            $mod = (int) ($l['modulo'] ?? 0);
-            $d['sessoes'][] = ['modulo_id' => in_array($mod, $ids, true) ? $mod : null, 'inicio' => $data . ' ' . $ini . ':00', 'fim' => $fim !== '' ? $data . ' ' . $fim . ':00' : null];
+            $inicio = $data . ' ' . $ini . ':00';
+            $horas = (float) ($l['horas'] ?? 0);
+            $temas = temas_da_linha((string) ($l['temas'] ?? ''), $ids);
+            $d['sessoes'][] = ['temas' => $temas, 'inicio' => $inicio,
+                'fim' => $fim !== '' ? $data . ' ' . $fim . ':00' : ($horas > 0 ? date('Y-m-d H:i:s', strtotime($inicio) + (int) round($horas * 3600)) : null)];
         }
         if ($d['sessoes']) {
             usort($d['sessoes'], function ($a, $b) { return strcmp($a['inicio'], $b['inicio']); });
@@ -406,11 +421,12 @@ function ler_sessao(): array
             $d['hora_inicio'] = substr($d['sessoes'][0]['inicio'], 11, 5);
             $d['hora_fim'] = $d['sessoes'][0]['fim'] ? substr($d['sessoes'][0]['fim'], 11, 5) : '';
         } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $d['data']) && preg_match('/^\d{2}:\d{2}$/', $d['hora_inicio'])) {
-            // Sem datas nas linhas: uma sessão por semana a partir da data indicada, à mesma hora
-            foreach (modulos_curso($curso_id) as $n => $m) {
-                $dia = date('Y-m-d', strtotime($d['data'] . ' +' . $n . ' week'));
-                $d['sessoes'][] = ['modulo_id' => (int) $m['id'], 'inicio' => $dia . ' ' . $d['hora_inicio'] . ':00', 'fim' => $d['hora_fim'] !== '' && $d['hora_fim'] > $d['hora_inicio'] ? $dia . ' ' . $d['hora_fim'] . ':00' : null];
+            // Sem datas nas linhas: uma sessão por semana a partir da data indicada, à mesma hora, com a duração do formato
+            foreach (distribuir_temas($mods, $duracoes) as $k => $temas) {
+                $inicio = date('Y-m-d', strtotime($d['data'] . ' +' . $k . ' week')) . ' ' . $d['hora_inicio'] . ':00';
+                $d['sessoes'][] = ['temas' => $temas, 'inicio' => $inicio, 'fim' => date('Y-m-d H:i:s', strtotime($inicio) + (int) round($duracoes[$k] * 3600))];
             }
+            $d['hora_fim'] = substr($d['sessoes'][0]['fim'], 11, 5);
         }
     }
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d['data']) || !strtotime($d['data'])) {
@@ -434,23 +450,26 @@ function gravar_sessao(array $d, int $curso_id, int $id = 0): int
     $sessoes = $d['sessoes'] ?? [];
     $inicio = $sessoes ? $sessoes[0]['inicio'] : $d['data'] . ' ' . $d['hora_inicio'] . ':00';
     $fim = $sessoes ? $sessoes[count($sessoes) - 1]['fim'] : ($d['hora_fim'] !== '' ? $d['data'] . ' ' . $d['hora_fim'] . ':00' : null);
-    $valores = [curso($curso_id)['nome'], $curso_id, null, $inicio, $fim, $d['modalidade'], $d['local'], $d['vagas'], $d['estado'], $d['notas'], $d['reuniao'] ?: null, $d['formador_id'] ?? null];
+    $valores = [curso($curso_id)['nome'], $curso_id, null, $inicio, $fim, $d['modalidade'], $d['local'], $d['vagas'], $d['estado'], $d['notas'], $d['reuniao'] ?: null, $d['formador_id'] ?? null, $d['formato'] ?? null];
     if ($id) {
-        executar('UPDATE formacoes SET titulo = ?, curso_id = ?, modulo_id = ?, inicio = ?, fim = ?, modalidade = ?, local = ?, vagas = ?, estado = ?, notas = ?, reuniao = ?, formador_id = ? WHERE id = ?', array_merge($valores, [$id]));
+        executar('UPDATE formacoes SET titulo = ?, curso_id = ?, modulo_id = ?, inicio = ?, fim = ?, modalidade = ?, local = ?, vagas = ?, estado = ?, notas = ?, reuniao = ?, formador_id = ?, formato = ? WHERE id = ?', array_merge($valores, [$id]));
     } else {
-        $id = executar('INSERT INTO formacoes (titulo, curso_id, modulo_id, inicio, fim, modalidade, local, vagas, estado, notas, reuniao, formador_id, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_merge($valores, [agora()]));
+        $id = executar('INSERT INTO formacoes (titulo, curso_id, modulo_id, inicio, fim, modalidade, local, vagas, estado, notas, reuniao, formador_id, formato, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_merge($valores, [agora()]));
     }
     executar('DELETE FROM sessoes WHERE formacao_id = ?', [$id]);
+    // Uma edição numa só sessão (formato de uma sessão) fica sem linhas, com a data e o horário da edição
     foreach (count($sessoes) > 1 ? $sessoes : [] as $n => $s) {
-        executar('INSERT INTO sessoes (formacao_id, ordem, modulo_id, inicio, fim) VALUES (?, ?, ?, ?, ?)', [$id, $n + 1, $s['modulo_id'], $s['inicio'], $s['fim']]);
+        $temas = $s['temas'] ?? (!empty($s['modulo_id']) ? [(int) $s['modulo_id']] : []);
+        executar('INSERT INTO sessoes (formacao_id, ordem, modulo_id, inicio, fim, modulos) VALUES (?, ?, ?, ?, ?, ?)', [$id, $n + 1, $temas[0] ?? null, $s['inicio'], $s['fim'], $temas ? json_encode($temas) : null]);
     }
     sessoes_formacao($id, true);
     return $id;
 }
 
-// Lista das sessões do curso, para escolher a data, o horário e a sessão do curso de cada linha.
-// Há um bloco por curso com várias sessões; só o do curso escolhido fica visível e ativo (assets/js/area.js troca-os).
-function campos_sessoes_curso(int $escolhido, array $atuais = []): string
+// Lista das sessões do curso, uma linha por sessão do formato escolhido (temas, duração, data e horário). Há um bloco
+// por curso com vários temas; só o do curso escolhido fica visível e ativo (assets/js/area.js troca-os).
+// $atuais: linhas do curso escolhido (sessoes_do_formulario); $formato: formato do curso escolhido (formato_do_formulario).
+function campos_sessoes_curso(int $escolhido, array $atuais = [], string $formato = ''): string
 {
     $html = '';
     foreach (consulta('SELECT * FROM cursos WHERE ativo = 1 OR id = ? ORDER BY nome', [$escolhido]) as $c) {
@@ -458,61 +477,152 @@ function campos_sessoes_curso(int $escolhido, array $atuais = []): string
         if (count($mods) < 2) {
             continue;
         }
-        $ativo = (int) $c['id'] === $escolhido;
-        // As linhas gravadas (ou enviadas) e, a seguir, as sessões do curso que ainda não têm linha, pela ordem do curso
-        $linhas = $ativo ? $atuais : [];
-        $com_linha = array_map('intval', array_column($linhas, 'modulo_id'));
-        foreach ($mods as $m) {
-            if (!in_array((int) $m['id'], $com_linha, true)) {
-                $linhas[] = ['modulo_id' => (int) $m['id'], 'inicio' => '', 'fim' => ''];
-            }
+        $cid = (int) $c['id'];
+        $ativo = $cid === $escolhido;
+        $f_curso = $ativo && $formato !== '' ? $formato : formato_por_tema($mods);
+        $duracoes = duracoes_formato($f_curso);
+        $linhas = $ativo && $atuais ? $atuais : linhas_do_formato($mods, $duracoes);
+        $linhas[] = ['temas' => [], 'horas' => null, 'inicio' => '', 'fim' => '', 'extra' => true];
+        $numero = [];
+        foreach ($mods as $k => $m) {
+            $numero[(int) $m['id']] = $k + 1;
         }
-        $linhas = array_merge($linhas, array_fill(0, 2, ['modulo_id' => 0, 'inicio' => '', 'fim' => '', 'extra' => true]));
-        $u = strtolower(unidade($c));
+        $presets = formatos_curso($mods);
+        $opcoes = '';
+        foreach ($presets as $valor => $rotulo) {
+            $valor = (string) $valor; // "6" (uma só sessão) fica com chave numérica no PHP
+            $opcoes .= '<option value="' . h($valor) . '"' . ($valor === $f_curso ? ' selected' : '') . '>' . h($rotulo) . '</option>';
+        }
+        $outro = !isset($presets[$f_curso]);
+        $opcoes .= '<option value="outro"' . ($outro ? ' selected' : '') . '>Outro (indicar as durações)</option>';
+        $temas = '';
+        foreach ($mods as $k => $m) {
+            $temas .= '<li>' . h($m['nome']) . ' <span class="texto-suave">(' . h(numero_horas(horas_modulo($m))) . ' h)</span></li>';
+        }
         $corpo = '';
         foreach ($linhas as $n => $l) {
-            $opcoes = '<option value="">' . h(ucfirst($u)) . ' do curso</option>' . implode('', array_map(function ($m) use ($l) {
-                return '<option value="' . (int) $m['id'] . '"' . ((int) $l['modulo_id'] === (int) $m['id'] ? ' selected' : '') . '>' . h(rotulo_modulo($m)) . '</option>';
-            }, $mods));
+            $campo = 'sessoes[' . $cid . '][' . $n . ']';
             $t = $l['inicio'] ? strtotime($l['inicio']) : false;
-            $campo = 'sessoes[' . (int) $c['id'] . '][' . $n . ']';
-            $corpo .= '<tr' . (empty($l['extra']) ? ' data-linha-curso' : '') . '><td class="n">' . ($n + 1) . '</td>'
-                . '<td><select name="' . $campo . '[modulo]" aria-label="' . h(ucfirst($u)) . ' do curso, linha ' . ($n + 1) . '">' . $opcoes . '</select></td>'
-                . '<td><input type="date" name="' . $campo . '[data]" value="' . ($t ? date('Y-m-d', $t) : '') . '" aria-label="Data, linha ' . ($n + 1) . '"></td>'
-                . '<td><input type="time" name="' . $campo . '[inicio]" value="' . ($t ? date('H:i', $t) : '') . '" aria-label="Início, linha ' . ($n + 1) . '"></td>'
-                . '<td><input type="time" name="' . $campo . '[fim]" value="' . (!empty($l['fim']) ? date('H:i', strtotime($l['fim'])) : '') . '" aria-label="Fim, linha ' . ($n + 1) . '"></td></tr>';
+            $nums = array_values(array_filter(array_map(function ($id) use ($numero) { return $numero[(int) $id] ?? 0; }, $l['temas'])));
+            $nomes = implode(' + ', array_map(function ($x) use ($mods) { return $mods[$x - 1]['nome']; }, $nums));
+            $horas = $l['horas'] ? numero_horas((float) $l['horas']) : '';
+            $corpo .= '<tr' . (empty($l['extra']) ? ' data-linha-curso' : '') . ($horas !== '' ? ' data-horas="' . h(str_replace(',', '.', $horas)) . '"' : '') . '><td class="n">' . ($n + 1) . '</td>'
+                . '<td><input type="text" name="' . $campo . '[temas]" value="' . h(implode(', ', $nums)) . '" inputmode="numeric" class="campo-temas" aria-label="Temas da sessão ' . ($n + 1) . ' (números)" placeholder="' . (empty($l['extra']) ? '' : 'extra') . '">'
+                . ($nomes !== '' ? '<br><span class="texto-suave">' . h($nomes) . '</span>' : '') . '</td>'
+                . '<td>' . ($horas !== '' ? h($horas) . ' h' : '') . '<input type="hidden" name="' . $campo . '[horas]" value="' . h(str_replace(',', '.', $horas)) . '"></td>'
+                . '<td><input type="date" data-campo="data" name="' . $campo . '[data]" value="' . ($t ? date('Y-m-d', $t) : '') . '" aria-label="Data, sessão ' . ($n + 1) . '"></td>'
+                . '<td><input type="time" data-campo="inicio" name="' . $campo . '[inicio]" value="' . ($t ? date('H:i', $t) : '') . '" aria-label="Início, sessão ' . ($n + 1) . '"></td>'
+                . '<td><input type="time" data-campo="fim" name="' . $campo . '[fim]" value="' . (!empty($l['fim']) ? date('H:i', strtotime($l['fim'])) : '') . '" aria-label="Fim, sessão ' . ($n + 1) . '"></td></tr>';
         }
-        $html .= '<fieldset class="campo-grupo sessoes-curso" data-curso="' . (int) $c['id'] . '"' . ($ativo ? '' : ' hidden disabled') . '>
-          <legend>Datas das ' . count($mods) . ' ' . ($u === 'sessão' ? 'sessões' : 'módulos') . ' de ' . h($c['nome']) . '</legend>
-          <p class="ajuda">Uma linha por ' . h($u) . ', pela ordem definida no curso: indique a data e o horário de cada uma e, se precisar, troque a ' . h($u) . ' da linha. As duas últimas linhas servem para ' . ($u === 'sessão' ? 'sessões' : 'módulos') . ' extra. As linhas sem data são ignoradas; se não preencher nenhuma, ficam marcadas semanalmente a partir da data e do horário indicados acima.</p>
-          <div class="tabela-rolante"><table class="tabela-sessoes"><thead><tr><th scope="col">#</th><th scope="col">' . h(ucfirst($u)) . ' do curso</th><th scope="col">Data</th><th scope="col">Início</th><th scope="col">Fim</th></tr></thead><tbody>' . $corpo . '</tbody></table></div>
+        $html .= '<fieldset class="campo-grupo sessoes-curso" data-curso="' . $cid . '"' . ($ativo ? '' : ' hidden disabled') . '>
+          <legend>Sessões de ' . h($c['nome']) . '</legend>
+          <div class="campos-2">
+            <div class="campo"><label for="c-formato-' . $cid . '">Formato das sessões</label><select id="c-formato-' . $cid . '" name="formato[' . $cid . ']" data-formato>' . $opcoes . '</select></div>
+            <div class="campo"><label for="c-formato-outro-' . $cid . '">Durações, em horas (com "Outro")</label><input id="c-formato-outro-' . $cid . '" name="formato_outro[' . $cid . ']" type="text" value="' . h($outro ? str_replace('.', ',', $f_curso) : '') . '" placeholder="Por exemplo, 2 + 1,5 + 2,5" maxlength="120"></div>
+          </div>
+          <p class="mb-0"><button class="botao botao-secundario botao-pequeno" type="submit" name="aplicar_formato" value="' . $cid . '" formnovalidate data-aplicar-formato>Aplicar o formato</button></p>
+          <p class="ajuda">O formato define quantas sessões tem a edição e quanto dura cada uma (por exemplo, 3 sessões de 2 horas). Os temas do curso são distribuídos pelas sessões, pela ordem; em cada sessão pode mudar os temas, com os números da lista. Indique a data e a hora de início: sem hora de fim, conta a duração do formato. As linhas sem data são ignoradas; se não preencher nenhuma, as sessões ficam marcadas semanalmente a partir da data e da hora indicadas acima. A última linha serve para uma sessão extra.</p>
+          <details><summary>Temas do curso (' . count($mods) . ', ' . h(numero_horas(array_sum(array_map('horas_modulo', $mods)))) . ' h)</summary><ol class="lista-datas">' . $temas . '</ol></details>
+          <div class="tabela-rolante"><table class="tabela-sessoes"><thead><tr><th scope="col">#</th><th scope="col">Temas (n.º)</th><th scope="col">Duração</th><th scope="col">Data</th><th scope="col">Início</th><th scope="col">Fim</th></tr></thead><tbody>' . $corpo . '</tbody></table></div>
           <p class="mb-0"><button class="botao botao-secundario botao-pequeno" type="button" data-preencher-sessoes>Propor datas semanais a partir da data acima</button></p>
         </fieldset>';
     }
     return $html;
 }
 
-// Linhas a mostrar no formulário: as enviadas (depois de um erro) ou as gravadas. Numa formação antiga numa só data,
-// as linhas ficam vazias e são propostas semanalmente a partir dessa data.
+// Linhas de um formato: os temas distribuídos pelas sessões, sem datas
+function linhas_do_formato(array $mods, array $duracoes): array
+{
+    $r = [];
+    foreach (distribuir_temas($mods, $duracoes) as $k => $ids) {
+        $r[] = ['temas' => $ids, 'horas' => $duracoes[$k], 'inicio' => '', 'fim' => ''];
+    }
+    return $r;
+}
+
+// Formato escolhido no formulário para o curso ($_POST), ou o gravado na edição, ou "uma sessão por tema"
+function formato_enviado(int $curso): string
+{
+    $v = (string) ($_POST['formato'][$curso] ?? '');
+    return $v === 'outro' ? trim((string) ($_POST['formato_outro'][$curso] ?? '')) : $v;
+}
+
+function formato_do_formulario(int $id): string
+{
+    $curso = (int) ($_POST['curso'] ?? 0);
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['formato'][$curso])) {
+        return duracoes_formato(formato_enviado($curso)) ? formato_de_duracoes(duracoes_formato(formato_enviado($curso))) : formato_enviado($curso);
+    }
+    $f = $id ? linha_bd('SELECT formato, curso_id FROM formacoes WHERE id = ?', [$id]) : null;
+    if ($f && duracoes_formato((string) $f['formato'])) {
+        return (string) $f['formato'];
+    }
+    // Edições anteriores: as durações das sessões gravadas (sem hora de fim, a duração do tema)
+    if ($id && ($sessoes = sessoes_formacao($id))) {
+        return formato_de_duracoes(array_map(function ($s) {
+            $temas = temas_sessao($s);
+            return !empty($s['fim']) ? max(0.25, (strtotime($s['fim']) - strtotime($s['inicio'])) / 3600) : ($temas ? array_sum(array_map('horas_modulo', $temas)) : 1.0);
+        }, $sessoes));
+    }
+    return '';
+}
+
+// Linhas a mostrar no formulário: as do formato aplicado agora (com datas semanais a partir da data e da hora acima),
+// as enviadas (depois de um erro) ou as gravadas. Sem nenhuma, valem as do formato (calculadas no formulário).
 function sessoes_do_formulario(int $id): array
 {
     $curso = (int) ($_POST['curso'] ?? 0);
-    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['sessoes'][$curso])) {
+    $post = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
+    $mods = modulos_curso($curso);
+    $ids = array_map('intval', array_column($mods, 'id'));
+    if ($post && (int) ($_POST['aplicar_formato'] ?? 0) === $curso && $curso) {
+        $duracoes = duracoes_formato(formato_enviado($curso));
+        $linhas = linhas_do_formato($mods, $duracoes ?: duracoes_formato(formato_por_tema($mods)));
+        $data = trim((string) ($_POST['data'] ?? ''));
+        $hora = trim((string) ($_POST['hora_inicio'] ?? ''));
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $data) && preg_match('/^\d{2}:\d{2}$/', $hora)) {
+            foreach ($linhas as $k => &$l) {
+                $dia = date('Y-m-d', strtotime($data . ' +' . $k . ' week'));
+                $l['inicio'] = $dia . ' ' . $hora . ':00';
+                $l['fim'] = date('Y-m-d H:i:s', strtotime($l['inicio']) + (int) round($l['horas'] * 3600));
+            }
+            unset($l);
+        }
+        return $linhas;
+    }
+    if ($post && isset($_POST['sessoes'][$curso])) {
         $r = [];
         foreach (array_values(array_filter((array) $_POST['sessoes'][$curso], 'is_array')) as $l) {
             $data = trim((string) ($l['data'] ?? ''));
-            if (empty($l['modulo']) && $data === '') {
+            $temas = temas_da_linha((string) ($l['temas'] ?? ''), $ids);
+            if (!$temas && $data === '') {
                 continue;
             }
             $ok = preg_match('/^\d{4}-\d{2}-\d{2}$/', $data) && preg_match('/^\d{2}:\d{2}$/', (string) ($l['inicio'] ?? ''));
-            $r[] = ['modulo_id' => (int) ($l['modulo'] ?? 0), 'inicio' => $ok ? $data . ' ' . $l['inicio'] . ':00' : '', 'fim' => $ok && preg_match('/^\d{2}:\d{2}$/', (string) ($l['fim'] ?? '')) ? $data . ' ' . $l['fim'] . ':00' : ''];
+            $r[] = ['temas' => $temas, 'horas' => (float) ($l['horas'] ?? 0) ?: null, 'inicio' => $ok ? $data . ' ' . $l['inicio'] . ':00' : '',
+                'fim' => $ok && preg_match('/^\d{2}:\d{2}$/', (string) ($l['fim'] ?? '')) ? $data . ' ' . $l['fim'] . ':00' : ''];
         }
         return $r;
     }
     if ($id && ($s = sessoes_formacao($id))) {
-        return array_map(function ($x) { return ['modulo_id' => (int) $x['modulo_id'], 'inicio' => $x['inicio'], 'fim' => (string) $x['fim']]; }, $s);
+        $duracoes = duracoes_formato(formato_do_formulario($id));
+        return array_map(function ($x, $k) use ($duracoes) {
+            return ['temas' => array_map('intval', array_column(temas_sessao($x), 'id')), 'horas' => $duracoes[$k] ?? null, 'inicio' => $x['inicio'], 'fim' => (string) $x['fim']];
+        }, $s, array_keys($s));
     }
     return [];
+}
+
+// Ids dos módulos de uma linha a partir dos números escritos ("1, 2" ou "1 2"), pela ordem do curso e sem repetições
+function temas_da_linha(string $texto, array $ids): array
+{
+    $r = [];
+    foreach (preg_split('/[^0-9]+/', $texto, -1, PREG_SPLIT_NO_EMPTY) as $n) {
+        if (isset($ids[(int) $n - 1]) && !in_array($ids[(int) $n - 1], $r, true)) {
+            $r[] = $ids[(int) $n - 1];
+        }
+    }
+    return $r;
 }
 
 // Curso de uma formação. Não há formações de um só módulo ou sessão: cada formação é uma edição do curso completo
@@ -681,16 +791,39 @@ function admin_curso(): void
             $html .= partilha_e_convite(endereco_site() . link_curso_publico($c), 'Página pública do curso',
                 'Mostra a descrição, o programa, os temas e as próximas edições com inscrição. Pode colocá-la no site, nas redes sociais ou enviá-la a um candidato. A ficha em PDF tem o mesmo conteúdo, num documento para enviar ou imprimir.', link_ficha($c));
         }
-        $sessoes = consulta('SELECT * FROM formacoes WHERE curso_id = ? AND inicio >= ? ORDER BY inicio', [$id, date('Y-m-d 00:00:00')]);
-        $html .= '<h2 class="espaco-topo">Sessões agendadas</h2>'
-            . ($sessoes ? calendario($sessoes, function ($f) { return '<a href="' . h(url('formacao', ['id' => $f['id']])) . '">Gerir</a>'; }) : '<p class="texto-suave">Este curso não tem sessões agendadas.</p>')
-            . '<p class="espaco-topo-curto"><a class="botao" href="' . h(url('formacao', ['curso' => $id])) . '">Agendar edição deste curso</a></p>';
         $pre = (int) (linha_bd("SELECT COUNT(*) AS n FROM preinscricoes WHERE curso_id = ? AND estado IN ('nova', 'convidada')", [$id])['n'] ?? 0);
         $html .= '<h2 class="espaco-topo" id="preinscricoes">Pré-inscrições</h2><p class="texto-suave">' . ($pre ? $pre . ' pré-inscrição(ões) por converter neste curso. ' : 'Não há pré-inscrições por converter neste curso. ')
             . 'As pré-inscrições geram-se em <a href="' . h(url('inscricoes', ['estado' => 'preinscricao'])) . '">Inscrições, Pré-inscrições</a>; quando agenda uma edição do curso no calendário, ficam associadas a essa edição, onde pode inscrever os candidatos ou enviar-lhes o convite.</p>';
         $html .= '<p class="espaco-topo">' . botao_apagar('curso', $id, 'Apagar este curso') . '</p>';
     }
-    pagina_area('cursos', $c ? $c['nome'] : 'Novo curso', $html, 'Cursos');
+    // Edições do curso no topo da página, antes da ficha
+    pagina_area('cursos', $c ? $c['nome'] : 'Novo curso', ($c ? edicoes_do_curso_html((int) $c['id']) . '<h2 class="espaco-topo">Dados do curso</h2>' : '') . $html, 'Cursos');
+}
+
+// Edições do curso (as próximas primeiro, depois as que já decorreram): datas, formato, formador, inscritos e estado
+function edicoes_do_curso_html(int $curso_id): string
+{
+    $hoje = date('Y-m-d 00:00:00');
+    $lista = array_merge(
+        consulta('SELECT * FROM formacoes WHERE curso_id = ? AND COALESCE(fim, inicio) >= ? ORDER BY inicio', [$curso_id, $hoje]),
+        consulta('SELECT * FROM formacoes WHERE curso_id = ? AND COALESCE(fim, inicio) < ? ORDER BY inicio DESC', [$curso_id, $hoje])
+    );
+    $linhas = '';
+    foreach ($lista as $f) {
+        $n = count(sessoes_formacao((int) $f['id'])) ?: 1;
+        $formato = texto_formato(duracoes_formato((string) $f['formato']));
+        $formador = !empty($f['formador_id']) ? (string) (linha_bd('SELECT nome FROM utilizadores WHERE id = ?', [(int) $f['formador_id']])['nome'] ?? '') : '';
+        $confirmadas = (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado = 'confirmada'", [$f['id']])['n'] ?? 0);
+        $decorrida = strtotime((string) ($f['fim'] ?: $f['inicio'])) < strtotime($hoje);
+        $linhas .= '<tr><td data-valor="' . h($f['inicio']) . '"><a href="' . h(url('formacao', ['id' => $f['id']])) . '">' . h(horario($f)) . '</a>' . ($decorrida ? '<br>' . etiqueta('Decorrida') : '') . '</td>'
+            . '<td>' . h($formato !== '' ? $formato : $n . ($n === 1 ? ' sessão' : ' sessões')) . '</td><td>' . h(modalidade_e_local($f)) . '</td><td>' . h($formador) . '</td>'
+            . '<td data-valor="' . inscritos((int) $f['id']) . '">' . inscritos((int) $f['id']) . ' de ' . (int) $f['vagas'] . '<br><span class="texto-suave">' . $confirmadas . ' confirmada(s)</span></td>'
+            . '<td>' . estado_etiqueta($f['estado'], ESTADOS_FORMACAO) . '</td></tr>';
+    }
+    return '<h2 id="edicoes">Edições agendadas (' . count($lista) . ')</h2>'
+        . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="edicoes-curso"><thead><tr><th>Datas</th><th>Formato</th><th data-filtro="lista">Modalidade</th><th data-filtro="lista">Formador</th><th>Inscritos</th><th data-filtro="lista">Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>'
+            : '<p class="texto-suave">Este curso ainda não tem edições agendadas.</p>')
+        . '<p class="espaco-topo-curto"><a class="botao" href="' . h(url('formacao', ['curso' => $curso_id])) . '">Agendar nova edição deste curso</a></p>';
 }
 
 /* Pré-inscrição: ficha, estado e inscrição numa edição já agendada ou numa edição nova (definir datas) */
@@ -727,7 +860,7 @@ function admin_preinscricao(): void
             }
             redirecionar('preinscricao', ['id' => $id]);
         }
-        if ($acao === 'inscrever') {
+        if ($acao === 'inscrever' && empty($_POST['aplicar_formato'])) {
             $formando = texto('formando', 120) ?: (string) $p['nome'];
             $email = texto('email_formando', 160);
             $estado = ($_POST['estado_inscricao'] ?? '') === 'pendente' ? 'pendente' : 'confirmada';
@@ -848,7 +981,7 @@ function admin_preinscricao(): void
               ' . campo('local', 'Local', (string) $v['local'], 'text', 'maxlength="160" placeholder="Morada, nas sessões presenciais ou mistas"') . '
               ' . campo('vagas', 'Vagas', (string) $v['vagas'], 'number', 'min="1" max="500"') . '
             </div>
-            ' . campos_sessoes_curso((int) $v['curso'], sessoes_do_formulario(0)) . '
+            ' . campos_sessoes_curso((int) $v['curso'], sessoes_do_formulario(0), formato_do_formulario(0)) . '
             ' . campo('reuniao', 'Ligação da reunião online (Google Meet)', (string) $v['reuniao'], 'url', 'maxlength="300" placeholder="https://meet.google.com/abc-defg-hij"') . '
           </fieldset>
           <div class="campos-2">

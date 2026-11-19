@@ -2548,3 +2548,13 @@ table[data-filtros] .col-oculta {
     left: 0;
   }
 }
+
+/* Formato das sessões da edição: campo dos temas (números) estreito, com os nomes por baixo */
+.tabela-sessoes .campo-temas {
+  width: 6.5rem;
+  min-width: 0;
+}
+.tabela-sessoes td .texto-suave {
+  font-size: 0.82rem;
+  line-height: 1.35;
+}

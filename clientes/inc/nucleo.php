@@ -93,6 +93,10 @@ function bd(): ?PDO
             id INTEGER PRIMARY KEY AUTOINCREMENT, formacao_id INTEGER NOT NULL REFERENCES formacoes(id), ordem INTEGER NOT NULL,
             modulo_id INTEGER REFERENCES modulos(id), inicio TEXT NOT NULL, fim TEXT)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS sessoes_formacao ON sessoes (formacao_id, inicio)');
+        // Formato das sessões da edição (durações em horas, "2+2+2"; vazio = uma sessão por tema) e temas de cada sessão
+        // (ids dos módulos em JSON; sessoes.modulo_id fica com o primeiro, para o código e as edições anteriores)
+        acrescentar_colunas($pdo, 'formacoes', ['formato' => 'TEXT']);
+        acrescentar_colunas($pdo, 'sessoes', ['modulos' => 'TEXT']);
         migrar_sessoes_para_cursos($pdo);
         // As inscrições feitas no site público ficam sem cliente até a Gadgetmetodo as associar
         $tabela_inscricoes = "CREATE TABLE IF NOT EXISTS inscricoes (
@@ -583,14 +587,36 @@ function sessoes_formacao(int $formacao_id, bool $renovar = false): array
     return $cache[$formacao_id];
 }
 
+// Temas (módulos do curso) de uma sessão: os de sessoes.modulos ou, nas sessões anteriores, o de sessoes.modulo_id
+function temas_sessao(array $s): array
+{
+    $ids = json_decode((string) ($s['modulos'] ?? ''), true);
+    $ids = is_array($ids) && $ids ? array_map('intval', $ids) : array_filter([(int) ($s['modulo_id'] ?? 0)]);
+    $r = [];
+    foreach ($ids as $id) {
+        if ($m = linha_bd('SELECT * FROM modulos WHERE id = ?', [$id])) {
+            $r[] = $m;
+        }
+    }
+    return $r;
+}
+
+// "O que é a IA generativa + Primeiros passos com o Claude"
+function nomes_temas_sessao(array $s): string
+{
+    return implode(' + ', array_column(temas_sessao($s), 'nome'));
+}
+
 // Uma linha por sessão: "Sessão 1: Nome · terça, 3 de novembro de 2026, 18:30 às 19:30"
+// (com vários temas na mesma sessão: "Sessão 1: Tema A + Tema B · …")
 function linhas_sessoes(array $f): array
 {
     $dias = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
     $r = [];
     foreach (sessoes_formacao((int) ($f['formacao_id'] ?? $f['id'] ?? 0)) as $n => $s) {
-        $m = $s['modulo_id'] ? linha_bd('SELECT * FROM modulos WHERE id = ?', [$s['modulo_id']]) : null;
-        $r[] = ($m ? rotulo_modulo($m) : 'Sessão ' . ($n + 1)) . ' · ' . $dias[(int) date('w', strtotime($s['inicio']))] . ', ' . data_extensa($s['inicio']) . ', ' . hora_sessao($s);
+        $temas = temas_sessao($s);
+        $rotulo = count($temas) === 1 && empty($s['modulos']) ? rotulo_modulo($temas[0]) : 'Sessão ' . ($n + 1) . ($temas ? ': ' . implode(' + ', array_column($temas, 'nome')) : '');
+        $r[] = $rotulo . ' · ' . $dias[(int) date('w', strtotime($s['inicio']))] . ', ' . data_extensa($s['inicio']) . ', ' . hora_sessao($s);
     }
     return count($r) > 1 ? $r : [];
 }

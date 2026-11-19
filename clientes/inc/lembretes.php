@@ -24,8 +24,8 @@ function sessoes_edicao(array $f): array
     $total = count($lista);
     $r = [];
     foreach ($lista as $n => $s) {
-        $m = !empty($s['modulo_id']) ? linha_bd('SELECT nome FROM modulos WHERE id = ?', [(int) $s['modulo_id']]) : null;
-        $nome = $total > 1 ? 'Sessão ' . ($n + 1) . ' de ' . $total . ($m ? ': ' . $m['nome'] : '') : '';
+        $temas = nomes_temas_sessao($s);
+        $nome = $total > 1 ? 'Sessão ' . ($n + 1) . ' de ' . $total . ($temas !== '' ? ': ' . $temas : '') : '';
         $r[] = ['n' => $n + 1, 'total' => $total, 'inicio' => (string) $s['inicio'], 'fim' => (string) ($s['fim'] ?? ''), 'nome' => $nome];
     }
     return $r;

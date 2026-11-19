@@ -441,3 +441,112 @@ function link_google_calendar(array $f): string
         'location' => (string) ($f['local'] ?? ''),
     ]);
 }
+
+/* Formato das sessões de uma edição: durações em horas ("2+2+2") e temas (módulos) de cada sessão */
+
+// Horas de um módulo (sem horas indicadas, conta 1 hora)
+function horas_modulo(array $m): float
+{
+    return (float) ($m['horas'] ?? 0) > 0 ? (float) $m['horas'] : 1.0;
+}
+
+// "1,5" a partir de 1.5; "2" a partir de 2.0
+function numero_horas(float $h): string
+{
+    return str_replace('.', ',', rtrim(rtrim(number_format($h, 2, '.', ''), '0'), '.'));
+}
+
+// Durações (horas) de um formato "2+2+2" ou "1,5 + 1,5 + 3"; vazio se o texto não for válido (1 a 30 sessões de 0,25 a 12 h)
+function duracoes_formato(string $formato): array
+{
+    $partes = array_map('trim', explode('+', str_replace([',', ' '], ['.', ''], $formato)));
+    if (!$partes || count($partes) > 30) {
+        return [];
+    }
+    $r = [];
+    foreach ($partes as $p) {
+        if (!preg_match('/^\d+(\.\d+)?$/', $p) || (float) $p < 0.25 || (float) $p > 12) {
+            return [];
+        }
+        $r[] = (float) $p;
+    }
+    return $r;
+}
+
+function formato_de_duracoes(array $duracoes): string
+{
+    return implode('+', array_map('numero_horas', $duracoes));
+}
+
+// "3 × 2 h" quando as sessões têm a mesma duração; "2 h + 1,5 h + 2,5 h" nos outros casos
+function texto_formato(array $duracoes): string
+{
+    if (!$duracoes) {
+        return '';
+    }
+    return count(array_unique(array_map('strval', $duracoes))) === 1
+        ? count($duracoes) . ' × ' . numero_horas($duracoes[0]) . ' h'
+        : implode(' + ', array_map(function ($d) { return numero_horas($d) . ' h'; }, $duracoes));
+}
+
+// Formato habitual de um curso: uma sessão por tema, com as horas de cada tema
+function formato_por_tema(array $mods): string
+{
+    return formato_de_duracoes(array_map('horas_modulo', $mods));
+}
+
+// Formatos propostos para um curso: uma sessão por tema e as divisões em sessões iguais em que os temas, pela ordem,
+// enchem cada sessão por inteiro (num curso de 6 temas de 1 h: 6 × 1 h, 3 × 2 h, 2 × 3 h e 1 × 6 h)
+function formatos_curso(array $mods): array
+{
+    $r = [];
+    if (!$mods) {
+        return $r;
+    }
+    $por_tema = formato_por_tema($mods);
+    $r[$por_tema] = 'Uma sessão por tema (' . texto_formato(duracoes_formato($por_tema)) . ')';
+    $horas = array_map('horas_modulo', $mods);
+    $total = array_sum($horas);
+    for ($k = count($mods) - 1; $k >= 1; $k--) {
+        $alvo = $total / $k;
+        $soma = 0.0;
+        $cortes = 0;
+        foreach ($horas as $h) {
+            $soma += $h;
+            if (abs($soma - $alvo * ($cortes + 1)) < 0.001) {
+                $cortes++;
+            }
+        }
+        if ($cortes === $k && abs($alvo * 4 - round($alvo * 4)) < 0.001) {
+            $f = formato_de_duracoes(array_fill(0, $k, $alvo));
+            $r[$f] = $r[$f] ?? texto_formato(duracoes_formato($f));
+        }
+    }
+    return $r;
+}
+
+// Distribui os temas do curso, pela ordem, pelas sessões do formato: cada tema fica na sessão onde começa (pelas horas
+// acumuladas); os temas que sobram ficam na última sessão. Devolve, por sessão, a lista dos ids dos módulos.
+function distribuir_temas(array $mods, array $duracoes): array
+{
+    $r = array_fill(0, count($duracoes), []);
+    if (!$duracoes) {
+        return $r;
+    }
+    $limites = [];
+    $soma = 0.0;
+    foreach ($duracoes as $d) {
+        $soma += $d;
+        $limites[] = $soma;
+    }
+    $inicio = 0.0;
+    foreach ($mods as $m) {
+        $k = 0;
+        while ($k < count($limites) - 1 && $inicio >= $limites[$k] - 0.001) {
+            $k++;
+        }
+        $r[$k][] = (int) $m['id'];
+        $inicio += horas_modulo($m);
+    }
+    return $r;
+}
