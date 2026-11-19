@@ -10,7 +10,9 @@ require_once __DIR__ . '/cursos.php';
 
 date_default_timezone_set('Europe/Lisbon');
 
-const PAPEIS = ['admin' => 'Gadgetmetodo', 'cliente' => 'Cliente', 'formando' => 'Formando'];
+// Perfis: admin (Gadgetmetodo) e formador têm o mesmo acesso (gerem tudo); cliente; formando (área do formando)
+const PAPEIS = ['admin' => 'Gadgetmetodo', 'formador' => 'Formador', 'cliente' => 'Cliente', 'formando' => 'Formando'];
+const PAPEIS_GESTAO = ['admin', 'formador'];
 const ESTADOS_FORMACAO = ['aberta' => 'Inscrições abertas', 'fechada' => 'Inscrições fechadas', 'cancelada' => 'Cancelada'];
 const ESTADOS_INSCRICAO = ['pendente' => 'Pendente', 'confirmada' => 'Confirmada', 'cancelada' => 'Cancelada'];
 const MODALIDADES = ['presencial' => 'Presencial', 'online' => 'Online', 'misto' => 'Misto'];
@@ -50,15 +52,17 @@ function bd(): ?PDO
             telefone TEXT, notas TEXT, criado TEXT NOT NULL, tipo TEXT NOT NULL DEFAULT 'empresa')");
         // Os clientes podem ser empresas (ou outras organizações) ou particulares
         acrescentar_colunas($pdo, 'clientes', ['tipo' => "TEXT NOT NULL DEFAULT 'empresa'"]);
-        // Perfis: admin (Gadgetmetodo), cliente e formando (área do formando). token_senha guarda o resumo (SHA-256) da
+        // Perfis: admin (Gadgetmetodo), formador (o mesmo acesso que admin), cliente e formando (área do formando). token_senha guarda o resumo (SHA-256) da
         // ligação enviada por email para definir a palavra-passe, válida até token_validade
         $tabela_utilizadores = "CREATE TABLE IF NOT EXISTS utilizadores (
             id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE COLLATE NOCASE, nome TEXT NOT NULL,
-            senha TEXT NOT NULL, papel TEXT NOT NULL CHECK (papel IN ('admin', 'cliente', 'formando')),
+            senha TEXT NOT NULL, papel TEXT NOT NULL CHECK (papel IN ('admin', 'formador', 'cliente', 'formando')),
             cliente_id INTEGER REFERENCES clientes(id), ativo INTEGER NOT NULL DEFAULT 1,
             criado TEXT NOT NULL, ultimo_acesso TEXT, token_senha TEXT, token_validade TEXT)";
         $pdo->exec($tabela_utilizadores);
         migrar_utilizadores_formando($pdo, $tabela_utilizadores);
+        // N.º do Certificado de Competências Pedagógicas (CCP) dos formadores, impresso nos certificados
+        acrescentar_colunas($pdo, 'utilizadores', ['ccp' => 'TEXT']);
         $pdo->exec('CREATE TABLE IF NOT EXISTS definicoes (chave TEXT PRIMARY KEY, valor TEXT)');
         // Campos da ficha do curso: percurso, unidade (Módulo ou Sessão), objetivo, pré-requisitos, resultado esperado,
         // estrutura-tipo da sessão e avaliação (linhas "rótulo: valor"), requisitos, enquadramento legal e investimento
@@ -81,6 +85,8 @@ function bd(): ?PDO
         acrescentar_colunas($pdo, 'formacoes', ['curso_id' => 'INTEGER REFERENCES cursos(id)', 'modulo_id' => 'INTEGER REFERENCES modulos(id)', 'reuniao' => 'TEXT']);
         // Antecedência do lembrete automático da edição, em minutos (vazio = 1 hora; 0 = sem lembrete automático)
         acrescentar_colunas($pdo, 'formacoes', ['lembrete_antecedencia' => 'INTEGER']);
+        // Formador da edição (utilizador Gadgetmetodo ou Formador): assina os certificados
+        acrescentar_colunas($pdo, 'formacoes', ['formador_id' => 'INTEGER']);
         // Edições do curso completo: uma linha por sessão, com data e horário próprios (formacoes.inicio é o da 1.ª
         // sessão e formacoes.fim o fim da última); sem linhas, a formação decorre numa só data
         $pdo->exec('CREATE TABLE IF NOT EXISTS sessoes (
@@ -160,6 +166,8 @@ function bd(): ?PDO
             cc_validade TEXT NOT NULL, presencas INTEGER NOT NULL, sessoes INTEGER NOT NULL, enviado TEXT, UNIQUE (ano, numero))');
         // Data do último pedido, por email, dos dados para o certificado
         acrescentar_colunas($pdo, 'inscricoes', ['dados_pedidos' => 'TEXT']);
+        // Formador com que o certificado foi emitido (nome e linha "Formador | CCP n.º …")
+        acrescentar_colunas($pdo, 'certificados', ['formador' => 'TEXT', 'formador_dados' => 'TEXT']);
         // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação; as pré-inscrições, 12 meses depois do registo;
         // os diagnósticos enviados pela administração, 2 anos depois do envio
         $pdo->prepare('DELETE FROM inscricoes WHERE formacao_id IN (SELECT id FROM formacoes WHERE inicio < ?)')
@@ -191,21 +199,22 @@ function acrescentar_colunas(PDO $pdo, string $tabela, array $colunas): void
     }
 }
 
-// Bases anteriores ao perfil Formando: a tabela de utilizadores é refeita (o SQLite não altera uma restrição CHECK),
-// com as mesmas linhas. Nenhuma tabela tem chave estrangeira para utilizadores.
+// Bases anteriores aos perfis Formando e Formador: a tabela de utilizadores é refeita (o SQLite não altera uma restrição
+// CHECK), com as mesmas linhas e as colunas comuns. Nenhuma tabela tem chave estrangeira para utilizadores.
 function migrar_utilizadores_formando(PDO $pdo, string $tabela): void
 {
     $sql = function () use ($pdo) { return (string) $pdo->query("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'utilizadores'")->fetchColumn(); };
-    if (strpos($sql(), "'formando'") !== false) {
+    if (strpos($sql(), "'formador'") !== false) {
         return;
     }
-    $comuns = 'id, email, nome, senha, papel, cliente_id, ativo, criado, ultimo_acesso';
+    $existentes = array_column($pdo->query('PRAGMA table_info(utilizadores)')->fetchAll(PDO::FETCH_ASSOC), 'name');
+    $comuns = implode(', ', array_intersect(['id', 'email', 'nome', 'senha', 'papel', 'cliente_id', 'ativo', 'criado', 'ultimo_acesso', 'token_senha', 'token_validade'], $existentes));
     $pdo->exec('PRAGMA foreign_keys = OFF');
     $aberta = false;
     try {
         $pdo->exec('BEGIN IMMEDIATE');
         $aberta = true;
-        if (strpos($sql(), "'formando'") === false) {
+        if (strpos($sql(), "'formador'") === false) {
             $pdo->exec('DROP TABLE IF EXISTS utilizadores_novo');
             $pdo->exec(str_replace('CREATE TABLE IF NOT EXISTS utilizadores (', 'CREATE TABLE utilizadores_novo (', $tabela));
             $pdo->exec("INSERT INTO utilizadores_novo ($comuns) SELECT $comuns FROM utilizadores");
@@ -341,7 +350,7 @@ function utilizador(): ?array
 
 function eh_admin(): bool
 {
-    return (utilizador()['papel'] ?? '') === 'admin';
+    return in_array(utilizador()['papel'] ?? '', PAPEIS_GESTAO, true);
 }
 
 function eh_formando(): bool

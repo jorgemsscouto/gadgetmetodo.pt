@@ -29,7 +29,7 @@ function admin_configuracao(): void
       <p class="texto-suave">Definições gerais da área reservada e do site: quem tem acesso, a tabela de preços, os emails enviados a clientes, candidatos, utilizadores e à administração e os lembretes automáticos das sessões.</p>
       <div class="cartoes-config">
         ' . $cartao('Utilizadores', 'Acessos à área reservada: perfil Gadgetmetodo (vê e gere tudo) ou Cliente (vê as formações e as inscrições do seu cliente).', [
-            '<strong>' . $n('SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1') . '</strong> ativos: ' . $n("SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1 AND papel = 'admin'") . ' da Gadgetmetodo e ' . $n("SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1 AND papel = 'cliente'") . ' de clientes',
+            '<strong>' . $n('SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1') . '</strong> ativos: ' . $n("SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1 AND papel IN ('admin', 'formador')") . ' da Gadgetmetodo (incluindo formadores) e ' . $n("SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1 AND papel = 'cliente'") . ' de clientes',
             $n('SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 0') . ' inativos',
         ], '<a class="botao" href="' . h(url('utilizadores')) . '">Gerir utilizadores</a><a class="botao botao-secundario" href="' . h(url('utilizadores')) . '#novo">Novo utilizador</a>') . '
         ' . $cartao('Preços', 'Tabela de preços por curso e por modalidade, com os textos e as condições do documento em PDF.', [

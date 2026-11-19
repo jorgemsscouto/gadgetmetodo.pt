@@ -11,6 +11,29 @@ const CERTIFICADO_FORMADOR = 'Jorge Manuel de Sá Silva Couto';
 const CERTIFICADO_FORMADOR_DADOS = 'Formador  |  CCP n.º F625978/2014 (IEFP)';
 const CERTIFICADO_ENTIDADE = 'Gadgetmetodo, Lda.';
 
+// Utilizadores que podem ser formadores de uma edição (ativos, perfis Gadgetmetodo e Formador), por id
+function formadores(): array
+{
+    static $lista = null;
+    if ($lista === null) {
+        $lista = [];
+        foreach (consulta("SELECT id, nome, ccp FROM utilizadores WHERE ativo = 1 AND papel IN ('admin', 'formador') ORDER BY nome COLLATE NOCASE") as $u) {
+            $lista[(int) $u['id']] = $u;
+        }
+    }
+    return $lista;
+}
+
+// [nome, linha "Formador | CCP n.º …"] do formador da edição; sem formador indicado, os de CERTIFICADO_FORMADOR*
+function formador_certificado(int $formacao_id): array
+{
+    $u = linha_bd('SELECT u.nome, u.ccp FROM formacoes f JOIN utilizadores u ON u.id = f.formador_id WHERE f.id = ?', [$formacao_id]);
+    if (!$u) {
+        return [CERTIFICADO_FORMADOR, CERTIFICADO_FORMADOR_DADOS];
+    }
+    return [(string) $u['nome'], 'Formador' . (trim((string) $u['ccp']) !== '' ? '  |  CCP n.º ' . trim((string) $u['ccp']) : '')];
+}
+
 /* Ficha do formando para o certificado */
 
 function ficha_certificado(string $email): ?array
@@ -158,17 +181,17 @@ function numero_certificado(array $c): string
 function emitir_certificado(array $i, array $ficha): array
 {
     $ctx = contexto_certificado($i);
-    $dados = [$ficha['nome_completo'], $ficha['cc_numero'], $ficha['cc_validade'], $ctx['presencas'], $ctx['sessoes']];
+    $dados = array_merge([$ficha['nome_completo'], $ficha['cc_numero'], $ficha['cc_validade'], $ctx['presencas'], $ctx['sessoes']], formador_certificado((int) $i['formacao_id']));
     $atual = certificado_da_inscricao((int) $i['id']);
     if ($atual) {
-        executar('UPDATE certificados SET emitido = ?, nome = ?, cc_numero = ?, cc_validade = ?, presencas = ?, sessoes = ? WHERE id = ?', array_merge([agora()], $dados, [$atual['id']]));
+        executar('UPDATE certificados SET emitido = ?, nome = ?, cc_numero = ?, cc_validade = ?, presencas = ?, sessoes = ?, formador = ?, formador_dados = ? WHERE id = ?', array_merge([agora()], $dados, [$atual['id']]));
     } else {
         $pdo = bd();
         $pdo->exec('BEGIN IMMEDIATE');
         try {
             $ano = (int) date('Y');
             $n = (int) (linha_bd('SELECT COALESCE(MAX(numero), 0) + 1 AS n FROM certificados WHERE ano = ?', [$ano])['n'] ?? 1);
-            executar('INSERT INTO certificados (inscricao_id, ano, numero, emitido, nome, cc_numero, cc_validade, presencas, sessoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            executar('INSERT INTO certificados (inscricao_id, ano, numero, emitido, nome, cc_numero, cc_validade, presencas, sessoes, formador, formador_dados) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 array_merge([(int) $i['id'], $ano, $n, agora()], $dados));
             $pdo->exec('COMMIT');
         } catch (Throwable $e) {

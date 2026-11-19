@@ -118,8 +118,8 @@ function gerar_pdf_certificado(array $c, array $ctx): string
     $pdf->centrado($centro, 135, CERTIFICADO_LOCAL . ', ' . data_curta((string) $c['emitido']), $largura, 'inter', 'B', 11, 'marinho');
 
     // Assinatura
-    $pdf->centrado($centro, 166, CERTIFICADO_FORMADOR, $largura, 'inter', 'B', 11, 'marinho');
-    $pdf->centrado($centro, 171.5, CERTIFICADO_FORMADOR_DADOS, $largura, 'inter', '', 9, 'cinza');
+    $pdf->centrado($centro, 166, (string) ($c['formador'] ?? '') ?: CERTIFICADO_FORMADOR, $largura, 'inter', 'B', 11, 'marinho');
+    $pdf->centrado($centro, 171.5, (string) ($c['formador_dados'] ?? '') ?: CERTIFICADO_FORMADOR_DADOS, $largura, 'inter', '', 9, 'cinza');
     $pdf->centrado($centro, 176.5, CERTIFICADO_ENTIDADE, $largura, 'inter', '', 9, 'cinza');
     return $pdf->Output('S');
 }

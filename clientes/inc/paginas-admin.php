@@ -164,9 +164,9 @@ function admin_formacao(): void
                 . ($associadas ? ' ' . $associadas . ' pré-inscrição(ões) do curso associada(s) a esta edição: veja "Pré-inscritos", mais abaixo.' : ''));
             redirecionar('formacao', ['id' => $id]);
         }
-        $f = ['id' => $id ?: null, 'titulo' => '', 'curso_id' => $curso_id, 'modulo_id' => $f['modulo_id'] ?? null, 'inicio' => $d['data'] . ' ' . $d['hora_inicio'], 'fim' => $d['hora_fim'] ? $d['data'] . ' ' . $d['hora_fim'] : '', 'modalidade' => $d['modalidade'], 'local' => $d['local'], 'vagas' => $d['vagas'], 'estado' => $d['estado'], 'notas' => $d['notas'], 'reuniao' => $d['reuniao']];
+        $f = ['id' => $id ?: null, 'titulo' => '', 'curso_id' => $curso_id, 'modulo_id' => $f['modulo_id'] ?? null, 'inicio' => $d['data'] . ' ' . $d['hora_inicio'], 'fim' => $d['hora_fim'] ? $d['data'] . ' ' . $d['hora_fim'] : '', 'modalidade' => $d['modalidade'], 'local' => $d['local'], 'vagas' => $d['vagas'], 'estado' => $d['estado'], 'notas' => $d['notas'], 'reuniao' => $d['reuniao'], 'formador_id' => $d['formador_id']];
     }
-    $v = $f ?: ['curso_id' => (int) ($_GET['curso'] ?? 0), 'modulo_id' => null, 'inicio' => '', 'fim' => '', 'modalidade' => 'presencial', 'local' => '', 'vagas' => 12, 'estado' => 'aberta', 'notas' => '', 'reuniao' => ''];
+    $v = $f ?: ['curso_id' => (int) ($_GET['curso'] ?? 0), 'modulo_id' => null, 'inicio' => '', 'fim' => '', 'modalidade' => 'presencial', 'local' => '', 'vagas' => 12, 'estado' => 'aberta', 'notas' => '', 'reuniao' => '', 'formador_id' => null];
     $t = $v['inicio'] ? strtotime($v['inicio']) : false;
     $selecionado = (int) ($v['curso_id'] ?? 0);
     $datas = $id ? sessoes_formacao((int) $id) : [];
@@ -191,6 +191,7 @@ function admin_formacao(): void
           ' . campo('local', 'Local', (string) $v['local'], 'text', 'maxlength="160" placeholder="Morada, nas sessões presenciais ou mistas"') . '
           ' . campo('vagas', 'Vagas *', (string) $v['vagas'], 'number', 'min="1" max="500" required') . '
           ' . campo_select('estado', 'Estado *', ESTADOS_FORMACAO, $v['estado']) . '
+          ' . campo_select('formador_id', 'Formador (assina os certificados)', array_map(function ($x) { return $x['nome'] . ($x['ccp'] ? ' · CCP ' . $x['ccp'] : ''); }, formadores()), (string) ($v['formador_id'] ?? ''), 'Por indicar (' . CERTIFICADO_FORMADOR . ')') . '
         </div>
         ' . campos_sessoes_curso($selecionado, sessoes_do_formulario((int) $id)) . '
         <div class="campo"><label for="c-reuniao">Ligação da reunião online (Google Meet)</label><input id="c-reuniao" name="reuniao" type="url" value="' . h((string) $v['reuniao']) . '" maxlength="300" placeholder="https://meet.google.com/abc-defg-hij" aria-describedby="ajuda-reuniao">
@@ -368,6 +369,7 @@ function ler_sessao(): array
         'local' => texto('local', 160), 'vagas' => max(1, min(500, (int) ($_POST['vagas'] ?? 12))),
         'estado' => isset(ESTADOS_FORMACAO[$_POST['estado'] ?? '']) ? $_POST['estado'] : 'aberta',
         'notas' => texto('notas', 2000, true), 'reuniao' => texto('reuniao', 300),
+        'formador_id' => isset(formadores()[(int) ($_POST['formador_id'] ?? 0)]) ? (int) $_POST['formador_id'] : null,
     ];
     $erros = [];
     // Cada formação é uma edição do curso completo: a inscrição é sempre em todas as sessões
@@ -432,11 +434,11 @@ function gravar_sessao(array $d, int $curso_id, int $id = 0): int
     $sessoes = $d['sessoes'] ?? [];
     $inicio = $sessoes ? $sessoes[0]['inicio'] : $d['data'] . ' ' . $d['hora_inicio'] . ':00';
     $fim = $sessoes ? $sessoes[count($sessoes) - 1]['fim'] : ($d['hora_fim'] !== '' ? $d['data'] . ' ' . $d['hora_fim'] . ':00' : null);
-    $valores = [curso($curso_id)['nome'], $curso_id, null, $inicio, $fim, $d['modalidade'], $d['local'], $d['vagas'], $d['estado'], $d['notas'], $d['reuniao'] ?: null];
+    $valores = [curso($curso_id)['nome'], $curso_id, null, $inicio, $fim, $d['modalidade'], $d['local'], $d['vagas'], $d['estado'], $d['notas'], $d['reuniao'] ?: null, $d['formador_id'] ?? null];
     if ($id) {
-        executar('UPDATE formacoes SET titulo = ?, curso_id = ?, modulo_id = ?, inicio = ?, fim = ?, modalidade = ?, local = ?, vagas = ?, estado = ?, notas = ?, reuniao = ? WHERE id = ?', array_merge($valores, [$id]));
+        executar('UPDATE formacoes SET titulo = ?, curso_id = ?, modulo_id = ?, inicio = ?, fim = ?, modalidade = ?, local = ?, vagas = ?, estado = ?, notas = ?, reuniao = ?, formador_id = ? WHERE id = ?', array_merge($valores, [$id]));
     } else {
-        $id = executar('INSERT INTO formacoes (titulo, curso_id, modulo_id, inicio, fim, modalidade, local, vagas, estado, notas, reuniao, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_merge($valores, [agora()]));
+        $id = executar('INSERT INTO formacoes (titulo, curso_id, modulo_id, inicio, fim, modalidade, local, vagas, estado, notas, reuniao, formador_id, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_merge($valores, [agora()]));
     }
     executar('DELETE FROM sessoes WHERE formacao_id = ?', [$id]);
     foreach (count($sessoes) > 1 ? $sessoes : [] as $n => $s) {
@@ -1072,7 +1074,7 @@ function admin_utilizadores(): void
                 [$nome, password_hash($senha, PASSWORD_DEFAULT), $papel, $cliente_id, $existente['id']]);
             aviso('Este email já tinha acesso de formando: a conta passou ao perfil ' . h(PAPEIS[$papel]) . ' e mantém as formações e as presenças.', 'info');
         } else {
-            executar('INSERT INTO utilizadores (email, nome, senha, papel, cliente_id, criado) VALUES (?, ?, ?, ?, ?, ?)', [$email, $nome, password_hash($senha, PASSWORD_DEFAULT), $papel, $cliente_id, agora()]);
+            executar('INSERT INTO utilizadores (email, nome, senha, papel, cliente_id, criado, ccp) VALUES (?, ?, ?, ?, ?, ?, ?)', [$email, $nome, password_hash($senha, PASSWORD_DEFAULT), $papel, $cliente_id, agora(), in_array($papel, PAPEIS_GESTAO, true) ? (texto('ccp', 60) ?: null) : null]);
         }
         if ($papel === 'formando' && $cliente_id) {
             aviso_formando_associado($email, $cliente_id);
@@ -1096,7 +1098,7 @@ function admin_utilizadores(): void
     pagina_area('utilizadores', 'Utilizadores', '
       <div class="conteudo tabela-rolante"><table data-filtros="utilizadores"><thead><tr><th>Nome</th><th>Email</th><th data-filtro="lista">Perfil</th><th data-filtro="lista">Cliente</th><th data-filtro="lista">Estado</th><th>Último acesso</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
       <h2 class="espaco-topo" id="novo">Novo utilizador</h2>
-      <p class="texto-suave">Perfil Gadgetmetodo: vê e gere tudo. Perfil Cliente: vê as formações e as inscrições do seu cliente. Perfil Formando: vê as suas formações confirmadas (pelo email das inscrições) e regista a presença em cada sessão; é criado automaticamente quando uma inscrição com email é confirmada. Pode ser associado à empresa cliente que o inscreve: as suas inscrições ainda sem cliente passam a ser dessa empresa, que as vê na área reservada (as já associadas a outro cliente ficam como estão).</p>
+      <p class="texto-suave">Perfil Gadgetmetodo: vê e gere tudo. Perfil Formador: o mesmo acesso que o perfil Gadgetmetodo (vê e gere tudo); pode ser escolhido como formador de uma edição, e é ele quem assina os certificados dessa edição, com o n.º do CCP indicado aqui. Perfil Cliente: vê as formações e as inscrições do seu cliente. Perfil Formando: vê as suas formações confirmadas (pelo email das inscrições) e regista a presença em cada sessão; é criado automaticamente quando uma inscrição com email é confirmada. Pode ser associado à empresa cliente que o inscreve: as suas inscrições ainda sem cliente passam a ser dessa empresa, que as vê na área reservada (as já associadas a outro cliente ficam como estão).</p>
       <p class="texto-suave">Cliente que também é formando (por exemplo, a sócia-gerente inscrita numa formação da empresa): não precisa de outra conta. Se houver inscrições confirmadas com o email do utilizador Cliente, ele passa a ter também "As minhas formações", onde regista só a sua própria presença, com as mesmas regras do Formando, e aparece nesta lista como "Cliente + Formando". Ao confirmar uma inscrição com o email de um utilizador que já existe (Cliente ou Gadgetmetodo), não é criada outra conta e o perfil mantém-se. Os emails comparam-se sem distinguir maiúsculas de minúsculas.</p>
       <form method="post" class="formulario">' . campo_csrf() . '<div class="campos-2">
         ' . campo('nome', 'Nome *', '', 'text', 'required maxlength="120"') . '
@@ -1104,6 +1106,7 @@ function admin_utilizadores(): void
         ' . campo_select('papel', 'Perfil *', PAPEIS, 'cliente') . '
         ' . campo_select('cliente_id', 'Cliente (obrigatório no perfil Cliente; no Formando, a empresa a que pertence)', $clientes, $pre, 'Escolha o cliente') . '
         ' . campo('senha', 'Palavra-passe', '', 'text', 'minlength="10" autocomplete="new-password" placeholder="Vazio: é gerada automaticamente"') . '
+        ' . campo('ccp', 'N.º do CCP (perfis Gadgetmetodo e Formador)', '', 'text', 'maxlength="60" placeholder="Por exemplo, F625978/2014 (IEFP)"') . '
       </div>
       <label class="opcao consentimento"><input type="checkbox" name="enviar_acesso" value="1"> <span>Enviar os dados de acesso por email ao utilizador, com a palavra-passe (texto em <a href="' . h(url('comunicacao', ['aberto' => 'acesso'])) . '#email-acesso">Comunicação</a>)</span></label>
       <div><button class="botao" type="submit">Criar utilizador</button></div></form>', 'Configuração');
@@ -1142,7 +1145,7 @@ function admin_utilizador(): void
             $erro = 'Indique o nome e um email válido.';
         } elseif ($erro_cliente !== '') {
             $erro = $erro_cliente;
-        } elseif ($eu && ($papel !== 'admin' || !$ativo)) {
+        } elseif ($eu && (!in_array($papel, PAPEIS_GESTAO, true) || !$ativo)) {
             $erro = 'Não pode retirar o seu próprio acesso de administração.';
         } elseif (linha_bd('SELECT id FROM utilizadores WHERE email = ? AND id != ?', [$email, $id])) {
             $erro = 'Já existe outro utilizador com este email.';
@@ -1150,7 +1153,7 @@ function admin_utilizador(): void
         if ($erro) {
             aviso(h($erro), 'erro');
         } else {
-            executar('UPDATE utilizadores SET nome = ?, email = ?, papel = ?, cliente_id = ?, ativo = ? WHERE id = ?', [$nome, $email, $papel, $cliente_id, $ativo, $id]);
+            executar('UPDATE utilizadores SET nome = ?, email = ?, papel = ?, cliente_id = ?, ativo = ?, ccp = ? WHERE id = ?', [$nome, $email, $papel, $cliente_id, $ativo, in_array($papel, PAPEIS_GESTAO, true) ? (texto('ccp', 60) ?: null) : null, $id]);
             aviso('Utilizador atualizado.');
             if ($papel === 'formando' && $cliente_id) {
                 aviso_formando_associado($email, $cliente_id);
@@ -1164,6 +1167,7 @@ function admin_utilizador(): void
         ' . campo('email', 'Email *', $u['email'], 'email', 'required maxlength="160"') . '
         ' . campo_select('papel', 'Perfil *', PAPEIS, $u['papel']) . '
         ' . campo_select('cliente_id', 'Cliente (obrigatório no perfil Cliente; no Formando, a empresa a que pertence)', $clientes, $u['cliente_id'], $u['papel'] === 'formando' ? 'Sem empresa' : 'Escolha o cliente') . '
+        ' . campo('ccp', 'N.º do CCP (perfis Gadgetmetodo e Formador)', (string) ($u['ccp'] ?? ''), 'text', 'maxlength="60" placeholder="Por exemplo, F625978/2014 (IEFP)"') . '
       </div>
       <label class="opcao consentimento"><input type="checkbox" name="ativo" value="1"' . ($u['ativo'] ? ' checked' : '') . '> Acesso ativo</label>
       <div><button class="botao" type="submit">Guardar alterações</button></div></form>
