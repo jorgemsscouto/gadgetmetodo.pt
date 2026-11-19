@@ -155,7 +155,15 @@ function campo_get(string $nome, string $rotulo, string $valor): string
 // Ficha do formando: dados, acesso à área do formando, cursos e presenças por sessão (a administração marca ou retira)
 function admin_formando(): void
 {
-    $base = linha_bd(SQL_INSCRICOES_FORMANDO . ' WHERE i.id = ?', [(int) ($_GET['i'] ?? 0)]);
+    // Pela inscrição (&i=) ou pelo email (&e=, a partir do menu Formandos); sem inscrições, a ficha da pessoa
+    $por_email = is_string($_GET['e'] ?? null) ? trim($_GET['e']) : '';
+    $base = $por_email !== ''
+        ? linha_bd(SQL_INSCRICOES_FORMANDO . ' WHERE ' . sprintf(SQL_EMAIL_IGUAL, 'i.email') . ' ORDER BY f.inicio DESC, i.id DESC LIMIT 1', [$por_email])
+        : linha_bd(SQL_INSCRICOES_FORMANDO . ' WHERE i.id = ?', [(int) ($_GET['i'] ?? 0)]);
+    if (!$base && $por_email !== '') {
+        admin_pessoa_sem_inscricao($por_email);
+        return;
+    }
     if (!$base) {
         pagina_erro('Formando não encontrado', 'O formando pedido não existe.');
     }
@@ -252,10 +260,10 @@ function admin_formando(): void
             ' . ($confirmada ? '<div class="espaco-topo"><button class="botao botao-secundario" type="submit">Guardar presenças</button></div>' : '<p class="texto-suave">As presenças registam-se nas inscrições confirmadas.</p>') . '</form>' : '') . '
         </section>';
     }
-    pagina_area('inscricoes', $base['formando'], '
+    pagina_area('formandos', $base['formando'], '
       <div class="conteudo"><table class="tabela-ficha"><tbody>' . $ficha . '</tbody></table></div>
       <h2 class="espaco-topo">Cursos e presenças (' . count($lista) . ')</h2>
       <p class="texto-suave">A administração marca ou retira presenças em qualquer momento; as marcadas aqui não enviam email ao formando.</p>
-      ' . $cursos . ficha_certificado_admin_html($email, (int) $base['id'], ...$ficha_erros) . '
-      <p class="espaco-topo"><a href="' . h(url('inscricoes')) . '">Voltar aos formandos</a></p>', 'Formando');
+      ' . $cursos . pre_e_diagnosticos_html($email) . ficha_certificado_admin_html($email, url('formando', ['i' => $base['id']]), ...$ficha_erros) . '
+      <p class="espaco-topo"><a href="' . h(url('formandos')) . '">Voltar aos formandos</a></p>', 'Formando');
 }

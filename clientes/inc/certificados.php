@@ -445,7 +445,7 @@ function certificados_edicao_html(array $f): string
 }
 
 // Ficha do formando (administração): os dados para o certificado, editáveis
-function ficha_certificado_admin_html(string $email, int $inscricao_base, array $valores = [], array $erros = []): string
+function ficha_certificado_admin_html(string $email, string $acao, array $valores = [], array $erros = []): string
 {
     if (trim($email) === '') {
         return '<h2 class="espaco-topo" id="certificado">Dados para o certificado</h2><p class="texto-suave">Sem email: a ficha para o certificado fica associada ao email do formando. Acrescente o email na inscrição para a preencher.</p>';
@@ -454,7 +454,7 @@ function ficha_certificado_admin_html(string $email, int $inscricao_base, array 
     $v = $valores ?: ($ficha ?: []);
     return '<h2 class="espaco-topo" id="certificado">Dados para o certificado ' . (ficha_completa($ficha) ? etiqueta('Completa', 'ok') : etiqueta('Em falta', 'info')) . '</h2>
       <p class="texto-suave">' . ($ficha ? 'Atualizados em ' . h(data_hora($ficha['atualizado'])) . ((int) $ficha['atualizado_por'] === (int) (utilizador_por_email($email)['id'] ?? -1) ? ' pelo próprio formando.' : ' pela administração.') : 'O formando ainda não preencheu a ficha na área do formando. Pode preenchê-la aqui.') . '</p>
-      <form method="post" action="' . h(url('formando', ['i' => $inscricao_base])) . '#certificado" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="ficha_certificado">
+      <form method="post" action="' . h($acao) . '#certificado" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="ficha_certificado">
         ' . campos_ficha_certificado($v, $erros) . '
         <div><button class="botao botao-secundario" type="submit">Guardar os dados</button></div>
       </form>';
