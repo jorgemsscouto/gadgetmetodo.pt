@@ -7,6 +7,11 @@ declare(strict_types=1);
 
 function admin_configuracao(): void
 {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['acao'] ?? '') === 'chave_agenda') {
+        chave_agenda(true);
+        aviso('Nova chave gerada para a agenda. O endereço anterior deixou de funcionar: volte a acrescentar a agenda no Google Calendar com o endereço novo.');
+        redirecionar('configuracao', [], 'agenda');
+    }
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['acao'] ?? '') === 'chave_lembretes') {
         chave_lembretes(true);
         aviso('Nova chave gerada. Atualize o endereço na tarefa agendada do alojamento: o endereço anterior deixou de funcionar.');
@@ -28,7 +33,7 @@ function admin_configuracao(): void
     pagina_area('configuracao', 'Configuração', '
       <p class="texto-suave">Definições gerais da área reservada e do site: quem tem acesso, a tabela de preços, os emails enviados a clientes, candidatos, utilizadores e à administração e os lembretes automáticos das sessões.</p>
       <div class="cartoes-config">
-        ' . $cartao('Utilizadores', 'Acessos à área reservada: perfil Gadgetmetodo (vê e gere tudo) ou Cliente (vê as formações e as inscrições do seu cliente).', [
+        ' . $cartao('Utilizadores', 'Acessos à área reservada: perfis Gadgetmetodo e Formador (veem e gerem tudo), Cliente (vê as formações e as inscrições do seu cliente) e Formando.', [
             '<strong>' . $n('SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1') . '</strong> ativos: ' . $n("SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1 AND papel IN ('admin', 'formador')") . ' da Gadgetmetodo (incluindo formadores) e ' . $n("SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1 AND papel = 'cliente'") . ' de clientes',
             $n('SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 0') . ' inativos',
         ], '<a class="botao" href="' . h(url('utilizadores')) . '">Gerir utilizadores</a><a class="botao botao-secundario" href="' . h(url('utilizadores')) . '#novo">Novo utilizador</a>') . '
@@ -44,8 +49,11 @@ function admin_configuracao(): void
             'Envio automático: <strong>' . ($tarefa['ativo'] ? 'ativo' : 'desativado') . '</strong>',
             'Tarefa agendada: ' . ($tarefa['ultima'] ? 'última execução em ' . h(data_hora($tarefa['ultima'])) : 'ainda não executada'),
         ], '<a class="botao" href="#lembretes">Tarefa agendada</a><a class="botao botao-secundario" href="' . h(url('comunicacao', ['aberto' => 'lembrete_hora'])) . '#email-lembrete_hora">Textos dos lembretes</a>') . '
+        ' . $cartao('Agenda Google', 'Todas as sessões dos cursos num endereço que o Google Calendar subscreve (Outros calendários, A partir do URL).', [
+            '<strong>' . $n("SELECT COUNT(*) AS n FROM formacoes WHERE estado != 'cancelada' AND COALESCE(fim, inicio) >= '" . date('Y-m-d 00:00:00') . "'") . '</strong> edições futuras ou em curso',
+        ], '<a class="botao" href="#agenda">Endereço e instruções</a>') . '
       </div>
-      ' . bloco_tarefa_lembretes($tarefa), 'Gadgetmetodo');
+      ' . bloco_tarefa_lembretes($tarefa) . bloco_agenda_google(), 'Gadgetmetodo');
 }
 
 // Instruções e endereço da tarefa agendada que envia os lembretes automáticos (clientes/lembretes.php)

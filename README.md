@@ -160,6 +160,10 @@ Endereço: `https://www.gadgetmetodo.pt/clientes/` (ligação no cabeçalho e no
 
 A área precisa de SQLite no alojamento. Se não existir, mostra "Área indisponível" (o formulário de contacto continua a funcionar com ficheiros CSV).
 
+### Agenda Google das sessões
+
+Todas as sessões das edições não canceladas (dos últimos 6 meses em diante) estão num endereço iCalendar com chave própria, `https://www.gadgetmetodo.pt/clientes/agenda.ics.php?chave=…` (`clientes/agenda.ics.php` e `clientes/inc/agenda-ics.php`), mostrado em Configuração, "Agenda Google das sessões", com as instruções e o botão "Gerar nova chave". No Google Calendar da conta onde se querem as sessões: Outros calendários, "A partir do URL", colar o endereço (uma só vez). Cada sessão tem o curso e o número da sessão no título e, na descrição, os temas, a modalidade, o formador, as inscrições confirmadas, a ligação da reunião e a ligação para a edição; as horas vão em UTC (convertidas de Lisboa). O identificador de cada sessão (`formacao-ID-sessao-N@gadgetmetodo.pt`) mantém-se entre atualizações; as edições canceladas saem da agenda. O Google atualiza as agendas subscritas sozinho, com algumas horas de atraso.
+
 ### Manual do Formando em áudio
 
 Página para partilhar com os formandos: `https://www.gadgetmetodo.pt/formacoes/manual-curso-1/` (gerada por `ferramentas/gerar-site.mjs`, constante `MANUAL_CURSO1`). Tem o grafismo do site, o leitor de áudio, "Descarregar o áudio (M4A)", "Copiar a ligação desta página" e a ligação para os cursos; não é indexada nem entra no `sitemap.xml` (`noindex`). O áudio não está no Git (os `.m4a` estão no `.gitignore`): fica na raiz do site, em `/Manual_Formando_Curso1_IA_Generativa.m4a`. Para o enviar ou substituir, copiar o ficheiro com esse nome para a pasta do projeto e correr `./publicar.sh`. O `.htaccess` serve os `.m4a` como `audio/mp4`.

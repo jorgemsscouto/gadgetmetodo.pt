@@ -19,6 +19,7 @@ require __DIR__ . '/inc/inscritos.php';
 require __DIR__ . '/inc/agenda.php';
 require __DIR__ . '/inc/diagnosticos.php';
 require __DIR__ . '/inc/certificados.php';
+require __DIR__ . '/inc/agenda-ics.php';
 
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
