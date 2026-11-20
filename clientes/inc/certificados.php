@@ -342,7 +342,7 @@ function tratar_certificados_edicao(array $f): void
     $lista = [];
     foreach ($escolhidas as $iid) {
         $i = linha_bd(SQL_INSCRICAO, [$iid]);
-        if ($i && (int) $i['formacao_id'] === $id && $i['estado'] === 'confirmada') {
+        if ($i && (int) $i['formacao_id'] === $id && in_array($i['estado'], ESTADOS_ATIVOS, true)) {
             $lista[] = $i;
         }
     }
@@ -406,7 +406,7 @@ function tratar_certificados_edicao(array $f): void
 
 function certificados_edicao_html(array $f): string
 {
-    $lista = consulta("SELECT i.id FROM inscricoes i WHERE i.formacao_id = ? AND i.estado = 'confirmada' ORDER BY i.formando COLLATE NOCASE", [$f['id']]);
+    $lista = consulta("SELECT i.id FROM inscricoes i WHERE i.formacao_id = ? AND i.estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado') ORDER BY i.formando COLLATE NOCASE", [$f['id']]);
     if (!$lista) {
         return '';
     }

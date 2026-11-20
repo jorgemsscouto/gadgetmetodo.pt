@@ -61,14 +61,14 @@ function perfil_pessoa(array $x): string
     if (!$u) {
         return $x['email'] === '' ? 'Sem email' : 'Sem conta';
     }
-    $tem_inscricao = (bool) array_filter($x['inscricoes'], function ($i) { return $i['estado'] === 'confirmada'; });
+    $tem_inscricao = (bool) array_filter($x['inscricoes'], function ($i) { return in_array($i['estado'], ESTADOS_ATIVOS, true); });
     return $u['papel'] === 'formando' ? 'Formando' : (PAPEIS[$u['papel']] ?? $u['papel']) . ($tem_inscricao ? ' + Formando' : '');
 }
 
 // Situação resumida: Inscrito, Pré-inscrito, Só diagnóstico, Sem inscrição
 function situacao_pessoa(array $x): string
 {
-    $ativas = array_filter($x['inscricoes'], function ($i) { return $i['estado'] !== 'cancelada'; });
+    $ativas = array_filter($x['inscricoes'], function ($i) { return !in_array($i['estado'], ESTADOS_SAIDA, true); });
     if ($ativas) {
         return 'Inscrito';
     }
@@ -97,7 +97,7 @@ function admin_lista_formandos(): void
         $insc = '';
         foreach ($x['inscricoes'] as $i) {
             $pp = '';
-            if ($i['estado'] === 'confirmada') {
+            if (in_array($i['estado'], ESTADOS_ATIVOS, true)) {
                 [$presentes, , $total] = resumo_presencas($i);
                 $pp = ' · ' . $presentes . '/' . $total;
             }
@@ -183,7 +183,7 @@ function tratar_acoes_formandos(): void
         redirecionar('formandos');
     }
     foreach ($escolhidas as $x) {
-        $confirmada = array_values(array_filter($x['inscricoes'], function ($i) { return $i['estado'] === 'confirmada'; }))[0] ?? null;
+        $confirmada = array_values(array_filter($x['inscricoes'], function ($i) { return in_array($i['estado'], ESTADOS_ATIVOS, true); }))[0] ?? null;
         $i = $confirmada ? linha_bd(SQL_INSCRICAO, [(int) $confirmada['id']]) : null;
         if (!$i || $x['email'] === '') {
             $ignorados[] = $x['nome'] . ' (sem inscrição confirmada com email)';

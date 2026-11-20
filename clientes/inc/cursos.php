@@ -197,9 +197,9 @@ function juntar_formacoes_por_sessao(PDO $pdo): void
             $pdo->exec("DELETE FROM formacoes WHERE id IN ($outras)");
         }
         $pessoa = function (string $t) { return "COALESCE(NULLIF(lower($t.email), ''), lower($t.formando))"; };
-        $pdo->exec("UPDATE inscricoes SET estado = 'cancelada' WHERE formacao_id = $id AND estado != 'cancelada'
-            AND id != (SELECT i2.id FROM inscricoes i2 WHERE i2.formacao_id = $id AND i2.estado != 'cancelada' AND " . $pessoa('i2') . ' = ' . $pessoa('inscricoes') . "
-                ORDER BY i2.estado = 'confirmada' DESC, i2.id LIMIT 1)");
+        $pdo->exec("UPDATE inscricoes SET estado = 'desistiu' WHERE formacao_id = $id AND estado NOT IN ('desistiu', 'nao_concluido')
+            AND id != (SELECT i2.id FROM inscricoes i2 WHERE i2.formacao_id = $id AND i2.estado NOT IN ('desistiu', 'nao_concluido') AND " . $pessoa('i2') . ' = ' . $pessoa('inscricoes') . "
+                ORDER BY i2.estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado') DESC, i2.id LIMIT 1)");
     }
     $pdo->commit();
 }

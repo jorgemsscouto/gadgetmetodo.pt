@@ -64,7 +64,7 @@ function conteudo_agenda(): string
     $desde = date('Y-m-d 00:00:00', strtotime('-6 months'));
     foreach (consulta("SELECT * FROM formacoes WHERE estado != 'cancelada' AND COALESCE(fim, inicio) >= ? ORDER BY inicio", [$desde]) as $f) {
         $sessoes = sessoes_edicao($f);
-        $confirmadas = (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado = 'confirmada'", [$f['id']])['n'] ?? 0);
+        $confirmadas = (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado')", [$f['id']])['n'] ?? 0);
         $formador = !empty($f['formador_id']) ? (string) (linha_bd('SELECT nome FROM utilizadores WHERE id = ?', [(int) $f['formador_id']])['nome'] ?? '') : '';
         $online = ($f['modalidade'] ?? '') !== 'presencial' && !empty($f['reuniao']);
         foreach ($sessoes as $s) {

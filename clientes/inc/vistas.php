@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 // Separadores da Configuração (só administração)
-const CONFIGURACAO = ['configuracao' => 'Visão geral', 'utilizadores' => 'Utilizadores', 'precos' => 'Preços', 'comunicacao' => 'Comunicação'];
+const CONFIGURACAO = ['configuracao' => 'Visão geral', 'utilizadores' => 'Utilizadores', 'precos' => 'Preços', 'comunicacao' => 'Comunicação', 'migracoes' => 'Migrações'];
 
 // Ícones do menu (traço simples, 24 x 24), como na barra lateral do portal de referência
 const ICONES_MENU = [
@@ -178,7 +178,8 @@ function nivel_etiqueta(?string $nivel): string
 
 function estado_etiqueta(string $estado, array $nomes): string
 {
-    $tipos = ['aberta' => 'ok', 'confirmada' => 'ok', 'pendente' => 'info', 'fechada' => '', 'cancelada' => 'erro'];
+    $tipos = ['aberta' => 'ok', 'fechada' => '', 'cancelada' => 'erro', 'encerrada' => '', 'inscrito' => 'info', 'em_formacao' => 'ok', 'concluido' => 'ok',
+        'certificado' => 'ok', 'encerrado' => '', 'desistiu' => 'erro', 'nao_concluido' => 'erro'];
     return etiqueta($nomes[$estado] ?? $estado, $tipos[$estado] ?? '');
 }
 

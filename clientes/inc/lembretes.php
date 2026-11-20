@@ -107,7 +107,7 @@ function enviar_lembretes(array $f, array $s, string $tipo): array
 {
     $enviados = 0;
     $falhados = 0;
-    foreach (consulta("SELECT id FROM inscricoes WHERE formacao_id = ? AND estado = 'confirmada' ORDER BY id", [$f['id']]) as $linha) {
+    foreach (consulta("SELECT id FROM inscricoes WHERE formacao_id = ? AND estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado') ORDER BY id", [$f['id']]) as $linha) {
         $i = linha_bd(SQL_INSCRICAO, [$linha['id']]);
         $contacto = $i['email'] ? null : contacto_inscricao($i);
         $para = $i['email'] ?: ($contacto['email'] ?? '');
@@ -151,7 +151,7 @@ function sessoes_para_lembrete(): array
         ) x JOIN formacoes f ON f.id = x.formacao_id
         WHERE f.estado <> 'cancelada' AND COALESCE(f.lembrete_antecedencia, " . LEMBRETE_ANTECEDENCIA . ") > 0 AND x.inicio > ?
           AND x.inicio <= datetime(?, '+' || COALESCE(f.lembrete_antecedencia, " . LEMBRETE_ANTECEDENCIA . ") || ' minutes')
-          AND EXISTS (SELECT 1 FROM inscricoes i WHERE i.formacao_id = f.id AND i.estado = 'confirmada')
+          AND EXISTS (SELECT 1 FROM inscricoes i WHERE i.formacao_id = f.id AND i.estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado'))
           AND NOT EXISTS (SELECT 1 FROM lembretes l WHERE l.formacao_id = f.id AND l.sessao = x.inicio AND l.tipo = 'hora')
         ORDER BY x.inicio", [$agora, $agora]);
 }

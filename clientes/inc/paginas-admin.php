@@ -7,7 +7,7 @@ function admin_painel(): void
 {
     $n = function (string $sql) { return (int) (linha_bd($sql)['n'] ?? 0); };
     $proximas = consulta("SELECT * FROM formacoes WHERE inicio >= ? AND estado != 'cancelada' ORDER BY inicio LIMIT 5", [date('Y-m-d 00:00:00')]);
-    $ultimas = consulta('SELECT i.*, ' . SQL_CLIENTE . ', f.titulo, f.inicio FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id ORDER BY i.criado DESC LIMIT 8');
+    $ultimas = consulta('SELECT i.*, ' . SQL_CLIENTE . ', COALESCE(f.titulo, (SELECT c2.nome FROM cursos c2 WHERE c2.id = i.curso_id)) AS titulo, f.inicio FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id LEFT JOIN formacoes f ON f.id = i.formacao_id ORDER BY i.criado DESC LIMIT 8');
     $linhas = '';
     foreach ($ultimas as $i) {
         $linhas .= '<tr><td>' . h(data_hora($i['criado'])) . '</td><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . cliente_html($i) . etiqueta_origem($i) . '</td><td>' . h($i['titulo']) . ', ' . h(data_hora($i['inicio'], false)) . '</td><td>' . nivel_etiqueta($i['nivel']) . '</td></tr>';
@@ -15,9 +15,9 @@ function admin_painel(): void
     pagina_area('painel', 'Painel', '
       <div class="numeros">
         <div><strong>' . $n("SELECT COUNT(*) AS n FROM formacoes WHERE inicio >= '" . date('Y-m-d') . "' AND estado != 'cancelada'") . '</strong>formações agendadas</div>
-        <div><strong>' . $n("SELECT COUNT(*) AS n FROM inscricoes WHERE estado != 'cancelada'") . '</strong>inscrições ativas</div>
+        <div><strong>' . $n("SELECT COUNT(*) AS n FROM inscricoes WHERE estado NOT IN ('desistiu', 'nao_concluido')") . '</strong>inscrições ativas</div>
         <div><strong>' . $n('SELECT COUNT(*) AS n FROM clientes') . '</strong>clientes</div>
-        <div><a href="' . h(url('inscricoes', ['origem' => 'por_associar'])) . '"><strong>' . $n("SELECT COUNT(*) AS n FROM inscricoes WHERE cliente_id IS NULL AND estado != 'cancelada'") . '</strong>inscrições do site por associar</a></div>
+        <div><a href="' . h(url('inscricoes', ['origem' => 'por_associar'])) . '"><strong>' . $n("SELECT COUNT(*) AS n FROM inscricoes WHERE cliente_id IS NULL AND estado NOT IN ('desistiu', 'nao_concluido')") . '</strong>inscrições do site por associar</a></div>
         <div><a href="' . h(url('inscricoes', ['estado' => 'preinscricao'])) . '"><strong>' . $n("SELECT COUNT(*) AS n FROM preinscricoes WHERE estado = 'nova'") . '</strong>pré-inscrições por tratar</a></div>
         <div><strong>' . $n('SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1') . '</strong>utilizadores ativos</div>
       </div>
@@ -205,7 +205,7 @@ function admin_formacao(): void
       </form>';
     $inscritos = '';
     if ($id) {
-        $confirmadas = (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado = 'confirmada'", [$id])['n'] ?? 0);
+        $confirmadas = (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado')", [$id])['n'] ?? 0);
         if (!empty($v['reuniao']) && $confirmadas) {
             $form .= '<form method="post" class="espaco-topo">' . campo_csrf() . '<input type="hidden" name="acao" value="enviar_reuniao"><button class="botao botao-secundario" type="submit">Enviar a ligação da reunião às ' . $confirmadas . ' inscrição(ões) confirmada(s)</button>
               <p class="ajuda">Envia a cada formando (ou, sem email do formando, a quem o inscreveu) uma mensagem com a data, a hora e a ligação. Útil quando a ligação é criada ou alterada depois das confirmações. Para lembrar a próxima sessão, use "Lembretes aos formandos", na lista de inscritos.</p></form>';
@@ -248,8 +248,8 @@ function admin_formacao(): void
 // Outras edições do mesmo curso que podem ser juntadas a esta (não canceladas, dos últimos 6 meses em diante)
 function edicoes_para_juntar(array $f): array
 {
-    return consulta("SELECT f.*, (SELECT COUNT(*) FROM inscricoes i WHERE i.formacao_id = f.id AND i.estado != 'cancelada') AS n_inscritos,
-            (SELECT COUNT(*) FROM inscricoes i WHERE i.formacao_id = f.id AND i.estado = 'confirmada') AS n_confirmadas
+    return consulta("SELECT f.*, (SELECT COUNT(*) FROM inscricoes i WHERE i.formacao_id = f.id AND i.estado NOT IN ('desistiu', 'nao_concluido')) AS n_inscritos,
+            (SELECT COUNT(*) FROM inscricoes i WHERE i.formacao_id = f.id AND i.estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado')) AS n_confirmadas
         FROM formacoes f WHERE f.curso_id = ? AND f.id != ? AND f.estado != 'cancelada' AND COALESCE(f.fim, f.inicio) >= ? ORDER BY f.inicio",
         [(int) $f['curso_id'], (int) $f['id'], date('Y-m-d 00:00:00', strtotime('-180 days'))]);
 }
@@ -321,9 +321,9 @@ function juntar_edicoes(array $f, array $ids, bool $datas, bool $ordenar): array
             executar('DELETE FROM formacoes WHERE id = ?', [$e['id']]);
         }
         $pessoa = function (string $t) { return "COALESCE(NULLIF(lower($t.email), ''), lower($t.formando))"; };
-        $st = $pdo->prepare("UPDATE inscricoes SET estado = 'cancelada' WHERE formacao_id = ? AND estado != 'cancelada'
-            AND id != (SELECT i2.id FROM inscricoes i2 WHERE i2.formacao_id = inscricoes.formacao_id AND i2.estado != 'cancelada' AND " . $pessoa('i2') . ' = ' . $pessoa('inscricoes') . "
-                ORDER BY i2.estado = 'confirmada' DESC, i2.id LIMIT 1)");
+        $st = $pdo->prepare("UPDATE inscricoes SET estado = 'desistiu' WHERE formacao_id = ? AND estado NOT IN ('desistiu', 'nao_concluido')
+            AND id != (SELECT i2.id FROM inscricoes i2 WHERE i2.formacao_id = inscricoes.formacao_id AND i2.estado NOT IN ('desistiu', 'nao_concluido') AND " . $pessoa('i2') . ' = ' . $pessoa('inscricoes') . "
+                ORDER BY i2.estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado') DESC, i2.id LIMIT 1)");
         $st->execute([$id]);
         $repetidas = $st->rowCount();
         $pdo->commit();
@@ -813,7 +813,7 @@ function edicoes_do_curso_html(int $curso_id): string
         $n = count(sessoes_formacao((int) $f['id'])) ?: 1;
         $formato = texto_formato(duracoes_formato((string) $f['formato']));
         $formador = !empty($f['formador_id']) ? (string) (linha_bd('SELECT nome FROM utilizadores WHERE id = ?', [(int) $f['formador_id']])['nome'] ?? '') : '';
-        $confirmadas = (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado = 'confirmada'", [$f['id']])['n'] ?? 0);
+        $confirmadas = (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado')", [$f['id']])['n'] ?? 0);
         $decorrida = strtotime((string) ($f['fim'] ?: $f['inicio'])) < strtotime($hoje);
         $linhas .= '<tr><td data-valor="' . h($f['inicio']) . '"><a href="' . h(url('formacao', ['id' => $f['id']])) . '">' . h(horario($f)) . '</a>' . ($decorrida ? '<br>' . etiqueta('Decorrida') : '') . '</td>'
             . '<td>' . h($formato !== '' ? $formato : $n . ($n === 1 ? ' sessão' : ' sessões')) . '</td><td>' . h(modalidade_e_local($f)) . '</td><td>' . h($formador) . '</td>'
@@ -1062,7 +1062,7 @@ function admin_inscricoes(): void
     $filtros = ['formacao' => (int) ($_GET['formacao'] ?? 0), 'cliente' => (int) ($_GET['cliente'] ?? 0), 'estado' => isset($estados[$_GET['estado'] ?? '']) ? $_GET['estado'] : '', 'origem' => isset($origens[$_GET['origem'] ?? '']) ? $_GET['origem'] : ''];
     $com_pre = !$filtros['formacao'] && !$filtros['cliente'] && in_array($filtros['estado'], ['', 'preinscricao'], true) && in_array($filtros['origem'], ['', 'site', 'por_associar'], true);
     $pre = $com_pre ? consulta("SELECT p.*, c.nome AS curso, fe.inicio AS edicao_inicio FROM preinscricoes p JOIN cursos c ON c.id = p.curso_id LEFT JOIN formacoes fe ON fe.id = p.formacao_id AND fe.estado != 'cancelada' WHERE p.estado != 'inscrita' ORDER BY p.estado = 'nova' DESC, p.criado DESC") : [];
-    $sql = 'SELECT i.*, ' . SQL_CLIENTE . ', f.titulo, f.inicio FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id WHERE ' . ($filtros['estado'] === 'preinscricao' ? '0 = 1' : '1 = 1');
+    $sql = 'SELECT i.*, ' . SQL_CLIENTE . ', COALESCE(f.titulo, (SELECT c2.nome FROM cursos c2 WHERE c2.id = i.curso_id)) AS titulo, f.inicio FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id LEFT JOIN formacoes f ON f.id = i.formacao_id WHERE ' . ($filtros['estado'] === 'preinscricao' ? '0 = 1' : '1 = 1');
     $par = [];
     if ($filtros['formacao']) { $sql .= ' AND i.formacao_id = ?'; $par[] = $filtros['formacao']; }
     if ($filtros['cliente']) { $sql .= ' AND i.cliente_id = ?'; $par[] = $filtros['cliente']; }
@@ -1220,8 +1220,8 @@ function admin_utilizadores(): void
     }
     $lista = consulta('SELECT u.*, c.nome AS cliente FROM utilizadores u LEFT JOIN clientes c ON c.id = u.cliente_id ORDER BY u.papel, c.nome, u.nome');
     // Emails com inscrições confirmadas próprias: os utilizadores Cliente com um destes emails também são formandos
-    $formandos = array_flip(array_column(consulta('SELECT DISTINCT LOWER(TRIM(i.email)) AS e FROM inscricoes i JOIN formacoes f ON f.id = i.formacao_id'
-        . " WHERE i.estado = 'confirmada' AND f.estado != 'cancelada' AND TRIM(COALESCE(i.email, '')) != ''"), 'e'));
+    $formandos = array_flip(array_column(consulta('SELECT DISTINCT LOWER(TRIM(i.email)) AS e FROM inscricoes i LEFT JOIN formacoes f ON f.id = i.formacao_id'
+        . " WHERE i.estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado') AND COALESCE(f.estado, '') != 'cancelada' AND TRIM(COALESCE(i.email, '')) != ''"), 'e'));
     $linhas = '';
     foreach ($lista as $u) {
         $perfil = PAPEIS[$u['papel']] . ($u['papel'] === 'cliente' && isset($formandos[strtolower(trim((string) $u['email']))]) ? ' + Formando' : '');

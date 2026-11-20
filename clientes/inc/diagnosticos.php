@@ -99,7 +99,7 @@ function inscricoes_do_email_html(string $email): string
         return '';
     }
     $partes = [];
-    foreach (consulta("SELECT i.id, f.titulo, f.inicio FROM inscricoes i JOIN formacoes f ON f.id = i.formacao_id WHERE i.estado != 'cancelada' AND " . sprintf(SQL_EMAIL_IGUAL, 'i.email') . ' ORDER BY f.inicio', [$email]) as $i) {
+    foreach (consulta("SELECT i.id, COALESCE(f.titulo, (SELECT c2.nome FROM cursos c2 WHERE c2.id = i.curso_id)) AS titulo, f.inicio FROM inscricoes i LEFT JOIN formacoes f ON f.id = i.formacao_id WHERE i.estado NOT IN ('desistiu', 'nao_concluido') AND " . sprintf(SQL_EMAIL_IGUAL, 'i.email') . ' ORDER BY f.inicio', [$email]) as $i) {
         $curso = preg_match('/^(Curso\s+\d+)\s*:/u', (string) $i['titulo'], $m) ? $m[1] : (string) $i['titulo'];
         $partes[] = '<a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($curso) . '</a> <span class="texto-suave">(' . h(date('d/m/Y', strtotime($i['inicio']))) . ')</span>';
     }
@@ -134,7 +134,7 @@ function inscrever_diagnosticos_sem_emails(): void
             'formando' => (string) $d['nome'], 'email' => $email, 'funcao' => '', 'ferramentas' => is_array($ferramentas) ? array_map('strval', $ferramentas) : [], 'expectativas' => ''],
             is_array($respostas) ? $respostas : [], true);
         if ($r['erro'] === '') {
-            executar("UPDATE inscricoes SET estado = 'confirmada' WHERE id = ?", [$r['id']]);
+            executar("UPDATE inscricoes SET estado = 'inscrito' WHERE id = ?", [$r['id']]);
             $feitas[] = (string) $d['nome'];
         } else {
             $falhas[] = $d['nome'] . ' (' . rtrim($r['erro'], '.') . ')';

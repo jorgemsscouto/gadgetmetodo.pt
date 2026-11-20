@@ -41,7 +41,7 @@ function botao_inscrever(array $f, int $restantes): string
 function cliente_painel(): void
 {
     $u = utilizador();
-    $minhas = consulta("SELECT i.*, f.titulo, f.inicio, f.fim, f.modalidade, f.local FROM inscricoes i JOIN formacoes f ON f.id = i.formacao_id WHERE i.cliente_id = ? AND f.inicio >= ? AND i.estado != 'cancelada' ORDER BY f.inicio", [$u['cliente_id'], date('Y-m-d 00:00:00')]);
+    $minhas = consulta("SELECT i.*, COALESCE(f.titulo, (SELECT c2.nome FROM cursos c2 WHERE c2.id = i.curso_id)) AS titulo, f.inicio, f.fim, f.modalidade, f.local FROM inscricoes i LEFT JOIN formacoes f ON f.id = i.formacao_id WHERE i.cliente_id = ? AND f.inicio >= ? AND i.estado != 'cancelada' ORDER BY f.inicio", [$u['cliente_id'], date('Y-m-d 00:00:00')]);
     $linhas = '';
     foreach ($minhas as $i) {
         $linhas .= '<tr><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . h($i['titulo']) . '<br><span class="texto-suave">' . h(horario($i)) . '</span></td><td>' . estado_etiqueta($i['estado'], ESTADOS_INSCRICAO) . '</td></tr>';
@@ -65,7 +65,7 @@ function cliente_formacoes(): void
 function cliente_inscricoes(): void
 {
     $u = utilizador();
-    $lista = consulta('SELECT i.*, f.titulo, f.inicio, f.fim FROM inscricoes i JOIN formacoes f ON f.id = i.formacao_id WHERE i.cliente_id = ? ORDER BY f.inicio DESC, i.formando', [$u['cliente_id']]);
+    $lista = consulta('SELECT i.*, COALESCE(f.titulo, (SELECT c2.nome FROM cursos c2 WHERE c2.id = i.curso_id)) AS titulo, f.inicio, f.fim FROM inscricoes i LEFT JOIN formacoes f ON f.id = i.formacao_id WHERE i.cliente_id = ? ORDER BY f.inicio DESC, i.formando', [$u['cliente_id']]);
     if (!empty($_GET['exportar'])) {
         $linhas = [];
         foreach ($lista as $i) {
@@ -234,7 +234,7 @@ function contacto_inscricao(array $i): ?array
     return null;
 }
 
-const SQL_INSCRICAO = 'SELECT i.*, ' . SQL_CLIENTE . ', f.titulo, f.modulo, f.curso_id, f.modulo_id, f.reuniao, f.inicio, f.fim, f.modalidade, f.local, f.estado AS estado_formacao, u.nome AS autor, u.email AS autor_email, u.papel AS autor_papel FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id LEFT JOIN utilizadores u ON u.id = i.utilizador_id WHERE i.id = ?';
+const SQL_INSCRICAO = 'SELECT i.*, ' . SQL_CLIENTE . ', COALESCE(f.titulo, (SELECT c2.nome FROM cursos c2 WHERE c2.id = i.curso_id)) AS titulo, f.modulo, f.modulo_id, f.reuniao, f.inicio, f.fim, f.modalidade, f.local, f.estado AS estado_formacao, u.nome AS autor, u.email AS autor_email, u.papel AS autor_papel FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id LEFT JOIN formacoes f ON f.id = i.formacao_id LEFT JOIN utilizadores u ON u.id = i.utilizador_id WHERE i.id = ?';
 
 // Grava uma inscrição numa transação, para que duas inscrições em simultâneo não ultrapassem as vagas.
 // Devolve o identificador e o resultado do diagnóstico, ou a mensagem de erro.
@@ -243,7 +243,7 @@ function gravar_inscricao(array $f, array $v, array $respostas, bool $sem_limite
     $pdo = bd();
     $pdo->exec('BEGIN IMMEDIATE');
     $erro = '';
-    if ($v['email'] !== '' && linha_bd("SELECT id FROM inscricoes WHERE formacao_id = ? AND email = ? COLLATE NOCASE AND estado != 'cancelada'", [$f['id'], $v['email']])) {
+    if ($v['email'] !== '' && linha_bd("SELECT id FROM inscricoes WHERE formacao_id = ? AND email = ? COLLATE NOCASE AND estado NOT IN ('desistiu', 'nao_concluido')", [$f['id'], $v['email']])) {
         $erro = 'Este formando já está inscrito nesta formação.';
     } elseif (!$sem_limite_vagas && inscritos((int) $f['id']) >= (int) $f['vagas']) {
         $erro = 'Já não há vagas nesta formação.';
@@ -253,9 +253,10 @@ function gravar_inscricao(array $f, array $v, array $respostas, bool $sem_limite
         return ['erro' => $erro];
     }
     $a = $respostas ? avaliar_diagnostico($respostas) : ['pontuacao' => null, 'responsavel' => null, 'nivel' => null, 'recomendacao' => ''];
-    $id = executar('INSERT INTO inscricoes (formacao_id, cliente_id, utilizador_id, origem, tipo_cliente, empresa, nif, contacto_nome, contacto_email, contacto_telefone, formando, email, funcao, respostas, pontuacao, responsavel, nivel, ferramentas, expectativas, estado, criado, idioma) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    $formando_id = formando_para((string) $v['formando'], (string) $v['email'], $v['cliente_id'] ?: null);
+    $id = executar('INSERT INTO inscricoes (formacao_id, cliente_id, utilizador_id, origem, tipo_cliente, empresa, nif, contacto_nome, contacto_email, contacto_telefone, formando, email, funcao, respostas, pontuacao, responsavel, nivel, ferramentas, expectativas, estado, criado, idioma, curso_id, formando_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [$f['id'], $v['cliente_id'] ?: null, $v['utilizador_id'] ?? null, $v['origem'], ($v['tipo_cliente'] ?? '') ?: null, ($v['empresa'] ?? '') ?: null, ($v['nif'] ?? '') ?: null, $v['contacto_nome'] ?? null, $v['contacto_email'] ?? null, $v['contacto_telefone'] ?? null,
-         $v['formando'], $v['email'], $v['funcao'], $respostas ? json_encode($respostas) : null, $a['pontuacao'], $a['responsavel'], $a['nivel'], implode(', ', $v['ferramentas']), $v['expectativas'], 'pendente', agora(), idioma_da_pagina_publica()]);
+         $v['formando'], $v['email'], $v['funcao'], $respostas ? json_encode($respostas) : null, $a['pontuacao'], $a['responsavel'], $a['nivel'], implode(', ', $v['ferramentas']), $v['expectativas'], 'inscrito', agora(), idioma_da_pagina_publica(), $f['curso_id'] ?? null, $formando_id]);
     $pdo->exec('COMMIT');
     return ['erro' => '', 'id' => $id] + $a;
 }
@@ -342,8 +343,8 @@ function pagina_inscricao(): void
     $contacto = contacto_inscricao($i);
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $acao = (string) ($_POST['acao'] ?? '');
-        if ($acao === 'cancelar' && $i['estado'] !== 'cancelada' && ($admin || $futura)) {
-            executar("UPDATE inscricoes SET estado = 'cancelada' WHERE id = ?", [$id]);
+        if ($acao === 'cancelar' && !in_array($i['estado'], ESTADOS_SAIDA, true) && ($admin || $futura)) {
+            executar("UPDATE inscricoes SET estado = 'desistiu' WHERE id = ?", [$id]);
             if (!$admin) {
                 enviar_mensagem('cancelamento_aviso', email_admin(), ['utilizador' => utilizador()['nome'], 'formando' => $i['formando'], 'cliente' => $i['cliente'],
                     'formacao' => $i['titulo'], 'data' => data_hora($i['inicio'], false), 'horario' => horario($i)]);
@@ -358,21 +359,21 @@ function pagina_inscricao(): void
             } else {
                 aviso('Estado atualizado.');
             }
-            // Inscrição confirmada: acesso do formando à área do formando (conta e ligação para definir a palavra-passe)
-            if ($novo === 'confirmada' && $i['estado'] !== 'confirmada' && ($acesso = acesso_apos_confirmacao($id))) {
+            // Inscrição reativada (de Desistiu ou Não concluído): acesso do formando à área do formando
+            if (in_array($novo, ESTADOS_ATIVOS, true) && !in_array($i['estado'], ESTADOS_ATIVOS, true) && ($acesso = acesso_apos_confirmacao($id))) {
                 aviso(...$acesso);
             }
-        } elseif ($acao === 'edicao' && $admin && $i['estado'] !== 'cancelada') {
+        } elseif ($acao === 'edicao' && $admin && !in_array($i['estado'], ESTADOS_SAIDA, true)) {
             // Passar a inscrição para outra edição (por exemplo, a do curso aconselhado pelo diagnóstico)
             $nova = linha_bd("SELECT * FROM formacoes WHERE id = ? AND estado != 'cancelada'", [(int) ($_POST['formacao_id'] ?? 0)]);
             if (!$nova) {
                 aviso('Escolha a edição.', 'erro');
             } elseif ((int) $nova['id'] === (int) $i['formacao_id']) {
                 aviso('A inscrição já está nesta edição.', 'info');
-            } elseif ((string) $i['email'] !== '' && linha_bd("SELECT id FROM inscricoes WHERE formacao_id = ? AND email = ? COLLATE NOCASE AND estado != 'cancelada' AND id != ?", [$nova['id'], $i['email'], $id])) {
+            } elseif ((string) $i['email'] !== '' && linha_bd("SELECT id FROM inscricoes WHERE formacao_id = ? AND email = ? COLLATE NOCASE AND estado NOT IN ('desistiu', 'nao_concluido') AND id != ?", [$nova['id'], $i['email'], $id])) {
                 aviso('Este formando já está inscrito nessa edição.', 'erro');
             } else {
-                executar('UPDATE inscricoes SET formacao_id = ? WHERE id = ?', [$nova['id'], $id]);
+                executar('UPDATE inscricoes SET formacao_id = ?, curso_id = ? WHERE id = ?', [$nova['id'], $nova['curso_id'], $id]);
                 aviso('Inscrição passada para ' . h($nova['titulo']) . ' (' . h(horario($nova)) . ').');
             }
         } elseif ($acao === 'associar' && $admin && $i['cliente_id'] === null) {
@@ -411,7 +412,7 @@ function pagina_inscricao(): void
         $aconselha = $ind && (int) $ind['curso']['id'] !== (int) $i['curso_id']
             ? '<div class="aviso aviso-info">O diagnóstico aconselha ' . h(curso_com_artigo((string) $ind['curso']['nome'])) . ' (' . h($ind['motivo']) . '). Antes de confirmar, pode passar a inscrição para uma edição desse curso ou de outro'
               . (array_filter(array_keys($opcoes), function ($k) use ($opcoes) { return strpos($opcoes[$k], '(curso aconselhado)') !== false; }) ? '.' : '; ainda não há edições desse curso: crie-a no Calendário.') . '</div>' : '';
-        if ($i['estado'] !== 'cancelada' && count($opcoes) > 1) {
+        if (!in_array($i['estado'], ESTADOS_SAIDA, true) && count($opcoes) > 1) {
             $acoes = $aconselha . '<form method="post" class="formulario linha-form">' . campo_csrf() . '<input type="hidden" name="acao" value="edicao">
               ' . campo_select('formacao_id', 'Edição (curso) da inscrição', $opcoes, (string) $i['formacao_id']) . '
               <div></div><div><button class="botao botao-secundario" type="submit">Mudar de edição</button></div></form>' . $acoes;
@@ -425,7 +426,7 @@ function pagina_inscricao(): void
               ' . campo_select('cliente_id', 'Associar a cliente', $clientes, '', 'Escolha o cliente', 'required') . '
               <div></div><div><button class="botao botao-secundario" type="submit">Associar</button></div></form>';
         }
-    } elseif ($i['estado'] !== 'cancelada' && $futura) {
+    } elseif (!in_array($i['estado'], ESTADOS_SAIDA, true) && $futura) {
         $acoes = '<form method="post" class="espaco-topo">' . campo_csrf() . '<input type="hidden" name="acao" value="cancelar"><button class="botao botao-secundario" type="submit">Cancelar esta inscrição</button></form>';
     }
     $publica = $i['origem'] === 'site';
@@ -435,7 +436,7 @@ function pagina_inscricao(): void
         'Cliente' => cliente_html($i) . ($i['nif'] ? ' <span class="texto-suave">· NIF ' . h($i['nif']) . '</span>' : ''),
         'Formando' => h($i['formando']), 'Email' => h($i['email']), 'Função' => h($i['funcao']),
         'Estado' => estado_etiqueta($i['estado'], ESTADOS_INSCRICAO),
-        'Sessões online' => $i['modalidade'] === 'presencial' || !$i['reuniao'] ? '' : ($admin || $i['estado'] === 'confirmada'
+        'Sessões online' => $i['modalidade'] === 'presencial' || !$i['reuniao'] ? '' : ($admin || in_array($i['estado'], ESTADOS_ATIVOS, true)
             ? '<a href="' . h($i['reuniao']) . '" target="_blank" rel="noopener">Entrar na reunião</a><br><span class="texto-suave">' . h($i['reuniao']) . '</span>'
             : '<span class="texto-suave">A ligação para a reunião é enviada com a confirmação da inscrição.</span>'),
         'Origem' => h(ORIGENS[$i['origem']] ?? $i['origem']) . (($pre = $admin ? linha_bd('SELECT id, criado, formandos FROM preinscricoes WHERE inscricao_id = ?', [$id]) : null)
@@ -511,7 +512,7 @@ function pagina_conta(): void
 // Email a quem fez a inscrição com o novo estado; na confirmação, com o local e a ligação da sessão online (cópia ao formando)
 function avisar_estado_inscricao(array $i, string $novo, array $contacto): bool
 {
-    $confirmada = $novo === 'confirmada';
+    $confirmada = $novo === 'inscrito';
     $local = $confirmada ? modalidade_e_local($i, ': ') : '';
     [$reuniao_html, $reuniao_texto] = $confirmada ? bloco_reuniao($i) : ['', ''];
     [$datas_html, $datas_texto] = datas_email($i);
@@ -555,7 +556,7 @@ function bloco_reuniao(array $i): array
 function enviar_reuniao_confirmados(array $f): int
 {
     $enviados = 0;
-    foreach (consulta("SELECT id FROM inscricoes WHERE formacao_id = ? AND estado = 'confirmada'", [$f['id']]) as $linha) {
+    foreach (consulta("SELECT id FROM inscricoes WHERE formacao_id = ? AND estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado')", [$f['id']]) as $linha) {
         $i = linha_bd(SQL_INSCRICAO, [$linha['id']]);
         $contacto = contacto_inscricao($i);
         $para = $i['email'] ?: ($contacto['email'] ?? '');

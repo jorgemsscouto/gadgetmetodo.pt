@@ -22,8 +22,8 @@ function mesmo_email(string $a, string $b): bool
 // Inscrições confirmadas de um email em edições não canceladas: o que dá acesso a "As minhas formações"
 function sql_inscricoes_do_email(string $colunas): string
 {
-    return 'SELECT ' . $colunas . ' FROM inscricoes i JOIN formacoes f ON f.id = i.formacao_id WHERE ' . sprintf(SQL_EMAIL_IGUAL, 'i.email')
-        . " AND i.estado = 'confirmada' AND f.estado != 'cancelada'";
+    return 'SELECT ' . $colunas . ' FROM inscricoes i LEFT JOIN formacoes f ON f.id = i.formacao_id WHERE ' . sprintf(SQL_EMAIL_IGUAL, 'i.email')
+        . " AND i.estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado') AND COALESCE(f.estado, '') != 'cancelada'";
 }
 
 // Formando associado a uma empresa cliente: as suas inscrições ainda sem cliente (pelo email) passam a ser dessa empresa,
@@ -182,7 +182,7 @@ function garantir_acesso_formando(array $i): string
 function acesso_apos_confirmacao(int $inscricao_id): ?array
 {
     $i = linha_bd(SQL_INSCRICAO, [$inscricao_id]);
-    if (!$i || $i['estado'] !== 'confirmada') {
+    if (!$i || !in_array($i['estado'], ESTADOS_ATIVOS, true)) {
         return null;
     }
     $quem = h((string) $i['formando']);
@@ -301,7 +301,7 @@ function formando_painel(): void
         $i = linha_bd(SQL_INSCRICAO, [$id]);
         // Só a própria presença: a inscrição tem de ser do email do utilizador (também para um Cliente que é formando,
         // que nunca regista a presença de outros inscritos do seu cliente)
-        $minha = $i && mesmo_email((string) $i['email'], (string) $u['email']) && $i['estado'] === 'confirmada' && $i['estado_formacao'] !== 'cancelada';
+        $minha = $i && mesmo_email((string) $i['email'], (string) $u['email']) && in_array($i['estado'], ESTADOS_ATIVOS, true) && $i['estado_formacao'] !== 'cancelada';
         $s = $minha ? (sessoes_da_inscricao($i)[$n - 1] ?? null) : null;
         if (!$s) {
             aviso('Sessão não encontrada.', 'erro');
@@ -373,7 +373,7 @@ function tratar_presencas_edicao(array $f): void
         $mostradas = is_array($_POST['mostradas'] ?? null) ? array_map('intval', array_keys($_POST['mostradas'])) : [];
         $novas = 0;
         $retiradas = 0;
-        foreach (consulta("SELECT id FROM inscricoes WHERE formacao_id = ? AND estado = 'confirmada'", [$id]) as $l) {
+        foreach (consulta("SELECT id FROM inscricoes WHERE formacao_id = ? AND estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado')", [$id]) as $l) {
             $iid = (int) $l['id'];
             if (!in_array($iid, $mostradas, true)) {
                 continue;
@@ -394,7 +394,7 @@ function tratar_presencas_edicao(array $f): void
     }
     if ($acao === 'acessos') {
         $contagem = ['criado' => 0, 'reenviado' => 0, 'falhou' => 0];
-        foreach (consulta("SELECT id FROM inscricoes WHERE formacao_id = ? AND estado = 'confirmada'", [$id]) as $l) {
+        foreach (consulta("SELECT id FROM inscricoes WHERE formacao_id = ? AND estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado')", [$id]) as $l) {
             $r = garantir_acesso_formando(linha_bd(SQL_INSCRICAO, [$l['id']]));
             if (isset($contagem[$r])) {
                 $contagem[$r]++;
@@ -415,7 +415,7 @@ function presencas_edicao_html(array $f): string
 {
     $sessoes = sessoes_edicao($f);
     $lista = consulta("SELECT i.id, i.formando, i.email, u.id AS uid, u.papel, u.token_senha, u.token_validade, u.ultimo_acesso FROM inscricoes i
-        LEFT JOIN utilizadores u ON TRIM(u.email) = TRIM(i.email) COLLATE NOCASE WHERE i.formacao_id = ? AND i.estado = 'confirmada' ORDER BY i.formando COLLATE NOCASE", [$f['id']]);
+        LEFT JOIN utilizadores u ON TRIM(u.email) = TRIM(i.email) COLLATE NOCASE WHERE i.formacao_id = ? AND i.estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado') ORDER BY i.formando COLLATE NOCASE", [$f['id']]);
     if (!$lista) {
         return '';
     }

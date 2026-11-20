@@ -68,7 +68,7 @@ function pedido_apagar(string $tipo, string $id): ?array
                 return null;
             }
             $ins = contar('SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ?', [$n]);
-            $conf = contar("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado = 'confirmada'", [$n]);
+            $conf = contar("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado')", [$n]);
             return [
                 'titulo' => 'Apagar uma edição do ' . $f['titulo'],
                 'apaga' => array_values(array_filter([

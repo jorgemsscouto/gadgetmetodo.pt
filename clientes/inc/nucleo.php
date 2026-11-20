@@ -8,6 +8,8 @@ require_once __DIR__ . '/../../formulario/email.php';
 require_once __DIR__ . '/../../formulario/comunicacao.php';
 require_once __DIR__ . '/cursos.php';
 require_once __DIR__ . '/idioma.php';
+require_once __DIR__ . '/migracoes.php';
+require_once __DIR__ . '/fluxo.php';
 
 date_default_timezone_set('Europe/Lisbon');
 
@@ -15,7 +17,12 @@ date_default_timezone_set('Europe/Lisbon');
 const PAPEIS = ['admin' => 'Gadgetmetodo', 'formador' => 'Formador', 'cliente' => 'Cliente', 'formando' => 'Formando'];
 const PAPEIS_GESTAO = ['admin', 'formador'];
 const ESTADOS_FORMACAO = ['aberta' => 'Inscrições abertas', 'fechada' => 'Inscrições fechadas', 'cancelada' => 'Cancelada'];
-const ESTADOS_INSCRICAO = ['pendente' => 'Pendente', 'confirmada' => 'Confirmada', 'cancelada' => 'Cancelada'];
+// Estados da inscrição (migração 001): o percurso normal e as saídas alternativas
+const ESTADOS_INSCRICAO = ['inscrito' => 'Inscrito', 'em_formacao' => 'Em formação', 'concluido' => 'Concluído', 'certificado' => 'Certificado',
+    'encerrado' => 'Encerrado', 'desistiu' => 'Desistiu', 'nao_concluido' => 'Não concluído'];
+// Inscrições que contam (vagas, presenças, lembretes, área do formando) e saídas alternativas
+const ESTADOS_ATIVOS = ['inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado'];
+const ESTADOS_SAIDA = ['desistiu', 'nao_concluido'];
 const MODALIDADES = ['presencial' => 'Presencial', 'online' => 'Online', 'misto' => 'Misto'];
 const SESSAO_MAXIMA = 7200; // segundos de inatividade
 const DIAS_INSCRICOES = 730; // conservação das inscrições após a data da formação
@@ -193,6 +200,19 @@ function bd(): ?PDO
         $pdo->exec('DELETE FROM certificados WHERE inscricao_id NOT IN (SELECT id FROM inscricoes)');
         aplicar_catalogo($pdo);
         acrescentar_cursos_do_catalogo($pdo);
+        // Migrações versionadas (clientes/inc/migracoes/): as que faltam são aplicadas aqui, com cópia de segurança antes
+        if ($erro = aplicar_migracoes_pendentes($pdo)) {
+            error_log('Área de clientes: ' . $erro);
+            $GLOBALS['erro_migracao'] = $erro;
+        }
+        if (tabela_existe($pdo, 'formandos')) {
+            // Conservação no novo fluxo: inscrições sem turma 2 anos depois do registo; formandos sem inscrições nem
+            // diagnósticos, 2 anos depois de criados
+            $limite = date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400);
+            $pdo->prepare('DELETE FROM inscricoes WHERE formacao_id IS NULL AND criado < ?')->execute([$limite]);
+            $pdo->prepare('DELETE FROM formandos WHERE criado < ? AND NOT EXISTS (SELECT 1 FROM inscricoes i WHERE i.formando_id = formandos.id)
+                AND NOT EXISTS (SELECT 1 FROM diagnosticos d WHERE d.formando_id = formandos.id)')->execute([$limite]);
+        }
         $pronta = true;
     }
     return $pdo;
@@ -500,7 +520,7 @@ function avisos(): string
 
 function inscritos(int $formacao_id): int
 {
-    return (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado != 'cancelada'", [$formacao_id])['n'] ?? 0);
+    return (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado NOT IN ('desistiu', 'nao_concluido')", [$formacao_id])['n'] ?? 0);
 }
 
 function formacao_nova(array $f): bool

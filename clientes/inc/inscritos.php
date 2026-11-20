@@ -72,15 +72,15 @@ function estado_acesso_formando(string $email): array
 }
 
 const SQL_INSCRICOES_FORMANDO = 'SELECT i.*, cl.nome AS cliente_registado, COALESCE(cl.nome, NULLIF(i.empresa, \'\'), i.contacto_nome) AS cliente, COALESCE(cl.tipo, i.tipo_cliente, \'empresa\') AS cliente_tipo,
-    f.titulo, f.inicio, f.fim, f.curso_id, f.modalidade, f.local, f.estado AS estado_formacao
-    FROM inscricoes i LEFT JOIN clientes cl ON cl.id = i.cliente_id JOIN formacoes f ON f.id = i.formacao_id';
+    COALESCE(f.titulo, (SELECT c2.nome FROM cursos c2 WHERE c2.id = i.curso_id)) AS titulo, f.inicio, f.fim, f.modalidade, f.local, f.estado AS estado_formacao
+    FROM inscricoes i LEFT JOIN clientes cl ON cl.id = i.cliente_id LEFT JOIN formacoes f ON f.id = i.formacao_id';
 
 // Formandos inscritos, um por pessoa, com as inscrições que cumprem os filtros (da mais recente para a mais antiga)
 function formandos_inscritos(array $filtros): array
 {
     $sql = SQL_INSCRICOES_FORMANDO . ' WHERE 1 = 1';
     $par = [];
-    if ($filtros['curso']) { $sql .= ' AND f.curso_id = ?'; $par[] = $filtros['curso']; }
+    if ($filtros['curso']) { $sql .= ' AND i.curso_id = ?'; $par[] = $filtros['curso']; }
     if ($filtros['cliente']) { $sql .= ' AND i.cliente_id = ?'; $par[] = $filtros['cliente']; }
     if ($filtros['estado']) { $sql .= ' AND i.estado = ?'; $par[] = $filtros['estado']; }
     if ($filtros['q'] !== '') { $sql .= ' AND (i.formando LIKE ? OR i.email LIKE ?)'; $par[] = '%' . $filtros['q'] . '%'; $par[] = '%' . $filtros['q'] . '%'; }
@@ -114,7 +114,7 @@ function admin_formandos(): void
         foreach ($lista as $i) {
             $cursos .= '<li>' . h($i['titulo']) . ' ' . estado_etiqueta($i['estado'], ESTADOS_INSCRICAO) . '<br><span class="texto-suave">' . h(data_hora($i['inicio'], false)) . '</span></li>';
             $cursos_csv[] = $i['titulo'] . ' (' . (ESTADOS_INSCRICAO[$i['estado']] ?? $i['estado']) . ')';
-            if ($i['estado'] === 'confirmada') {
+            if (in_array($i['estado'], ESTADOS_ATIVOS, true)) {
                 [$p, $d] = resumo_presencas($i);
                 $presentes += $p;
                 $decorridas += $d;
@@ -201,7 +201,7 @@ function admin_formando(): void
             redirecionar('formando', ['i' => $base['id']], 'inscricao-' . $iid);
         }
         if ($acao === 'acesso' && $email !== '') {
-            $confirmada = array_values(array_filter($lista, function ($x) { return $x['estado'] === 'confirmada'; }))[0] ?? null;
+            $confirmada = array_values(array_filter($lista, function ($x) { return in_array($x['estado'], ESTADOS_ATIVOS, true); }))[0] ?? null;
             [$estado, , $u] = estado_acesso_formando($email);
             if ($u && $u['papel'] === 'formando') {
                 aviso_envio(enviar_ligacao_senha($u, (string) ($confirmada['titulo'] ?? '')), 'Ligação para definir a palavra-passe (válida 7 dias) enviada para ' . h($email) . '.');
@@ -218,7 +218,7 @@ function admin_formando(): void
         }
     }
     [$estado, $texto_acesso, $u] = estado_acesso_formando($email);
-    $tem_confirmada = (bool) array_filter($lista, function ($x) { return $x['estado'] === 'confirmada'; });
+    $tem_confirmada = (bool) array_filter($lista, function ($x) { return in_array($x['estado'], ESTADOS_ATIVOS, true); });
     $botao_acesso = '';
     if ($u && $u['papel'] === 'formando') {
         $botao_acesso = '<form method="post" class="linha-botoes">' . campo_csrf() . '<input type="hidden" name="acao" value="acesso"><button class="botao botao-secundario" type="submit">Enviar nova ligação para definir a palavra-passe</button> <a href="' . h(url('utilizador', ['id' => $u['id']])) . '">Ver o utilizador</a></form>';
@@ -242,7 +242,7 @@ function admin_formando(): void
     foreach ($lista as $i) {
         $sessoes = sessoes_formacao_cache((int) $i['formacao_id']);
         $presencas = presencas_inscricao((int) $i['id']);
-        $confirmada = $i['estado'] === 'confirmada';
+        $confirmada = in_array($i['estado'], ESTADOS_ATIVOS, true);
         $linhas = '';
         foreach ($sessoes as $s) {
             $p = $presencas[$s['n']] ?? null;
