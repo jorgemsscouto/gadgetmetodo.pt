@@ -100,8 +100,7 @@ function etapas_inscricao(array $i, array $ctx): array
     $e[3] = !empty($i['email_inscricao']) ? ['feita', 'Enviado em ' . data_hora($i['email_inscricao'], false)] : ((string) $i['email'] === '' ? ['bloqueada', 'Sem email'] : ['por_fazer', 'Por enviar']);
     $falta = campos_em_falta($ctx['ficha']);
     $e[4] = ficha_completa($ctx['ficha']) ? ['feita', 'Completos'] : (!empty($i['dados_pedidos']) ? ['em_curso', 'Pedidos em ' . data_hora($i['dados_pedidos'], false) . '; faltam: ' . mb_strtolower(implode(', ', $falta))] : ['por_fazer', 'Em falta: ' . mb_strtolower(implode(', ', $falta))]);
-    $n_temas = $ctx['curso'] ? count(modulos_curso((int) $ctx['curso']['id'])) : 0;
-    $e[5] = $ctx['curso'] ? ['feita', $ctx['curso']['nome'] . ($n_temas ? ' (' . $n_temas . ' sessões)' : '')] : ['por_fazer', 'Sem curso'];
+    $e[5] = $ctx['curso'] ? ['feita', (string) $ctx['curso']['nome']] : ['por_fazer', 'Sem curso'];
     $e[6] = $ctx['turma'] ? ['feita', horario($ctx['turma']) . ' · ' . modalidade_e_local($ctx['turma'])] : ['por_fazer', 'Por escolher'];
     $acessos = $ctx['acessos'];
     $e[7] = !$ctx['materiais'] ? ['bloqueada', 'Sem materiais no curso ou na turma'] : ($acessos ? ['feita', implode('; ', array_unique(array_map(function ($a) {

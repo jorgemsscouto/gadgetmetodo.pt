@@ -255,7 +255,8 @@ function contexto_certificado(array $i): array
 {
     $sessoes = sessoes_formacao_cache((int) $i['formacao_id']);
     $curso = !empty($i['curso_id']) ? linha_bd('SELECT * FROM cursos WHERE id = ?', [(int) $i['curso_id']]) : null;
-    $nome = trim((string) preg_replace('/^Curso\s+\d+\s*[:.\x{2013}-]\s*/u', '', (string) ($curso['nome'] ?? $i['titulo'])));
+    // Título do curso no certificado: sem "Curso N:" nem o formato no fim ("(6 sessões)", "(3 × 2 h)"), que o certificado já indica
+    $nome = trim((string) preg_replace(['/^Curso\s+\d+\s*[:.\x{2013}-]\s*/u', '/\s*\((\d+ sess(ão|ões)|\d+ × [0-9,]+ ?h|formato [0-9,]+ ?h)\)\s*$/u'], '', (string) ($curso['nome'] ?? $i['titulo'])));
     $posicao = '';
     if ($curso && preg_match('/Curso\s+(\d+)\s+de\s+(\d+)/u', (string) $curso['descricao'], $m)) {
         $posicao = 'Curso ' . $m[1] . ' de ' . $m[2];

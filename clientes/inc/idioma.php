@@ -204,6 +204,13 @@ function forma_texto(string $s): array
             return marca_texto(count($marcas) - 1);
         }, $s);
     }
+    // Frações ("10/12 vagas"): os dois números são valores (as datas já foram tratadas acima)
+    $s = (string) preg_replace_callback('/\b(\d+)\/(\d+)\b/', function ($x) use (&$marcas) {
+        $marcas[] = ['n', $x[1]];
+        $a = marca_texto(count($marcas) - 1);
+        $marcas[] = ['n', $x[2]];
+        return $a . '/' . marca_texto(count($marcas) - 1);
+    }, $s);
     $s = (string) preg_replace_callback('/\b\d{1,2}:\d{2}\b/', function ($x) use (&$marcas) {
         $marcas[] = ['h', $x[0]];
         return marca_texto(count($marcas) - 1);
@@ -267,6 +274,14 @@ function traduzir_bloco(string $s, bool $livre = true): ?string
     }
     if (!$livre) {
         return null;
+    }
+    // Rótulos compostos ("Curso · datas · vagas"): cada parte é traduzida à parte; basta uma ter tradução
+    if (strpos($s, ' · ') !== false && strpos($s, '<') === false) {
+        $partes = explode(' · ', $s);
+        $traduzidas = array_map(function ($p) { return traduzir_bloco($p) ?? $p; }, $partes);
+        if ($traduzidas !== $partes) {
+            return implode(' · ', $traduzidas);
+        }
     }
     foreach ($d['livres'] as [$re, $en]) {
         if (preg_match($re, $forma, $m)) {

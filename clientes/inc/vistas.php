@@ -66,6 +66,7 @@ function documento(string $titulo, string $corpo): void
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="google-site-verification" content="T-qA5H44j2vhQVk4bXzkT5a7o4SyuFCCZq0zogR4iLs">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="google" content="notranslate">
   <title>' . h($titulo) . ' | Área reservada | Gadgetmetodo, Lda.</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="' . h(versao_ficheiro('/assets/css/site.css')) . '">

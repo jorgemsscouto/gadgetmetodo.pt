@@ -13,7 +13,7 @@
   "cursos": [
     {
       "chave": "ia-generativa-1",
-      "nome": "Curso 1: Iniciação à IA Generativa no Trabalho",
+      "nome": "Curso 1: Iniciação à IA Generativa no Trabalho (6 sessões)",
       "objetivo": "Utilizar o Claude com segurança em tarefas simples do dia a dia e reconhecer o que a ferramenta faz bem e onde falha.",
       "prerequisitos": "Nenhum.",
       "resultado": "O formando produz, sozinho, um e-mail e um resumo de documento de qualidade profissional e sabe que informação não deve introduzir na ferramenta.",
@@ -62,7 +62,7 @@
     },
     {
       "chave": "ia-generativa-2",
-      "nome": "Curso 2: Produtividade com IA Generativa",
+      "nome": "Curso 2: Produtividade com IA Generativa (6 sessões)",
       "objetivo": "Transformar o Claude numa ferramenta de trabalho regular, com instruções estruturadas, contexto persistente e verificação sistemática.",
       "prerequisitos": "Curso 1 ou utilização regular demonstrada.",
       "resultado": "O formando tem uma biblioteca de instruções e pelo menos um projeto configurado, e verifica os dados numéricos e as fontes antes de usar qualquer resultado.",
@@ -111,7 +111,7 @@
     },
     {
       "chave": "ia-generativa-3",
-      "nome": "Curso 3: IA nos Processos da Organização",
+      "nome": "Curso 3: IA nos Processos da Organização (6 sessões)",
       "objetivo": "Passar do uso individual para a aplicação em processos de equipa, com ligação a ferramentas empresariais, automatização de tarefas recorrentes e regras de governação.",
       "prerequisitos": "Curso 2.",
       "resultado": "Cada grupo entrega uma proposta de piloto fundamentada e cada formando conhece as regras mínimas de conformidade para usar IA com dados da organização.",
@@ -160,7 +160,7 @@
     },
     {
       "chave": "ia-generativa-4",
-      "nome": "Curso 4: Liderança e Implementação de IA",
+      "nome": "Curso 4: Liderança e Implementação de IA (6 sessões)",
       "objetivo": "Desenhar, decidir e liderar a adoção de IA generativa numa organização, incluindo agentes, gestão da mudança e gestão de risco.",
       "prerequisitos": "Curso 3. Recomendado para quadros, chefias, consultores e responsáveis por transformação digital.",
       "resultado": "Cada formando sai com um plano de implementação defendido, com casos de uso priorizados, métricas, riscos identificados e plano de capacitação.",
@@ -209,7 +209,7 @@
     },
     {
       "chave": "ia-generativa-5",
-      "nome": "Curso 5: Implementação de Casos Práticos",
+      "nome": "Curso 5: Implementação de Casos Práticos (6 sessões)",
       "objetivo": "Pôr em funcionamento, com acompanhamento, um caso de uso de IA generativa da própria organização, do desenho à utilização no dia a dia, com verificação de qualidade e medição de resultados.",
       "prerequisitos": "Curso 4, ou experiência equivalente na definição de casos de uso de IA. Recomendado para quem já tem um caso de uso identificado na sua organização e o quer pôr em funcionamento.",
       "resultado": "Cada formando, ou grupo, sai com um caso prático implementado ou pronto a entrar em funcionamento, com instruções e fluxos documentados, critérios de verificação, regras de uso responsável e indicadores de resultado.",
