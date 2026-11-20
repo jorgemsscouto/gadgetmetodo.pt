@@ -1584,7 +1584,7 @@ pagina({
               'Inclui também a metodologia em quatro fases, os modelos de colaboração, exemplos de intervenção por setor e os contactos.',
             ], 'O que contém o catálogo?')}
             <div class="acoes" style="margin-top:24px">
-              <a class="botao" href="${CATALOGO_PDF}">${icone('file-text')} Descarregar o catálogo (PDF, 1,2 MB)</a>
+              <a class="botao" href="${CATALOGO_PDF}">${icone('file-text')} Descarregar o catálogo (PDF, 3 MB)</a>
               <a class="botao botao-secundario" href="/contactos/#formulario">Pedir proposta</a>
             </div>
             <h2 class="espaco-topo" style="font-size:1.3rem">Conteúdo</h2>
@@ -1847,6 +1847,11 @@ ${paginasEn.map(p => `  <url>
   </url>`).join('\n')}
   <url>
     <loc>${URL_BASE}/catalogo-servicos-2026.pdf</loc>
+    <lastmod>${HOJE}</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>${URL_BASE}/services-catalogue-2026.pdf</loc>
     <lastmod>${HOJE}</lastmod>
     <priority>0.6</priority>
   </url>

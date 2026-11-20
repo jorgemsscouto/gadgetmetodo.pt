@@ -668,7 +668,8 @@ function traduzir_jsonld(string $conteudo): string
     return "\n" . json_encode($dados, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "\n  ";
 }
 
-// Atributos de uma etiqueta: textos (title, alt, aria-label, placeholder, descrições) e endereços (href, action, og:url)
+// Atributos de uma etiqueta: textos (title, alt, aria-label, placeholder, descrições) e endereços (href, action, src, og:url;
+// src só muda para os ficheiros com versão inglesa em rotas.json, como a capa do catálogo)
 function traduzir_etiqueta(string $tag): string
 {
     // Elementos fixos (seletor de língua, hreflang) e os que já estão em inglês ficam como estão
@@ -690,7 +691,7 @@ function traduzir_etiqueta(string $tag): string
         }
         return ' ' . $m[1] . '="' . htmlspecialchars(tr($texto), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8') . '"';
     }, $tag);
-    $tag = (string) preg_replace_callback('/\s(href|action)="([^"]*)"/i', function ($m) {
+    $tag = (string) preg_replace_callback('/\s(href|action|src)="([^"]*)"/i', function ($m) {
         return ' ' . $m[1] . '="' . htmlspecialchars(endereco_traduzido(html_entity_decode($m[2], ENT_QUOTES | ENT_HTML5, 'UTF-8')), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8') . '"';
     }, $tag);
     if (preg_match('/^<meta\b[^>]*property="og:url"/i', $tag)) {

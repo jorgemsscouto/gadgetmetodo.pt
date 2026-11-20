@@ -1,5 +1,5 @@
 <?php
-// Ligação do catálogo enviada na confirmação dos pedidos: regista a abertura e encaminha para o PDF.
+// Ligação do catálogo enviada na confirmação dos pedidos: regista a abertura e encaminha para o PDF (com l=en, o inglês).
 // Sem referência válida, encaminha na mesma, sem registar nada.
 
 declare(strict_types=1);
@@ -29,4 +29,4 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET'
 header('Cache-Control: no-store');
 header('Referrer-Policy: no-referrer');
 header('X-Robots-Tag: noindex, nofollow');
-header('Location: ' . CATALOGO_PDF, true, 302);
+header('Location: ' . (($_GET['l'] ?? '') === 'en' ? CATALOGO_PDF_EN : CATALOGO_PDF), true, 302);

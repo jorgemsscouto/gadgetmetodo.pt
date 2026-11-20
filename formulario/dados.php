@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 const CATALOGO_PDF = '/catalogo-servicos-2026.pdf';
+const CATALOGO_PDF_EN = '/services-catalogue-2026.pdf';
 const DIAS_CONSERVACAO = 365;
 
 function pasta_dados(array $cfg): ?string
@@ -83,10 +84,12 @@ function assinatura(array $cfg, string $ref): string
 function link_catalogo(array $cfg, string $ref): string
 {
     $site = rtrim((string) ($cfg['site'] ?? 'https://www.gadgetmetodo.pt'), '/');
+    // Pedido feito nas páginas em inglês: o catálogo em inglês
+    $en = function_exists('em_ingles') && em_ingles();
     if (empty($cfg['chave'])) {
-        return $site . CATALOGO_PDF;
+        return $site . ($en ? CATALOGO_PDF_EN : CATALOGO_PDF);
     }
-    return $site . '/formulario/catalogo.php?r=' . rawurlencode($ref) . '&s=' . assinatura($cfg, $ref);
+    return $site . '/formulario/catalogo.php?r=' . rawurlencode($ref) . '&s=' . assinatura($cfg, $ref) . ($en ? '&l=en' : '');
 }
 
 /* Escrita */

@@ -23,5 +23,7 @@
   "/formacoes/inscricao-curso.php": "/en/training/course-registration.php",
   "/formacoes/ficha.php": "/en/training/course-sheet.php",
   "/clientes/": "/clientes/area.php?idioma=en",
-  "/clientes/area.php": "/clientes/area.php"
+  "/clientes/area.php": "/clientes/area.php",
+  "/catalogo-servicos-2026.pdf": "/services-catalogue-2026.pdf",
+  "/assets/img/catalogo-capa.jpg": "/assets/img/catalogue-cover-en.jpg"
 }
