@@ -293,6 +293,9 @@ function emitir_certificado(array $i, array $ficha): array
     $dados = array_merge([$ficha['nome_completo'], (string) $ficha['cc_numero'], (string) $ficha['cc_validade'], $ctx['presencas'], $ctx['sessoes']], formador_certificado((int) $i['formacao_id']), [$ficha['documento_tipo'] ?? 'cc']);
     $atual = certificado_da_inscricao((int) $i['id']);
     if ($atual) {
+        if (!empty($atual['assinado_ficheiro'])) {
+            apagar_assinado($atual);
+        }
         executar('UPDATE certificados SET emitido = ?, nome = ?, cc_numero = ?, cc_validade = ?, presencas = ?, sessoes = ?, formador = ?, formador_dados = ?, documento_tipo = ? WHERE id = ?', array_merge([agora()], $dados, [$atual['id']]));
     } else {
         $pdo = bd();
@@ -318,6 +321,146 @@ function nome_ficheiro_certificado(array $c): string
     return 'Certificado_' . sprintf('%03d-%d', (int) $c['numero'], (int) $c['ano']) . '_' . $nome . '.pdf';
 }
 
+/* Versão assinada digitalmente: o PDF é descarregado, assinado fora do site (Cartão de Cidadão, Chave Móvel Digital)
+   e carregado na turma; fica na pasta de dados e passa a ser o que se envia e descarrega */
+
+const TAMANHO_MAX_ASSINADO = 10 * 1024 * 1024;
+
+function pasta_assinados(): string
+{
+    $pasta = pasta_dados(cfg());
+    if (!$pasta) {
+        throw new RuntimeException('Sem pasta de dados para os certificados assinados.');
+    }
+    $dir = $pasta . '/certificados-assinados';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0700, true);
+        @file_put_contents($dir . '/.htaccess', "Require all denied\n");
+    }
+    return $dir;
+}
+
+// Conteúdo do PDF assinado (null se não houver)
+function pdf_assinado(array $c): ?string
+{
+    if (empty($c['assinado_ficheiro'])) {
+        return null;
+    }
+    $f = pasta_assinados() . '/' . basename((string) $c['assinado_ficheiro']);
+    $conteudo = is_file($f) ? file_get_contents($f) : false;
+    return $conteudo === false ? null : $conteudo;
+}
+
+function apagar_assinado(array $c): void
+{
+    if (!empty($c['assinado_ficheiro'])) {
+        @unlink(pasta_assinados() . '/' . basename((string) $c['assinado_ficheiro']));
+    }
+    executar('UPDATE certificados SET assinado = NULL, assinado_ficheiro = NULL, assinado_por = NULL WHERE id = ?', [(int) $c['id']]);
+}
+
+// Um PDF assinado digitalmente tem um campo de assinatura (/Sig) com o intervalo assinado (/ByteRange)
+function tem_assinatura_digital(string $pdf): bool
+{
+    return str_contains($pdf, '/ByteRange') && str_contains($pdf, '/Sig');
+}
+
+// Número do certificado no nome do ficheiro ("Certificado_002-2026_Nome.pdf", também com sufixos como "_assinado")
+function numero_no_ficheiro(string $nome): ?array
+{
+    return preg_match('/(?<!\d)(\d{1,4})[-_](20\d{2})(?!\d)/', $nome, $m) ? [(int) $m[1], (int) $m[2]] : null;
+}
+
+// Descarga dos PDF por assinar: um só PDF, ou um ZIP com vários. $pares: [[certificado, inscrição], ...]
+function descarregar_para_assinar(array $pares, string $nome): void
+{
+    if (count($pares) === 1) {
+        [$c, $i] = $pares[0];
+        $conteudo = pdf_certificado($c, $i);
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="' . nome_ficheiro_certificado($c) . '"');
+        header('Content-Length: ' . strlen($conteudo));
+        echo $conteudo;
+        exit;
+    }
+    $tmp = tempnam(sys_get_temp_dir(), 'cert');
+    $zip = new ZipArchive();
+    if ($zip->open($tmp, ZipArchive::OVERWRITE) !== true) {
+        throw new RuntimeException('Não foi possível criar o ZIP.');
+    }
+    foreach ($pares as [$c, $i]) {
+        $zip->addFromString(nome_ficheiro_certificado($c), pdf_certificado($c, $i));
+    }
+    $zip->close();
+    $nome = trim((string) preg_replace('/[^A-Za-z0-9]+/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', $nome) ?: 'turma'), '_');
+    header('Content-Type: application/zip');
+    header('Content-Disposition: attachment; filename="Certificados_para_assinar_' . $nome . '.zip"');
+    header('Content-Length: ' . filesize($tmp));
+    readfile($tmp);
+    @unlink($tmp);
+    exit;
+}
+
+// Recebe os PDF assinados de uma turma (campo "assinados[]"); cada ficheiro é ligado ao certificado pelo número no nome
+function receber_assinados(array $f): void
+{
+    $ficheiros = [];
+    $up = $_FILES['assinados'] ?? null;
+    if ($up && is_array($up['name'])) {
+        foreach ($up['name'] as $k => $nome) {
+            $ficheiros[] = ['nome' => (string) $nome, 'tmp' => (string) $up['tmp_name'][$k], 'erro' => (int) $up['error'][$k], 'tamanho' => (int) $up['size'][$k]];
+        }
+    }
+    $ficheiros = array_filter($ficheiros, fn ($x) => $x['erro'] !== UPLOAD_ERR_NO_FILE);
+    if (!$ficheiros) {
+        aviso('Escolha os PDF assinados.', 'erro');
+        return;
+    }
+    $ok = [];
+    $erros = [];
+    foreach ($ficheiros as $x) {
+        $nome = $x['nome'];
+        if ($x['erro'] !== UPLOAD_ERR_OK || !is_uploaded_file($x['tmp'])) {
+            $erros[] = $nome . ' (não foi recebido' . (in_array($x['erro'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true) ? ': demasiado grande' : '') . ')';
+            continue;
+        }
+        if ($x['tamanho'] > TAMANHO_MAX_ASSINADO) {
+            $erros[] = $nome . ' (mais de 10 MB)';
+            continue;
+        }
+        $conteudo = (string) file_get_contents($x['tmp']);
+        if (!str_starts_with($conteudo, '%PDF')) {
+            $erros[] = $nome . ' (não é um PDF)';
+            continue;
+        }
+        $n = numero_no_ficheiro($nome);
+        $c = $n ? linha_bd('SELECT c.* FROM certificados c JOIN inscricoes i ON i.id = c.inscricao_id WHERE c.numero = ? AND c.ano = ? AND i.formacao_id = ?', [$n[0], $n[1], (int) $f['id']]) : null;
+        if (!$c) {
+            $erros[] = $nome . ' (' . ($n ? 'o certificado n.º ' . sprintf('%03d/%d', $n[0], $n[1]) . ' não é desta turma' : 'sem o número do certificado no nome do ficheiro') . ')';
+            continue;
+        }
+        if (!tem_assinatura_digital($conteudo)) {
+            $erros[] = $nome . ' (não tem assinatura digital)';
+            continue;
+        }
+        $destino = sprintf('%d-%03d-%d-%s.pdf', (int) $c['id'], (int) $c['numero'], (int) $c['ano'], bin2hex(random_bytes(6)));
+        if (file_put_contents(pasta_assinados() . '/' . $destino, $conteudo) === false) {
+            $erros[] = $nome . ' (não foi possível guardar)';
+            continue;
+        }
+        if (!empty($c['assinado_ficheiro'])) {
+            @unlink(pasta_assinados() . '/' . basename((string) $c['assinado_ficheiro']));
+        }
+        executar('UPDATE certificados SET assinado = ?, assinado_ficheiro = ?, assinado_por = ? WHERE id = ?', [agora(), $destino, (int) (utilizador()['id'] ?? 0), (int) $c['id']]);
+        $ok[] = numero_certificado($c);
+    }
+    $partes = array_filter([
+        $ok ? count($ok) . ' certificado(s) assinado(s) guardado(s): n.º ' . implode(', ', $ok) . '.' : 'Nenhum certificado assinado guardado.',
+        $erros ? 'Não guardados: ' . implode('; ', $erros) . '.' : '',
+    ]);
+    aviso(h(implode(' ', $partes)), $erros ? ($ok ? 'info' : 'erro') : 'ok');
+}
+
 /* PDF (clientes/inc/certificado-pdf.php, carregado só quando é preciso) */
 
 // PDF do certificado (conteúdo). $c: linha de certificados; $i: linha de SQL_INSCRICAO.
@@ -331,9 +474,15 @@ function pdf_certificado(array $c, array $i): string
 }
 
 // Envia o PDF para o navegador (descarga)
+// PDF a enviar e a descarregar: o assinado digitalmente, se já foi carregado; senão o gerado
+function conteudo_certificado(array $c, array $i): string
+{
+    return pdf_assinado($c) ?? pdf_certificado($c, $i);
+}
+
 function descarregar_certificado(array $c, array $i): void
 {
-    $conteudo = pdf_certificado($c, $i);
+    $conteudo = conteudo_certificado($c, $i);
     header('Content-Type: application/pdf');
     header('Content-Disposition: inline; filename="' . nome_ficheiro_certificado($c) . '"');
     header('Content-Length: ' . strlen($conteudo));
@@ -377,7 +526,7 @@ function enviar_certificado(array $c, array $i): bool
     $ok = enviar_mensagem('certificado', $email, variaveis_certificado($i, (string) $c['nome']), [
         '<p style="margin:0 0 14px;"><strong>Certificado n.º:</strong> ' . h(numero_certificado($c)) . '</p>',
         'Certificado n.º ' . numero_certificado($c),
-    ], ['anexos' => [[nome_ficheiro_certificado($c), pdf_certificado($c, $i), 'application/pdf']]]);
+    ], ['anexos' => [[nome_ficheiro_certificado($c), conteudo_certificado($c, $i), 'application/pdf']]]);
     if ($ok) {
         executar('UPDATE certificados SET enviado = ? WHERE id = ?', [agora(), (int) $c['id']]);
     }
@@ -447,6 +596,10 @@ function tratar_certificados_edicao(array $f): void
 {
     $id = (int) $f['id'];
     $acao = (string) ($_POST['acao'] ?? '');
+    if ($acao === 'cert_assinados') {
+        receber_assinados($f);
+        redirecionar('formacao', ['id' => $id], 'certificados');
+    }
     $escolhidas = array_map('intval', array_filter((array) ($_POST['cert'] ?? []), 'is_numeric'));
     $lista = [];
     foreach ($escolhidas as $iid) {
@@ -458,6 +611,19 @@ function tratar_certificados_edicao(array $f): void
     if (!$lista) {
         aviso('Escolha os formandos.', 'erro');
         redirecionar('formacao', ['id' => $id], 'certificados');
+    }
+    if ($acao === 'cert_assinar') {
+        $pares = [];
+        foreach ($lista as $i) {
+            if ($c = certificado_da_inscricao((int) $i['id'])) {
+                $pares[] = [$c, $i];
+            }
+        }
+        if (!$pares) {
+            aviso('Nenhum dos formandos escolhidos tem o certificado emitido. Emita os certificados antes de os descarregar para assinar.', 'erro');
+            redirecionar('formacao', ['id' => $id], 'certificados');
+        }
+        descarregar_para_assinar($pares, (string) $f['titulo']);
     }
     if ($acao === 'cert_pedir') {
         $enviados = 0;
@@ -482,7 +648,21 @@ function tratar_certificados_edicao(array $f): void
     $enviados = 0;
     $bloqueados = [];
     $falhados = [];
+    $assinados = [];
     foreach ($lista as $i) {
+        // Os já assinados não voltam a ser emitidos (perdiam a assinatura): só se enviam
+        $atual = certificado_da_inscricao((int) $i['id']);
+        if ($atual && !empty($atual['assinado'])) {
+            $assinados[] = (string) $i['formando'];
+            if ($enviar) {
+                if (enviar_certificado($atual, $i)) {
+                    $enviados++;
+                } else {
+                    $falhados[] = (string) $i['formando'];
+                }
+            }
+            continue;
+        }
         // As mesmas regras da ficha do formando: dados completos, presenças, assiduidade validada e avaliação "Aprovado"
         $ctx = contexto_inscricao($i);
         if ($b = bloqueios_certificado($i, $ctx)) {
@@ -501,11 +681,13 @@ function tratar_certificados_edicao(array $f): void
         }
     }
     $partes = array_filter([
-        $emitidos ? $emitidos . ' certificado(s) emitido(s)' . ($enviar ? ', ' . $enviados . ' enviado(s) por email' : '') . '.' : 'Nenhum certificado emitido.',
+        $emitidos ? $emitidos . ' certificado(s) emitido(s).' : 'Nenhum certificado emitido.',
+        $assinados ? 'Já assinados, não foram emitidos de novo: ' . implode(', ', $assinados) . '.' : '',
+        $enviar ? $enviados . ' enviado(s) por email.' : '',
         $bloqueados ? 'Bloqueados: ' . implode('; ', $bloqueados) . '.' : '',
         $falhados ? 'Email não enviado: ' . implode(', ', $falhados) . '.' : '',
     ]);
-    aviso(h(implode(' ', $partes)), $bloqueados || $falhados ? ($emitidos ? 'info' : 'erro') : 'ok');
+    aviso(h(implode(' ', $partes)), $bloqueados || $falhados ? ($emitidos || $enviados ? 'info' : 'erro') : 'ok');
     redirecionar('formacao', ['id' => $id], 'certificados');
 }
 
@@ -531,7 +713,9 @@ function certificados_edicao_html(array $f): string
             $dados = etiqueta('Em falta', 'info') . ((string) $i['email'] === '' ? '<br><span class="texto-suave">Sem email: preencha na ficha do formando</span>'
                 : ($i['dados_pedidos'] ? '<br><span class="texto-suave">Pedidos em ' . h(data_hora($i['dados_pedidos'], false)) . '</span>' : ''));
         }
-        $cert = $c ? '<a href="' . h(url('certificado', ['i' => $i['id']])) . '" target="_blank" rel="noopener">N.º ' . h(numero_certificado($c)) . '</a><br><span class="texto-suave">Emitido a ' . h(data_hora($c['emitido'], false))
+        $cert = $c ? '<a href="' . h(url('certificado', ['i' => $i['id']])) . '" target="_blank" rel="noopener">N.º ' . h(numero_certificado($c)) . '</a> '
+            . (!empty($c['assinado']) ? etiqueta('Assinado', 'ok') : etiqueta('Por assinar', 'info')) . '<br><span class="texto-suave">Emitido a ' . h(data_hora($c['emitido'], false))
+            . (!empty($c['assinado']) ? '<br>Assinado a ' . h(data_hora($c['assinado'], false)) : '')
             . ($c['enviado'] ? '<br>Enviado a ' . h(data_hora($c['enviado'], false)) : '<br>Por enviar') . '</span>' : '<span class="texto-suave">Por emitir</span>';
         $linhas .= '<tr><td class="c-sessao"><input type="checkbox" name="cert[]" value="' . (int) $i['id'] . '" checked aria-label="' . h($i['formando']) . '"></td>'
             . '<td><a href="' . h(url('formando', ['i' => $i['id']])) . '#certificado">' . h($i['formando']) . '</a></td><td>' . $dados . '</td>'
@@ -546,9 +730,22 @@ function certificados_edicao_html(array $f): string
         <div class="espaco-topo acoes">
           <button class="botao botao-secundario" type="submit" name="acao" value="cert_pedir">Pedir os dados por email</button>
           <button class="botao botao-secundario" type="submit" name="acao" value="cert_emitir">Emitir (sem enviar)</button>
+          <button class="botao botao-secundario" type="submit" name="acao" value="cert_assinar">Descarregar para assinar</button>
           <button class="botao" type="submit" name="acao" value="cert_enviar">Emitir e enviar por email</button>
         </div>
-        <p class="ajuda">As ações aplicam-se aos formandos escolhidos. Só se emitem certificados com os dados completos, presenças, a assiduidade validada pelo formador e a avaliação "Aprovado"; o email leva o PDF em anexo e o formando pode descarregá-lo na área do formando.</p>
+        <p class="ajuda">As ações aplicam-se aos formandos escolhidos. Só se emitem certificados com os dados completos, presenças, a assiduidade validada pelo formador e a avaliação "Aprovado"; o email leva o PDF em anexo e o formando pode descarregá-lo na área do formando. Os certificados já assinados não voltam a ser emitidos: "Emitir e enviar" envia a versão assinada.</p>
+      </form>
+      <h3 class="espaco-topo" id="certificados-assinados">Assinatura digital</h3>
+      <ol class="texto-suave">
+        <li>Emita os certificados e use "Descarregar para assinar" (um PDF, ou um ZIP com vários).</li>
+        <li>Assine cada PDF fora do site, por exemplo com o Cartão de Cidadão ou a Chave Móvel Digital na aplicação Autenticação.gov.</li>
+        <li>Carregue aqui os PDF assinados, sem retirar do nome o número do certificado (por exemplo "Certificado_002-2026_Nome_assinado.pdf").</li>
+        <li>Envie com "Emitir e enviar por email": segue a versão assinada, que é também a que o formando descarrega.</li>
+      </ol>
+      <form method="post" enctype="multipart/form-data" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="cert_assinados">
+        <div><label for="assinados">PDF assinados</label><input type="file" id="assinados" name="assinados[]" accept="application/pdf,.pdf" multiple required></div>
+        <div><button class="botao botao-secundario" type="submit">Carregar os assinados</button></div>
+        <p class="ajuda">Até 10 MB por ficheiro. Só são aceites PDF com assinatura digital e de certificados desta turma. Carregar de novo substitui a versão assinada anterior; emitir de novo na ficha do formando retira-a.</p>
       </form>';
 }
 

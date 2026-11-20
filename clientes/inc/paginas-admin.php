@@ -134,7 +134,7 @@ function admin_formacao(): void
         }
         redirecionar('formacao', ['id' => $id], 'encerramento');
     }
-    if ($post && in_array($acao, ['cert_pedir', 'cert_emitir', 'cert_enviar'], true) && $f) {
+    if ($post && in_array($acao, ['cert_pedir', 'cert_emitir', 'cert_enviar', 'cert_assinar', 'cert_assinados'], true) && $f) {
         tratar_certificados_edicao($f);
     }
     if ($post && $acao === 'lembrete' && $f) {
