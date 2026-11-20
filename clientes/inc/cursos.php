@@ -494,36 +494,6 @@ function formato_por_tema(array $mods): string
     return formato_de_duracoes(array_map('horas_modulo', $mods));
 }
 
-// Formatos propostos para um curso: uma sessão por tema e as divisões em sessões iguais em que os temas, pela ordem,
-// enchem cada sessão por inteiro (num curso de 6 temas de 1 h: 6 × 1 h, 3 × 2 h, 2 × 3 h e 1 × 6 h)
-function formatos_curso(array $mods): array
-{
-    $r = [];
-    if (!$mods) {
-        return $r;
-    }
-    $por_tema = formato_por_tema($mods);
-    $r[$por_tema] = 'Uma sessão por tema (' . texto_formato(duracoes_formato($por_tema)) . ')';
-    $horas = array_map('horas_modulo', $mods);
-    $total = array_sum($horas);
-    for ($k = count($mods) - 1; $k >= 1; $k--) {
-        $alvo = $total / $k;
-        $soma = 0.0;
-        $cortes = 0;
-        foreach ($horas as $h) {
-            $soma += $h;
-            if (abs($soma - $alvo * ($cortes + 1)) < 0.001) {
-                $cortes++;
-            }
-        }
-        if ($cortes === $k && abs($alvo * 4 - round($alvo * 4)) < 0.001) {
-            $f = formato_de_duracoes(array_fill(0, $k, $alvo));
-            $r[$f] = $r[$f] ?? texto_formato(duracoes_formato($f));
-        }
-    }
-    return $r;
-}
-
 // Distribui os temas do curso, pela ordem, pelas sessões do formato: cada tema fica na sessão onde começa (pelas horas
 // acumuladas); os temas que sobram ficam na última sessão. Devolve, por sessão, a lista dos ids dos módulos.
 function distribuir_temas(array $mods, array $duracoes): array
