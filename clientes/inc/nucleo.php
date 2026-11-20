@@ -16,7 +16,7 @@ date_default_timezone_set('Europe/Lisbon');
 // Perfis: admin (Gadgetmetodo) e formador têm o mesmo acesso (gerem tudo); cliente; formando (área do formando)
 const PAPEIS = ['admin' => 'Gadgetmetodo', 'formador' => 'Formador', 'cliente' => 'Cliente', 'formando' => 'Formando'];
 const PAPEIS_GESTAO = ['admin', 'formador'];
-const ESTADOS_FORMACAO = ['aberta' => 'Inscrições abertas', 'fechada' => 'Inscrições fechadas', 'cancelada' => 'Cancelada'];
+const ESTADOS_FORMACAO = ['aberta' => 'Inscrições abertas', 'fechada' => 'Inscrições fechadas', 'cancelada' => 'Cancelada', 'encerrada' => 'Encerrada'];
 // Estados da inscrição (migração 001): o percurso normal e as saídas alternativas
 const ESTADOS_INSCRICAO = ['inscrito' => 'Inscrito', 'em_formacao' => 'Em formação', 'concluido' => 'Concluído', 'certificado' => 'Certificado',
     'encerrado' => 'Encerrado', 'desistiu' => 'Desistiu', 'nao_concluido' => 'Não concluído'];
@@ -562,6 +562,10 @@ function etiqueta(string $texto, string $tipo = ''): string
 function horario(array $f): string
 {
     $s = sessoes_formacao((int) ($f['formacao_id'] ?? $f['id'] ?? 0));
+    // Inscrição no curso ainda sem turma (sem datas)
+    if (!$s && empty($f['inicio'])) {
+        return 'Turma por indicar';
+    }
     if (count($s) > 1) {
         $horas = array_values(array_unique(array_map('hora_sessao', $s)));
         return count($s) . ' sessões, ' . periodo($s[0]['inicio'], $s[count($s) - 1]['inicio']) . (count($horas) === 1 ? ', ' . $horas[0] : '');

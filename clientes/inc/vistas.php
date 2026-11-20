@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 // Separadores da Configuração (só administração)
-const CONFIGURACAO = ['configuracao' => 'Visão geral', 'utilizadores' => 'Utilizadores', 'precos' => 'Preços', 'comunicacao' => 'Comunicação', 'migracoes' => 'Migrações'];
+const CONFIGURACAO = ['configuracao' => 'Visão geral', 'utilizadores' => 'Utilizadores', 'precos' => 'Preços', 'comunicacao' => 'Comunicação', 'certificados_config' => 'Certificados', 'migracoes' => 'Migrações'];
 
 // Ícones do menu (traço simples, 24 x 24), como na barra lateral do portal de referência
 const ICONES_MENU = [
@@ -24,7 +24,7 @@ const ICONES_MENU = [
 function menu_area(string $atual): string
 {
     $itens = eh_admin()
-        ? ['painel' => 'Painel', 'calendario' => 'Calendário', 'cursos' => 'Cursos', 'inscricoes' => 'Inscrições', 'formandos' => 'Formandos', 'diagnosticos' => 'Diagnósticos', 'clientes' => 'Clientes', 'pedidos' => 'Pedidos do site', 'configuracao' => 'Configuração', 'conta' => 'A minha conta']
+        ? ['painel' => 'Painel', 'calendario' => 'Calendário', 'cursos' => 'Cursos', 'formandos' => 'Formandos', 'clientes' => 'Clientes', 'pedidos' => 'Pedidos do site', 'configuracao' => 'Configuração', 'conta' => 'A minha conta']
         : (eh_formando() ? ['painel' => 'As minhas formações', 'conta' => 'A minha conta']
             : ['painel' => 'Painel', 'calendario' => 'Formações', 'inscricoes' => 'Inscrições'] + (tambem_formando() ? ['presencas' => 'As minhas formações'] : []) + ['conta' => 'A minha conta']);
     $atual = eh_admin() && isset(CONFIGURACAO[$atual]) ? 'configuracao' : $atual;

@@ -309,3 +309,32 @@ function cartao_email(string $tipo, array $d, bool $aberto, bool $alterado): str
       </div>
     </details>';
 }
+
+/* Certificados: campos pedidos para o certificado */
+
+function admin_config_certificados(): void
+{
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+        $novo = [];
+        foreach (CAMPOS_CERTIFICADO as $k => $c) {
+            $v = (string) ($_POST['campo'][$k] ?? '');
+            $novo[$k] = $c['fixo'] ? 'obrigatorio' : (in_array($v, ['obrigatorio', 'opcional', 'desligado'], true) ? $v : $c['omissao']);
+        }
+        definir(bd(), 'certificado_campos', (string) json_encode($novo));
+        aviso('Campos para o certificado guardados. As fichas já preenchidas mantêm os dados; os campos obrigatórios novos passam a ser pedidos a quem ainda não os tiver.');
+        redirecionar('certificados_config');
+    }
+    $config = config_campos_certificado();
+    $linhas = '';
+    foreach (CAMPOS_CERTIFICADO as $k => $c) {
+        $linhas .= '<tr><th scope="row">' . h($c['rotulo']) . '</th><td>' . ($c['fixo'] ? 'Sempre obrigatório' : '<select name="campo[' . h($k) . ']" aria-label="' . h($c['rotulo']) . '">'
+            . opcoes_select(['obrigatorio' => 'Obrigatório', 'opcional' => 'Opcional', 'desligado' => 'Não pedir'], $config[$k]) . '</select>') . '</td></tr>';
+    }
+    pagina_area('certificados_config', 'Dados para o certificado', '
+      <p class="texto-suave">Campos pedidos ao formando na ficha para o certificado (área do formando, email da inscrição e ficha do formando). Recolha apenas o mínimo necessário (RGPD): por omissão, o nome completo e o documento de identificação (tipo, número e validade), que aparecem no certificado. O certificado só é emitido com todos os campos obrigatórios preenchidos.</p>
+      <form method="post" class="formulario">' . campo_csrf() . '
+        <div class="conteudo tabela-rolante"><table class="tabela-ficha"><tbody>' . $linhas . '</tbody></table></div>
+        <div><button class="botao" type="submit">Guardar</button></div>
+      </form>
+      <p class="texto-suave espaco-topo">A assiduidade não tem um mínimo automático: conta a validação do formador, na ficha do formando (etapa Assiduidade).</p>', 'Configuração');
+}

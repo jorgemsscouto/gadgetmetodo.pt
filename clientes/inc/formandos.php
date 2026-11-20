@@ -328,6 +328,19 @@ function formando_painel(): void
     $blocos = '';
     $inscricoes = inscricoes_do_formando($u);
     foreach ($inscricoes as $i) {
+        // Materiais do curso e da turma (as ligações registam o acesso na ficha do formando)
+        $materiais = function_exists('materiais_inscricao') ? materiais_inscricao($i) : [];
+        $lista_mat = $materiais ? '<p class="mb-0"><strong>Materiais</strong></p><ul class="lista-datas">' . implode('', array_map(function ($m) use ($i) {
+            return '<li><a href="' . h(url('material', ['i' => $i['id'], 'm' => $m['id']])) . '" target="_blank" rel="noopener">' . h($m['titulo']) . '</a> <span class="texto-suave">(' . h(TIPOS_MATERIAL[$m['tipo']] ?? $m['tipo']) . ')</span></li>';
+        }, $materiais)) . '</ul>' : '';
+        if (empty($i['formacao_id'])) {
+            // Inscrição no curso, ainda sem turma
+            $blocos .= '<section class="bloco-formando" id="inscricao-' . (int) $i['id'] . '">
+              <h2>' . h($i['titulo']) . '</h2>
+              <p class="texto-suave">' . h(ESTADOS_INSCRICAO[$i['estado']] ?? $i['estado']) . ' · Turma por indicar: a Gadgetmetodo envia-lhe as datas e o horário das sessões assim que a turma estiver marcada.</p>' . $lista_mat . '
+            </section>';
+            continue;
+        }
         $sessoes = sessoes_da_inscricao($i);
         $presencas = presencas_inscricao((int) $i['id']);
         $online = ($i['modalidade'] ?? '') !== 'presencial' && !empty($i['reuniao']);
@@ -352,12 +365,13 @@ function formando_painel(): void
           <h2>' . h($i['titulo']) . '</h2>
           <p class="texto-suave">' . h(horario($i)) . ' · ' . h(modalidade_e_local($i)) . ' · Presenças: ' . count($presencas) . ' de ' . count($sessoes) . '</p>
           <div class="conteudo tabela-rolante"><table class="tabela-presencas"><thead><tr><th>Sessão</th><th>Data</th><th>Presença</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
+          ' . $lista_mat . '
         </section>';
     }
     // Ficha para o certificado e certificados emitidos, antes das formações
     $blocos = bloco_certificado_formando($u, $inscricoes, ...$ficha_erros) . $blocos;
     pagina_area(rota_formando(), 'As minhas formações', ($blocos !== '' ? '<p class="texto-suave">Em cada sessão, registe a presença com o botão "Estou presente", disponível de 2 horas antes do início até 1 dia depois do fim. Recebe a confirmação por email.</p>' . $blocos
-        : '<p class="texto-suave">Ainda não tem formações confirmadas. Quando a sua inscrição for confirmada, a formação aparece aqui.</p>'), 'Área do formando');
+        : '<p class="texto-suave">Ainda não tem formações. Quando ficar inscrito num curso, a formação aparece aqui.</p>'), 'Área do formando');
 }
 
 /* Administração: presenças de uma edição e acessos dos formandos */

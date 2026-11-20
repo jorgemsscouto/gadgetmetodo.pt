@@ -41,9 +41,40 @@ function ficha_certificado(string $email): ?array
     return trim($email) === '' ? null : linha_bd('SELECT * FROM fichas_certificado WHERE ' . sprintf(SQL_EMAIL_IGUAL, 'email'), [$email]);
 }
 
+// Ficha completa: todos os campos obrigatórios (Configuração, Certificados) preenchidos
 function ficha_completa(?array $f): bool
 {
-    return $f && trim((string) $f['nome_completo']) !== '' && trim((string) $f['cc_numero']) !== '' && trim((string) $f['cc_validade']) !== '';
+    if (!$f || trim((string) $f['nome_completo']) === '') {
+        return false;
+    }
+    foreach (config_campos_certificado() as $k => $estado) {
+        if ($estado !== 'obrigatorio' || $k === 'nome_completo') {
+            continue;
+        }
+        $valores = $k === 'documento' ? [$f['documento_tipo'] ?? 'cc', $f['cc_numero'] ?? '', $f['cc_validade'] ?? ''] : [$f[$k] ?? ''];
+        foreach ($valores as $v) {
+            if (trim((string) $v) === '') {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+// Campos da ficha em falta (rótulos), para mostrar ao gestor e ao formando
+function campos_em_falta(?array $f): array
+{
+    $r = [];
+    foreach (config_campos_certificado() as $k => $estado) {
+        if ($estado !== 'obrigatorio') {
+            continue;
+        }
+        $valores = !$f ? [''] : ($k === 'documento' ? [$f['cc_numero'] ?? '', $f['cc_validade'] ?? ''] : [$f[$k] ?? '']);
+        if (array_filter($valores, function ($v) { return trim((string) $v) === ''; })) {
+            $r[] = CAMPOS_CERTIFICADO[$k]['rotulo'];
+        }
+    }
+    return $r;
 }
 
 // Número do documento sem espaços nem separadores, em maiúsculas
@@ -91,53 +122,130 @@ function data_curta(string $data): string
     return date('d/m/Y', strtotime($data));
 }
 
-// Dados da ficha a partir do formulário: [dados, erros]
+// NIF português válido (9 algarismos, com o algarismo de controlo)
+function nif_valido(string $nif): bool
+{
+    if (!preg_match('/^[1-35-9]\d{8}$/', $nif)) {
+        return false;
+    }
+    $soma = 0;
+    for ($k = 0; $k < 8; $k++) {
+        $soma += (int) $nif[$k] * (9 - $k);
+    }
+    $controlo = 11 - $soma % 11;
+    return ($controlo >= 10 ? 0 : $controlo) === (int) $nif[8];
+}
+
+function data_valida(string $d): bool
+{
+    $t = preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) ? strtotime($d) : false;
+    return $t && date('Y-m-d', $t) === $d;
+}
+
+// Dados da ficha a partir do formulário, só com os campos ligados em Configuração: [dados, erros]
 function ler_ficha_certificado(): array
 {
-    $nome = trim((string) preg_replace('/\s+/u', ' ', texto('nome_completo', 160)));
-    $cc = numero_cc_normalizado(texto('cc_numero', 30));
-    $validade = texto('cc_validade', 10);
+    $config = config_campos_certificado();
+    $d = ['nome_completo' => trim((string) preg_replace('/\s+/u', ' ', texto('nome_completo', 160))), 'documento_tipo' => 'cc', 'cc_numero' => '', 'cc_validade' => '',
+        'data_nascimento' => null, 'nif' => null, 'naturalidade' => null, 'nacionalidade' => null];
     $erros = [];
-    if (count(explode(' ', $nome)) < 2 || mb_strlen($nome) < 5) {
-        $erros['nome_completo'] = 'Indique o nome completo, tal como consta do Cartão de Cidadão.';
+    if (count(explode(' ', $d['nome_completo'])) < 2 || mb_strlen($d['nome_completo']) < 5) {
+        $erros['nome_completo'] = 'Indique o nome completo, tal como consta do documento de identificação.';
     }
-    if (!numero_cc_valido($cc)) {
-        $erros['cc_numero'] = 'Confirme o número do Cartão de Cidadão: indique os 8 algarismos do número de identificação civil ou o número completo do documento (por exemplo, 12345678 9 ZZ1).';
+    $obrigatorio = function (string $k) use ($config) { return ($config[$k] ?? '') === 'obrigatorio'; };
+    if ($config['documento'] !== 'desligado') {
+        $d['documento_tipo'] = isset(TIPOS_DOCUMENTO[$_POST['documento_tipo'] ?? '']) ? $_POST['documento_tipo'] : 'cc';
+        $d['cc_numero'] = numero_cc_normalizado(texto('cc_numero', 30));
+        $d['cc_validade'] = texto('cc_validade', 10);
+        $nome_doc = TIPOS_DOCUMENTO[$d['documento_tipo']];
+        $preenchido = $d['cc_numero'] !== '' || $d['cc_validade'] !== '';
+        if ($obrigatorio('documento') || $preenchido) {
+            if ($d['documento_tipo'] === 'cc' && !numero_cc_valido($d['cc_numero'])) {
+                $erros['cc_numero'] = 'Confirme o número do Cartão de Cidadão: indique os 8 algarismos do número de identificação civil ou o número completo do documento (por exemplo, 12345678 9 ZZ1).';
+            } elseif ($d['documento_tipo'] !== 'cc' && !preg_match('/^[A-Z0-9]{5,20}$/', $d['cc_numero'])) {
+                $erros['cc_numero'] = 'Indique o número do ' . mb_strtolower($nome_doc) . ' (5 a 20 letras ou algarismos).';
+            }
+            if (!data_valida($d['cc_validade'])) {
+                $erros['cc_validade'] = 'Indique a data de validade do documento.';
+            } elseif ($d['cc_validade'] < date('Y-m-d')) {
+                $erros['cc_validade'] = 'O documento indicado já expirou. Indique os dados de um documento válido.';
+            } elseif (strtotime($d['cc_validade']) > strtotime('+15 years')) {
+                $erros['cc_validade'] = 'Confirme a data de validade do documento.';
+            }
+        }
     }
-    $t = preg_match('/^\d{4}-\d{2}-\d{2}$/', $validade) ? strtotime($validade) : false;
-    if (!$t || date('Y-m-d', $t) !== $validade) {
-        $erros['cc_validade'] = 'Indique a data de validade do Cartão de Cidadão.';
-    } elseif ($validade < date('Y-m-d')) {
-        $erros['cc_validade'] = 'O Cartão de Cidadão indicado já expirou. Indique os dados do cartão válido.';
-    } elseif ($t > strtotime('+15 years')) {
-        $erros['cc_validade'] = 'Confirme a data de validade do Cartão de Cidadão.';
+    if ($config['data_nascimento'] !== 'desligado') {
+        $d['data_nascimento'] = texto('data_nascimento', 10) ?: null;
+        if (($obrigatorio('data_nascimento') || $d['data_nascimento']) && (!data_valida((string) $d['data_nascimento']) || $d['data_nascimento'] >= date('Y-m-d', strtotime('-14 years')))) {
+            $erros['data_nascimento'] = 'Indique a data de nascimento.';
+        }
     }
-    return [['nome_completo' => $nome, 'cc_numero' => $cc, 'cc_validade' => $validade], $erros];
+    if ($config['nif'] !== 'desligado') {
+        $d['nif'] = preg_replace('/\D/', '', texto('nif', 20)) ?: null;
+        if (($obrigatorio('nif') || $d['nif']) && !nif_valido((string) $d['nif'])) {
+            $erros['nif'] = 'Confirme o NIF (9 algarismos).';
+        }
+    }
+    foreach (['naturalidade', 'nacionalidade'] as $k) {
+        if ($config[$k] !== 'desligado') {
+            $d[$k] = texto($k, 80) ?: null;
+            if ($obrigatorio($k) && !$d[$k]) {
+                $erros[$k] = 'Indique a ' . $k . '.';
+            }
+        }
+    }
+    return [$d, $erros];
 }
 
 function gravar_ficha_certificado(string $email, array $d, int $por): void
 {
+    $valores = [$d['nome_completo'], $d['documento_tipo'] ?? 'cc', $d['cc_numero'] ?? '', $d['cc_validade'] ?? '', $d['data_nascimento'] ?? null, $d['nif'] ?? null,
+        $d['naturalidade'] ?? null, $d['nacionalidade'] ?? null, agora(), $por];
     $atual = ficha_certificado($email);
     if ($atual) {
-        executar('UPDATE fichas_certificado SET nome_completo = ?, cc_numero = ?, cc_validade = ?, atualizado = ?, atualizado_por = ? WHERE id = ?',
-            [$d['nome_completo'], $d['cc_numero'], $d['cc_validade'], agora(), $por, $atual['id']]);
+        executar('UPDATE fichas_certificado SET nome_completo = ?, documento_tipo = ?, cc_numero = ?, cc_validade = ?, data_nascimento = ?, nif = ?, naturalidade = ?, nacionalidade = ?,
+            atualizado = ?, atualizado_por = ? WHERE id = ?', array_merge($valores, [$atual['id']]));
     } else {
-        executar('INSERT INTO fichas_certificado (email, nome_completo, cc_numero, cc_validade, atualizado, atualizado_por) VALUES (?, ?, ?, ?, ?, ?)',
-            [trim($email), $d['nome_completo'], $d['cc_numero'], $d['cc_validade'], agora(), $por]);
+        executar('INSERT INTO fichas_certificado (email, nome_completo, documento_tipo, cc_numero, cc_validade, data_nascimento, nif, naturalidade, nacionalidade, atualizado, atualizado_por)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_merge([trim($email)], $valores));
     }
 }
 
-// Campos da ficha (nome completo, número e validade do CC), com os erros de cada campo
+// Campos da ficha, só os ligados em Configuração (Certificados), com os erros de cada campo
 function campos_ficha_certificado(array $v, array $erros): string
 {
+    $config = config_campos_certificado();
     $erro = function (string $c) use ($erros) {
         return isset($erros[$c]) ? '<p class="erro-campo">' . h($erros[$c]) . '</p>' : '';
     };
-    return '<div class="campos-2">'
-        . '<div>' . campo('nome_completo', 'Nome completo *', (string) ($v['nome_completo'] ?? ''), 'text', 'required maxlength="160" autocomplete="name"') . $erro('nome_completo') . '</div>'
-        . '<div>' . campo('cc_numero', 'N.º do Cartão de Cidadão *', numero_cc_formatado((string) ($v['cc_numero'] ?? '')), 'text', 'required maxlength="20" autocomplete="off" placeholder="12345678 9 ZZ1"') . $erro('cc_numero') . '</div>'
-        . '<div>' . campo('cc_validade', 'Válido até *', (string) ($v['cc_validade'] ?? ''), 'date', 'required min="' . date('Y-m-d') . '"') . $erro('cc_validade') . '</div>'
-        . '</div>';
+    $marca = function (string $k) use ($config) { return $config[$k] === 'obrigatorio' ? ' *' : ''; };
+    $req = function (string $k) use ($config) { return $config[$k] === 'obrigatorio' ? 'required ' : ''; };
+    $html = '<div>' . campo('nome_completo', 'Nome completo *', (string) ($v['nome_completo'] ?? ''), 'text', 'required maxlength="160" autocomplete="name"') . $erro('nome_completo') . '</div>';
+    if ($config['documento'] !== 'desligado') {
+        $html .= '<div>' . campo_select('documento_tipo', 'Documento de identificação' . $marca('documento'), TIPOS_DOCUMENTO, (string) ($v['documento_tipo'] ?? 'cc')) . '</div>'
+            . '<div>' . campo('cc_numero', 'N.º do documento' . $marca('documento'), numero_cc_formatado((string) ($v['cc_numero'] ?? '')), 'text', $req('documento') . 'maxlength="20" autocomplete="off" placeholder="12345678 9 ZZ1"') . $erro('cc_numero') . '</div>'
+            . '<div>' . campo('cc_validade', 'Válido até' . $marca('documento'), (string) ($v['cc_validade'] ?? ''), 'date', $req('documento') . 'min="' . date('Y-m-d') . '"') . $erro('cc_validade') . '</div>';
+    }
+    if ($config['data_nascimento'] !== 'desligado') {
+        $html .= '<div>' . campo('data_nascimento', 'Data de nascimento' . $marca('data_nascimento'), (string) ($v['data_nascimento'] ?? ''), 'date', $req('data_nascimento') . 'max="' . date('Y-m-d') . '" autocomplete="bday"') . $erro('data_nascimento') . '</div>';
+    }
+    if ($config['nif'] !== 'desligado') {
+        $html .= '<div>' . campo('nif', 'NIF' . $marca('nif'), (string) ($v['nif'] ?? ''), 'text', $req('nif') . 'inputmode="numeric" maxlength="11"') . $erro('nif') . '</div>';
+    }
+    foreach (['naturalidade' => 'Naturalidade', 'nacionalidade' => 'Nacionalidade'] as $k => $rotulo) {
+        if ($config[$k] !== 'desligado') {
+            $html .= '<div>' . campo($k, $rotulo . $marca($k), (string) ($v[$k] ?? ''), 'text', $req($k) . 'maxlength="80"') . $erro($k) . '</div>';
+        }
+    }
+    return '<div class="campos-2">' . $html . '</div>';
+}
+
+// "Cartão de Cidadão n.º 12345678 9 ZZ1, válido até 20/05/2031" (ou passaporte, título de residência)
+function linha_documento(array $f): string
+{
+    $tipo = TIPOS_DOCUMENTO[$f['documento_tipo'] ?? 'cc'] ?? TIPOS_DOCUMENTO['cc'];
+    return trim((string) ($f['cc_numero'] ?? '')) === '' ? '' : $tipo . ' n.º ' . (($f['documento_tipo'] ?? 'cc') === 'cc' ? numero_cc_formatado((string) $f['cc_numero']) : $f['cc_numero'])
+        . ($f['cc_validade'] ? ', válido até ' . data_curta((string) $f['cc_validade']) : '');
 }
 
 /* Contexto do certificado de uma inscrição */
@@ -181,17 +289,17 @@ function numero_certificado(array $c): string
 function emitir_certificado(array $i, array $ficha): array
 {
     $ctx = contexto_certificado($i);
-    $dados = array_merge([$ficha['nome_completo'], $ficha['cc_numero'], $ficha['cc_validade'], $ctx['presencas'], $ctx['sessoes']], formador_certificado((int) $i['formacao_id']));
+    $dados = array_merge([$ficha['nome_completo'], (string) $ficha['cc_numero'], (string) $ficha['cc_validade'], $ctx['presencas'], $ctx['sessoes']], formador_certificado((int) $i['formacao_id']), [$ficha['documento_tipo'] ?? 'cc']);
     $atual = certificado_da_inscricao((int) $i['id']);
     if ($atual) {
-        executar('UPDATE certificados SET emitido = ?, nome = ?, cc_numero = ?, cc_validade = ?, presencas = ?, sessoes = ?, formador = ?, formador_dados = ? WHERE id = ?', array_merge([agora()], $dados, [$atual['id']]));
+        executar('UPDATE certificados SET emitido = ?, nome = ?, cc_numero = ?, cc_validade = ?, presencas = ?, sessoes = ?, formador = ?, formador_dados = ?, documento_tipo = ? WHERE id = ?', array_merge([agora()], $dados, [$atual['id']]));
     } else {
         $pdo = bd();
         $pdo->exec('BEGIN IMMEDIATE');
         try {
             $ano = (int) date('Y');
             $n = (int) (linha_bd('SELECT COALESCE(MAX(numero), 0) + 1 AS n FROM certificados WHERE ano = ?', [$ano])['n'] ?? 1);
-            executar('INSERT INTO certificados (inscricao_id, ano, numero, emitido, nome, cc_numero, cc_validade, presencas, sessoes, formador, formador_dados) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            executar('INSERT INTO certificados (inscricao_id, ano, numero, emitido, nome, cc_numero, cc_validade, presencas, sessoes, formador, formador_dados, documento_tipo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 array_merge([(int) $i['id'], $ano, $n, agora()], $dados));
             $pdo->exec('COMMIT');
         } catch (Throwable $e) {
@@ -310,7 +418,7 @@ function bloco_certificado_formando(array $u, array $inscricoes, array $valores 
       <h2>Ficha para o certificado ' . ($completa ? etiqueta('Completa', 'ok') : etiqueta('Por completar', 'info')) . '</h2>
       ' . ($emitidos !== '' ? '<p><strong>Certificados emitidos</strong></p><ul class="lista-datas">' . $emitidos . '</ul>' : '') . '
       <details' . ($aberta ? ' open' : '') . '><summary>' . ($completa ? 'Ver ou corrigir os dados (' . h($ficha['nome_completo']) . ', CC n.º ' . h(numero_cc_formatado((string) $ficha['cc_numero'])) . ', válido até ' . h(data_curta((string) $ficha['cc_validade'])) . ')' : 'Preencher os dados para o certificado') . '</summary>
-        <p class="texto-suave">Indique o nome completo e o número e a validade do Cartão de Cidadão, tal como devem constar do certificado de frequência. Estes dados servem apenas para emitir os seus certificados.</p>
+        <p class="texto-suave">Indique o nome completo e os dados do documento de identificação, tal como devem constar do certificado de frequência. Estes dados servem apenas para emitir os seus certificados.</p>
         <form method="post" action="' . h(url(rota_formando())) . '#certificado" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="ficha_certificado">
           ' . campos_ficha_certificado($v, $erros) . '
           <div><button class="botao" type="submit">Guardar os dados</button></div>
@@ -371,20 +479,17 @@ function tratar_certificados_edicao(array $f): void
     $enviar = $acao === 'cert_enviar';
     $emitidos = 0;
     $enviados = 0;
-    $sem_ficha = [];
-    $sem_presencas = [];
+    $bloqueados = [];
     $falhados = [];
     foreach ($lista as $i) {
-        $ficha = ficha_certificado((string) $i['email']);
-        if (!ficha_completa($ficha)) {
-            $sem_ficha[] = (string) $i['formando'];
+        // As mesmas regras da ficha do formando: dados completos, presenças, assiduidade validada e avaliação "Aprovado"
+        $ctx = contexto_inscricao($i);
+        if ($b = bloqueios_certificado($i, $ctx)) {
+            $bloqueados[] = $i['formando'] . ' (' . implode('; ', $b) . ')';
             continue;
         }
-        if (!contexto_certificado($i)['presencas']) {
-            $sem_presencas[] = (string) $i['formando'];
-            continue;
-        }
-        $c = emitir_certificado($i, $ficha);
+        $c = emitir_certificado($i, $ctx['ficha']);
+        executar("UPDATE inscricoes SET estado = 'certificado' WHERE id = ? AND estado IN ('inscrito', 'em_formacao', 'concluido')", [$i['id']]);
         $emitidos++;
         if ($enviar) {
             if (enviar_certificado($c, $i)) {
@@ -396,11 +501,10 @@ function tratar_certificados_edicao(array $f): void
     }
     $partes = array_filter([
         $emitidos ? $emitidos . ' certificado(s) emitido(s)' . ($enviar ? ', ' . $enviados . ' enviado(s) por email' : '') . '.' : 'Nenhum certificado emitido.',
-        $sem_ficha ? 'Sem a ficha completa: ' . implode(', ', $sem_ficha) . '.' : '',
-        $sem_presencas ? 'Sem presenças registadas: ' . implode(', ', $sem_presencas) . '.' : '',
+        $bloqueados ? 'Bloqueados: ' . implode('; ', $bloqueados) . '.' : '',
         $falhados ? 'Email não enviado: ' . implode(', ', $falhados) . '.' : '',
     ]);
-    aviso(h(implode(' ', $partes)), $sem_ficha || $sem_presencas || $falhados ? ($emitidos ? 'info' : 'erro') : 'ok');
+    aviso(h(implode(' ', $partes)), $bloqueados || $falhados ? ($emitidos ? 'info' : 'erro') : 'ok');
     redirecionar('formacao', ['id' => $id], 'certificados');
 }
 
@@ -420,7 +524,7 @@ function certificados_edicao_html(array $f): string
         $ficha = ficha_certificado((string) $i['email']);
         $c = certificado_da_inscricao((int) $i['id']);
         if (ficha_completa($ficha)) {
-            $dados = etiqueta('Completa', 'ok') . '<br><span class="texto-suave">' . h($ficha['nome_completo']) . '<br>CC ' . h(numero_cc_formatado((string) $ficha['cc_numero'])) . ', até ' . h(data_curta((string) $ficha['cc_validade'])) . '</span>';
+            $dados = etiqueta('Completa', 'ok') . '<br><span class="texto-suave">' . h($ficha['nome_completo']) . '<br>' . h(linha_documento($ficha)) . '</span>';
         } else {
             $faltam++;
             $dados = etiqueta('Em falta', 'info') . ((string) $i['email'] === '' ? '<br><span class="texto-suave">Sem email: preencha na ficha do formando</span>'
@@ -433,7 +537,7 @@ function certificados_edicao_html(array $f): string
             . '<td>' . $ctx['presencas'] . ' de ' . $ctx['sessoes'] . '</td><td>' . $cert . '</td></tr>';
     }
     return '<h2 class="espaco-topo" id="certificados">Certificados de frequência</h2>
-      <p class="texto-suave">O certificado leva o nome completo e o número e a validade do Cartão de Cidadão da ficha do formando, preenchida na área do formando (ou, na ficha do formando, pela administração), e a assiduidade registada nas presenças.'
+      <p class="texto-suave">O certificado leva os dados da ficha do formando (nome completo e documento de identificação), preenchida na área do formando ou, na ficha do formando, pela administração, e a assiduidade registada nas presenças. Só é emitido com os dados completos, a assiduidade validada pelo formador e a avaliação "Aprovado" (na ficha do formando).'
         . ($faltam ? ' ' . $faltam . ' formando(s) sem a ficha completa: use "Pedir os dados por email".' : '')
         . ($terminada ? '' : ' A edição ainda não terminou: confirme as presenças antes de emitir.') . ' Voltar a emitir um certificado mantém o número e atualiza os dados.</p>
       <form method="post">' . campo_csrf() . '
@@ -443,7 +547,7 @@ function certificados_edicao_html(array $f): string
           <button class="botao botao-secundario" type="submit" name="acao" value="cert_emitir">Emitir (sem enviar)</button>
           <button class="botao" type="submit" name="acao" value="cert_enviar">Emitir e enviar por email</button>
         </div>
-        <p class="ajuda">As ações aplicam-se aos formandos escolhidos. Só se emitem certificados com a ficha completa e pelo menos uma presença; o email leva o PDF em anexo e o formando pode descarregá-lo na área do formando.</p>
+        <p class="ajuda">As ações aplicam-se aos formandos escolhidos. Só se emitem certificados com os dados completos, presenças, a assiduidade validada pelo formador e a avaliação "Aprovado"; o email leva o PDF em anexo e o formando pode descarregá-lo na área do formando.</p>
       </form>';
 }
 

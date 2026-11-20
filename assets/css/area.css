@@ -2551,3 +2551,105 @@ table[data-filtros] .col-oculta {
 .cabecalho .seletor-idioma {
   margin-left: auto;
 }
+
+/* Fluxo do formando: progresso (x/10), cartão de cada inscrição e as 10 etapas em linha */
+.progresso {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.progresso::before {
+  content: "";
+  width: 64px;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--petroleo) var(--p, 0%), var(--linha, #E7DFD4) var(--p, 0%));
+}
+.cartao-inscricao {
+  margin: 0 0 24px;
+  padding: var(--pad-caixa, 28px);
+  background: var(--creme, #FBF9F6);
+  border: 1px solid var(--linha, #E7DFD4);
+  border-radius: var(--raio-grande, 24px);
+}
+.cartao-inscricao > header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.cartao-inscricao > header p {
+  grid-column: 1 / -1;
+}
+.fluxo-etapas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.fluxo-etapa {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid var(--linha, #E7DFD4);
+}
+.fluxo-etapa-n {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--linha, #E7DFD4);
+}
+.fluxo-etapa-texto {
+  display: grid;
+  gap: 2px;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+.fluxo-etapa-estado {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.fluxo-etapa small {
+  color: var(--cinzento, #687280);
+}
+.fluxo-etapa-feita {
+  background: #EEF6F4;
+  border-color: #BFDCD8;
+}
+.fluxo-etapa-feita .fluxo-etapa-n {
+  background: var(--petroleo, #00636A);
+  color: #fff;
+}
+.fluxo-etapa-em_curso {
+  background: #FFF8E8;
+  border-color: #F1D9A6;
+}
+.fluxo-etapa-em_curso .fluxo-etapa-n {
+  background: #E0A93B;
+  color: #fff;
+}
+.fluxo-etapa-bloqueada {
+  opacity: 0.7;
+  background: #F4F2EF;
+}
+.acoes-etapas details + details {
+  margin-top: 8px;
+}
+.ficha-formando-topo .factos-area {
+  margin-bottom: 12px;
+}

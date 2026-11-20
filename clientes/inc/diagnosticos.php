@@ -84,148 +84,53 @@ function enviar_ligacao_diagnostico(int $id): bool
     ]);
 }
 
-/* Inscrever numa edição quem respondeu ao diagnóstico */
+/* Formandos, vista Diagnósticos: lista dos diagnósticos e envio a formandos */
 
-// Edições onde se pode inscrever: não canceladas, dos últimos 6 meses em diante
-function edicoes_para_inscrever(): array
+// Envia o diagnóstico de um curso aos formandos indicados (ids); devolve [enviados, falhados]
+function enviar_diagnostico_lote(array $ids, int $curso): array
 {
-    return consulta("SELECT * FROM formacoes WHERE estado != 'cancelada' AND inicio >= ? ORDER BY inicio", [date('Y-m-d 00:00:00', strtotime('-6 months'))]);
-}
-
-// Inscrições não canceladas de um email: "Curso 1 (06/10/2026)", com a ligação para a inscrição
-function inscricoes_do_email_html(string $email): string
-{
-    if (trim($email) === '') {
-        return '';
-    }
-    $partes = [];
-    foreach (consulta("SELECT i.id, COALESCE(f.titulo, (SELECT c2.nome FROM cursos c2 WHERE c2.id = i.curso_id)) AS titulo, f.inicio FROM inscricoes i LEFT JOIN formacoes f ON f.id = i.formacao_id WHERE i.estado NOT IN ('desistiu', 'nao_concluido') AND " . sprintf(SQL_EMAIL_IGUAL, 'i.email') . ' ORDER BY f.inicio', [$email]) as $i) {
-        $curso = preg_match('/^(Curso\s+\d+)\s*:/u', (string) $i['titulo'], $m) ? $m[1] : (string) $i['titulo'];
-        $partes[] = '<a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($curso) . '</a> <span class="texto-suave">(' . h(date('d/m/Y', strtotime($i['inicio']))) . ')</span>';
-    }
-    return implode('<br>', $partes);
-}
-
-// Inscreve na edição escolhida, confirmadas e sem enviar nenhum email, as pessoas dos diagnósticos escolhidos, com as
-// respostas e as ferramentas do diagnóstico (quando já respondido) e a empresa cliente do utilizador
-function inscrever_diagnosticos_sem_emails(): void
-{
-    $f = linha_bd("SELECT * FROM formacoes WHERE id = ? AND estado != 'cancelada'", [(int) ($_POST['edicao'] ?? 0)]);
-    $ids = array_values(array_unique(array_map('intval', array_filter((array) ($_POST['diag'] ?? []), 'is_numeric'))));
-    if (!$f || !$ids) {
-        aviso(!$f ? 'Escolha a edição.' : 'Escolha as pessoas a inscrever.', 'erro');
-        redirecionar('diagnosticos', [], 'enviados');
-    }
-    $feitas = [];
-    $falhas = [];
-    $vistos = [];
-    foreach ($ids as $id) {
-        $d = linha_bd('SELECT d.*, u.cliente_id, u.papel FROM diagnosticos d LEFT JOIN utilizadores u ON u.id = d.utilizador_id WHERE d.id = ?', [$id]);
-        $email = trim((string) ($d['email'] ?? ''));
-        if (!$d || isset($vistos[strtolower($email)])) {
+    $enviados = [];
+    $falhados = [];
+    foreach ($ids as $fid) {
+        $f = formando((int) $fid);
+        if (!$f) {
             continue;
         }
-        $vistos[strtolower($email)] = true;
-        $respostas = $d['respondido'] !== null ? json_decode((string) $d['respostas'], true) : null;
-        $ferramentas = json_decode((string) $d['ferramentas'], true);
-        $cliente = !empty($d['cliente_id']) ? linha_bd('SELECT * FROM clientes WHERE id = ?', [(int) $d['cliente_id']]) : null;
-        $r = gravar_inscricao($f, ['cliente_id' => $cliente['id'] ?? null, 'utilizador_id' => utilizador()['id'], 'origem' => 'area',
-            'tipo_cliente' => $cliente['tipo'] ?? null, 'empresa' => null, 'nif' => null, 'contacto_nome' => $d['nome'], 'contacto_email' => $email, 'contacto_telefone' => null,
-            'formando' => (string) $d['nome'], 'email' => $email, 'funcao' => '', 'ferramentas' => is_array($ferramentas) ? array_map('strval', $ferramentas) : [], 'expectativas' => ''],
-            is_array($respostas) ? $respostas : [], true);
-        if ($r['erro'] === '') {
-            executar("UPDATE inscricoes SET estado = 'inscrito' WHERE id = ?", [$r['id']]);
-            $feitas[] = (string) $d['nome'];
-        } else {
-            $falhas[] = $d['nome'] . ' (' . rtrim($r['erro'], '.') . ')';
+        try {
+            [, $ok] = enviar_diagnostico_formando((int) $fid, $curso);
+            $ok ? $enviados[] = $f['nome'] : $falhados[] = $f['nome'] . ' (falha no envio)';
+        } catch (InvalidArgumentException $e) {
+            $falhados[] = $f['nome'] . ' (' . mb_strtolower(rtrim($e->getMessage(), '.')) . ')';
         }
     }
-    aviso(($feitas ? count($feitas) . ' pessoa(s) inscrita(s) em ' . h($f['titulo']) . ' (' . h(horario($f)) . '), confirmada(s), sem enviar nenhum email: ' . h(implode(', ', $feitas)) . '. Os emails enviam-se depois na <a href="' . h(url('formacao', ['id' => $f['id']])) . '">ficha da edição</a>.' : 'Ninguém foi inscrito.')
-        . ($falhas ? ' Não inscritas: ' . h(implode('; ', $falhas)) . '.' : ''), $falhas ? ($feitas ? 'info' : 'erro') : 'ok');
-    redirecionar('diagnosticos', [], 'enviados');
+    return [$enviados, $falhados];
 }
-
-/* Administração */
 
 function admin_diagnosticos(): void
 {
-    $cursos = array_column(consulta('SELECT id, nome FROM cursos WHERE ativo = 1 ORDER BY id'), 'nome', 'id');
-    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['acao'] ?? '') === 'inscrever_edicao') {
-        inscrever_diagnosticos_sem_emails();
-    }
+    $cursos = opcoes_cursos();
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
-        // Cursos escolhidos, pela ordem do catálogo
-        $marcados = array_map('intval', array_filter((array) ($_POST['cursos'] ?? []), 'is_string'));
-        $escolhidos = array_values(array_filter(array_keys($cursos), function ($id) use ($marcados) { return in_array((int) $id, $marcados, true); }));
-        $ids = array_values(array_unique(array_filter(array_map('intval', (array) ($_POST['utilizadores'] ?? [])))));
-        if (!$escolhidos) {
-            aviso('Escolha pelo menos um curso.', 'erro');
-            redirecionar('diagnosticos');
-        }
-        if (!$ids) {
-            aviso('Escolha pelo menos um utilizador.', 'erro');
-            redirecionar('diagnosticos', ['cursos' => implode(',', $escolhidos)]);
-        }
-        $enviados = [];
-        $falhados = [];
-        foreach ($ids as $uid) {
-            $u = linha_bd("SELECT * FROM utilizadores WHERE id = ? AND ativo = 1 AND papel IN ('formando', 'cliente')", [$uid]);
-            if (!$u) {
-                continue;
+        $lote = ($_POST['acao'] ?? '') === 'diagnostico_lote';
+        $curso = (int) ($lote ? ($_POST['curso_lote'] ?? 0) : ($_POST['curso'] ?? 0));
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array) ($_POST[$lote ? 'formando' : 'formandos'] ?? [])))));
+        if (!isset($cursos[$curso])) {
+            aviso('Escolha o curso: quem responder fica inscrito nesse curso.', 'erro');
+        } elseif (!$ids) {
+            aviso('Escolha pelo menos um formando.', 'erro');
+        } else {
+            [$enviados, $falhados] = enviar_diagnostico_lote($ids, $curso);
+            if ($enviados) {
+                aviso('Diagnóstico do ' . h($cursos[$curso]) . ' enviado a ' . count($enviados) . ' formando(s): ' . h(implode(', ', $enviados)) . '. Quem responder fica inscrito neste curso.');
             }
-            // Quem já tem um diagnóstico por responder recebe esse, com os cursos agora escolhidos e uma ligação nova
-            $d = linha_bd('SELECT id FROM diagnosticos WHERE utilizador_id = ? AND respondido IS NULL ORDER BY id DESC LIMIT 1', [$uid]);
-            if ($d) {
-                $id = (int) $d['id'];
-                executar('UPDATE diagnosticos SET cursos = ?, curso_id = ? WHERE id = ?', [json_encode($escolhidos), $escolhidos[0], $id]);
-            } else {
-                $id = executar('INSERT INTO diagnosticos (utilizador_id, nome, email, curso_id, cursos, enviado, enviado_por) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [$uid, $u['nome'], trim((string) $u['email']), $escolhidos[0], json_encode($escolhidos), agora(), utilizador()['id']]);
-            }
-            if (enviar_ligacao_diagnostico($id)) {
-                $enviados[] = h($u['nome']);
-            } else {
-                $falhados[] = h($u['nome']) . ' (' . h($u['email']) . ')';
+            if ($falhados) {
+                aviso('Sem envio: ' . h(implode('; ', $falhados)) . '.', 'erro');
             }
         }
-        if ($enviados) {
-            aviso('Diagnóstico (' . h(juntar_lista(array_map(function ($id) use ($cursos) { return $cursos[$id]; }, $escolhidos))) . ') enviado a ' . count($enviados) . ' utilizador(es): ' . implode(', ', $enviados) . '.');
-        }
-        if ($falhados) {
-            aviso('Não foi possível enviar o email a: ' . implode(', ', $falhados) . '. Verifique o envio de emails em Configuração, Comunicação.', 'erro');
-        }
-        redirecionar('diagnosticos', ['cursos' => implode(',', $escolhidos)]);
+        redirecionar('formandos', $lote ? [] : ['vista' => 'diagnosticos']);
     }
 
-    // Utilizadores a quem se pode enviar (Formando e Cliente, ativos), com o último diagnóstico de cada um
-    $lista = consulta("SELECT u.id, u.nome, u.email, u.papel, c.nome AS cliente,
-            (SELECT MAX(d.enviado) FROM diagnosticos d WHERE d.utilizador_id = u.id) AS ultimo
-        FROM utilizadores u LEFT JOIN clientes c ON c.id = u.cliente_id
-        WHERE u.ativo = 1 AND u.papel IN ('formando', 'cliente') ORDER BY u.nome COLLATE NOCASE");
-    $linhas = '';
-    foreach ($lista as $u) {
-        $linhas .= '<tr><td><input type="checkbox" name="utilizadores[]" value="' . (int) $u['id'] . '" id="u-' . (int) $u['id'] . '" aria-label="Enviar a ' . h($u['nome']) . '"></td>'
-            . '<td><label for="u-' . (int) $u['id'] . '">' . h($u['nome']) . '</label></td><td>' . h($u['email']) . '</td><td>' . h(PAPEIS[$u['papel']]) . '</td><td>' . h((string) $u['cliente']) . '</td>'
-            . '<td data-valor="' . h((string) $u['ultimo']) . '">' . h(data_hora($u['ultimo'], false)) . '</td></tr>';
-    }
-    $pre = array_map('intval', explode(',', (string) ($_GET['cursos'] ?? '')));
-    $opcoes = '';
-    foreach ($cursos as $id => $nome) {
-        $opcoes .= '<label class="opcao"><input type="checkbox" name="cursos[]" value="' . (int) $id . '"' . (in_array((int) $id, $pre, true) ? ' checked' : '') . '> ' . h($nome) . '</label>';
-    }
-    $envio = $lista
-        ? '<form method="post" class="formulario">' . campo_csrf() . '
-            <fieldset class="campo-grupo escolha-cursos"><legend>Cursos *</legend>
-              <p class="ajuda">Escolha um ou vários. Cada pessoa recebe um só diagnóstico, com os cursos escolhidos indicados no email.</p>
-              <div class="opcoes opcoes-grelha">' . $opcoes . '</div></fieldset>
-            <div class="conteudo tabela-rolante"><table data-filtros="escolha" class="tabela-escolha"><thead><tr><th data-sem-filtro><input type="checkbox" class="marcar-todos" aria-label="Escolher todos os utilizadores visíveis"></th><th>Nome</th><th>Email</th><th data-filtro="lista">Perfil</th><th data-filtro="lista">Cliente</th><th>Último diagnóstico</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
-            <div><button class="botao" type="submit">Enviar diagnóstico</button></div>
-          </form>'
-        : '<p class="texto-suave">Ainda não há utilizadores com o perfil Formando ou Cliente. Crie-os em Configuração, Utilizadores.</p>';
-
-    // Diagnósticos enviados
-    // Cliente: o associado ao utilizador que recebeu o diagnóstico (empresa do Formando ou cliente do utilizador Cliente)
-    $enviados = consulta('SELECT d.*, c.nome AS cliente FROM diagnosticos d LEFT JOIN utilizadores u ON u.id = d.utilizador_id LEFT JOIN clientes c ON c.id = u.cliente_id ORDER BY d.enviado DESC');
+    // Diagnósticos enviados, com o formando, o curso e a inscrição criada
+    $enviados = consulta('SELECT d.*, c.nome AS cliente FROM diagnosticos d LEFT JOIN formandos fo ON fo.id = d.formando_id LEFT JOIN clientes c ON c.id = fo.cliente_id ORDER BY d.enviado DESC');
     $linhas = '';
     foreach ($enviados as $d) {
         [$estado, $tipo] = estado_diagnostico($d);
@@ -236,30 +141,31 @@ function admin_diagnosticos(): void
             $ind = aconselhado_do_diagnostico($d, $r);
             $aconselhado = $ind ? $ind['curso']['nome'] . ($ind['pedido'] ? '' : ' (não pedido)') : '';
         }
-        $inscrito = inscricoes_do_email_html((string) $d['email']);
-        $linhas .= '<tr><td><input type="checkbox" form="inscrever-diagnosticos" name="diag[]" value="' . (int) $d['id'] . '" aria-label="Escolher ' . h($d['nome']) . '"></td>'
-            . '<td><a href="' . h(url('diagnostico', ['id' => $d['id']])) . '">' . h($d['nome']) . '</a></td><td>' . h($d['email']) . '</td><td>' . h((string) $d['cliente']) . '</td><td>' . h(nomes_cursos_diagnostico($d)) . '</td>'
+        $nome = $d['formando_id'] ? '<a href="' . h(url('formando', ['id' => $d['formando_id']])) . '" translate="no">' . h($d['nome']) . '</a>' : '<span translate="no">' . h($d['nome']) . '</span>';
+        $linhas .= '<tr><td>' . $nome . '</td><td translate="no">' . h($d['email']) . '</td><td>' . h((string) $d['cliente']) . '</td><td><a href="' . h(url('diagnostico', ['id' => $d['id']])) . '">' . h(nomes_cursos_diagnostico($d)) . '</a></td>'
             . '<td data-valor="' . h($d['enviado']) . '">' . h(data_hora($d['enviado'], false)) . '</td><td>' . etiqueta($estado, $tipo) . '</td>'
             . '<td data-valor="' . h((string) $d['pontuacao']) . '">' . h($resultado) . '</td><td>' . h($aconselhado) . '</td>'
-            . '<td data-valor="' . ($inscrito !== '' ? 'Inscrito' : 'Sem inscrição') . '">' . ($inscrito !== '' ? $inscrito : '<span class="texto-suave">Sem inscrição</span>') . '</td></tr>';
+            . '<td>' . ($d['inscricao_id'] ? '<a href="' . h(url('formando', ['id' => $d['formando_id']])) . '#inscricao-' . (int) $d['inscricao_id'] . '">Inscrito</a>' : '') . '</td></tr>';
     }
-    $edicoes = '';
-    foreach (edicoes_para_inscrever() as $f) {
-        $edicoes .= '<option value="' . (int) $f['id'] . '">' . h($f['titulo'] . ' · ' . horario($f) . ' · ' . (ESTADOS_FORMACAO[$f['estado']] ?? $f['estado'])) . '</option>';
+    // Envio: formandos com email
+    $lista = consulta("SELECT f.*, c.nome AS cliente, (SELECT MAX(d.enviado) FROM diagnosticos d WHERE d.formando_id = f.id) AS ultimo
+        FROM formandos f LEFT JOIN clientes c ON c.id = f.cliente_id WHERE trim(COALESCE(f.email, '')) != '' ORDER BY f.nome COLLATE NOCASE");
+    $opcoes = '';
+    foreach ($lista as $f) {
+        $opcoes .= '<tr><td><input type="checkbox" name="formandos[]" value="' . (int) $f['id'] . '" id="f-' . (int) $f['id'] . '" aria-label="Enviar a ' . h($f['nome']) . '"></td>'
+            . '<td><label for="f-' . (int) $f['id'] . '" translate="no">' . h($f['nome']) . '</label></td><td translate="no">' . h($f['email']) . '</td><td>' . h((string) $f['cliente']) . '</td>'
+            . '<td data-valor="' . h((string) $f['ultimo']) . '">' . h(data_hora($f['ultimo'], false)) . '</td></tr>';
     }
-    $inscrever = $linhas && $edicoes !== ''
-        ? '<form method="post" id="inscrever-diagnosticos" class="formulario espaco-topo-curto">' . campo_csrf() . '<input type="hidden" name="acao" value="inscrever_edicao">
-            <div class="campo"><label for="c-edicao">Inscrever os escolhidos na edição</label><select id="c-edicao" name="edicao" required><option value="">Escolha a edição</option>' . $edicoes . '</select></div>
-            <div><button class="botao botao-secundario" type="submit">Inscrever sem enviar emails</button></div>
-            <p class="ajuda">Fica inscrito na edição, confirmado, com o nome, o email, a empresa cliente do utilizador e as respostas do diagnóstico (se já respondeu). Não é enviado nenhum email nem criado o acesso à área do formando; envie-os depois na ficha da edição. Quem já está inscrito nessa edição não é inscrito de novo.</p>
-          </form>' : '';
-    pagina_area('diagnosticos', 'Diagnósticos', '
-      <p class="texto-suave">Envie o diagnóstico de IA antes da formação: escolha um ou vários cursos e os utilizadores. Cada pessoa recebe por email uma só ligação pessoal, válida 30 dias e de uso único, e responde sem precisar de entrar na área reservada. São ' . (count(DIAGNOSTICO) + 1) . ' perguntas: ' . count(DIAGNOSTICO_V2) . ' sobre a utilização da IA, ' . count(DIAGNOSTICO_CONHECIMENTO) . ' de conhecimentos e as ferramentas usadas. O resultado e o curso aconselhado só aparecem aqui.</p>
-      <h2 class="espaco-topo" id="enviados">Diagnósticos enviados</h2>
-      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="enviados" class="tabela-escolha"><thead><tr><th data-sem-filtro><input type="checkbox" class="marcar-todos" aria-label="Escolher todos os diagnósticos visíveis"></th><th>Nome</th><th>Email</th><th data-filtro="lista">Cliente</th><th>Cursos</th><th>Enviado</th><th data-filtro="lista">Estado</th><th>Resultado</th><th data-filtro="lista">Curso aconselhado</th><th data-filtro="lista">Inscrição</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' . $inscrever
+    pagina_area('formandos', 'Diagnósticos', separadores_formandos('diagnosticos') . '
+      <p class="texto-suave">O diagnóstico de IA é a 1.ª etapa: cada formando recebe por email uma ligação pessoal, válida 30 dias e de uso único, para o curso escolhido. Quando responde, fica inscrito nesse curso e recebe o email da inscrição. São ' . (count(DIAGNOSTICO) + 1) . ' perguntas: ' . count(DIAGNOSTICO_V2) . ' sobre a utilização da IA, ' . count(DIAGNOSTICO_CONHECIMENTO) . ' de conhecimentos e as ferramentas usadas. O resultado e o curso aconselhado só aparecem aqui.</p>
+      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="enviados2"><thead><tr><th>Nome</th><th>Email</th><th data-filtro="lista">Cliente</th><th data-filtro="lista">Curso</th><th>Enviado</th><th data-filtro="lista">Estado</th><th>Resultado</th><th data-filtro="lista">Curso aconselhado</th><th data-filtro="lista">Inscrição</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>'
         : '<p class="texto-suave">Ainda não foi enviado nenhum diagnóstico.</p>') . '
       <h2 class="espaco-topo" id="enviar">Enviar o diagnóstico</h2>
-      ' . $envio, 'Formação');
+      ' . ($lista ? '<form method="post" class="formulario">' . campo_csrf() . '
+          <div class="campos-2">' . campo_select('curso', 'Curso (quem responder fica inscrito neste curso) *', $cursos, '', 'Escolha o curso', 'required') . '</div>
+          <div class="conteudo tabela-rolante"><table data-filtros="escolha2" class="tabela-escolha"><thead><tr><th data-sem-filtro><input type="checkbox" class="marcar-todos" aria-label="Escolher todos os formandos visíveis"></th><th>Nome</th><th>Email</th><th data-filtro="lista">Cliente</th><th>Último diagnóstico</th></tr></thead><tbody>' . $opcoes . '</tbody></table></div>
+          <div><button class="botao" type="submit">Enviar diagnóstico</button></div>
+        </form>' : '<p class="texto-suave">Ainda não há formandos com email. Crie-os em <a href="' . h(url('formandos')) . '#novo">Formandos, Novo formando</a>.</p>'), 'Formação');
 }
 
 function admin_diagnostico(): void
@@ -294,7 +200,7 @@ function admin_diagnostico(): void
           <h2 class="espaco-topo">Respostas</h2>
           <div class="conteudo tabela-rolante tabela-diagnostico">' . tabela_diagnostico(['respostas' => $d['respostas']]) . '</div>';
     }
-    pagina_area('diagnosticos', 'Diagnóstico de ' . $d['nome'], $dados . $resultado . '
+    pagina_area('formandos', 'Diagnóstico de ' . $d['nome'], $dados . $resultado . '
       <div class="acoes espaco-topo">'
         . ($d['respondido'] === null ? '<form method="post">' . campo_csrf() . '<input type="hidden" name="acao" value="reenviar"><button class="botao" type="submit">Reenviar a ligação</button></form>' : '')
         . '<a class="botao botao-secundario" href="' . h(url('diagnosticos')) . '">Voltar aos diagnósticos</a>'

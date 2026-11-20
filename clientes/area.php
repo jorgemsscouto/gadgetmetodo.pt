@@ -20,7 +20,7 @@ require __DIR__ . '/inc/agenda.php';
 require __DIR__ . '/inc/diagnosticos.php';
 require __DIR__ . '/inc/certificados.php';
 require __DIR__ . '/inc/agenda-ics.php';
-require __DIR__ . '/inc/pessoas.php';
+require __DIR__ . '/inc/gestao-formandos.php';
 
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
@@ -82,12 +82,12 @@ if ($post) {
 
 $comuns = ['inscrever' => 'pagina_inscrever', 'inscricao' => 'pagina_inscricao', 'conta' => 'pagina_conta'];
 $rotas = eh_admin()
-    ? ['painel' => 'admin_painel', 'calendario' => 'admin_calendario', 'formacao' => 'admin_formacao', 'cursos' => 'admin_cursos', 'curso' => 'admin_curso', 'inscricoes' => 'admin_inscricoes',
+    ? ['painel' => 'admin_painel', 'calendario' => 'admin_calendario', 'formacao' => 'admin_formacao', 'cursos' => 'admin_cursos', 'curso' => 'admin_curso', 'inscricoes' => 'redirecionar_inscricoes',
        'clientes' => 'admin_clientes', 'cliente' => 'admin_cliente', 'utilizadores' => 'admin_utilizadores', 'utilizador' => 'admin_utilizador',
-       'pedidos' => 'admin_pedidos', 'configuracao' => 'admin_configuracao', 'precos' => 'admin_precos', 'comunicacao' => 'admin_comunicacao', 'apagar' => 'admin_apagar', 'formando' => 'admin_formando', 'diagnosticos' => 'admin_diagnosticos', 'diagnostico' => 'admin_diagnostico', 'certificado' => 'pagina_certificado', 'formandos' => 'admin_lista_formandos', 'migracoes' => 'admin_migracoes'] + $comuns
+       'pedidos' => 'admin_pedidos', 'configuracao' => 'admin_configuracao', 'precos' => 'admin_precos', 'comunicacao' => 'admin_comunicacao', 'apagar' => 'admin_apagar', 'formando' => 'admin_ficha_formando', 'diagnosticos' => 'redirecionar_diagnosticos', 'diagnostico' => 'admin_diagnostico', 'certificado' => 'pagina_certificado', 'formandos' => 'admin_gestao_formandos', 'material' => 'pagina_material', 'migracoes' => 'admin_migracoes', 'certificados_config' => 'admin_config_certificados'] + $comuns
     : (eh_formando()
-        ? ['painel' => 'formando_painel', 'certificado' => 'pagina_certificado', 'conta' => 'pagina_conta']
-        : ['painel' => 'cliente_painel', 'calendario' => 'cliente_formacoes', 'inscricoes' => 'cliente_inscricoes'] + (tambem_formando() ? ['presencas' => 'formando_painel', 'certificado' => 'pagina_certificado'] : []) + $comuns);
+        ? ['painel' => 'formando_painel', 'certificado' => 'pagina_certificado', 'material' => 'pagina_material', 'conta' => 'pagina_conta']
+        : ['painel' => 'cliente_painel', 'calendario' => 'cliente_formacoes', 'inscricoes' => 'cliente_inscricoes'] + (tambem_formando() ? ['presencas' => 'formando_painel', 'certificado' => 'pagina_certificado', 'material' => 'pagina_material'] : []) + $comuns);
 
 if (!isset($rotas[$p])) {
     negar();

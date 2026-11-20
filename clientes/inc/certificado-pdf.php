@@ -107,7 +107,9 @@ function gerar_pdf_certificado(array $c, array $ctx): string
     $pdf->Text(280 - $pdf->GetStringWidth($t), 19, $t);
     $pdf->centrado($centro, 42, 'Certificado de Frequência', $largura, 'montserrat', 'B', 26, 'marinho');
     $pdf->centrado($centro, 64, (string) $c['nome'], $largura, 'montserrat', 'B', 17, 'marinho');
-    $pdf->centrado($centro, 71, 'Cartão de Cidadão n.º ' . numero_cc_formatado((string) $c['cc_numero']) . ', válido até ' . data_curta((string) $c['cc_validade']), $largura, 'inter', '', 9.5, 'cinza');
+    if (($documento = linha_documento($c)) !== '') {
+        $pdf->centrado($centro, 71, $documento, $largura, 'inter', '', 9.5, 'cinza');
+    }
     $pdf->centrado($centro, 88, 'frequentou o curso', $largura, 'inter', '', 12, 'texto');
     $pdf->centrado($centro, 102, $ctx['curso'], $largura, 'montserrat', 'B', 20, 'marinho');
     $n = (int) $c['sessoes'];

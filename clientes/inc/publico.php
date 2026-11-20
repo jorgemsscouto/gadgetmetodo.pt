@@ -503,9 +503,8 @@ function inscricao_curso_publica(): array
                 executar("UPDATE inscricoes SET empresa = ?, tipo_cliente = 'empresa' WHERE id = ?", [$v['empresa'], $iid]);
             }
             limite_excedido('inscricoes_curso', 5, 3600, true);
-            if ($iid) {
-                emails_nova_inscricao($iid);
-            }
+            // Aviso à administração: diagnóstico respondido, com o resultado e o curso aconselhado
+            aviso_diagnostico_respondido($did);
             header('Location: /formacoes/inscricao-curso.php?recebida=1&c=' . (int) $c['id'], true, 303);
             exit;
         }

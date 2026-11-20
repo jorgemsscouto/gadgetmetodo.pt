@@ -339,7 +339,7 @@ function pagina_inscricao(): void
         http_response_code(404);
         pagina_erro('Inscrição não encontrada', 'A inscrição pedida não existe ou não pertence ao seu cliente.');
     }
-    $futura = strtotime($i['inicio']) >= strtotime('today');
+    $futura = empty($i['inicio']) || strtotime($i['inicio']) >= strtotime('today');
     $contacto = contacto_inscricao($i);
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $acao = (string) ($_POST['acao'] ?? '');

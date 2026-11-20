@@ -123,6 +123,17 @@ function admin_formacao(): void
     if ($post && in_array($acao, ['presencas', 'acessos'], true) && $f) {
         tratar_presencas_edicao($f);
     }
+    if ($post && $f && tratar_materiais((int) $f['curso_id'], (int) $id)) {
+        redirecionar('formacao', ['id' => $id], 'materiais');
+    }
+    if ($post && $acao === 'encerrar_turma' && $f) {
+        if (empty($_POST['confirmar'])) {
+            aviso('Marque a confirmação para encerrar a turma.', 'erro');
+        } else {
+            aviso('Turma encerrada: ' . encerrar_turma((int) $id) . ' inscrição(ões) passaram a Encerrado.');
+        }
+        redirecionar('formacao', ['id' => $id], 'encerramento');
+    }
     if ($post && in_array($acao, ['cert_pedir', 'cert_emitir', 'cert_enviar'], true) && $f) {
         tratar_certificados_edicao($f);
     }
@@ -230,6 +241,8 @@ function admin_formacao(): void
         $inscritos .= $linhas ? lembretes_edicao(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]), $confirmadas) : '';
         $inscritos .= $confirmadas ? presencas_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id])) : '';
         $inscritos .= $confirmadas ? certificados_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id])) : '';
+        $inscritos .= materiais_html((int) $v['curso_id'], (int) $id);
+        $inscritos .= encerramento_turma_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]));
         $inscritos .= juntar_edicoes_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]));
         $inscritos .= '<p class="espaco-topo">' . botao_apagar('formacao', $id, 'Apagar esta edição') . '</p>';
     }
@@ -671,6 +684,9 @@ function admin_curso(): void
     if ($id && !$c) {
         pagina_erro('Curso não encontrado', 'O curso pedido não existe.');
     }
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $c && tratar_materiais($id, null)) {
+        redirecionar('curso', ['id' => $id], 'materiais');
+    }
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $acao = (string) ($_POST['acao'] ?? '');
         if ($acao === 'curso') {
@@ -762,7 +778,7 @@ function admin_curso(): void
         $html .= '<p class="espaco-topo">' . botao_apagar('curso', $id, 'Apagar este curso') . '</p>';
     }
     // Edições do curso no topo da página, antes da ficha
-    pagina_area('cursos', $c ? $c['nome'] : 'Novo curso', ($c ? edicoes_do_curso_html((int) $c['id']) . '<h2 class="espaco-topo">Dados do curso</h2>' : '') . $html, 'Cursos');
+    pagina_area('cursos', $c ? $c['nome'] : 'Novo curso', ($c ? edicoes_do_curso_html((int) $c['id']) . materiais_html((int) $c['id'], null) . '<h2 class="espaco-topo">Dados do curso</h2>' : '') . $html, 'Cursos');
 }
 
 // Edições do curso (as próximas primeiro, depois as que já decorreram): datas, formato, formador, inscritos e estado
@@ -827,49 +843,6 @@ function form_modulo(array $m, int $numero, string $unidade = 'Módulo'): string
 }
 
 /* Inscrições */
-
-// Lista de inscrições, com filtros e exportação para Excel
-function admin_inscricoes(): void
-{
-    if (($_GET['vista'] ?? '') !== 'todas' && !array_intersect_key($_GET, array_flip(['formacao', 'cliente', 'estado', 'origem', 'exportar']))) {
-        admin_formandos();
-        return;
-    }
-    $origens = ['site' => 'Site', 'por_associar' => 'Site, por associar a cliente', 'area' => 'Área reservada'];
-    $estados = ESTADOS_INSCRICAO;
-    $filtros = ['formacao' => (int) ($_GET['formacao'] ?? 0), 'cliente' => (int) ($_GET['cliente'] ?? 0), 'estado' => isset($estados[$_GET['estado'] ?? '']) ? $_GET['estado'] : '', 'origem' => isset($origens[$_GET['origem'] ?? '']) ? $_GET['origem'] : ''];
-    $sql = 'SELECT i.*, ' . SQL_CLIENTE . ', COALESCE(f.titulo, (SELECT c2.nome FROM cursos c2 WHERE c2.id = i.curso_id)) AS titulo, f.inicio FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id LEFT JOIN formacoes f ON f.id = i.formacao_id WHERE 1 = 1';
-    $par = [];
-    if ($filtros['formacao']) { $sql .= ' AND i.formacao_id = ?'; $par[] = $filtros['formacao']; }
-    if ($filtros['cliente']) { $sql .= ' AND i.cliente_id = ?'; $par[] = $filtros['cliente']; }
-    if ($filtros['estado']) { $sql .= ' AND i.estado = ?'; $par[] = $filtros['estado']; }
-    if ($filtros['origem'] === 'por_associar') { $sql .= ' AND i.cliente_id IS NULL'; }
-    elseif ($filtros['origem']) { $sql .= ' AND i.origem = ?'; $par[] = $filtros['origem']; }
-    $lista = consulta($sql . ' ORDER BY f.inicio DESC, i.criado', $par);
-    if (!empty($_GET['exportar'])) {
-        $linhas = [];
-        foreach ($lista as $i) {
-            $linhas[] = [$i['titulo'], data_hora($i['inicio']), $i['cliente'], TIPOS_CLIENTE[$i['cliente_tipo']] ?? '', ORIGENS[$i['origem']] ?? $i['origem'], $i['contacto_nome'], $i['contacto_email'], $i['contacto_telefone'], $i['formando'], $i['email'], $i['funcao'], ESTADOS_INSCRICAO[$i['estado']] ?? $i['estado'], $i['nivel'], $i['pontuacao'], $i['responsavel'], $i['ferramentas'], $i['expectativas'], data_hora($i['criado'])];
-        }
-        exportar_csv('gadgetmetodo-inscricoes', ['Formação', 'Data da formação', 'Cliente', 'Tipo de cliente', 'Origem', 'Contacto (site)', 'Email do contacto', 'Telefone do contacto', 'Formando', 'Email', 'Função', 'Estado', 'Nível de IA', 'Pontuação', 'Uso responsável (0-9)', 'Ferramentas usadas', 'Expectativas', 'Data da inscrição'], $linhas);
-    }
-    $formacoes = [];
-    foreach (consulta('SELECT id, titulo, inicio FROM formacoes ORDER BY inicio DESC') as $f) {
-        $formacoes[$f['id']] = data_hora($f['inicio'], false) . ' · ' . $f['titulo'];
-    }
-    $clientes = array_column(consulta('SELECT id, nome FROM clientes ORDER BY nome'), 'nome', 'id');
-    $linhas = '';
-    foreach ($lista as $i) {
-        $linhas .= '<tr><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . cliente_html($i) . etiqueta_origem($i) . '</td><td>' . h($i['titulo']) . '<br><span class="texto-suave">' . h(data_hora($i['inicio'])) . '</span></td><td>' . nivel_etiqueta($i['nivel']) . '</td><td>' . estado_etiqueta($i['estado'], ESTADOS_INSCRICAO) . '</td><td>' . h(data_hora($i['criado'])) . '</td></tr>';
-    }
-    pagina_area('inscricoes', 'Inscrições', submenu_inscricoes('todas') . '
-      <form method="get" class="filtros">
-        <input type="hidden" name="p" value="inscricoes"><input type="hidden" name="vista" value="todas">
-        ' . campo_select('formacao', 'Formação', $formacoes, $filtros['formacao'], 'Todas') . campo_select('cliente', 'Cliente', $clientes, $filtros['cliente'], 'Todos') . campo_select('estado', 'Estado', $estados, $filtros['estado'], 'Todos') . campo_select('origem', 'Origem', $origens, $filtros['origem'], 'Todas') . '
-        <div class="filtros-acoes"><button class="botao" type="submit">Filtrar</button><a class="botao botao-secundario" href="' . h(url('inscricoes', array_filter($filtros) + ['exportar' => 1])) . '">Exportar para Excel</a></div>
-      </form>
-      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Formando</th><th>Cliente</th><th>Formação</th><th>Nível de IA</th><th>Estado</th><th>Inscrito em</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Sem inscrições para os filtros escolhidos.</p>'), 'Formações');
-}
 
 /* Clientes */
 

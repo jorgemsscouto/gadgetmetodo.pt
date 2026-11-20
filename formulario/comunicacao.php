@@ -209,6 +209,16 @@ const EMAILS = [
         'texto' => "{nome},\n\nObrigado por responder ao diagnóstico. Está inscrito(a) no **{curso}**. A Gadgetmetodo vai indicar-lhe a turma, com as datas e o horário das sessões.\n\nNa sua área de formando pode acompanhar a formação, consultar os materiais, registar as presenças e preencher os dados necessários para o certificado. Para entrar pela primeira vez, ative a conta e defina a sua palavra-passe no botão abaixo.",
         'fecho' => 'Preencha os dados para o certificado assim que possível: só os usamos para emitir o certificado de frequência. Se tiver alguma dúvida, responda a este email.',
     ],
+    'materiais_formando' => [
+        'grupo' => 'clientes', 'nome' => 'Materiais do curso',
+        'quando' => 'No botão "Enviar os materiais por email" da ficha do formando (etapa Manual e áudio).',
+        'dados' => 'Lista dos materiais do curso e da turma (manual, áudio e outros), com ligações pessoais que registam o acesso na ficha do formando.',
+        'desativavel' => false, 'variaveis' => ['nome', 'formando', 'curso'],
+        'assunto' => 'Materiais do curso: {curso}',
+        'titulo' => 'Materiais do curso',
+        'texto' => "{nome},\n\nSeguem os materiais do **{curso}**. Pode abri-los nas ligações abaixo ou na sua área de formando.",
+        'fecho' => 'Se tiver dificuldade em abrir algum material, responda a este email.',
+    ],
     'dados_certificado' => [
         'grupo' => 'clientes', 'nome' => 'Pedido de dados para o certificado',
         'quando' => 'No botão "Pedir os dados por email" dos certificados de uma edição, para os formandos escolhidos.',
