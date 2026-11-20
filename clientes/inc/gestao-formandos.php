@@ -552,15 +552,185 @@ function pagina_material(): void
     $i = linha_bd(SQL_INSCRICAO, [(int) ($_GET['i'] ?? 0)]);
     $m = linha_bd('SELECT * FROM materiais WHERE id = ?', [(int) ($_GET['m'] ?? 0)]);
     $deste = $i && $m && ((int) $m['curso_id'] === (int) $i['curso_id'] || ($m['formacao_id'] && (int) $m['formacao_id'] === (int) $i['formacao_id']));
-    if (!$deste || (!eh_admin() && !mesmo_email((string) $i['email'], (string) $u['email']))) {
+    // A administração abre qualquer material (sem inscrição: pré-visualização na página do curso ou da turma)
+    if (!$m || (!eh_admin() && (!$deste || !mesmo_email((string) $i['email'], (string) $u['email'])))) {
         http_response_code(404);
         pagina_erro('Material não encontrado', 'O material pedido não existe ou não é de uma formação sua.');
     }
-    if (!eh_admin()) {
+    // Um acesso por abertura (os pedidos parciais seguintes do áudio e do vídeo não contam)
+    $range = (string) ($_SERVER['HTTP_RANGE'] ?? '');
+    if (!eh_admin() && ($range === '' || preg_match('/^bytes=0-/', $range))) {
         executar("INSERT INTO materiais_acessos (inscricao_id, material_id, tipo, registado, utilizador_id) VALUES (?, ?, 'acedido', ?, ?)", [$i['id'], $m['id'], agora(), $u['id']]);
+    }
+    if (!empty($m['ficheiro'])) {
+        servir_ficheiro_material($m);
     }
     header('Location: ' . $m['url'], true, 302);
     exit;
+}
+
+/* Materiais carregados como ficheiro: pasta de dados materiais/, fora da parte pública */
+
+const MATERIAL_TAMANHO_MAX = 500 * 1024 * 1024;
+const MATERIAL_PARTE_MAX = 2 * 1024 * 1024;
+const MATERIAL_EXTENSOES = [
+    'pdf' => 'application/pdf', 'm4a' => 'audio/mp4', 'mp3' => 'audio/mpeg', 'wav' => 'audio/wav', 'aac' => 'audio/aac', 'ogg' => 'audio/ogg',
+    'mp4' => 'video/mp4', 'mov' => 'video/quicktime', 'webm' => 'video/webm',
+    'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'epub' => 'application/epub+zip', 'zip' => 'application/zip',
+];
+
+function pasta_materiais(string $sub = ''): string
+{
+    $pasta = pasta_dados(cfg());
+    if (!$pasta) {
+        throw new RuntimeException('Sem pasta de dados para os materiais.');
+    }
+    $dir = $pasta . '/materiais' . ($sub !== '' ? '/' . $sub : '');
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0700, true);
+        @file_put_contents($pasta . '/materiais/.htaccess', "Require all denied\n");
+    }
+    return $dir;
+}
+
+function tamanho_legivel(int $b): string
+{
+    return $b >= 1048576 ? number_format($b / 1048576, 1, ',', '') . ' MB' : max(1, (int) round($b / 1024)) . ' KB';
+}
+
+// Envia o ficheiro ao navegador, com suporte de pedidos parciais (Range), que os leitores de áudio e vídeo usam
+function servir_ficheiro_material(array $m): void
+{
+    $f = pasta_materiais() . '/' . basename((string) $m['ficheiro']);
+    if (!is_file($f)) {
+        http_response_code(404);
+        pagina_erro('Material não encontrado', 'O ficheiro deste material já não existe.');
+    }
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    @set_time_limit(0);
+    $total = filesize($f);
+    $inicio = 0;
+    $fim = $total - 1;
+    if (preg_match('/^bytes=(\d*)-(\d*)$/', (string) ($_SERVER['HTTP_RANGE'] ?? ''), $r) && ($r[1] !== '' || $r[2] !== '')) {
+        if ($r[1] === '') {
+            $inicio = max(0, $total - (int) $r[2]);
+        } else {
+            $inicio = (int) $r[1];
+            $fim = $r[2] !== '' ? min((int) $r[2], $total - 1) : $total - 1;
+        }
+        if ($inicio > $fim || $inicio >= $total) {
+            http_response_code(416);
+            header('Content-Range: bytes */' . $total);
+            exit;
+        }
+        http_response_code(206);
+        header('Content-Range: bytes ' . $inicio . '-' . $fim . '/' . $total);
+    }
+    $nome = (string) ($m['ficheiro_nome'] ?: basename($f));
+    $ascii = trim((string) preg_replace('/[^A-Za-z0-9._-]+/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', $nome) ?: 'material'), '_');
+    header('Content-Type: ' . ($m['mime'] ?: 'application/octet-stream'));
+    header('Content-Disposition: inline; filename="' . $ascii . '"; filename*=UTF-8\'\'' . rawurlencode($nome));
+    header('Accept-Ranges: bytes');
+    header('Content-Length: ' . ($fim - $inicio + 1));
+    header('Cache-Control: private, max-age=3600');
+    header('X-Content-Type-Options: nosniff');
+    $h = fopen($f, 'rb');
+    fseek($h, $inicio);
+    $falta = $fim - $inicio + 1;
+    while ($falta > 0 && !feof($h) && !connection_aborted()) {
+        $bloco = fread($h, (int) min(1048576, $falta));
+        echo $bloco;
+        flush();
+        $falta -= strlen($bloco);
+    }
+    fclose($h);
+    exit;
+}
+
+function responder_json(array $r, int $codigo = 200): void
+{
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    http_response_code($codigo);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($r, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// Recebe uma parte do ficheiro (o navegador envia-o em partes de 1,5 MB, abaixo dos limites habituais do alojamento);
+// na última, valida e regista o material. Sem JavaScript, o ficheiro inteiro chega numa só parte.
+function receber_parte_material(?int $curso_id, ?int $formacao_id): void
+{
+    $json = !empty($_POST['js']);
+    $erro = function (string $msg) use ($json, $curso_id, $formacao_id) {
+        if ($json) {
+            responder_json(['ok' => false, 'erro' => $msg], 400);
+        }
+        aviso(h($msg), 'erro');
+        $formacao_id ? redirecionar('formacao', ['id' => $formacao_id], 'materiais') : redirecionar('curso', ['id' => $curso_id], 'materiais');
+    };
+    $envio = preg_match('/^[a-f0-9]{16,32}$/', (string) ($_POST['envio'] ?? '')) ? (string) $_POST['envio'] : bin2hex(random_bytes(8));
+    $parte = max(0, (int) ($_POST['parte'] ?? 0));
+    $partes = max(1, (int) ($_POST['partes'] ?? 1));
+    $up = $_FILES['ficheiro'] ?? null;
+    if (!$up || (int) $up['error'] !== UPLOAD_ERR_OK || !is_uploaded_file((string) $up['tmp_name'])) {
+        $erro(in_array((int) ($up['error'] ?? 0), [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)
+            ? 'O ficheiro é maior do que o servidor aceita num só envio. Use um navegador com JavaScript ativo (o envio é feito em partes).'
+            : 'Não foi possível receber o ficheiro. Tente de novo.');
+    }
+    $nome = trim((string) ($_POST['nome'] ?? '')) ?: (string) $up['name'];
+    $nome = mb_substr(str_replace(['/', '\\', "\0"], '_', $nome), 0, 200);
+    $ext = strtolower(pathinfo($nome, PATHINFO_EXTENSION));
+    if (!isset(MATERIAL_EXTENSOES[$ext])) {
+        $erro('Tipo de ficheiro não aceite (' . ($ext ?: 'sem extensão') . '). Aceites: ' . implode(', ', array_keys(MATERIAL_EXTENSOES)) . '.');
+    }
+    // Ficheiros parciais com mais de um dia são apagados
+    $tmp_dir = pasta_materiais('partes');
+    foreach (glob($tmp_dir . '/*.part') ?: [] as $velho) {
+        if (filemtime($velho) < time() - 86400) {
+            @unlink($velho);
+        }
+    }
+    $tmp = $tmp_dir . '/' . (int) (utilizador()['id'] ?? 0) . '-' . $envio . '.part';
+    if ($parte === 0) {
+        @unlink($tmp);
+    } elseif (!is_file($tmp)) {
+        $erro('O envio foi interrompido. Escolha o ficheiro e envie de novo.');
+    }
+    $dados = (string) file_get_contents((string) $up['tmp_name']);
+    if (($parte === 0 ? 0 : filesize($tmp)) + strlen($dados) > MATERIAL_TAMANHO_MAX) {
+        @unlink($tmp);
+        $erro('O ficheiro tem mais de ' . (MATERIAL_TAMANHO_MAX / 1048576) . ' MB.');
+    }
+    file_put_contents($tmp, $dados, FILE_APPEND);
+    clearstatcache(true, $tmp);
+    if ($parte + 1 < $partes) {
+        responder_json(['ok' => true, 'parte' => $parte]);
+    }
+    // Última parte: o tamanho tem de bater certo com o anunciado
+    $tamanho = filesize($tmp);
+    if (isset($_POST['tamanho']) && (int) $_POST['tamanho'] !== $tamanho) {
+        @unlink($tmp);
+        $erro('O ficheiro não chegou completo (' . tamanho_legivel($tamanho) . ' de ' . tamanho_legivel((int) $_POST['tamanho']) . '). Envie de novo.');
+    }
+    $titulo = texto('material_titulo', 160) ?: pathinfo($nome, PATHINFO_FILENAME);
+    $tipo = isset(TIPOS_MATERIAL[$_POST['material_tipo'] ?? '']) ? $_POST['material_tipo'] : (str_starts_with(MATERIAL_EXTENSOES[$ext], 'audio/') ? 'audio' : 'manual');
+    $destino = bin2hex(random_bytes(12)) . '.' . $ext;
+    if (!rename($tmp, pasta_materiais() . '/' . $destino)) {
+        @unlink($tmp);
+        $erro('Não foi possível guardar o ficheiro.');
+    }
+    executar('INSERT INTO materiais (curso_id, formacao_id, titulo, tipo, url, ordem, criado, ficheiro, ficheiro_nome, tamanho, mime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [$formacao_id ? null : $curso_id, $formacao_id, $titulo, $tipo, '', (int) (linha_bd('SELECT COUNT(*) AS n FROM materiais')['n'] ?? 0), agora(), $destino, $nome, $tamanho, MATERIAL_EXTENSOES[$ext]]);
+    aviso('Material carregado: ' . h($titulo) . ' (' . h(tamanho_legivel($tamanho)) . ').');
+    if ($json) {
+        responder_json(['ok' => true, 'fim' => true]);
+    }
+    $formacao_id ? redirecionar('formacao', ['id' => $formacao_id], 'materiais') : redirecionar('curso', ['id' => $curso_id], 'materiais');
 }
 
 function pagina_ficha_formando(array $f, array $erros_ficha): void
@@ -705,6 +875,9 @@ function cartao_inscricao(array $i, callable $form): string
 function tratar_materiais(?int $curso_id, ?int $formacao_id): bool
 {
     $acao = (string) ($_POST['acao'] ?? '');
+    if ($acao === 'material_ficheiro') {
+        receber_parte_material($curso_id, $formacao_id);
+    }
     if ($acao === 'material_novo') {
         $titulo = texto('material_titulo', 160);
         $url_m = texto('material_url', 500);
@@ -720,6 +893,10 @@ function tratar_materiais(?int $curso_id, ?int $formacao_id): bool
     }
     if ($acao === 'material_apagar') {
         $id = (int) ($_POST['material'] ?? 0);
+        $m = linha_bd('SELECT * FROM materiais WHERE id = ? AND (curso_id = ? OR formacao_id = ?)', [$id, (int) $curso_id, (int) $formacao_id]);
+        if ($m && !empty($m['ficheiro'])) {
+            @unlink(pasta_materiais() . '/' . basename((string) $m['ficheiro']));
+        }
         executar('DELETE FROM materiais WHERE id = ? AND (curso_id = ? OR formacao_id = ?)', [$id, (int) $curso_id, (int) $formacao_id]);
         aviso('Material retirado. Os registos de envio e de acesso já feitos mantêm-se na ficha do formando.');
         return true;
@@ -732,18 +909,30 @@ function materiais_html(?int $curso_id, ?int $formacao_id): string
     $lista = $formacao_id ? consulta('SELECT * FROM materiais WHERE formacao_id = ? ORDER BY ordem, id', [$formacao_id]) : consulta('SELECT * FROM materiais WHERE curso_id = ? ORDER BY ordem, id', [(int) $curso_id]);
     $linhas = '';
     foreach ($lista as $m) {
-        $linhas .= '<tr><td><a href="' . h($m['url']) . '" target="_blank" rel="noopener">' . h($m['titulo']) . '</a></td><td>' . h(TIPOS_MATERIAL[$m['tipo']] ?? $m['tipo']) . '</td><td>'
-            . '<form method="post">' . campo_csrf() . '<input type="hidden" name="acao" value="material_apagar"><input type="hidden" name="material" value="' . (int) $m['id'] . '"><button class="botao-texto" type="submit">Retirar</button></form></td></tr>';
+        $ficheiro = !empty($m['ficheiro']);
+        $linhas .= '<tr><td><a href="' . h($ficheiro ? url('material', ['m' => $m['id']]) : $m['url']) . '" target="_blank" rel="noopener">' . h($m['titulo']) . '</a>'
+            . ($ficheiro ? '<br><span class="texto-suave">' . h((string) $m['ficheiro_nome']) . ' · ' . h(tamanho_legivel((int) $m['tamanho'])) . '</span>' : '') . '</td><td>' . h(TIPOS_MATERIAL[$m['tipo']] ?? $m['tipo']) . '</td><td>' . ($ficheiro ? 'Ficheiro' : 'Ligação') . '</td><td>'
+            . '<form method="post" data-confirmar="Retirar este material' . ($ficheiro ? ' e apagar o ficheiro' : '') . '?">' . campo_csrf() . '<input type="hidden" name="acao" value="material_apagar"><input type="hidden" name="material" value="' . (int) $m['id'] . '"><button class="botao-texto" type="submit">Retirar</button></form></td></tr>';
     }
     return '<h2 class="espaco-topo" id="materiais">Materiais ' . ($formacao_id ? 'desta turma' : 'do curso') . '</h2>
       <p class="texto-suave">' . ($formacao_id ? 'Só para os formandos desta turma; os materiais do curso aparecem também.' : 'Para todos os formandos do curso, em qualquer turma.') . ' Os formandos abrem-nos na área do formando ou no email "Materiais do curso"; o envio e cada acesso ficam registados na ficha do formando (etapa Manual e áudio).</p>
-      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Material</th><th>Tipo</th><th><span class="visualmente-oculto">Ações</span></th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '') . '
+      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Material</th><th>Tipo</th><th>Origem</th><th><span class="visualmente-oculto">Ações</span></th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '') . '
+      <h3 class="espaco-topo-curto">Carregar um ficheiro</h3>
+      <form method="post" enctype="multipart/form-data" class="formulario" data-carregar-material>' . campo_csrf() . '<input type="hidden" name="acao" value="material_ficheiro">
+        <div class="campos-2">' . campo('material_titulo', 'Título', '', 'text', 'maxlength="160" placeholder="Por omissão, o nome do ficheiro"', 'material_titulo_f')
+        . '<div class="campo"><label for="material_tipo_f">Tipo</label><select id="material_tipo_f" name="material_tipo">' . opcoes_select(['' => 'Pelo ficheiro (áudio ou manual)'] + TIPOS_MATERIAL, '') . '</select></div></div>
+        <div><label for="material_ficheiro">Ficheiro *</label><input type="file" id="material_ficheiro" name="ficheiro" required accept=".' . implode(',.', array_keys(MATERIAL_EXTENSOES)) . '"></div>
+        <div class="carregar-progresso" hidden><progress max="100" value="0"></progress> <span class="texto-suave" aria-live="polite"></span></div>
+        <div><button class="botao botao-secundario" type="submit">Carregar o ficheiro</button></div>
+        <p class="ajuda">PDF, áudio (m4a, mp3, wav), vídeo (mp4, mov, webm), Word, PowerPoint, Excel, ePub ou ZIP, até ' . (MATERIAL_TAMANHO_MAX / 1048576) . ' MB. O ficheiro fica guardado fora da parte pública do site: só o abrem os formandos ' . ($formacao_id ? 'desta turma' : 'deste curso') . ', com sessão iniciada na área do formando.</p>
+      </form>
+      <details class="espaco-topo-curto"><summary>Acrescentar uma ligação (material alojado noutro sítio)</summary>
       <form method="post" class="formulario espaco-topo-curto">' . campo_csrf() . '<input type="hidden" name="acao" value="material_novo">
         <div class="campos-2">' . campo('material_titulo', 'Título *', '', 'text', 'required maxlength="160" placeholder="Por exemplo, Manual do Formando em áudio"')
         . campo('material_url', 'Endereço *', '', 'url', 'required maxlength="500" placeholder="https://www.gadgetmetodo.pt/formacoes/manual-curso-1/"')
         . campo_select('material_tipo', 'Tipo', TIPOS_MATERIAL, 'manual') . '</div>
-        <div><button class="botao botao-secundario" type="submit">Acrescentar material</button></div>
-      </form>';
+        <div><button class="botao botao-secundario" type="submit">Acrescentar a ligação</button></div>
+      </form></details>';
 }
 
 /* Encerramento da turma (etapa 10) */

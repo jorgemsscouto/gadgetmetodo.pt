@@ -331,7 +331,15 @@ function formando_painel(): void
         // Materiais do curso e da turma (as ligações registam o acesso na ficha do formando)
         $materiais = function_exists('materiais_inscricao') ? materiais_inscricao($i) : [];
         $lista_mat = $materiais ? '<p class="mb-0"><strong>Materiais</strong></p><ul class="lista-datas">' . implode('', array_map(function ($m) use ($i) {
-            return '<li><a href="' . h(url('material', ['i' => $i['id'], 'm' => $m['id']])) . '" target="_blank" rel="noopener">' . h($m['titulo']) . '</a> <span class="texto-suave">(' . h(TIPOS_MATERIAL[$m['tipo']] ?? $m['tipo']) . ')</span></li>';
+            $link = url('material', ['i' => $i['id'], 'm' => $m['id']]);
+            $info = TIPOS_MATERIAL[$m['tipo']] ?? $m['tipo'];
+            if (!empty($m['ficheiro'])) {
+                $info .= ', ' . strtoupper(pathinfo((string) $m['ficheiro_nome'], PATHINFO_EXTENSION)) . ', ' . tamanho_legivel((int) $m['tamanho']);
+            }
+            // Os ficheiros de áudio ouvem-se na própria página
+            $leitor = !empty($m['ficheiro']) && str_starts_with((string) $m['mime'], 'audio/')
+                ? '<br><audio controls preload="none" src="' . h($link) . '" style="width:100%;max-width:480px;margin-top:6px"></audio>' : '';
+            return '<li><a href="' . h($link) . '" target="_blank" rel="noopener">' . h($m['titulo']) . '</a> <span class="texto-suave">(' . h($info) . ')</span>' . $leitor . '</li>';
         }, $materiais)) . '</ul>' : '';
         if (empty($i['formacao_id'])) {
             // Inscrição no curso, ainda sem turma

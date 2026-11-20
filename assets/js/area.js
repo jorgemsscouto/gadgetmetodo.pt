@@ -408,3 +408,65 @@ function gmT(pt, en) { return gmEN ? en : pt; }
     aplicar();
   });
 })();
+
+// Formulários com data-confirmar: pedem confirmação antes de enviar
+document.addEventListener('submit', function (e) {
+  var f = e.target;
+  if (f.getAttribute && f.getAttribute('data-confirmar') && !window.confirm(f.getAttribute('data-confirmar'))) {
+    e.preventDefault();
+  }
+});
+
+// Materiais: o ficheiro é enviado em partes de 1,5 MB (abaixo dos limites habituais do alojamento), com a barra de
+// progresso; o servidor junta as partes e regista o material na última. Sem JavaScript, o formulário envia o ficheiro inteiro.
+(function () {
+  var PARTE = 1536 * 1024;
+  document.querySelectorAll('form[data-carregar-material]').forEach(function (form) {
+    var entrada = form.querySelector('input[type=file]');
+    var caixa = form.querySelector('.carregar-progresso');
+    var barra = caixa.querySelector('progress');
+    var texto = caixa.querySelector('span');
+    var botao = form.querySelector('button[type=submit]');
+    form.addEventListener('submit', function (e) {
+      var ficheiro = entrada.files && entrada.files[0];
+      if (!ficheiro || !window.fetch || !window.FormData) {
+        return;
+      }
+      e.preventDefault();
+      var envio = Array.from(crypto.getRandomValues(new Uint8Array(8))).map(function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+      var partes = Math.max(1, Math.ceil(ficheiro.size / PARTE));
+      caixa.hidden = false;
+      botao.disabled = true;
+      var enviar = function (i) {
+        var dados = new FormData(form);
+        dados.delete('ficheiro');
+        dados.append('ficheiro', ficheiro.slice(i * PARTE, (i + 1) * PARTE), 'parte');
+        dados.append('js', '1');
+        dados.append('envio', envio);
+        dados.append('parte', String(i));
+        dados.append('partes', String(partes));
+        dados.append('nome', ficheiro.name);
+        dados.append('tamanho', String(ficheiro.size));
+        texto.textContent = gmT('A enviar ', 'Uploading ') + Math.round(100 * i / partes) + '%';
+        return fetch(form.action || window.location.href, { method: 'POST', body: dados, credentials: 'same-origin' })
+          .then(function (r) { return r.json().catch(function () { return { ok: false, erro: gmT('Resposta inválida do servidor (código ', 'Invalid server response (code ') + r.status + ').' }; }); })
+          .then(function (r) {
+            if (!r.ok) {
+              throw new Error(r.erro || gmT('Falha no envio.', 'Upload failed.'));
+            }
+            barra.value = Math.round(100 * (i + 1) / partes);
+            if (i + 1 < partes) {
+              return enviar(i + 1);
+            }
+            texto.textContent = gmT('Concluído.', 'Done.');
+            window.location.hash = 'materiais';
+            window.location.reload();
+          });
+      };
+      enviar(0).catch(function (erro) {
+        texto.textContent = erro.message;
+        botao.disabled = false;
+      });
+    });
+  });
+})();
