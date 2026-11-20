@@ -6,8 +6,8 @@ import path from 'path';
 
 const OUT = process.argv[2];
 const URL_BASE = 'https://www.gadgetmetodo.pt';
-const HOJE = '2026-11-12';
-const HOJE_TXT = '12 de novembro de 2026';
+const HOJE = '2026-11-19';
+const HOJE_TXT = '19 de novembro de 2026';
 const EMAIL = 'info@gadgetmetodo.pt';
 const TEL = '+351 915 416 112';
 const TEL_LINK = 'tel:+351915416112';
@@ -35,6 +35,16 @@ function icone(nome, classe = '') {
 
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const semTags = s => s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
+
+// Versão inglesa (en-GB): rotas PT → EN partilhadas com o tradutor da área reservada (clientes/inc/idioma.php).
+// Cada página portuguesa tem uma página /en/… que a serve traduzida pelo dicionário clientes/inc/traducoes/en.json.
+const ROTAS_EN = JSON.parse(fs.readFileSync(path.join(OUT, 'clientes/inc/traducoes/rotas.json'), 'utf8'));
+function urlEn(url) {
+  const [caminho, resto = ''] = url.split(/(?=[?#])/);
+  if (ROTAS_EN[caminho]) return ROTAS_EN[caminho] + resto;
+  const prefixo = Object.keys(ROTAS_EN).filter(k => k !== '/' && k.endsWith('/') && ROTAS_EN[k].endsWith('/') && caminho.startsWith(k)).sort((a, b) => b.length - a.length)[0];
+  return prefixo ? ROTAS_EN[prefixo] + caminho.slice(prefixo.length) + resto : null;
+}
 
 // Navegação
 const NAV = [
@@ -133,6 +143,7 @@ function cabecalho(atual) {
       <nav id="navegacao" class="navegacao" aria-label="Principal">
         <ul>
           ${links}
+          <li><a class="nav-idioma" href="${urlEn(atual) || '/en/'}" hreflang="en-GB" lang="en-GB" title="View in English" data-fixo data-idioma="en">EN</a></li>
           <li><a class="nav-clientes" href="/clientes/" title="Área reservada a clientes">${icone('circle-user-round').replace('<svg ', '<svg width="18" height="18" ')}<span class="nav-clientes-texto">Área reservada</span></a></li>
           <li><a class="botao" href="/contactos/#formulario"${atual === '/contactos/' ? ' aria-current="page"' : ''}>Pedir proposta</a></li>
         </ul>
@@ -264,6 +275,7 @@ function cartaoServico(s) {
 
 // Página completa
 const paginas = [];
+const paginasEn = [];
 // Páginas com conteúdo dinâmico (formações) são geradas como PHP: "php" é o código inicial,
 // "jsonldExtra" acrescenta dados estruturados calculados no servidor e "estilos" folhas de estilo adicionais.
 // "cabecaPhp" ({ titulo, descricao, canonical }) substitui esses campos por código PHP, em páginas cujo conteúdo depende da base de dados.
@@ -308,6 +320,10 @@ function pagina({ url, titulo, descricao, h1Schema, tipo = 'WebPage', trilho, co
   <meta name="description" content="${cabeca.descricao}">
   <meta name="robots" content="${url === '/404.html' || !indexar ? 'noindex, follow' : 'index, follow, max-snippet:-1, max-image-preview:large'}">
   ${url === '/404.html' ? '' : `<link rel="canonical" href="${cabeca.canonical}">`}
+${!cabecaPhp && urlEn(url) ? `  <link rel="alternate" hreflang="pt-PT" href="${canonical}" data-fixo>
+  <link rel="alternate" hreflang="en-GB" href="${URL_BASE + urlEn(url)}" data-fixo>
+  <link rel="alternate" hreflang="x-default" href="${canonical}" data-fixo>
+` : ''}
   <meta name="theme-color" content="#0A0F26">
   <meta name="author" content="Gadgetmetodo, Lda.">
   <meta property="og:type" content="website">
@@ -348,6 +364,18 @@ ${scripts.map(s => `  <script src="${s}" defer></script>\n`).join('')}</body>
   const destino = url === '/404.html' ? path.join(OUT, '404.html') : url.endsWith('.php') ? path.join(OUT, url) : path.join(OUT, url, ficheiro);
   fs.mkdirSync(path.dirname(destino), { recursive: true });
   fs.writeFileSync(destino, html);
+  // Versão inglesa: um pequeno PHP em /en/… que serve esta página traduzida (as páginas PHP são executadas e traduzidas à saída)
+  const en = url === '/404.html' ? null : urlEn(url);
+  if (en) {
+    const destinoEn = en.endsWith('.php') ? path.join(OUT, en) : path.join(OUT, en, 'index.php');
+    fs.mkdirSync(path.dirname(destinoEn), { recursive: true });
+    const nucleo = path.relative(path.dirname(destinoEn), path.join(OUT, 'clientes/inc/nucleo.php'));
+    const original = path.relative(path.dirname(destinoEn), destino);
+    fs.writeFileSync(destinoEn, destino.endsWith('.php')
+      ? `<?php\n// Gerado por ferramentas/gerar-site.mjs: versão inglesa de ${url} (traduzida à saída)\ndefine('IDIOMA', 'en');\nrequire_once __DIR__ . '/${nucleo}';\niniciar_traducao();\nrequire __DIR__ . '/${original}';\n`
+      : `<?php\n// Gerado por ferramentas/gerar-site.mjs: versão inglesa de ${url}\ndefine('IDIOMA', 'en');\nrequire_once __DIR__ . '/${nucleo}';\nservir_pagina_en(__DIR__ . '/${original}');\n`);
+    if (indexar && !cabecaPhp) paginasEn.push({ url: en, prioridade });
+  }
   // As páginas com cabeçalho dinâmico (uma por curso) não têm endereço fixo para o sitemap
   if (url !== '/404.html' && indexar && !cabecaPhp) paginas.push({ url, titulo, descricao, prioridade, llms });
 }
@@ -1776,7 +1804,8 @@ pagina({
         <p>Aplicamos medidas técnicas e organizativas adequadas para proteger os dados contra acesso não autorizado, perda ou divulgação indevida.</p>
 
         <h2>11. Alterações</h2>
-        <p class="mb-0">Esta política pode ser atualizada. A data da versão em vigor está indicada no topo desta página.</p>
+        <p>Esta política pode ser atualizada. A data da versão em vigor está indicada no topo desta página.</p>
+        <p class="mb-0">Esta política está também disponível em inglês. Em caso de divergência entre as duas versões, prevalece a versão portuguesa.</p>
       </div>
     </section>
   `,
@@ -1811,6 +1840,11 @@ ${paginas.map(p => `  <url>
     <lastmod>${HOJE}</lastmod>
     <priority>${p.prioridade}</priority>
   </url>`).join('\n')}
+${paginasEn.map(p => `  <url>
+    <loc>${URL_BASE}${p.url}</loc>
+    <lastmod>${HOJE}</lastmod>
+    <priority>${p.prioridade}</priority>
+  </url>`).join('\n')}
   <url>
     <loc>${URL_BASE}/catalogo-servicos-2026.pdf</loc>
     <lastmod>${HOJE}</lastmod>
@@ -1830,4 +1864,4 @@ fs.writeFileSync(path.join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="U
   </sitemap>
 </sitemapindex>
 `);
-console.log(paginas.length, 'páginas');
+console.log(paginas.length, 'páginas,', paginasEn.length, 'em inglês');

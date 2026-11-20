@@ -1,3 +1,7 @@
+// Texto na língua da página: português ou, nas páginas em inglês (<html lang="en-GB">), inglês
+var gmEN = document.documentElement.lang === 'en-GB';
+function gmT(pt, en) { return gmEN ? en : pt; }
+
 // Formulário de pedido: validação, envio sem recarregar a página e ditado por voz.
 // Sem JavaScript, o formulário é enviado normalmente e validado no servidor.
 (function () {
@@ -15,11 +19,11 @@
   /* Validação */
 
   var REGRAS = {
-    nome: function (v) { return v.trim().length >= 2 || "Indique o seu nome."; },
-    empresa: function (v) { return !paraEmpresa() || v.trim().length >= 2 || "Indique o nome da empresa."; },
-    email: function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || "Indique um email válido."; },
-    telemovel: function (v) { return /^[0-9 +()\-]{9,20}$/.test(v.trim()) || "Indique um número de telemóvel válido."; },
-    mensagem: function (v) { return v.trim().length >= 10 || "Descreva o pedido com pelo menos 10 caracteres."; },
+    nome: function (v) { return v.trim().length >= 2 || gmT("Indique o seu nome.", "Please enter your name."); },
+    empresa: function (v) { return !paraEmpresa() || v.trim().length >= 2 || gmT("Indique o nome da empresa.", "Please enter the company name."); },
+    email: function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || gmT("Indique um email válido.", "Please enter a valid email address."); },
+    telemovel: function (v) { return /^[0-9 +()\-]{9,20}$/.test(v.trim()) || gmT("Indique um número de telemóvel válido.", "Please enter a valid mobile number."); },
+    mensagem: function (v) { return v.trim().length >= 10 || gmT("Descreva o pedido com pelo menos 10 caracteres.", "Please describe your request in at least 10 characters."); },
   };
 
   // Nos pedidos de particulares o nome da empresa não é pedido
@@ -53,10 +57,10 @@
       if (r !== true && !primeiro) primeiro = form.elements[nome];
     });
     var servicos = form.querySelectorAll('input[name="servicos[]"]:checked').length > 0;
-    mostrarErro("servicos", servicos ? "" : "Selecione pelo menos um serviço.");
+    mostrarErro("servicos", servicos ? "" : gmT("Selecione pelo menos um serviço.", "Please select at least one service."));
     if (!servicos && !primeiro) primeiro = form.querySelector('input[name="servicos[]"]');
     var consentimento = form.elements.consentimento.checked;
-    mostrarErro("consentimento", consentimento ? "" : "É necessário aceitar para podermos responder.");
+    mostrarErro("consentimento", consentimento ? "" : gmT("É necessário aceitar para podermos responder.", "You need to accept so that we can reply."));
     if (!consentimento && !primeiro) primeiro = form.elements.consentimento;
     if (primeiro) primeiro.focus();
     return !primeiro;
@@ -90,7 +94,7 @@
     if (!validar()) return;
 
     botaoEnviar.disabled = true;
-    definirEstado("A enviar o pedido...");
+    definirEstado(gmT("A enviar o pedido...", "Sending your request..."));
 
     fetch(form.action, {
       method: "POST",
@@ -108,11 +112,11 @@
           sucesso.className = "sucesso-envio";
           sucesso.setAttribute("tabindex", "-1");
           var h = document.createElement("h3");
-          h.textContent = "Pedido enviado. Obrigado, " + nome + ".";
+          h.textContent = gmT("Pedido enviado. Obrigado, ", "Request sent. Thank you, ") + nome + ".";
           var p1 = document.createElement("p");
-          p1.textContent = "Enviámos uma confirmação para " + email + (dados.referencia ? ", com a referência " + dados.referencia : "") + ".";
+          p1.textContent = gmT("Enviámos uma confirmação para ", "We have sent a confirmation to ") + email + (dados.referencia ? gmT(", com a referência ", ", with reference ") + dados.referencia : "") + ".";
           var p2 = document.createElement("p");
-          p2.textContent = "Um membro da nossa equipa entrará em contacto consigo brevemente.";
+          p2.textContent = gmT("Um membro da nossa equipa entrará em contacto consigo brevemente.", "A member of our team will be in touch shortly.");
           sucesso.appendChild(h);
           sucesso.appendChild(p1);
           sucesso.appendChild(p2);
@@ -123,11 +127,11 @@
         if (dados.erros) {
           Object.keys(dados.erros).forEach(function (nome) { mostrarErro(nome, dados.erros[nome]); });
         }
-        definirEstado(dados.mensagem || "Não foi possível enviar o pedido. Tente novamente ou escreva para info@gadgetmetodo.pt.", true);
+        definirEstado(dados.mensagem || gmT("Não foi possível enviar o pedido. Tente novamente ou escreva para info@gadgetmetodo.pt.", "Your request could not be sent. Please try again or write to info@gadgetmetodo.pt."), true);
         botaoEnviar.disabled = false;
       })
       .catch(function () {
-        definirEstado("Não foi possível enviar o pedido. Verifique a ligação à internet ou escreva para info@gadgetmetodo.pt.", true);
+        definirEstado(gmT("Não foi possível enviar o pedido. Verifique a ligação à internet ou escreva para info@gadgetmetodo.pt.", "Your request could not be sent. Please check your internet connection or write to info@gadgetmetodo.pt."), true);
         botaoEnviar.disabled = false;
       });
   });
@@ -142,7 +146,7 @@
   if (!Reconhecimento || !botaoDitado) return;
 
   var rec = new Reconhecimento();
-  rec.lang = "pt-PT";
+  rec.lang = gmEN ? "en-GB" : "pt-PT";
   rec.continuous = true;
   rec.interimResults = true;
 
@@ -159,7 +163,7 @@
 
   function atualizarBotao() {
     botaoDitado.setAttribute("aria-pressed", ditado.ativo ? "true" : "false");
-    rotulo.textContent = ditado.ativo ? "Parar ditado" : "Ditar";
+    rotulo.textContent = ditado.ativo ? gmT("Parar ditado", "Stop dictation") : gmT("Ditar", "Dictate");
   }
 
   ditado.parar = function () {
@@ -183,13 +187,13 @@
   rec.onerror = function (evento) {
     if (evento.error === "no-speech") return;
     var textos = {
-      "not-allowed": "O acesso ao microfone foi recusado. Pode autorizá-lo nas definições do navegador.",
-      "service-not-allowed": "O ditado não está disponível neste navegador.",
-      "audio-capture": "Não foi encontrado nenhum microfone.",
-      network: "O ditado precisa de ligação à internet.",
+      "not-allowed": gmT("O acesso ao microfone foi recusado. Pode autorizá-lo nas definições do navegador.", "Microphone access was denied. You can allow it in your browser settings."),
+      "service-not-allowed": gmT("O ditado não está disponível neste navegador.", "Dictation is not available in this browser."),
+      "audio-capture": gmT("Não foi encontrado nenhum microfone.", "No microphone was found."),
+      network: gmT("O ditado precisa de ligação à internet.", "Dictation needs an internet connection."),
     };
     ditado.parar();
-    estadoDitado.textContent = textos[evento.error] || "O ditado foi interrompido. Pode continuar a escrever.";
+    estadoDitado.textContent = textos[evento.error] || gmT("O ditado foi interrompido. Pode continuar a escrever.", "Dictation stopped. You can carry on typing.");
   };
 
   rec.onend = function () {
@@ -207,7 +211,7 @@
     base = mensagem.value;
     ditado.ativo = true;
     atualizarBotao();
-    estadoDitado.textContent = "A ouvir. Fale normalmente; o texto aparece no campo e pode ser corrigido.";
+    estadoDitado.textContent = gmT("A ouvir. Fale normalmente; o texto aparece no campo e pode ser corrigido.", "Listening. Speak normally; the text appears in the field and can be corrected.");
     try { rec.start(); } catch (err) { /* já iniciado */ }
   });
 

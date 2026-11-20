@@ -2558,3 +2558,26 @@ table[data-filtros] .col-oculta {
   font-size: 0.82rem;
   line-height: 1.35;
 }
+
+/* Seletor de língua (PT/EN) no topo da área reservada e na página de entrada */
+.seletor-idioma {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.6rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  opacity: 0.8;
+}
+.seletor-idioma:hover,
+.seletor-idioma:focus-visible {
+  opacity: 1;
+}
+.cabecalho .seletor-idioma {
+  margin-left: auto;
+}

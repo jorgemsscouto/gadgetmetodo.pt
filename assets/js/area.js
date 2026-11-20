@@ -1,3 +1,7 @@
+// Texto na língua da página: português ou, nas páginas em inglês (<html lang="en-GB">), inglês
+var gmEN = document.documentElement.lang === 'en-GB';
+function gmT(pt, en) { return gmEN ? en : pt; }
+
 // Área reservada: lista das sessões do curso no formulário da formação (cada formação é uma edição do curso completo).
 // Mostra só a lista do curso escolhido e propõe datas semanais a partir da data e do horário da 1.ª sessão.
 (function () {
@@ -196,7 +200,7 @@
         campo = document.createElement('select');
         var todas = document.createElement('option');
         todas.value = '';
-        todas.textContent = 'Todos';
+        todas.textContent = gmT('Todos', 'All');
         campo.appendChild(todas);
         var vistos = {};
         linhas.map(function (l) { return l.cells[i] ? l.cells[i].textContent.trim() : ''; })
@@ -205,15 +209,15 @@
           .forEach(function (v) {
             var o = document.createElement('option');
             o.value = v;
-            o.textContent = v === '' ? '(vazio)' : v;
+            o.textContent = v === '' ? gmT('(vazio)', '(empty)') : v;
             campo.appendChild(o);
           });
       } else {
         campo = document.createElement('input');
         campo.type = 'search';
-        campo.placeholder = 'Filtrar';
+        campo.placeholder = gmT('Filtrar', 'Filter');
       }
-      campo.setAttribute('aria-label', 'Filtrar por ' + nome.toLowerCase());
+      campo.setAttribute('aria-label', gmT('Filtrar por ', 'Filter by ') + nome.toLowerCase());
       campo.addEventListener('input', aplicar);
       // Numa tabela dentro de um formulário, Enter no filtro não envia o formulário
       campo.addEventListener('keydown', function (e) {
@@ -236,7 +240,7 @@
     var limpar = document.createElement('button');
     limpar.type = 'button';
     limpar.className = 'botao botao-secundario botao-pequeno';
-    limpar.textContent = 'Limpar filtros';
+    limpar.textContent = gmT('Limpar filtros', 'Clear filters');
     limpar.hidden = true;
     limpar.addEventListener('click', function () {
       campos.forEach(function (c) { if (c) { c.value = ''; } });
@@ -257,12 +261,12 @@
     menu.className = 'colunas-menu';
     var resumo = document.createElement('summary');
     resumo.className = 'botao botao-secundario botao-pequeno';
-    resumo.textContent = 'Colunas';
+    resumo.textContent = gmT('Colunas', 'Columns');
     menu.appendChild(resumo);
     var listaColunas = document.createElement('div');
     listaColunas.className = 'colunas-lista';
     listaColunas.setAttribute('role', 'group');
-    listaColunas.setAttribute('aria-label', 'Colunas visíveis');
+    listaColunas.setAttribute('aria-label', gmT('Colunas visíveis', 'Visible columns'));
     var caixasColunas = [];
 
     function mostrarColuna(i, mostrar) {
@@ -279,7 +283,7 @@
       ocultas = caixasColunas.filter(function (x) { return !x.caixa.checked; }).map(function (x) { return x.nome; });
       var visiveis = caixasColunas.filter(function (x) { return x.caixa.checked; });
       caixasColunas.forEach(function (x) { x.caixa.disabled = visiveis.length === 1 && x.caixa.checked; });
-      resumo.textContent = ocultas.length ? 'Colunas (' + ocultas.length + ' escondida' + (ocultas.length > 1 ? 's' : '') + ')' : 'Colunas';
+      resumo.textContent = ocultas.length ? gmT('Colunas (' + ocultas.length + ' escondida' + (ocultas.length > 1 ? 's' : '') + ')', 'Columns (' + ocultas.length + ' hidden)') : gmT('Colunas', 'Columns');
       try {
         window.localStorage.setItem(chave, JSON.stringify(ocultas));
       } catch (e) {
@@ -312,7 +316,7 @@
     var mostrarTodas = document.createElement('button');
     mostrarTodas.type = 'button';
     mostrarTodas.className = 'colunas-todas';
-    mostrarTodas.textContent = 'Mostrar todas';
+    mostrarTodas.textContent = gmT('Mostrar todas', 'Show all');
     mostrarTodas.addEventListener('click', function () {
       caixasColunas.forEach(function (x) {
         x.caixa.checked = true;
@@ -359,7 +363,7 @@
         visiveis += mostra ? 1 : 0;
       });
       campos.forEach(function (c) { ativos += c && c.value !== '' ? 1 : 0; });
-      contador.textContent = ativos ? visiveis + ' de ' + linhas.length + ' registos' : linhas.length + ' registos';
+      contador.textContent = ativos ? visiveis + gmT(' de ', ' of ') + linhas.length + gmT(' registos', ' records') : linhas.length + gmT(' registos', ' records');
       limpar.hidden = !ativos;
     }
 

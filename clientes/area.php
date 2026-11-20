@@ -36,6 +36,9 @@ if (!bd()) {
     pagina_erro('Área indisponível', 'A área reservada está temporariamente indisponível. Contacte info@gadgetmetodo.pt.');
 }
 verificar_lembretes_na_saida();
+// Língua da área (português ou inglês) e tradução da página à saída, em inglês
+idioma_da_area();
+iniciar_traducao();
 
 $p = (string) ($_GET['p'] ?? 'painel');
 $post = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';

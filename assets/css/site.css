@@ -239,6 +239,21 @@ strong {
   font-weight: 600;
 }
 
+.navegacao .nav-idioma {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.4rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .navegacao .nav-clientes {
   display: flex;
   align-items: center;

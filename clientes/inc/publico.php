@@ -528,8 +528,8 @@ function pre_inscricao_publica(): array
                     array_merge($dados, [$v['empresa'] ?: null, $associado, $c ? $id : null, $existente['id']]));
                 $pid = (int) $existente['id'];
             } else {
-                $pid = executar('INSERT INTO preinscricoes (tipo_cliente, nome, email, telefone, formandos, modalidade, preferencias, respostas, ferramentas, empresa, curso_id, curso_origem, estado, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    array_merge($dados, [$v['empresa'] ?: null, $associado, $c ? $id : null, 'nova', agora()]));
+                $pid = executar('INSERT INTO preinscricoes (tipo_cliente, nome, email, telefone, formandos, modalidade, preferencias, respostas, ferramentas, empresa, curso_id, curso_origem, estado, criado, idioma) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    array_merge($dados, [$v['empresa'] ?: null, $associado, $c ? $id : null, 'nova', agora(), idioma_da_pagina_publica()]));
             }
             limite_excedido('preinscricoes', 5, 3600, true);
             emails_pre_inscricao($pid, (bool) $existente);

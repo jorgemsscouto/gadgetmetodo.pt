@@ -253,9 +253,9 @@ function gravar_inscricao(array $f, array $v, array $respostas, bool $sem_limite
         return ['erro' => $erro];
     }
     $a = $respostas ? avaliar_diagnostico($respostas) : ['pontuacao' => null, 'responsavel' => null, 'nivel' => null, 'recomendacao' => ''];
-    $id = executar('INSERT INTO inscricoes (formacao_id, cliente_id, utilizador_id, origem, tipo_cliente, empresa, nif, contacto_nome, contacto_email, contacto_telefone, formando, email, funcao, respostas, pontuacao, responsavel, nivel, ferramentas, expectativas, estado, criado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    $id = executar('INSERT INTO inscricoes (formacao_id, cliente_id, utilizador_id, origem, tipo_cliente, empresa, nif, contacto_nome, contacto_email, contacto_telefone, formando, email, funcao, respostas, pontuacao, responsavel, nivel, ferramentas, expectativas, estado, criado, idioma) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [$f['id'], $v['cliente_id'] ?: null, $v['utilizador_id'] ?? null, $v['origem'], ($v['tipo_cliente'] ?? '') ?: null, ($v['empresa'] ?? '') ?: null, ($v['nif'] ?? '') ?: null, $v['contacto_nome'] ?? null, $v['contacto_email'] ?? null, $v['contacto_telefone'] ?? null,
-         $v['formando'], $v['email'], $v['funcao'], $respostas ? json_encode($respostas) : null, $a['pontuacao'], $a['responsavel'], $a['nivel'], implode(', ', $v['ferramentas']), $v['expectativas'], 'pendente', agora()]);
+         $v['formando'], $v['email'], $v['funcao'], $respostas ? json_encode($respostas) : null, $a['pontuacao'], $a['responsavel'], $a['nivel'], implode(', ', $v['ferramentas']), $v['expectativas'], 'pendente', agora(), idioma_da_pagina_publica()]);
     $pdo->exec('COMMIT');
     return ['erro' => '', 'id' => $id] + $a;
 }

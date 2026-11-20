@@ -1,3 +1,7 @@
+// Texto na língua da página: português ou, nas páginas em inglês (<html lang="en-GB">), inglês
+var gmEN = document.documentElement.lang === 'en-GB';
+function gmT(pt, en) { return gmEN ? en : pt; }
+
 // Botões "Copiar ligação" ([data-copiar]), usados na página do curso e na área de clientes.
 (function () {
   function copiarTexto(texto) {
@@ -30,9 +34,9 @@
     if (copiar) {
       var ligacao = copiar.getAttribute('data-copiar');
       copiarTexto(ligacao).then(function () {
-        mostrar(copiar, 'Ligação copiada: ' + ligacao);
+        mostrar(copiar, gmT('Ligação copiada: ', 'Link copied: ') + ligacao);
       }, function () {
-        mostrar(copiar, 'Não foi possível copiar automaticamente. Copie esta ligação: ' + ligacao);
+        mostrar(copiar, gmT('Não foi possível copiar automaticamente. Copie esta ligação: ', 'Could not copy automatically. Copy this link: ') + ligacao);
       });
     }
   });

@@ -102,7 +102,7 @@ function pagina_area(string $atual, string $titulo, string $conteudo, string $so
     ' . menu_area($atual) . '
   </aside>
   <div class="area-principal">
-    <header class="area-topo"><div class="area-utilizador"><span class="area-quem"><strong>' . h($u['nome']) . '</strong><small>' . h($perfil) . '</small></span><span class="area-avatar" aria-hidden="true">' . h(iniciais((string) $u['nome'])) . '</span><a class="botao botao-secundario" href="' . h(url('sair')) . '">Terminar sessão</a></div></header>
+    <header class="area-topo"><div class="area-utilizador"><span class="area-quem"><strong translate="no">' . h($u['nome']) . '</strong><small>' . h($perfil) . '</small></span><span class="area-avatar" aria-hidden="true">' . h(iniciais((string) $u['nome'])) . '</span>' . seletor_idioma_area() . '<a class="botao botao-secundario" href="' . h(url('sair')) . '">Terminar sessão</a></div></header>
     <main class="secao area-conteudo"><div class="contentor">
       ' . submenu_configuracao($atual) . avisos() . '
       ' . ($sobretitulo ? '<span class="sobretitulo">' . h($sobretitulo) . '</span>' : '') . '
@@ -116,7 +116,7 @@ function pagina_area(string $atual, string $titulo, string $conteudo, string $so
 function pagina_entrada(string $erro = ''): void
 {
     $primeiro = (int) (linha_bd('SELECT COUNT(*) AS n FROM utilizadores')['n'] ?? 0) === 0;
-    documento('Entrar', '<header class="cabecalho"><div class="contentor"><a class="marca" href="/"><img src="/assets/marca/logotipo.svg" alt="Gadgetmetodo, Lda." width="234" height="42"></a></div></header>
+    documento('Entrar', '<header class="cabecalho"><div class="contentor"><a class="marca" href="/"><img src="/assets/marca/logotipo.svg" alt="Gadgetmetodo, Lda." width="234" height="42"></a>' . seletor_idioma_area() . '</div></header>
   <main class="secao"><div class="contentor estreito">
     ' . avisos() . '
     <div class="entrada-cartao-marca">

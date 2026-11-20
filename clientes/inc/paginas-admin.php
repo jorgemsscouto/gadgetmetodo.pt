@@ -941,7 +941,7 @@ function admin_preinscricao(): void
         'Cliente' => $p['tipo_cliente'] === 'particular' ? 'Particular' : h((string) $p['empresa']),
         'Contactos' => '<a href="mailto:' . h($p['email']) . '">' . h($p['email']) . '</a>' . ($p['telefone'] ? ' · ' . h($p['telefone']) : ''),
         'Formandos previstos' => (string) (int) $p['formandos'],
-        'Modalidade preferida' => h(MODALIDADES[$p['modalidade']] ?? 'Indiferente'),
+        'Modalidade preferida' => h(MODALIDADES[$p['modalidade'] ?? ''] ?? 'Indiferente'),
         'Preferências de datas' => nl2br(h((string) $p['preferencias'])),
         'Ferramentas de IA' => h((string) $p['ferramentas']),
         'Estado' => etiqueta('Pré-inscrição', 'pre') . ' ' . h(ESTADOS_PREINSCRICAO[$p['estado']] ?? $p['estado'])

@@ -9,6 +9,10 @@
   <meta name="description" content="Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com cinco cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
   <link rel="canonical" href="https://www.gadgetmetodo.pt/formacoes/">
+  <link rel="alternate" hreflang="pt-PT" href="https://www.gadgetmetodo.pt/formacoes/" data-fixo>
+  <link rel="alternate" hreflang="en-GB" href="https://www.gadgetmetodo.pt/en/training/" data-fixo>
+  <link rel="alternate" hreflang="x-default" href="https://www.gadgetmetodo.pt/formacoes/" data-fixo>
+
   <meta name="theme-color" content="#0A0F26">
   <meta name="author" content="Gadgetmetodo, Lda.">
   <meta property="og:type" content="website">
@@ -29,8 +33,8 @@
   <link rel="alternate" type="text/plain" href="/llms.txt" title="Resumo do site para modelos de linguagem">
   <link rel="preload" href="/assets/fonts/montserrat-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/css/site.css?v=fe6ea68666">
-  <link rel="stylesheet" href="/assets/css/area.css?v=30ba77a1c7">
+  <link rel="stylesheet" href="/assets/css/site.css?v=2aa1433eaa">
+  <link rel="stylesheet" href="/assets/css/area.css?v=188fd5fa63">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
 {
@@ -205,7 +209,7 @@
       "about": {
         "@id": "https://www.gadgetmetodo.pt/#organizacao"
       },
-      "dateModified": "2026-11-12",
+      "dateModified": "2026-11-19",
       "primaryImageOfPage": {
         "@type": "ImageObject",
         "url": "https://www.gadgetmetodo.pt/assets/img/partilha.png"
@@ -256,6 +260,7 @@
           <li><a href="/experiencia/">Experiência</a></li>
           <li><a href="/sobre/">Sobre</a></li>
           <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
+          <li><a class="nav-idioma" href="/en/training/" hreflang="en-GB" lang="en-GB" title="View in English" data-fixo data-idioma="en">EN</a></li>
           <li><a class="nav-clientes" href="/clientes/" title="Área reservada a clientes"><svg width="18" height="18" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M17.925 20.056a6 6 0 0 0-11.851.001"/> <circle cx="12" cy="11" r="4"/> <circle cx="12" cy="12" r="10"/> </svg><span class="nav-clientes-texto">Área reservada</span></a></li>
           <li><a class="botao" href="/contactos/#formulario">Pedir proposta</a></li>
         </ul>

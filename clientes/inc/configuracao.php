@@ -83,6 +83,34 @@ function bloco_tarefa_lembretes(array $tarefa): string
 
 /* Comunicação */
 
+// Versão em inglês de um email (para quem usa o site ou a área em inglês): os campos vazios usam a tradução automática
+// dos textos em português (dicionário clientes/inc/traducoes/en.json)
+function versao_inglesa_email(string $tipo, array $campos): string
+{
+    $guardados = (array) (comunicacao_guardada(bd())['emails_en'][$tipo] ?? []);
+    $auto = com_idioma('en', function () use ($tipo) { return textos_email_en($tipo); });
+    $id = 'e-' . $tipo . '-en-';
+    $campo = function (string $c, string $rotulo, string $tipo_campo, string $extra) use ($guardados, $auto, $id) {
+        $valor = (string) ($guardados[$c] ?? '');
+        $html = $tipo_campo === 'textarea'
+            ? '<textarea id="' . $id . $c . '" name="' . $c . '_en" ' . $extra . ' lang="en-GB" placeholder="' . h($auto[$c]) . '">' . h($valor) . '</textarea>'
+            : '<input id="' . $id . $c . '" name="' . $c . '_en" type="text" value="' . h($valor) . '" ' . $extra . ' lang="en-GB" placeholder="' . h($auto[$c]) . '">';
+        return '<div class="campo"><label for="' . $id . $c . '">' . $rotulo . '</label>' . $html . '</div>';
+    };
+    return '<details class="programa espaco-topo-curto"><summary>Versão em inglês' . ($guardados ? ' ' . etiqueta('Escrita à mão', 'info') : '') . '</summary>
+      <form method="post" class="formulario" action="' . h(url('comunicacao', ['aberto' => $tipo])) . '#email-' . h($tipo) . '">' . campo_csrf() . '
+        <input type="hidden" name="acao" value="email_en"><input type="hidden" name="tipo" value="' . h($tipo) . '">
+        <p class="ajuda mt-0">Enviada a quem usa o site ou a área reservada em inglês. Em branco, cada campo usa a tradução automática do texto em português (mostrada a cinzento); se o texto em português tiver sido alterado e não houver tradução, usa a tradução do texto original. As variáveis são as mesmas.</p>
+        ' . $campo('assunto', 'Subject', 'text', 'maxlength="200"')
+        . (in_array('titulo', $campos, true) ? $campo('titulo', 'Title', 'text', 'maxlength="120"') : '')
+        . (in_array('texto', $campos, true) ? $campo('texto', 'Text', 'textarea', 'maxlength="4000" rows="6"') : '')
+        . (in_array('fecho', $campos, true) ? $campo('fecho', 'Closing', 'textarea', 'maxlength="1500" rows="2"') : '') . '
+        <div class="acoes-formulario"><button class="botao botao-secundario" type="submit">Guardar a versão em inglês</button></div>
+      </form>
+      ' . ($guardados ? '<form method="post" action="' . h(url('comunicacao', ['aberto' => $tipo])) . '#email-' . h($tipo) . '">' . campo_csrf() . '<input type="hidden" name="acao" value="repor_en"><input type="hidden" name="tipo" value="' . h($tipo) . '"><button class="botao-texto" type="submit">Usar a tradução automática</button></form>' : '') . '
+    </details>';
+}
+
 function guardar_comunicacao(array $guardada): void
 {
     definir(bd(), 'comunicacao', json_encode($guardada, JSON_UNESCAPED_UNICODE));
@@ -155,6 +183,28 @@ function admin_comunicacao(): void
                 redirecionar('comunicacao', ['aberto' => $tipo], 'email-' . $tipo);
             }
             $env_email[$tipo] = $d;
+        } elseif ($acao === 'email_en' && $tipo) {
+            // Versão em inglês: guardam-se só os campos preenchidos; os vazios usam a tradução automática
+            $en = [];
+            foreach (['assunto' => [200, false], 'titulo' => [120, false], 'texto' => [4000, true], 'fecho' => [1500, true]] as $c => [$max, $linhas]) {
+                $en[$c] = texto($c . '_en', $max, $linhas);
+            }
+            foreach (['assunto' => 'Subject', 'titulo' => 'Title', 'texto' => 'Text', 'fecho' => 'Closing'] as $c => $rotulo) {
+                if ($desconhecidas = variaveis_desconhecidas($en[$c], $tipo)) {
+                    $erros[] = 'Versão em inglês, ' . $rotulo . ': ' . implode(', ', array_map(function ($v) { return '{' . $v . '}'; }, $desconhecidas)) . ' não é variável deste email.';
+                }
+            }
+            if (!$erros) {
+                $guardada['emails_en'][$tipo] = array_filter($en, 'strlen');
+                guardar_comunicacao($guardada);
+                aviso('Versão em inglês do email "' . h(EMAILS[$tipo]['nome']) . '" guardada.');
+                redirecionar('comunicacao', ['aberto' => $tipo], 'email-' . $tipo);
+            }
+        } elseif ($acao === 'repor_en' && $tipo) {
+            unset($guardada['emails_en'][$tipo]);
+            guardar_comunicacao($guardada);
+            aviso('Versão em inglês do email "' . h(EMAILS[$tipo]['nome']) . '" reposta com a tradução automática.');
+            redirecionar('comunicacao', ['aberto' => $tipo], 'email-' . $tipo);
         } elseif ($acao === 'repor' && $tipo) {
             unset($guardada['emails'][$tipo]);
             guardar_comunicacao($guardada);
@@ -253,6 +303,7 @@ function cartao_email(string $tipo, array $d, bool $aberto, bool $alterado): str
           <div class="acoes-formulario"><button class="botao" type="submit">Guardar</button></div>
         </form>
         <details class="programa"><summary>Pré-visualização com dados de exemplo</summary><div class="pre-email">' . $previa . '</div></details>
+        ' . ($interno ? '' : versao_inglesa_email($tipo, $campos)) . '
         <div class="acoes-formulario espaco-topo-curto">' . $form('teste', 'Enviar um teste para ' . h((string) utilizador()['email']), 'botao botao-secundario botao-pequeno')
           . ($alterado ? $form('repor', 'Repor os textos originais', 'botao-texto') : '') . '</div>
       </div>

@@ -212,10 +212,13 @@ function nome_ficheiro_certificado(array $c): string
 /* PDF (clientes/inc/certificado-pdf.php, carregado só quando é preciso) */
 
 // PDF do certificado (conteúdo). $c: linha de certificados; $i: linha de SQL_INSCRICAO.
+// O certificado sai na língua do formando (a da conta ou a da inscrição feita no site em inglês)
 function pdf_certificado(array $c, array $i): string
 {
     require_once __DIR__ . '/certificado-pdf.php';
-    return gerar_pdf_certificado($c, contexto_certificado($i));
+    return com_idioma(idioma_do_email((string) $i['email']), function () use ($c, $i) {
+        return gerar_pdf_certificado($c, contexto_certificado($i));
+    });
 }
 
 // Envia o PDF para o navegador (descarga)

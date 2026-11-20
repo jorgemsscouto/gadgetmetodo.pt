@@ -9,6 +9,10 @@ require_once __DIR__ . '/../../formulario/lib/FPDF/fpdf.php';
 // Converte UTF-8 para Windows-1252, a codificação das fontes do PDF (cobre o português e a pontuação habitual)
 function pdf_txt(?string $s): string
 {
+    // Em inglês (ficha do curso em /en/…, certificado de um formando em inglês), o texto é traduzido antes de escrito
+    if ($s !== null && function_exists('em_ingles') && em_ingles()) {
+        $s = tr($s);
+    }
     $s = strtr((string) $s, ["\u{2192}" => '->', "\u{2264}" => '<=', "\u{2265}" => '>=', "\u{00A0}" => ' ', "\u{202F}" => ' ']);
     if (function_exists('iconv') && ($r = @iconv('UTF-8', 'Windows-1252//TRANSLIT', $s)) !== false) {
         return $r;
@@ -128,7 +132,7 @@ class FichaPdf extends FPDF
     // Texto em maiúsculas com espaçamento entre letras (rótulos); alinhado à esquerda ou à direita de $x
     public function rotulo(float $x, float $y, string $texto, float $espaco = 0.35, string $alinhar = 'L'): float
     {
-        $t = pdf_txt(pdf_maiusculas($texto));
+        $t = pdf_txt(pdf_maiusculas(function_exists("tr") ? tr($texto) : $texto));
         $largura = $this->GetStringWidth($t) + $espaco * max(0, strlen($t) - 1);
         $inicio = $alinhar === 'R' ? $x - $largura : $x;
         $this->_out(sprintf('%.3F Tc', $espaco * $this->k));
@@ -394,7 +398,7 @@ function ficha_pdf(array $c, array $d): void
         $pdf->SetFont('montserrat', 'B', 6.4);
         $minimos = [];
         foreach ($factos as $k => $v) {
-            $r = pdf_txt(pdf_maiusculas($k));
+            $r = pdf_txt(pdf_maiusculas(function_exists("tr") ? tr($k) : $k));
             $minimos[$k] = $pdf->GetStringWidth($r) + 0.3 * strlen($r) + 9;
         }
         $pesos = array_map(function ($v) { return strlen($v) > 30 ? 2.3 : 1; }, $factos);

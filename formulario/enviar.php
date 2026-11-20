@@ -10,6 +10,7 @@ require __DIR__ . '/email.php';
 require __DIR__ . '/modelos.php';
 require __DIR__ . '/dados.php';
 require_once __DIR__ . '/comunicacao.php';
+require_once __DIR__ . '/../clientes/inc/idioma.php';
 
 date_default_timezone_set('Europe/Lisbon');
 
@@ -31,22 +32,30 @@ const TEMPO_MINIMO = 3; // segundos entre abrir a página e enviar
 const ERRO_GERAL = 'Não foi possível enviar o pedido. Tente novamente ou escreva para info@gadgetmetodo.pt.';
 
 $quer_json = strpos($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json') !== false;
+// Pedido feito na versão inglesa do site (/en/…): respostas, confirmação e página de agradecimento em inglês
+if (strpos((string) parse_url((string) ($_SERVER['HTTP_REFERER'] ?? ''), PHP_URL_PATH), '/en/') === 0) {
+    definir_idioma('en');
+}
 
 function responder(bool $ok, int $codigo, array $dados, bool $json): void
 {
     http_response_code($codigo);
     header('Cache-Control: no-store');
+    if (em_ingles() && !$ok) {
+        $dados['mensagem'] = tr((string) ($dados['mensagem'] ?? ERRO_GERAL));
+        $dados['erros'] = array_map('tr', (array) ($dados['erros'] ?? []));
+    }
     if ($json) {
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['ok' => $ok] + $dados, JSON_UNESCAPED_UNICODE);
         exit;
     }
     if ($ok) {
-        header('Location: /contactos/obrigado/', true, 303);
+        header('Location: ' . (em_ingles() ? '/en/contact/thank-you/' : '/contactos/obrigado/'), true, 303);
         exit;
     }
     header('Content-Type: text/html; charset=utf-8');
-    echo pagina_erro($dados['mensagem'] ?? ERRO_GERAL, $dados['erros'] ?? []);
+    echo traduzir_html(pagina_erro($dados['mensagem'] ?? ERRO_GERAL, $dados['erros'] ?? []));
     exit;
 }
 
@@ -234,8 +243,19 @@ try {
 $modelo = $com['emails']['pedido_confirmacao'];
 if ($modelo['ativo']) {
     $vars = ['nome' => nome_saudacao($nome) ?: 'Senhor(a)', 'tipo_pedido' => $dados['tipo'] === 'Pedido de orçamento' ? 'pedido de orçamento' : 'pedido de informações', 'referencia' => $referencia];
+    $assinatura = $com['geral']['assinatura'];
+    if (em_ingles()) {
+        // Em inglês: a "Versão em inglês" escrita em Comunicação ou a tradução dos textos (dos originais, se faltar alguma)
+        $en = (array) (comunicacao_guardada(ligacao($cfg))['emails_en']['pedido_confirmacao'] ?? []);
+        foreach (['assunto', 'titulo', 'texto', 'fecho'] as $c) {
+            [$t, $completo] = tr_paragrafos((string) $modelo[$c]);
+            $modelo[$c] = trim((string) ($en[$c] ?? '')) !== '' ? (string) $en[$c] : ($completo ? $t : tr_paragrafos((string) email_inicial('pedido_confirmacao')[$c])[0]);
+        }
+        $vars = array_map('tr', $vars);
+        $assinatura = tr_paragrafos($assinatura)[0];
+    }
     $dados['textos'] = ['titulo' => substituir_variaveis($modelo['titulo'], $vars), 'texto' => substituir_variaveis($modelo['texto'], $vars),
-        'fecho' => substituir_variaveis($modelo['fecho'], $vars), 'assinatura' => $com['geral']['assinatura']];
+        'fecho' => substituir_variaveis($modelo['fecho'], $vars), 'assinatura' => $assinatura];
     try {
         $confirmacao = novo_email($cfg);
         $confirmacao->addAddress($email, nome_saudacao($nome));
@@ -246,8 +266,8 @@ if ($modelo['ativo']) {
         $confirmacao->addCustomHeader('Auto-Submitted', 'auto-generated');
         $confirmacao->Subject = assunto_email($modelo['assunto'], $vars);
         $confirmacao->isHTML(true);
-        $confirmacao->Body = email_confirmacao_html($dados);
-        $confirmacao->AltBody = email_confirmacao_texto($dados);
+        $confirmacao->Body = em_ingles() ? traduzir_html(email_confirmacao_html($dados)) : email_confirmacao_html($dados);
+        $confirmacao->AltBody = em_ingles() ? implode("\n", array_map('tr', explode("\n", email_confirmacao_texto($dados)))) : email_confirmacao_texto($dados);
         $confirmacao->send();
     } catch (PHPMailerException $e) {
         error_log('Formulário: falha na confirmação do pedido ' . $referencia . ': ' . $e->getMessage());

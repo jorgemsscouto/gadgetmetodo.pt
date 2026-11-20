@@ -2,87 +2,167 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.gadgetmetodo.pt/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/servicos/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/servicos/organizacao-e-metodos/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/servicos/inteligencia-artificial/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/servicos/protecao-de-dados-e-conformidade/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/servicos/estrategia-e-gestao/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/servicos/sites-seo-geo-aeo/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/formacoes/ai-essentials/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/abordagem/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/experiencia/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/sobre/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/perguntas-frequentes/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/contactos/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/catalogo/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/formacoes/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/privacidade/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/services/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/services/organisation-and-methods/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/services/artificial-intelligence/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/services/data-protection-and-compliance/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/services/strategy-and-management/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/services/websites-seo-geo-aeo/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/training/ai-essentials/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/approach/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/experience/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/about/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/faq/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/contact/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/catalogue/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/training/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.gadgetmetodo.pt/en/privacy/</loc>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://www.gadgetmetodo.pt/catalogo-servicos-2026.pdf</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-19</lastmod>
     <priority>0.6</priority>
   </url>
 </urlset>

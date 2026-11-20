@@ -49,7 +49,7 @@ class CertificadoPdf extends FPDF
     public function rotulo(float $x, float $y, string $texto): void
     {
         $this->_out(sprintf('%.3F Tc', 0.25 * $this->k));
-        $this->Text($x, $y, pdf_txt(pdf_maiusculas($texto)));
+        $this->Text($x, $y, pdf_txt(pdf_maiusculas(function_exists("tr") ? tr($texto) : $texto)));
         $this->_out('0 Tc');
     }
 }

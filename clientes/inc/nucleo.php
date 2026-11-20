@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../formulario/dados.php';
 require_once __DIR__ . '/../../formulario/email.php';
 require_once __DIR__ . '/../../formulario/comunicacao.php';
 require_once __DIR__ . '/cursos.php';
+require_once __DIR__ . '/idioma.php';
 
 date_default_timezone_set('Europe/Lisbon');
 
@@ -63,6 +64,8 @@ function bd(): ?PDO
         migrar_utilizadores_formando($pdo, $tabela_utilizadores);
         // N.º do Certificado de Competências Pedagógicas (CCP) dos formadores, impresso nos certificados
         acrescentar_colunas($pdo, 'utilizadores', ['ccp' => 'TEXT']);
+        // Língua preferida na área reservada e nos emails (pt ou en)
+        acrescentar_colunas($pdo, 'utilizadores', ['idioma' => 'TEXT']);
         $pdo->exec('CREATE TABLE IF NOT EXISTS definicoes (chave TEXT PRIMARY KEY, valor TEXT)');
         // Campos da ficha do curso: percurso, unidade (Módulo ou Sessão), objetivo, pré-requisitos, resultado esperado,
         // estrutura-tipo da sessão e avaliação (linhas "rótulo: valor"), requisitos, enquadramento legal e investimento
@@ -170,6 +173,9 @@ function bd(): ?PDO
             cc_validade TEXT NOT NULL, presencas INTEGER NOT NULL, sessoes INTEGER NOT NULL, enviado TEXT, UNIQUE (ano, numero))');
         // Data do último pedido, por email, dos dados para o certificado
         acrescentar_colunas($pdo, 'inscricoes', ['dados_pedidos' => 'TEXT']);
+        // Língua de quem se inscreveu ou pré-inscreveu no site (en nas páginas /en/…), para os emails e o certificado
+        acrescentar_colunas($pdo, 'inscricoes', ['idioma' => 'TEXT']);
+        acrescentar_colunas($pdo, 'preinscricoes', ['idioma' => 'TEXT']);
         // Formador com que o certificado foi emitido (nome e linha "Formador | CCP n.º …")
         acrescentar_colunas($pdo, 'certificados', ['formador' => 'TEXT', 'formador_dados' => 'TEXT']);
         // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação; as pré-inscrições, 12 meses depois do registo;
@@ -652,6 +658,25 @@ function comunicacao(bool $renovar = false): array
     return config_comunicacao(bd(), cfg(), $renovar);
 }
 
+// Textos de um email em inglês: os escritos em Comunicação ("Versão em inglês"); sem eles, a tradução dos textos em
+// português configurados ou, se esses tiverem frases sem tradução (textos alterados), a tradução dos textos originais
+function textos_email_en(string $tipo): array
+{
+    $guardados = (array) (comunicacao_guardada(bd())['emails_en'][$tipo] ?? []);
+    $pt = comunicacao()['emails'][$tipo];
+    $original = email_inicial($tipo);
+    $r = [];
+    foreach (['assunto', 'titulo', 'texto', 'fecho'] as $c) {
+        if (trim((string) ($guardados[$c] ?? '')) !== '') {
+            $r[$c] = (string) $guardados[$c];
+            continue;
+        }
+        [$t, $completo] = tr_paragrafos((string) $pt[$c]);
+        $r[$c] = $completo ? $t : tr_paragrafos((string) $original[$c])[0];
+    }
+    return $r;
+}
+
 // Caixa que recebe os avisos internos e as respostas dos clientes
 function email_admin(): string
 {
@@ -665,12 +690,30 @@ function email_admin(): string
 // anexos (lista de [nome do ficheiro, conteúdo, tipo MIME]).
 function enviar_mensagem(string $tipo, string $para, array $vars, array $meio = ['', ''], array $op = []): bool
 {
+    // Língua do destinatário: os avisos internos seguem em português; os outros, na língua da pessoa (ou na indicada em $op)
+    $interno = EMAILS[$tipo]['grupo'] === 'admin';
+    $l = $interno ? 'pt' : (string) ($op['idioma'] ?? idioma_do_email($para));
+    if ($l === 'en' && !em_ingles()) {
+        return com_idioma('en', function () use ($tipo, $para, $vars, $meio, $op) { return enviar_mensagem($tipo, $para, $vars, $meio, ['idioma' => 'en'] + $op); });
+    }
+    if ($l === 'pt' && em_ingles()) {
+        return com_idioma('pt', function () use ($tipo, $para, $vars, $meio, $op) { return enviar_mensagem($tipo, $para, $vars, $meio, ['idioma' => 'pt'] + $op); });
+    }
     $com = comunicacao();
     $e = $com['emails'][$tipo];
     if (!$e['ativo'] && empty($op['teste'])) {
         return false;
     }
-    $interno = EMAILS[$tipo]['grupo'] === 'admin';
+    if (em_ingles()) {
+        // Textos em inglês (os escritos em Comunicação, "Versão em inglês", ou a tradução dos textos em português),
+        // valores das variáveis e dados do envio traduzidos
+        $e = textos_email_en($tipo) + $e;
+        $vars = array_map(function ($v) { return is_string($v) ? tr($v) : $v; }, $vars);
+        if (isset($vars['no_curso'])) {
+            $vars['no_curso'] = !empty($vars['curso']) ? 'for ' . $vars['curso'] : 'for the training';
+        }
+        $meio = [traduzir_html((string) ($meio[0] ?? '')), implode("\n", array_map('tr', explode("\n", (string) ($meio[1] ?? ''))))];
+    }
     $texto = substituir_variaveis($e['texto'], $vars);
     if (($op['texto'] ?? '') !== '') {
         // Mensagem escrita à mão (sem variáveis): fica a saudação do modelo (1.º parágrafo, curto e acabado em vírgula)
@@ -679,7 +722,7 @@ function enviar_mensagem(string $tipo, string $para, array $vars, array $meio = 
         $texto = ($saudacao !== '' ? $saudacao . "\n\n" : '') . $op['texto'];
     }
     $fecho = substituir_variaveis($e['fecho'], $vars);
-    $assinatura = $interno ? '' : $com['geral']['assinatura'];
+    $assinatura = $interno ? '' : (em_ingles() ? tr_paragrafos($com['geral']['assinatura'])[0] : $com['geral']['assinatura']);
     $html = html_paragrafos($texto) . $meio[0] . html_paragrafos($fecho, 'margin:18px 0 0;') . html_paragrafos($assinatura, 'margin:22px 0 0;');
     $txt = implode("\n\n", array_filter([texto_paragrafos($texto), trim($meio[1]), texto_paragrafos($fecho), texto_paragrafos($assinatura)], 'strlen'));
     // Os emails de teste vão só para quem os pede, sem cópias
@@ -711,6 +754,10 @@ function enviar_aviso(string $para, string $assunto, string $titulo, string $cor
         return false;
     }
     $geral = comunicacao()['geral'];
+    if (em_ingles()) {
+        $geral['cabecalho'] = tr((string) $geral['cabecalho']);
+        $geral['rodape'] = tr_paragrafos((string) $geral['rodape'])[0];
+    }
     try {
         $m = novo_email(['remetente_nome' => $geral['remetente_nome']] + $cfg);
         $m->addAddress($para);
@@ -734,7 +781,7 @@ function enviar_aviso(string $para, string $assunto, string $titulo, string $cor
         $m->isHTML(true);
         $f = "'Segoe UI', Helvetica, Arial, sans-serif";
         // Grafismo 2026-11: fundo areia, cartão creme arredondado, cabeçalho em gradiente marinho e petróleo, botões em pílula
-        $m->Body = '<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;}@media (max-width:480px){.pad{padding-left:24px!important;padding-right:24px!important;}}</style></head><body style="margin:0;background:#F2EDE6;">'
+        $m->Body = '<!doctype html><html lang="' . (em_ingles() ? 'en-GB' : 'pt-PT') . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;}@media (max-width:480px){.pad{padding-left:24px!important;padding-right:24px!important;}}</style></head><body style="margin:0;background:#F2EDE6;">'
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F2EDE6;"><tr><td align="center" style="padding:28px 14px;">'
             . '<table role="presentation" width="620" cellpadding="0" cellspacing="0" style="width:100%;max-width:620px;">'
             . '<tr><td style="padding:0 6px 14px;"><img src="' . h(endereco_site()) . '/assets/marca/logotipo.png" width="180" alt="Gadgetmetodo, Lda." style="display:block;width:180px;height:auto;border:0;"></td></tr>'
