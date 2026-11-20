@@ -20,7 +20,7 @@
   "/formacoes/manual-curso-1/": "/en/training/course-1-handbook/",
   "/formacoes/curso.php": "/en/training/course.php",
   "/formacoes/inscricao.php": "/en/training/registration.php",
-  "/formacoes/pre-inscricao.php": "/en/training/pre-registration.php",
+  "/formacoes/inscricao-curso.php": "/en/training/course-registration.php",
   "/formacoes/ficha.php": "/en/training/course-sheet.php",
   "/clientes/": "/clientes/area.php?idioma=en",
   "/clientes/area.php": "/clientes/area.php"

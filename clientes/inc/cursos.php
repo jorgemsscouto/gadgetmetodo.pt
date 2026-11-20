@@ -56,11 +56,10 @@ function carregar_catalogo(PDO $pdo, ?array $so_chaves = null): int
     return $n;
 }
 
-// Apaga todas as sessões do calendário (e as respetivas inscrições), as pré-inscrições, os módulos e os cursos
+// Apaga todas as sessões do calendário (e as respetivas inscrições), os módulos e os cursos
 function limpar_agenda_e_cursos(PDO $pdo): void
 {
     $pdo->exec('DELETE FROM inscricoes');
-    $pdo->exec('DELETE FROM preinscricoes');
     $pdo->exec('DELETE FROM sessoes');
     $pdo->exec('DELETE FROM formacoes');
     $pdo->exec('DELETE FROM modulos');
@@ -78,14 +77,14 @@ function repor_catalogo(PDO $pdo): int
 }
 
 // Na primeira utilização de uma versão nova do catálogo: substitui a agenda e os cursos só quando não há
-// inscrições nem pré-inscrições a perder; caso contrário, a Gadgetmetodo decide na administração (Cursos, "Repor o catálogo")
+// inscrições a perder; caso contrário, a Gadgetmetodo decide na administração (Cursos, "Repor o catálogo")
 function aplicar_catalogo(PDO $pdo): void
 {
     $versao = (string) (catalogo()['versao'] ?? '');
     if ($versao === '' || definicao($pdo, 'catalogo') === $versao) {
         return;
     }
-    if (!$pdo->query('SELECT 1 FROM inscricoes UNION ALL SELECT 1 FROM preinscricoes LIMIT 1')->fetchColumn()) {
+    if (!$pdo->query('SELECT 1 FROM inscricoes LIMIT 1')->fetchColumn()) {
         repor_catalogo($pdo);
     } elseif (!$pdo->query('SELECT 1 FROM cursos LIMIT 1')->fetchColumn()) {
         carregar_catalogo($pdo);

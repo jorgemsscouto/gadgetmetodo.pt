@@ -28,8 +28,6 @@ const SESSAO_MAXIMA = 7200; // segundos de inatividade
 const DIAS_INSCRICOES = 730; // conservação das inscrições após a data da formação
 const DIAS_NOVA = 30; // formações agendadas há menos de 30 dias aparecem como novas
 const ORIGENS = ['area' => 'Área reservada', 'site' => 'Site'];
-const ESTADOS_PREINSCRICAO = ['nova' => 'Nova', 'convidada' => 'Convite enviado', 'inscrita' => 'Inscrita', 'arquivada' => 'Arquivada'];
-const DIAS_PREINSCRICOES = 365; // conservação das pré-inscrições após o registo
 const TIPOS_CLIENTE = ['particular' => 'Particular', 'empresa' => 'Empresa'];
 // Rótulos das opções nos formulários públicos
 const OPCOES_TIPO_CLIENTE = ['particular' => 'Particular', 'empresa' => 'Empresa ou outra organização'];
@@ -120,17 +118,6 @@ function bd(): ?PDO
         acrescentar_colunas($pdo, 'inscricoes', ['tipo_cliente' => 'TEXT']);
         $pdo->exec('CREATE INDEX IF NOT EXISTS inscricoes_formacao ON inscricoes (formacao_id)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS inscricoes_cliente ON inscricoes (cliente_id)');
-        // Pré-inscrições em cursos sem datas: o candidato recebe o convite quando houver sessões
-        $pdo->exec("CREATE TABLE IF NOT EXISTS preinscricoes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, curso_id INTEGER NOT NULL REFERENCES cursos(id), nome TEXT NOT NULL,
-            empresa TEXT, email TEXT NOT NULL, telefone TEXT, formandos INTEGER NOT NULL DEFAULT 1, modalidade TEXT,
-            preferencias TEXT, estado TEXT NOT NULL DEFAULT 'nova', criado TEXT NOT NULL, respostas TEXT, inscricao_id INTEGER,
-            tipo_cliente TEXT, ferramentas TEXT)");
-        // curso_id: curso associado (à partida, o aconselhado pelo diagnóstico); curso_origem: curso da ligação de onde veio o candidato
-        acrescentar_colunas($pdo, 'preinscricoes', ['respostas' => 'TEXT', 'inscricao_id' => 'INTEGER', 'tipo_cliente' => 'TEXT', 'ferramentas' => 'TEXT', 'curso_origem' => 'INTEGER']);
-        // Edição a que a pré-inscrição ficou associada quando foi agendada uma edição do curso (clientes/inc/agenda.php)
-        acrescentar_colunas($pdo, 'preinscricoes', ['formacao_id' => 'INTEGER']);
-        $pdo->exec('CREATE INDEX IF NOT EXISTS preinscricoes_curso ON preinscricoes (curso_id)');
         // Tabela de preços (administração): linhas (cursos), modalidades (colunas) e preço de cada linha em cada modalidade,
         // em cêntimos e sem IVA (sem valor, "sob consulta"). As linhas com "legado" são da 1.ª versão (uma lista simples
         // com categoria, unidade, valor e IVA) e ficam só para consulta.
@@ -180,17 +167,14 @@ function bd(): ?PDO
             cc_validade TEXT NOT NULL, presencas INTEGER NOT NULL, sessoes INTEGER NOT NULL, enviado TEXT, UNIQUE (ano, numero))');
         // Data do último pedido, por email, dos dados para o certificado
         acrescentar_colunas($pdo, 'inscricoes', ['dados_pedidos' => 'TEXT']);
-        // Língua de quem se inscreveu ou pré-inscreveu no site (en nas páginas /en/…), para os emails e o certificado
+        // Língua de quem se inscreveu no site (en nas páginas /en/…), para os emails e o certificado
         acrescentar_colunas($pdo, 'inscricoes', ['idioma' => 'TEXT']);
-        acrescentar_colunas($pdo, 'preinscricoes', ['idioma' => 'TEXT']);
         // Formador com que o certificado foi emitido (nome e linha "Formador | CCP n.º …")
         acrescentar_colunas($pdo, 'certificados', ['formador' => 'TEXT', 'formador_dados' => 'TEXT']);
-        // Conservação: as inscrições e os diagnósticos são apagados 2 anos depois da formação; as pré-inscrições, 12 meses depois do registo;
-        // os diagnósticos enviados pela administração, 2 anos depois do envio
+        // Conservação: as inscrições são apagadas 2 anos depois da formação e os diagnósticos 2 anos depois do envio
         $pdo->prepare('DELETE FROM inscricoes WHERE formacao_id IN (SELECT id FROM formacoes WHERE inicio < ?)')
             ->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
         $pdo->prepare('DELETE FROM lembretes WHERE criado < ?')->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
-        $pdo->prepare('DELETE FROM preinscricoes WHERE criado < ?')->execute([date('Y-m-d H:i:s', time() - DIAS_PREINSCRICOES * 86400)]);
         $pdo->prepare('DELETE FROM diagnosticos WHERE enviado < ?')->execute([date('Y-m-d H:i:s', time() - DIAS_INSCRICOES * 86400)]);
         // Contas de formando sem nenhuma inscrição (apagadas com as inscrições, 2 anos depois da formação)
         $pdo->prepare("DELETE FROM utilizadores WHERE papel = 'formando' AND criado < ? AND NOT EXISTS (SELECT 1 FROM inscricoes i WHERE TRIM(i.email) = TRIM(utilizadores.email) COLLATE NOCASE)")

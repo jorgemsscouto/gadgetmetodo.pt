@@ -339,7 +339,7 @@ function tr_paragrafos(string $texto): array
     return [implode("\n\n", $partes), $completo];
 }
 
-// Língua de uma pessoa, pelo email: a preferida na conta, senão a da última inscrição ou pré-inscrição feita no site
+// Língua de uma pessoa, pelo email: a preferida na conta, senão a do formando ou da última inscrição feita no site
 // em inglês, senão o português
 function idioma_do_email(string $email): string
 {
@@ -348,7 +348,7 @@ function idioma_do_email(string $email): string
     }
     foreach (['SELECT idioma FROM utilizadores WHERE ' . sprintf(SQL_EMAIL_IGUAL_IDIOMA, 'email'),
         'SELECT idioma FROM inscricoes WHERE idioma IS NOT NULL AND ' . sprintf(SQL_EMAIL_IGUAL_IDIOMA, 'email') . ' ORDER BY id DESC LIMIT 1',
-        'SELECT idioma FROM preinscricoes WHERE idioma IS NOT NULL AND ' . sprintf(SQL_EMAIL_IGUAL_IDIOMA, 'email') . ' ORDER BY id DESC LIMIT 1'] as $sql) {
+        'SELECT idioma FROM formandos WHERE idioma IS NOT NULL AND ' . sprintf(SQL_EMAIL_IGUAL_IDIOMA, 'email')] as $sql) {
         $l = (string) (linha_bd($sql, [$email])['idioma'] ?? '');
         if (isset(IDIOMAS[$l])) {
             return $l;

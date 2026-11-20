@@ -283,7 +283,7 @@
           <div class="resumo">
           <h2>Que formação oferece a Gadgetmetodo?</h2>
           <p>A Gadgetmetodo, Lda. dá formação em inteligência artificial (IA) a empresas e profissionais em dois formatos: cursos abertos, com inscrição individual, organizados no percurso IA Generativa no Trabalho (cinco cursos de seis horas, da iniciação à implementação de casos práticos); e programas à medida, como o <a href="/formacoes/ai-essentials/">AI Essentials</a>, para administrações e equipas.</p>
-          <p>Cada curso tem uma página com o programa, os temas e os casos práticos de cada sessão, uma ficha para descarregar em PDF e a inscrição online. Sem datas agendadas, a pré-inscrição garante o convite quando forem marcadas.</p>
+          <p>Cada curso tem uma página com o programa, os temas e os casos práticos de cada sessão, uma ficha para descarregar em PDF e a inscrição online. Sem datas agendadas, a inscrição no curso garante o lugar e a Gadgetmetodo indica-lhe a turma quando forem marcadas.</p>
         </div>
           <nav class="atalhos-formacao" aria-label="Nesta página">
             <a href="#percurso"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="6" cy="19" r="3"/> <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/> <circle cx="18" cy="5" r="3"/> </svg><span><strong>Cursos abertos</strong>Percurso IA Generativa no Trabalho</span></a>
@@ -323,10 +323,10 @@
             <h2 id="como-inscrever" style="font-size:1.3rem">Como se inscrever</h2>
             <ol class="etapas etapas-compactas">
               <li><h3>Conheça os cursos</h3><p>Veja o programa, os temas, os casos práticos e a ficha em PDF. Não precisa de saber por qual começar.</p></li>
-              <li><h3>Inscreva-se ou faça a pré-inscrição</h3><p>Com datas agendadas, inscreve-se numa edição do curso, que inclui todas as sessões. Sem datas, a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a> garante que recebe o convite quando forem marcadas.</p></li>
+              <li><h3>Inscreva-se</h3><p>Com datas agendadas, inscreve-se numa turma do curso, que inclui todas as sessões. Sem datas, a <a href="/formacoes/inscricao-curso.php">inscrição no curso</a> garante o lugar e a Gadgetmetodo indica-lhe a turma quando forem marcadas.</p></li>
               <li><h3>Receba a confirmação</h3><p>Recebe um email logo a seguir. A Gadgetmetodo analisa o diagnóstico, indica-lhe o curso mais adequado e confirma a inscrição nos dias úteis seguintes.</p></li>
             </ol>
-            <p class="espaco-topo-curto mb-0"><a class="botao" href="/formacoes/pre-inscricao.php"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/> <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/> <path d="M12 11h4"/> <path d="M12 16h4"/> <path d="M8 11h.01"/> <path d="M8 16h.01"/> </svg> Fazer pré-inscrição</a></p>
+            <p class="espaco-topo-curto mb-0"><a class="botao" href="/formacoes/inscricao-curso.php"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/> <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/> <path d="M12 11h4"/> <path d="M12 16h4"/> <path d="M8 11h.01"/> <path d="M8 16h.01"/> </svg> Inscrever-me num curso</a></p>
           </div>
         </div>
       </div>
@@ -342,11 +342,11 @@
           </details>
           <details>
             <summary>Por que curso devo começar?</summary>
-            <div class="resposta"><p>Não precisa de escolher sozinho: a inscrição e a pré-inscrição incluem um diagnóstico com 20 perguntas sobre a forma como usa a IA e sobre os seus conhecimentos, e a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado ao seu ponto de partida antes de confirmar a inscrição. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4; no Curso 5, o Curso 4 ou experiência equivalente na definição de casos de uso de IA. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital; o Curso 5, para quem já tem um caso de uso para pôr em funcionamento.</p></div>
+            <div class="resposta"><p>Não precisa de escolher sozinho: a inscrição inclui um diagnóstico com 20 perguntas sobre a forma como usa a IA e sobre os seus conhecimentos, e a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado ao seu ponto de partida. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4; no Curso 5, o Curso 4 ou experiência equivalente na definição de casos de uso de IA. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital; o Curso 5, para quem já tem um caso de uso para pôr em funcionamento.</p></div>
           </details>
           <details>
-            <summary>Como me inscrevo e o que é a pré-inscrição?</summary>
-            <div class="resposta"><p>Na <a href="/formacoes/">área de formação</a>, cada curso tem um botão de inscrição. Pode inscrever-se como particular ou em nome de uma empresa. Se já houver datas, inscreve-se numa edição do curso, sem precisar de conta; a inscrição inclui sempre todas as sessões do curso (não há inscrições em sessões avulsas) e fica pendente até ser confirmada por email. Se ainda não houver datas, faz a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a>: recebe logo uma confirmação por email e, quando as datas forem marcadas, o convite para a inscrição. A pré-inscrição não obriga a inscrever-se.</p></div>
+            <summary>Como me inscrevo?</summary>
+            <div class="resposta"><p>Na <a href="/formacoes/">área de formação</a>, cada curso tem um botão de inscrição. Se já houver turmas com datas, inscreve-se numa turma do curso, sem precisar de conta; a inscrição inclui sempre todas as sessões do curso (não há inscrições em sessões avulsas). Se ainda não houver datas, faz a <a href="/formacoes/inscricao-curso.php">inscrição no curso</a>, com o diagnóstico, e a Gadgetmetodo indica-lhe a turma quando as datas forem marcadas. Em ambos os casos recebe por email a confirmação da inscrição e a ligação para ativar a sua área de formando.</p></div>
           </details>
           <details>
             <summary>Que requisitos técnicos são necessários?</summary>

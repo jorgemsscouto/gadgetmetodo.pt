@@ -620,7 +620,7 @@ function ficha_pdf(array $c, array $d): void
         $esq[] = ['t' => horario($f) . ' · ' . nome_modulo($f) . ' · ' . modalidade_e_local($f), 'f' => ['inter', '', 8.8], 'c' => 'texto', 'lh' => 4.5, 'marca' => true, 'antes' => 1];
     }
     if (!$esq) {
-        $esq[] = ['t' => 'Ainda não há datas agendadas. Na página do curso pode fazer a pré-inscrição e receber o convite quando forem marcadas.', 'f' => ['inter', '', 8.8], 'c' => 'texto', 'lh' => 4.5];
+        $esq[] = ['t' => 'Ainda não há datas agendadas. Na página do curso pode inscrever-se já: responde ao diagnóstico e escolhe a turma quando houver datas.', 'f' => ['inter', '', 8.8], 'c' => 'texto', 'lh' => 4.5];
     }
     $esq[] = ['t' => 'Programa, datas e inscrição online:', 'f' => ['inter', '', 8.8], 'c' => 'texto', 'lh' => 4.5, 'antes' => 3];
     $wl = 98.0;

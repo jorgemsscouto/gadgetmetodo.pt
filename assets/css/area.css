@@ -188,15 +188,6 @@
   background: var(--petroleo-tinta);
 }
 
-.etiqueta-pre {
-  color: #7a4a00;
-  background: #fff1d6;
-}
-
-.linha-pre td {
-  background: #fffaf0;
-}
-
 .nova-sessao {
   padding: 16px 18px;
   background: var(--nevoa);
@@ -847,27 +838,6 @@ h2.calendario-mes {
 
 .nota-legal h3 {
   font-size: 1.05rem;
-}
-
-/* Pré-inscrições na administração */
-
-.form-linha {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-  margin: 0;
-}
-
-.form-linha select {
-  min-height: 36px;
-  padding: 4px 8px;
-}
-
-.acoes-celula {
-  display: grid;
-  gap: 6px;
-  justify-items: start;
 }
 
 .botao.botao-pequeno {

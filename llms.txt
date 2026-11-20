@@ -27,7 +27,7 @@ Factos essenciais:
 
 Formação em inteligência artificial:
 
-- Percurso IA Generativa no Trabalho: cinco cursos abertos de seis horas, com calendário de edições, inscrição no curso completo (todas as sessões) e pré-inscrição online. Curso 1: Iniciação à IA Generativa no Trabalho; Curso 2: Produtividade com IA Generativa; Curso 3: IA nos Processos da Organização; Curso 4: Liderança e Implementação de IA; Curso 5: Implementação de Casos Práticos. Cada curso tem página própria com programa, temas e casos práticos por sessão, e ficha em PDF.
+- Percurso IA Generativa no Trabalho: cinco cursos abertos de seis horas, com calendário de edições, inscrição online no curso completo (todas as sessões); sem datas, inscrição no curso e indicação da turma. Curso 1: Iniciação à IA Generativa no Trabalho; Curso 2: Produtividade com IA Generativa; Curso 3: IA nos Processos da Organização; Curso 4: Liderança e Implementação de IA; Curso 5: Implementação de Casos Práticos. Cada curso tem página própria com programa, temas e casos práticos por sessão, e ficha em PDF.
 - AI Essentials: programa à medida, em cinco módulos, sobre IA para administrações e equipas.
 
 Metodologia em quatro fases:
@@ -57,7 +57,7 @@ Gestor de projeto e consultor: Jorge Sá Couto. Acompanha os projetos da Gadgetm
 
 ## Formação
 
-- [Área de formação](https://www.gadgetmetodo.pt/formacoes/): percurso IA Generativa no Trabalho, comparação dos cinco cursos, calendário de edições, inscrição e pré-inscrição, com ligação para a página e a ficha em PDF de cada curso
+- [Área de formação](https://www.gadgetmetodo.pt/formacoes/): percurso IA Generativa no Trabalho, comparação dos cinco cursos, calendário de edições e inscrição, com ligação para a página e a ficha em PDF de cada curso
 - [AI Essentials para empresas](https://www.gadgetmetodo.pt/formacoes/ai-essentials/): programa à medida em cinco módulos sobre IA para administrações e equipas
 
 ## Empresa

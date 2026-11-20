@@ -205,9 +205,9 @@ function link_ficha(array $curso): string
     return '/formacoes/ficha.php?c=' . (int) $curso['id'];
 }
 
-function link_pre_inscricao(int $curso_id): string
+function link_inscricao_curso(int $curso_id): string
 {
-    return '/formacoes/pre-inscricao.php' . ($curso_id ? '?c=' . $curso_id : '');
+    return '/formacoes/inscricao-curso.php' . ($curso_id ? '?c=' . $curso_id : '');
 }
 
 // Sessões abertas, futuras e com vagas de um curso
@@ -439,8 +439,7 @@ function pagina_inscricao(): void
         'Sessões online' => $i['modalidade'] === 'presencial' || !$i['reuniao'] ? '' : ($admin || in_array($i['estado'], ESTADOS_ATIVOS, true)
             ? '<a href="' . h($i['reuniao']) . '" target="_blank" rel="noopener">Entrar na reunião</a><br><span class="texto-suave">' . h($i['reuniao']) . '</span>'
             : '<span class="texto-suave">A ligação para a reunião é enviada com a confirmação da inscrição.</span>'),
-        'Origem' => h(ORIGENS[$i['origem']] ?? $i['origem']) . (($pre = $admin ? linha_bd('SELECT id, criado, formandos FROM preinscricoes WHERE inscricao_id = ?', [$id]) : null)
-            ? '<br><a href="' . h(url('preinscricao', ['id' => $pre['id']])) . '">Pré-inscrição de ' . h(data_hora($pre['criado'], false)) . '</a>' . ((int) $pre['formandos'] > 1 ? ' <span class="texto-suave">(' . (int) $pre['formandos'] . ' formandos previstos)</span>' : '') : ''),
+        'Origem' => h(ORIGENS[$i['origem']] ?? $i['origem']),
         'Inscrito por' => $publica
             ? h($i['contacto_nome']) . ', ' . h(data_hora($i['criado'])) . '<br><span class="texto-suave"><a href="mailto:' . h($i['contacto_email']) . '">' . h($i['contacto_email']) . '</a>' . ($i['contacto_telefone'] ? ' · ' . h($i['contacto_telefone']) : '') . '</span>'
             : h($i['autor']) . ', ' . h(data_hora($i['criado'])),

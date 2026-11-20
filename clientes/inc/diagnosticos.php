@@ -84,7 +84,7 @@ function enviar_ligacao_diagnostico(int $id): bool
     ]);
 }
 
-/* Inscrever numa edição quem respondeu ao diagnóstico (sem pré-inscrição) */
+/* Inscrever numa edição quem respondeu ao diagnóstico */
 
 // Edições onde se pode inscrever: não canceladas, dos últimos 6 meses em diante
 function edicoes_para_inscrever(): array
@@ -251,7 +251,7 @@ function admin_diagnosticos(): void
         ? '<form method="post" id="inscrever-diagnosticos" class="formulario espaco-topo-curto">' . campo_csrf() . '<input type="hidden" name="acao" value="inscrever_edicao">
             <div class="campo"><label for="c-edicao">Inscrever os escolhidos na edição</label><select id="c-edicao" name="edicao" required><option value="">Escolha a edição</option>' . $edicoes . '</select></div>
             <div><button class="botao botao-secundario" type="submit">Inscrever sem enviar emails</button></div>
-            <p class="ajuda">Para quem fez o diagnóstico sem pré-inscrição: fica inscrito na edição, confirmado, com o nome, o email, a empresa cliente do utilizador e as respostas do diagnóstico (se já respondeu). Não é enviado nenhum email nem criado o acesso à área do formando; envie-os depois na ficha da edição. Quem já está inscrito nessa edição não é inscrito de novo.</p>
+            <p class="ajuda">Fica inscrito na edição, confirmado, com o nome, o email, a empresa cliente do utilizador e as respostas do diagnóstico (se já respondeu). Não é enviado nenhum email nem criado o acesso à área do formando; envie-os depois na ficha da edição. Quem já está inscrito nessa edição não é inscrito de novo.</p>
           </form>' : '';
     pagina_area('diagnosticos', 'Diagnósticos', '
       <p class="texto-suave">Envie o diagnóstico de IA antes da formação: escolha um ou vários cursos e os utilizadores. Cada pessoa recebe por email uma só ligação pessoal, válida 30 dias e de uso único, e responde sem precisar de entrar na área reservada. São ' . (count(DIAGNOSTICO) + 1) . ' perguntas: ' . count(DIAGNOSTICO_V2) . ' sobre a utilização da IA, ' . count(DIAGNOSTICO_CONHECIMENTO) . ' de conhecimentos e as ferramentas usadas. O resultado e o curso aconselhado só aparecem aqui.</p>
@@ -324,15 +324,24 @@ function pagina_responder_diagnostico(): void
         $respostas = respostas_diagnostico();
         $v = ['diag' => array_map('strval', array_filter((array) ($_POST['diag'] ?? []), 'is_string'))] + ferramentas_post();
         $erro = $respostas === null ? 'Responda a todas as perguntas (falta pelo menos uma).' : erro_ferramentas($v);
+        if ($erro === '' && empty($_POST['consentimento'])) {
+            $erro = 'Para continuar, aceite a política de privacidade.';
+        }
         if ($erro === '') {
             $a = avaliar_diagnostico($respostas);
             $ferramentas = array_merge($v['ferramentas'], $v['ferramenta_outra'] !== '' ? ['Outra: ' . $v['ferramenta_outra']] : []);
             executar('UPDATE diagnosticos SET respostas = ?, ferramentas = ?, pontuacao = ?, nivel = ?, respondido = ?, token = NULL WHERE id = ? AND respondido IS NULL',
                 [json_encode($respostas), json_encode($ferramentas, JSON_UNESCAPED_UNICODE), $a['pontuacao'], $a['nivel'], agora(), $d['id']]);
+            // Consentimento (RGPD) registado no formando; inscrição automática no curso indicado e email da inscrição
+            if (!empty($d['formando_id'])) {
+                executar('UPDATE formandos SET consentimento = COALESCE(consentimento, ?) WHERE id = ?', [agora(), $d['formando_id']]);
+            }
+            $iid = inscrever_apos_diagnostico((int) $d['id']);
             aviso_diagnostico_respondido((int) $d['id']);
             documento('Diagnóstico enviado', $cabecalho . '<main class="secao"><div class="contentor estreito"><div class="entrada-cartao"><span class="sobretitulo">Diagnóstico de IA</span>
               <h1>Obrigado, ' . h(nome_curto((string) $d['nome'])) . '</h1>
-              <p class="lead">As suas respostas foram registadas. A Gadgetmetodo vai analisá-las para preparar a formação de acordo com o seu ponto de partida.</p></div></div></main>');
+              <p class="lead">As suas respostas foram registadas. A Gadgetmetodo vai analisá-las para preparar a formação de acordo com o seu ponto de partida.</p>
+              ' . ($iid ? '<p>Está inscrito(a) no ' . h((string) (curso((int) $d['curso_id'])['nome'] ?? '')) . '. Enviámos para ' . h((string) $d['email']) . ' a confirmação da inscrição, com a ligação para ativar a sua área de formando e o pedido dos dados para o certificado.</p>' : '') . '</div></div></main>');
         }
     }
     $n = count(DIAGNOSTICO) + 1;
@@ -345,6 +354,7 @@ function pagina_responder_diagnostico(): void
       <form method="post" action="' . h(url('responder', ['t' => $t])) . '" class="formulario formulario-inscricao">' . campo_csrf() . '
         ' . campos_diagnostico($v['diag']) . '
         ' . campo_ferramentas($v, $n) . '
+        <label class="opcao consentimento"><input type="checkbox" name="consentimento" value="1" required> <span>Li a <a href="/privacidade/" target="_blank" rel="noopener">Política de privacidade</a> e autorizo o tratamento destes dados pela Gadgetmetodo, Lda. para a minha inscrição e formação. *</span></label>
         <div><button class="botao" type="submit">Enviar respostas</button></div>
       </form>
     </div></main>');

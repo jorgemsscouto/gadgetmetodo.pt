@@ -1,17 +1,15 @@
 <?php
 // Inscrições (administração): lista dos formandos inscritos em qualquer curso, agrupados por pessoa (pelo email do
 // formando; sem email, cada inscrição conta como um formando), e ficha do formando com os dados, os cursos e as
-// presenças por sessão. A lista por inscrição (com filtros e exportação) e as pré-inscrições continuam disponíveis.
+// presenças por sessão. A lista por inscrição (com filtros e exportação) continua disponível.
 
 declare(strict_types=1);
 
-// Separadores de Inscrições: formandos, pré-inscrições e todas as inscrições
+// Separadores de Inscrições: formandos e todas as inscrições
 function submenu_inscricoes(string $atual): string
 {
-    $pre = (int) (linha_bd("SELECT COUNT(*) AS n FROM preinscricoes WHERE estado != 'inscrita'")['n'] ?? 0);
     $itens = [
         'formandos' => ['Formandos', url('inscricoes')],
-        'pre' => ['Pré-inscrições' . ($pre ? ' (' . $pre . ')' : ''), url('inscricoes', ['estado' => 'preinscricao'])],
         'todas' => ['Todas as inscrições', url('inscricoes', ['vista' => 'todas'])],
     ];
     $html = '';
@@ -133,9 +131,7 @@ function admin_formandos(): void
     }
     $cursos = array_column(consulta('SELECT id, nome FROM cursos ORDER BY id'), 'nome', 'id');
     $clientes = array_column(consulta('SELECT id, nome FROM clientes ORDER BY nome'), 'nome', 'id');
-    $novas = (int) (linha_bd("SELECT COUNT(*) AS n FROM preinscricoes WHERE estado = 'nova'")['n'] ?? 0);
-    pagina_area('inscricoes', 'Inscrições', submenu_inscricoes('formandos')
-      . ($novas ? '<div class="aviso aviso-info">' . $novas . ' pré-inscrição(ões) nova(s) por tratar. <a href="' . h(url('inscricoes', ['estado' => 'preinscricao'])) . '">Ver as pré-inscrições</a></div>' : '') . '
+    pagina_area('inscricoes', 'Inscrições', submenu_inscricoes('formandos')  . '
       <p class="texto-suave">Formandos inscritos em qualquer curso, um por pessoa (pelo email do formando). Abra o formando para ver os dados, os cursos e as presenças em cada sessão.</p>
       <form method="get" class="filtros">
         <input type="hidden" name="p" value="inscricoes">

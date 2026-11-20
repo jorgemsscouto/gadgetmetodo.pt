@@ -147,16 +147,31 @@ function aplicar_migracoes_pendentes(PDO $pdo, bool $manual = false): ?string
         $pdo->exec("DELETE FROM definicoes WHERE chave = 'migracoes_pausa'");
     } elseif (definicao($pdo, 'migracoes_pausa') !== null) {
         return null;
+    } elseif (($falha = definicao($pdo, 'migracoes_falha')) !== null && strtotime($falha) > time() - 600) {
+        // Depois de uma falha, a aplicação automática espera 10 minutos (cada tentativa faz uma cópia de segurança)
+        return 'A última tentativa de aplicar as migrações falhou às ' . date('H:i', strtotime($falha)) . '; nova tentativa automática dentro de 10 minutos ou em Configuração, Migrações.';
     }
     foreach (array_keys(migracoes_pendentes($pdo)) as $id) {
         if ($erro = aplicar_migracao($pdo, $id)) {
+            $pdo->prepare('INSERT OR REPLACE INTO definicoes (chave, valor) VALUES (?, ?)')->execute(['migracoes_falha', date('Y-m-d H:i:s')]);
             return $erro;
         }
     }
+    $pdo->exec("DELETE FROM definicoes WHERE chave = 'migracoes_falha'");
     return null;
 }
 
 /* Utilitários para os scripts de migração */
+
+// Um só valor de uma consulta, com o cursor fechado (o SQLite não altera nem renomeia tabelas com consultas abertas)
+function valor_unico(PDO $pdo, string $sql, array $parametros = [])
+{
+    $st = $pdo->prepare($sql);
+    $st->execute($parametros);
+    $v = $st->fetchColumn();
+    $st->closeCursor();
+    return $v;
+}
 
 function coluna_existe(PDO $pdo, string $tabela, string $coluna): bool
 {

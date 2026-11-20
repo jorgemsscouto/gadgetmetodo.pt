@@ -1,26 +1,26 @@
-<?php require __DIR__ . '/../clientes/inc/publico.php'; $pagina = pre_inscricao_publica(); ?>
+<?php require __DIR__ . '/../clientes/inc/publico.php'; $pagina = inscricao_curso_publica(); ?>
 <!doctype html>
 <html lang="pt-PT">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="google-site-verification" content="T-qA5H44j2vhQVk4bXzkT5a7o4SyuFCCZq0zogR4iLs">
-  <title>Pré-inscrição em curso | Gadgetmetodo, Lda.</title>
-  <meta name="description" content="Pré-inscrição nos cursos da Gadgetmetodo, Lda.: responda ao diagnóstico, receba a indicação do curso mais adequado e o convite quando houver datas.">
+  <title>Inscrição em curso | Gadgetmetodo, Lda.</title>
+  <meta name="description" content="Inscrição nos cursos da Gadgetmetodo, Lda.: responda ao diagnóstico, fique inscrito no curso e receba a indicação da turma quando houver datas.">
   <meta name="robots" content="noindex, follow">
-  <link rel="canonical" href="https://www.gadgetmetodo.pt/formacoes/pre-inscricao.php">
-  <link rel="alternate" hreflang="pt-PT" href="https://www.gadgetmetodo.pt/formacoes/pre-inscricao.php" data-fixo>
-  <link rel="alternate" hreflang="en-GB" href="https://www.gadgetmetodo.pt/en/training/pre-registration.php" data-fixo>
-  <link rel="alternate" hreflang="x-default" href="https://www.gadgetmetodo.pt/formacoes/pre-inscricao.php" data-fixo>
+  <link rel="canonical" href="https://www.gadgetmetodo.pt/formacoes/inscricao-curso.php">
+  <link rel="alternate" hreflang="pt-PT" href="https://www.gadgetmetodo.pt/formacoes/inscricao-curso.php" data-fixo>
+  <link rel="alternate" hreflang="en-GB" href="https://www.gadgetmetodo.pt/en/training/course-registration.php" data-fixo>
+  <link rel="alternate" hreflang="x-default" href="https://www.gadgetmetodo.pt/formacoes/inscricao-curso.php" data-fixo>
 
   <meta name="theme-color" content="#0A0F26">
   <meta name="author" content="Gadgetmetodo, Lda.">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="pt_PT">
   <meta property="og:site_name" content="Gadgetmetodo, Lda.">
-  <meta property="og:title" content="Pré-inscrição em curso | Gadgetmetodo, Lda.">
-  <meta property="og:description" content="Pré-inscrição nos cursos da Gadgetmetodo, Lda.: responda ao diagnóstico, receba a indicação do curso mais adequado e o convite quando houver datas.">
-  <meta property="og:url" content="https://www.gadgetmetodo.pt/formacoes/pre-inscricao.php">
+  <meta property="og:title" content="Inscrição em curso | Gadgetmetodo, Lda.">
+  <meta property="og:description" content="Inscrição nos cursos da Gadgetmetodo, Lda.: responda ao diagnóstico, fique inscrito no curso e receba a indicação da turma quando houver datas.">
+  <meta property="og:url" content="https://www.gadgetmetodo.pt/formacoes/inscricao-curso.php">
   <meta property="og:image" content="https://www.gadgetmetodo.pt/assets/img/partilha.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -198,10 +198,10 @@
     },
     {
       "@type": "WebPage",
-      "@id": "https://www.gadgetmetodo.pt/formacoes/pre-inscricao.php#pagina",
-      "url": "https://www.gadgetmetodo.pt/formacoes/pre-inscricao.php",
-      "name": "Pré-inscrição em curso",
-      "description": "Pré-inscrição nos cursos da Gadgetmetodo, Lda.: responda ao diagnóstico, receba a indicação do curso mais adequado e o convite quando houver datas.",
+      "@id": "https://www.gadgetmetodo.pt/formacoes/inscricao-curso.php#pagina",
+      "url": "https://www.gadgetmetodo.pt/formacoes/inscricao-curso.php",
+      "name": "Inscrição em curso",
+      "description": "Inscrição nos cursos da Gadgetmetodo, Lda.: responda ao diagnóstico, fique inscrito no curso e receba a indicação da turma quando houver datas.",
       "inLanguage": "pt-PT",
       "isPartOf": {
         "@id": "https://www.gadgetmetodo.pt/#website"
@@ -215,7 +215,7 @@
         "url": "https://www.gadgetmetodo.pt/assets/img/partilha.png"
       },
       "breadcrumb": {
-        "@id": "https://www.gadgetmetodo.pt/formacoes/pre-inscricao.php#migalhas"
+        "@id": "https://www.gadgetmetodo.pt/formacoes/inscricao-curso.php#migalhas"
       }
     },
     {
@@ -236,11 +236,11 @@
         {
           "@type": "ListItem",
           "position": 3,
-          "name": "Pré-inscrição",
-          "item": "https://www.gadgetmetodo.pt/formacoes/pre-inscricao.php"
+          "name": "Inscrição no curso",
+          "item": "https://www.gadgetmetodo.pt/formacoes/inscricao-curso.php"
         }
       ],
-      "@id": "https://www.gadgetmetodo.pt/formacoes/pre-inscricao.php#migalhas"
+      "@id": "https://www.gadgetmetodo.pt/formacoes/inscricao-curso.php#migalhas"
     }
   ]
 }
@@ -266,7 +266,7 @@
           <li><a href="/experiencia/">Experiência</a></li>
           <li><a href="/sobre/">Sobre</a></li>
           <li><a href="/perguntas-frequentes/">Perguntas frequentes</a></li>
-          <li><a class="nav-idioma" href="/en/training/pre-registration.php" hreflang="en-GB" lang="en-GB" title="View in English" data-fixo data-idioma="en">EN</a></li>
+          <li><a class="nav-idioma" href="/en/training/course-registration.php" hreflang="en-GB" lang="en-GB" title="View in English" data-fixo data-idioma="en">EN</a></li>
           <li><a class="nav-clientes" href="/clientes/" title="Área reservada a clientes"><svg width="18" height="18" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M17.925 20.056a6 6 0 0 0-11.851.001"/> <circle cx="12" cy="11" r="4"/> <circle cx="12" cy="12" r="10"/> </svg><span class="nav-clientes-texto">Área reservada</span></a></li>
           <li><a class="botao" href="/contactos/#formulario">Pedir proposta</a></li>
         </ul>
@@ -276,9 +276,9 @@
   <main id="conteudo">
     <section class="topo-pagina">
       <div class="contentor">
-        <nav class="migalhas" aria-label="Localização"><ol><li><a href="/">Início</a></li><li><a href="/formacoes/">Formação</a></li><li aria-current="page">Pré-inscrição</li></ol></nav>
-        <h1>Pré-inscrição</h1>
-        <p class="lead">Deixe os seus dados e responda ao diagnóstico: indicamos-lhe o curso mais adequado ao seu ponto de partida e enviamos-lhe o convite para a inscrição assim que houver datas. Não fica obrigado a inscrever-se.</p>
+        <nav class="migalhas" aria-label="Localização"><ol><li><a href="/">Início</a></li><li><a href="/formacoes/">Formação</a></li><li aria-current="page">Inscrição no curso</li></ol></nav>
+        <h1>Inscrição no curso</h1>
+        <p class="lead">Deixe os seus dados e responda ao diagnóstico: fica inscrito no curso, recebe por email a ligação para a sua área de formando e a Gadgetmetodo indica-lhe a turma, com as datas e o horário das sessões.</p>
         
       </div>
     </section>

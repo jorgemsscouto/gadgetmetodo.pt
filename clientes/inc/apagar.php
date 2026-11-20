@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 
-const TIPOS_APAGAR = ['inscricao', 'preinscricao', 'formacao', 'curso', 'modulo', 'cliente', 'utilizador', 'pedido', 'diagnostico'];
+const TIPOS_APAGAR = ['inscricao', 'formacao', 'curso', 'modulo', 'cliente', 'utilizador', 'pedido', 'diagnostico'];
 
 // Ligação "Apagar..." para a página de confirmação
 function botao_apagar(string $tipo, $id, string $rotulo, string $classe = 'botao botao-secundario botao-apagar'): string
@@ -16,8 +16,6 @@ function botao_apagar(string $tipo, $id, string $rotulo, string $classe = 'botao
 // Apaga uma edição com tudo o que depende dela: inscrições (e diagnósticos), datas das sessões e registo dos lembretes
 function apagar_formacao_completa(int $id): void
 {
-    executar('UPDATE preinscricoes SET inscricao_id = NULL WHERE inscricao_id IN (SELECT id FROM inscricoes WHERE formacao_id = ?)', [$id]);
-    executar('UPDATE preinscricoes SET formacao_id = NULL WHERE formacao_id = ?', [$id]);
     executar('DELETE FROM inscricoes WHERE formacao_id = ?', [$id]);
     executar('DELETE FROM sessoes WHERE formacao_id = ?', [$id]);
     executar('DELETE FROM lembretes WHERE formacao_id = ?', [$id]);
@@ -43,25 +41,11 @@ function pedido_apagar(string $tipo, string $id): ?array
                 'titulo' => 'Apagar a inscrição de ' . $i['formando'],
                 'apaga' => ['A inscrição de ' . $i['formando'] . ' no ' . $i['titulo'] . ' (' . horario($i) . '), com os dados do formando e de quem o inscreveu.', 'As respostas ao diagnóstico desta inscrição.'],
                 'mantem' => [],
-                'alternativa' => 'Em alternativa, mude o estado da inscrição para Cancelada: deixa de contar para as vagas e os dados ficam guardados.',
+                'alternativa' => 'Em alternativa, mude o estado da inscrição para Desistiu: deixa de contar para as vagas e os dados ficam guardados.',
                 'voltar' => url('inscricao', ['id' => $n]), 'depois' => ['formacao', ['id' => (int) $i['formacao_id']]], 'menu' => 'inscricoes',
                 'executar' => function () use ($n) {
-                    executar('UPDATE preinscricoes SET inscricao_id = NULL WHERE inscricao_id = ?', [$n]);
                     executar('DELETE FROM inscricoes WHERE id = ?', [$n]);
                 },
-            ];
-        case 'preinscricao':
-            if (!$p = linha_bd('SELECT * FROM preinscricoes WHERE id = ?', [$n])) {
-                return null;
-            }
-            $c = curso((int) $p['curso_id']);
-            return [
-                'titulo' => 'Apagar a pré-inscrição de ' . $p['nome'],
-                'apaga' => ['A pré-inscrição de ' . $p['nome'] . ' (' . $p['email'] . ')' . ($c ? ' no ' . $c['nome'] : '') . ', com os contactos e as preferências.', 'As respostas ao diagnóstico desta pré-inscrição.'],
-                'mantem' => $p['inscricao_id'] ? ['A inscrição feita a partir desta pré-inscrição.'] : [],
-                'alternativa' => 'Em alternativa, mude o estado para Arquivada: sai da lista por tratar e os dados ficam guardados.',
-                'voltar' => url('preinscricao', ['id' => $n]), 'depois' => ['inscricoes', ['estado' => 'preinscricao']], 'menu' => 'inscricoes',
-                'executar' => function () use ($n) { executar('DELETE FROM preinscricoes WHERE id = ?', [$n]); },
             ];
         case 'formacao':
             if (!$f = linha_bd('SELECT * FROM formacoes WHERE id = ?', [$n])) {
@@ -76,7 +60,7 @@ function pedido_apagar(string $tipo, string $id): ?array
                     $ins ? $ins . ' inscrição(ões) nesta edição (' . $conf . ' confirmada(s)), com os diagnósticos.' : '',
                     contar('SELECT COUNT(*) AS n FROM lembretes WHERE formacao_id = ?', [$n]) ? 'O registo dos lembretes enviados.' : '',
                 ])),
-                'mantem' => ['O curso e as pré-inscrições.'],
+                'mantem' => ['O curso.'],
                 'alternativa' => 'Em alternativa, mude o estado para Cancelada: a edição sai do site e os dados ficam guardados.',
                 'voltar' => url('formacao', ['id' => $n]), 'depois' => ['calendario', []], 'menu' => 'calendario',
                 'executar' => function () use ($n) { apagar_formacao_completa($n); },
@@ -87,14 +71,12 @@ function pedido_apagar(string $tipo, string $id): ?array
             }
             $edicoes = array_map('intval', array_column(consulta('SELECT id FROM formacoes WHERE curso_id = ?', [$n]), 'id'));
             $ins = contar('SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id IN (SELECT id FROM formacoes WHERE curso_id = ?)', [$n]);
-            $pre = contar('SELECT COUNT(*) AS n FROM preinscricoes WHERE curso_id = ?', [$n]);
             return [
                 'titulo' => 'Apagar o ' . $c['nome'],
                 'apaga' => array_values(array_filter([
                     'O curso ' . $c['nome'] . ', com a ficha e as ' . count(modulos_curso($n)) . ' ' . unidade($c, true) . ' (temas e casos práticos).',
                     $edicoes ? count($edicoes) . ' edição(ões) no calendário, com as datas das sessões.' : '',
                     $ins ? $ins . ' inscrição(ões) nessas edições, com os diagnósticos.' : '',
-                    $pre ? $pre . ' pré-inscrição(ões) neste curso.' : '',
                 ])),
                 'mantem' => ['A tabela de preços e os outros cursos do percurso.'],
                 'alternativa' => 'Em alternativa, desative o curso: deixa de poder ser agendado e de aparecer no site, e os dados ficam guardados.',
@@ -103,8 +85,6 @@ function pedido_apagar(string $tipo, string $id): ?array
                     foreach ($edicoes as $e) {
                         apagar_formacao_completa($e);
                     }
-                    executar('DELETE FROM preinscricoes WHERE curso_id = ?', [$n]);
-                    executar('UPDATE preinscricoes SET curso_origem = NULL WHERE curso_origem = ?', [$n]);
                     executar('DELETE FROM modulos WHERE curso_id = ?', [$n]);
                     executar('UPDATE diagnosticos SET curso_id = NULL WHERE curso_id = ?', [$n]);
                     executar('DELETE FROM cursos WHERE id = ?', [$n]);

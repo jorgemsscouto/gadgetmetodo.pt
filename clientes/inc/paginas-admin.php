@@ -18,7 +18,6 @@ function admin_painel(): void
         <div><strong>' . $n("SELECT COUNT(*) AS n FROM inscricoes WHERE estado NOT IN ('desistiu', 'nao_concluido')") . '</strong>inscrições ativas</div>
         <div><strong>' . $n('SELECT COUNT(*) AS n FROM clientes') . '</strong>clientes</div>
         <div><a href="' . h(url('inscricoes', ['origem' => 'por_associar'])) . '"><strong>' . $n("SELECT COUNT(*) AS n FROM inscricoes WHERE cliente_id IS NULL AND estado NOT IN ('desistiu', 'nao_concluido')") . '</strong>inscrições do site por associar</a></div>
-        <div><a href="' . h(url('inscricoes', ['estado' => 'preinscricao'])) . '"><strong>' . $n("SELECT COUNT(*) AS n FROM preinscricoes WHERE estado = 'nova'") . '</strong>pré-inscrições por tratar</a></div>
         <div><strong>' . $n('SELECT COUNT(*) AS n FROM utilizadores WHERE ativo = 1') . '</strong>utilizadores ativos</div>
       </div>
       <div class="acoes mb-0" style="margin-top:0"><a class="botao" href="' . h(url('formacao')) . '">Nova formação</a><a class="botao botao-secundario" href="' . h(url('utilizadores')) . '">Novo utilizador</a></div>
@@ -127,9 +126,6 @@ function admin_formacao(): void
     if ($post && in_array($acao, ['cert_pedir', 'cert_emitir', 'cert_enviar'], true) && $f) {
         tratar_certificados_edicao($f);
     }
-    if ($post && in_array($acao, ['pre_convidar_edicao', 'pre_convidar_todas_edicao', 'pre_inscrever_sem_emails'], true) && $f) {
-        tratar_preinscritos_edicao($f);
-    }
     if ($post && $acao === 'lembrete' && $f) {
         [$enviados, $falhados, $s] = enviar_lembrete_sessao($f, (int) ($_POST['sessao'] ?? 0));
         if (!$s) {
@@ -162,9 +158,7 @@ function admin_formacao(): void
         $erros = $aplicar ? [] : $erros;
         if (!$erros && !$aplicar) {
             $id = gravar_sessao($d, $curso_id, $f ? $id : 0);
-            $associadas = $f ? 0 : associar_preinscricoes($id);
-            aviso($f ? 'Formação atualizada.' : 'Formação criada e visível para os clientes e na área de formação do site.'
-                . ($associadas ? ' ' . $associadas . ' pré-inscrição(ões) do curso associada(s) a esta edição: veja "Pré-inscritos", mais abaixo.' : ''));
+            aviso($f ? 'Formação atualizada.' : 'Formação criada e visível para os clientes e na área de formação do site.');
             redirecionar('formacao', ['id' => $id]);
         }
         $f = ['id' => $id ?: null, 'titulo' => '', 'curso_id' => $curso_id, 'modulo_id' => $f['modulo_id'] ?? null, 'inicio' => $d['data'] . ' ' . $d['hora_inicio'], 'fim' => $d['hora_fim'] ? $d['data'] . ' ' . $d['hora_fim'] : '', 'modalidade' => $d['modalidade'], 'local' => $d['local'], 'vagas' => $d['vagas'], 'estado' => $d['estado'], 'notas' => $d['notas'], 'reuniao' => $d['reuniao'], 'formador_id' => $d['formador_id']];
@@ -236,7 +230,6 @@ function admin_formacao(): void
         $inscritos .= $linhas ? lembretes_edicao(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]), $confirmadas) : '';
         $inscritos .= $confirmadas ? presencas_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id])) : '';
         $inscritos .= $confirmadas ? certificados_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id])) : '';
-        $inscritos .= preinscritos_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]));
         $inscritos .= juntar_edicoes_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]));
         $inscritos .= '<p class="espaco-topo">' . botao_apagar('formacao', $id, 'Apagar esta edição') . '</p>';
     }
@@ -316,7 +309,6 @@ function juntar_edicoes(array $f, array $ids, bool $datas, bool $ordenar): array
         foreach ($origens as $e) {
             $movidas += (int) (linha_bd('SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ?', [$e['id']])['n'] ?? 0);
             executar('UPDATE inscricoes SET formacao_id = ? WHERE formacao_id = ?', [$id, $e['id']]);
-            executar('UPDATE preinscricoes SET formacao_id = ? WHERE formacao_id = ?', [$id, $e['id']]);
             executar('DELETE FROM sessoes WHERE formacao_id = ?', [$e['id']]);
             executar('DELETE FROM formacoes WHERE id = ?', [$e['id']]);
         }
@@ -363,7 +355,7 @@ function juntar_edicoes_html(array $f): string
       </form></div>';
 }
 
-// Lê e valida os campos de uma sessão (formulário da sessão ou "Nova sessão" na pré-inscrição)
+// Lê e valida os campos de uma sessão (formulário da edição)
 function ler_sessao(): array
 {
     $d = [
@@ -642,7 +634,7 @@ function admin_cursos(): void
 {
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['acao'] ?? '') === 'repor_catalogo') {
         if (empty($_POST['confirmo'])) {
-            aviso('Para repor o catálogo, confirme que aceita apagar a agenda, as inscrições, as pré-inscrições e os cursos.', 'erro');
+            aviso('Para repor o catálogo, confirme que aceita apagar a agenda, as inscrições e os cursos.', 'erro');
         } else {
             $n = repor_catalogo(bd());
             aviso('Agenda e cursos limpos. Catálogo carregado com ' . $n . ' cursos.');
@@ -650,24 +642,23 @@ function admin_cursos(): void
         redirecionar('cursos');
     }
     $lista = consulta("SELECT c.*, (SELECT COUNT(*) FROM modulos m WHERE m.curso_id = c.id) AS n_modulos,
-        (SELECT COUNT(*) FROM formacoes f WHERE f.curso_id = c.id AND f.inicio >= ? AND f.estado != 'cancelada') AS n_sessoes,
-        (SELECT COUNT(*) FROM preinscricoes p WHERE p.curso_id = c.id AND p.estado = 'nova') AS n_pre
+        (SELECT COUNT(*) FROM formacoes f WHERE f.curso_id = c.id AND f.inicio >= ? AND f.estado != 'cancelada') AS n_sessoes
         FROM cursos c ORDER BY c.ativo DESC, c.nome", [date('Y-m-d 00:00:00')]);
     $linhas = '';
     foreach ($lista as $c) {
-        $linhas .= '<tr><td><a href="' . h(url('curso', ['id' => $c['id']])) . '">' . h($c['nome']) . '</a>' . ($c['percurso'] ? '<br><span class="texto-suave">' . h($c['percurso']) . '</span>' : '') . '</td><td>' . h($c['tipologia']) . '</td><td>' . (int) $c['n_modulos'] . '</td><td>' . (int) $c['n_sessoes'] . '</td><td>' . ($c['n_pre'] ? '<a href="' . h(url('curso', ['id' => $c['id']])) . '#preinscricoes">' . (int) $c['n_pre'] . ' por tratar</a>' : '0') . '</td><td>' . ($c['diagnostico'] ? 'Sim' : 'Não') . '</td><td>' . ($c['ativo'] ? etiqueta('Ativo', 'ok') : etiqueta('Inativo')) . '</td>'
+        $linhas .= '<tr><td><a href="' . h(url('curso', ['id' => $c['id']])) . '">' . h($c['nome']) . '</a>' . ($c['percurso'] ? '<br><span class="texto-suave">' . h($c['percurso']) . '</span>' : '') . '</td><td>' . h($c['tipologia']) . '</td><td>' . (int) $c['n_modulos'] . '</td><td>' . (int) $c['n_sessoes'] . '</td><td>' . ($c['diagnostico'] ? 'Sim' : 'Não') . '</td><td>' . ($c['ativo'] ? etiqueta('Ativo', 'ok') : etiqueta('Inativo')) . '</td>'
             . '<td>' . ($c['ativo'] ? '<a href="' . h(link_ficha($c)) . '" target="_blank" rel="noopener">Ficha em PDF</a>' : '') . '</td></tr>';
     }
     $versao = (string) (catalogo()['versao'] ?? '');
-    pagina_area('cursos', 'Cursos', ($versao !== '' && catalogo_pendente() ? '<div class="aviso aviso-info">Há um catálogo de cursos novo por carregar ("' . h((string) (catalogo()['comum']['percurso'] ?? $versao)) . '"). Não foi carregado automaticamente porque já existem inscrições ou pré-inscrições. Use "Repor o catálogo", no fim desta página, quando quiser substituir a agenda e os cursos.</div>' : '') . '
+    pagina_area('cursos', 'Cursos', ($versao !== '' && catalogo_pendente() ? '<div class="aviso aviso-info">Há um catálogo de cursos novo por carregar ("' . h((string) (catalogo()['comum']['percurso'] ?? $versao)) . '"). Não foi carregado automaticamente porque já existem inscrições. Use "Repor o catálogo", no fim desta página, quando quiser substituir a agenda e os cursos.</div>' : '') . '
       <p class="texto-suave">Cada curso tem tipologia, descrição, destinatários, objetivo, pré-requisitos, resultado esperado, avaliação, requisitos e módulos (ou sessões) com os temas e o caso prático. As sessões do calendário são de um curso completo ou de um módulo. O diagnóstico de utilização de IA pode ser ativado em cada curso. Cada curso tem uma ficha para exportar em PDF.</p>
       <div class="acoes" style="margin-top:0"><a class="botao" href="' . h(url('curso')) . '">Novo curso</a></div>
-      ' . ($linhas ? '<div class="conteudo tabela-rolante espaco-topo-curto"><table><thead><tr><th>Curso</th><th>Tipologia</th><th>Módulos ou sessões</th><th>Sessões agendadas</th><th>Pré-inscrições</th><th>Diagnóstico de IA</th><th>Estado</th><th>Ficha</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há cursos.</p>') . '
+      ' . ($linhas ? '<div class="conteudo tabela-rolante espaco-topo-curto"><table><thead><tr><th>Curso</th><th>Tipologia</th><th>Módulos ou sessões</th><th>Sessões agendadas</th><th>Diagnóstico de IA</th><th>Estado</th><th>Ficha</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há cursos.</p>') . '
       <div class="zona-perigo espaco-topo">
         <h2 class="mt-0">Repor o catálogo</h2>
-        <p>Apaga <strong>todas</strong> as sessões do calendário, as respetivas inscrições, as pré-inscrições e todos os cursos, e carrega o catálogo do ficheiro de dados (' . h((string) (catalogo()['comum']['percurso'] ?? 'catálogo')) . ', ' . count(catalogo()['cursos'] ?? []) . ' cursos). Os clientes, os utilizadores e os pedidos do site não são afetados. Esta ação não pode ser desfeita: exporte antes as inscrições para Excel, se precisar delas.</p>
+        <p>Apaga <strong>todas</strong> as sessões do calendário, as respetivas inscrições e todos os cursos, e carrega o catálogo do ficheiro de dados (' . h((string) (catalogo()['comum']['percurso'] ?? 'catálogo')) . ', ' . count(catalogo()['cursos'] ?? []) . ' cursos). Os clientes, os utilizadores e os pedidos do site não são afetados. Esta ação não pode ser desfeita: exporte antes as inscrições para Excel, se precisar delas.</p>
         <form method="post" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="repor_catalogo">
-          <label class="opcao consentimento"><input type="checkbox" name="confirmo" value="1" required> <span>Confirmo que quero apagar a agenda, as inscrições, as pré-inscrições e os cursos e carregar o catálogo.</span></label>
+          <label class="opcao consentimento"><input type="checkbox" name="confirmo" value="1" required> <span>Confirmo que quero apagar a agenda, as inscrições e os cursos e carregar o catálogo.</span></label>
           <div><button class="botao botao-perigo" type="submit">Limpar agenda e cursos e carregar o catálogo</button></div>
         </form>
       </div>', 'Formação');
@@ -721,29 +712,6 @@ function admin_curso(): void
             } else {
                 aviso_envio(convite_curso($c, $convite['nome'], $convite['email'], $convite['mensagem']), 'Convite enviado para ' . h($convite['email']) . '.');
             }
-        } elseif (in_array($acao, ['pre_convidar', 'pre_convidar_todas'], true) && $c) {
-            // Convite às pré-inscrições: só quando o curso tem sessões abertas com vagas
-            $lista = $acao === 'pre_convidar'
-                ? consulta('SELECT * FROM preinscricoes WHERE id = ? AND curso_id = ?', [(int) ($_POST['pre_id'] ?? 0), $id])
-                : consulta("SELECT * FROM preinscricoes WHERE curso_id = ? AND estado = 'nova' ORDER BY criado", [$id]);
-            if (!sessoes_com_vagas($id)) {
-                aviso('Agende primeiro uma edição do curso com inscrições abertas: o convite leva o candidato às datas do curso.', 'erro');
-            } else {
-                $enviados = 0;
-                foreach ($lista as $pre) {
-                    if (convite_curso($c, (string) $pre['nome'], (string) $pre['email'], '', 'convite_preinscricao')) {
-                        executar("UPDATE preinscricoes SET estado = 'convidada' WHERE id = ?", [$pre['id']]);
-                        $enviados++;
-                    }
-                }
-                aviso_envio($enviados > 0, count($lista) === 1 ? 'Convite enviado para ' . h((string) $lista[0]['email']) . '.' : $enviados . ' de ' . count($lista) . ' convites enviados.');
-            }
-        } elseif ($acao === 'pre_estado' && $c) {
-            $estado = (string) ($_POST['estado'] ?? '');
-            if (isset(estados_preinscricao_manuais()[$estado])) {
-                executar('UPDATE preinscricoes SET estado = ? WHERE id = ? AND curso_id = ?', [$estado, (int) ($_POST['pre_id'] ?? 0), $id]);
-                aviso('Estado da pré-inscrição atualizado.');
-            }
         }
         redirecionar('curso', ['id' => $id]);
     }
@@ -791,9 +759,6 @@ function admin_curso(): void
             $html .= partilha_e_convite(endereco_site() . link_curso_publico($c), 'Página pública do curso',
                 'Mostra a descrição, o programa, os temas e as próximas edições com inscrição. Pode colocá-la no site, nas redes sociais ou enviá-la a um candidato. A ficha em PDF tem o mesmo conteúdo, num documento para enviar ou imprimir.', link_ficha($c));
         }
-        $pre = (int) (linha_bd("SELECT COUNT(*) AS n FROM preinscricoes WHERE curso_id = ? AND estado IN ('nova', 'convidada')", [$id])['n'] ?? 0);
-        $html .= '<h2 class="espaco-topo" id="preinscricoes">Pré-inscrições</h2><p class="texto-suave">' . ($pre ? $pre . ' pré-inscrição(ões) por converter neste curso. ' : 'Não há pré-inscrições por converter neste curso. ')
-            . 'As pré-inscrições geram-se em <a href="' . h(url('inscricoes', ['estado' => 'preinscricao'])) . '">Inscrições, Pré-inscrições</a>; quando agenda uma edição do curso no calendário, ficam associadas a essa edição, onde pode inscrever os candidatos ou enviar-lhes o convite.</p>';
         $html .= '<p class="espaco-topo">' . botao_apagar('curso', $id, 'Apagar este curso') . '</p>';
     }
     // Edições do curso no topo da página, antes da ficha
@@ -824,193 +789,6 @@ function edicoes_do_curso_html(int $curso_id): string
         . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="edicoes-curso"><thead><tr><th>Datas</th><th>Formato</th><th data-filtro="lista">Modalidade</th><th data-filtro="lista">Formador</th><th>Inscritos</th><th data-filtro="lista">Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>'
             : '<p class="texto-suave">Este curso ainda não tem edições agendadas.</p>')
         . '<p class="espaco-topo-curto"><a class="botao" href="' . h(url('formacao', ['curso' => $curso_id])) . '">Agendar nova edição deste curso</a></p>';
-}
-
-/* Pré-inscrição: ficha, estado e inscrição numa edição já agendada ou numa edição nova (definir datas) */
-
-// Estados que se escolhem à mão; "Inscrita" só resulta de inscrever o candidato numa sessão
-function estados_preinscricao_manuais(string $atual = ''): array
-{
-    return $atual === 'inscrita' ? ESTADOS_PREINSCRICAO : array_diff_key(ESTADOS_PREINSCRICAO, ['inscrita' => true]);
-}
-
-function admin_preinscricao(): void
-{
-    $id = (int) ($_GET['id'] ?? 0);
-    $p = linha_bd('SELECT * FROM preinscricoes WHERE id = ?', [$id]);
-    $c = $p ? curso((int) $p['curso_id']) : null;
-    if (!$p || !$c) {
-        pagina_erro('Pré-inscrição não encontrada', 'A pré-inscrição pedida não existe ou já foi apagada.');
-    }
-    $respostas = json_decode((string) $p['respostas'], true);
-    $respostas = is_array($respostas) ? $respostas : [];
-    $erros = [];
-    $acao = (string) ($_POST['acao'] ?? '');
-    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
-        if ($acao === 'estado' && isset(estados_preinscricao_manuais()[$_POST['estado'] ?? ''])) {
-            executar('UPDATE preinscricoes SET estado = ? WHERE id = ?', [$_POST['estado'], $id]);
-            aviso('Estado da pré-inscrição atualizado.');
-            redirecionar('preinscricao', ['id' => $id]);
-        }
-        if ($acao === 'curso') {
-            $novo = (int) ($_POST['curso_associado'] ?? 0);
-            if (in_array($novo, array_map('intval', array_column(cursos_do_percurso($c) ?: [$c], 'id')), true)) {
-                executar('UPDATE preinscricoes SET curso_id = ?, formacao_id = ? WHERE id = ?', [$novo, proxima_edicao_curso($novo)['id'] ?? null, $id]);
-                aviso('Curso associado: ' . h((string) curso($novo)['nome']) . '.');
-            }
-            redirecionar('preinscricao', ['id' => $id]);
-        }
-        if ($acao === 'inscrever' && empty($_POST['aplicar_formato'])) {
-            $formando = texto('formando', 120) ?: (string) $p['nome'];
-            $email = texto('email_formando', 160);
-            $estado = ($_POST['estado_inscricao'] ?? '') === 'pendente' ? 'pendente' : 'confirmada';
-            if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $erros[] = 'O email do formando não é válido.';
-            }
-            $f = null;
-            $nova = null;
-            if (($_POST['sessao'] ?? '') === 'nova') {
-                [$d, $curso_id, $e] = ler_sessao();
-                if (!$e && strtotime($d['data']) < strtotime('today')) {
-                    $e[] = 'A data da 1.ª sessão já passou.';
-                }
-                $erros = array_merge($erros, $e);
-                $nova = [$d, $curso_id];
-            } elseif (!($f = linha_bd("SELECT * FROM formacoes WHERE id = ? AND estado != 'cancelada'", [(int) ($_POST['sessao'] ?? 0)]))) {
-                $erros[] = 'Escolha a edição ou "Nova edição".';
-            }
-            if (!$erros) {
-                if ($nova) {
-                    $f = linha_bd('SELECT * FROM formacoes WHERE id = ?', [gravar_sessao(...$nova)]);
-                    associar_preinscricoes((int) $f['id']);
-                }
-                $r = inscrever_preinscricao($p, $f, $formando, $email, $estado);
-                if ($r['erro']) {
-                    $erros[] = $r['erro'];
-                } else {
-                    // "Sem emails": nem a confirmação nem a ligação da área do formando (enviam-se depois na edição)
-                    $sem_emails = !empty($_POST['sem_emails']);
-                    $i = linha_bd(SQL_INSCRICAO, [$r['id']]);
-                    $avisado = !$sem_emails && $estado === 'confirmada' && !empty($_POST['avisar']) && ($contacto = contacto_inscricao($i)) && avisar_estado_inscricao($i, 'confirmada', $contacto);
-                    aviso('Inscrição de ' . h($formando) . ' registada: ' . h(horario($f)) . ($nova ? ' (formação nova criada no calendário)' : '') . '.'
-                        . ($avisado ? ' Confirmação enviada por email para ' . h((string) $p['email']) . '.' : '')
-                        . ($sem_emails ? ' Não foi enviado nenhum email.' : ''));
-                    if (!$sem_emails && $estado === 'confirmada' && ($acesso = acesso_apos_confirmacao((int) $r['id']))) {
-                        aviso(...$acesso);
-                    }
-                    redirecionar('inscricao', ['id' => $r['id']]);
-                }
-            }
-        }
-    }
-
-    // Sessões futuras dos cursos do mesmo percurso (ou do próprio curso), para escolher; ou uma sessão nova
-    $cursos = array_column(cursos_do_percurso($c) ?: [$c], 'nome', 'id');
-    $sessoes = consulta('SELECT * FROM formacoes WHERE curso_id IN (' . implode(',', array_map('intval', array_keys($cursos))) . ") AND inicio >= ? AND estado != 'cancelada' ORDER BY inicio", [date('Y-m-d 00:00:00')]);
-    $escolha = (string) ($_POST['sessao'] ?? ($_GET['sessao'] ?? ($p['formacao_id'] ?? '')));
-    if ($escolha === '' || ($escolha !== 'nova' && !in_array($escolha, array_map('strval', array_column($sessoes, 'id')), true))) {
-        $propria = array_values(array_filter($sessoes, function ($f) use ($c) { return (int) $f['curso_id'] === (int) $c['id']; }));
-        $escolha = $propria ? (string) $propria[0]['id'] : 'nova';
-    }
-    $opcoes = '';
-    foreach ($sessoes as $f) {
-        $livres = (int) $f['vagas'] - inscritos((int) $f['id']);
-        $opcoes .= '<label class="opcao"><input type="radio" name="sessao" value="' . (int) $f['id'] . '"' . ($escolha === (string) $f['id'] ? ' checked' : '') . '> <span><strong>' . h($f['titulo']) . '</strong> · ' . h(nome_modulo($f)) . '<br>'
-            . h(horario($f)) . ' · ' . h(MODALIDADES[$f['modalidade']] ?? '') . ' · ' . ($livres > 0 ? $livres . ' vaga(s) livre(s)' : 'sem vagas livres') . ($f['estado'] !== 'aberta' ? ' · ' . h(ESTADOS_FORMACAO[$f['estado']]) : '') . '</span></label>';
-    }
-    $opcoes .= '<label class="opcao"><input type="radio" name="sessao" value="nova"' . ($escolha === 'nova' ? ' checked' : '') . '> <span><strong>Nova edição</strong>: definir agora as datas e o horário das sessões (fica também no calendário e no site)</span></label>';
-    $v = $_POST + ['curso' => $c['id'], 'data' => '', 'hora_inicio' => '09:30', 'hora_fim' => '10:30', 'modalidade' => $p['modalidade'] ?: 'presencial', 'local' => '', 'vagas' => '12', 'reuniao' => '', 'formando' => $p['nome'], 'email_formando' => $p['email'], 'estado_inscricao' => 'confirmada'];
-    $a = $respostas ? avaliar_diagnostico($respostas) : null;
-    $rec = $respostas ? recomendacao_de(['respostas' => json_encode($respostas), 'curso_id' => $c['id']]) : '';
-    $ind = $respostas ? curso_indicado($respostas, $c) : null;
-    $origem = $p['curso_origem'] ? curso((int) $p['curso_origem']) : null;
-    // Curso associado: à partida, o aconselhado pelo diagnóstico; pode trocar-se por outro curso do percurso
-    $lista_cursos = [];
-    foreach (cursos_do_percurso($c) ?: [$c] as $x) {
-        $lista_cursos[$x['id']] = $x['nome'] . ($ind && (int) $ind['curso']['id'] === (int) $x['id'] ? ' (aconselhado)' : '');
-    }
-    $form_curso = count($lista_cursos) > 1 && $p['estado'] !== 'inscrita' ? '<form method="post" class="formulario linha-form">' . campo_csrf() . '<input type="hidden" name="acao" value="curso">
-          ' . campo_select('curso_associado', 'Curso associado', $lista_cursos, (string) $c['id']) . '
-          <div></div><div><button class="botao botao-secundario" type="submit">Associar este curso</button></div></form>' : '';
-    $dados = array_filter([
-        'Curso associado' => '<a href="' . h(url('curso', ['id' => $c['id']])) . '">' . h($c['nome']) . '</a>'
-            . ($ind ? ((int) $ind['curso']['id'] === (int) $c['id'] ? ' ' . etiqueta('Aconselhado pelo diagnóstico', 'ok') : ' ' . etiqueta('Diferente do aconselhado', 'info')) : ''),
-        'Curso aconselhado' => $ind ? '<strong>' . h($ind['curso']['nome']) . '</strong><br><span class="texto-suave">' . h(ucfirst($ind['motivo'])) . '</span>' : '',
-        'Pedido a partir de' => $origem ? '<a href="' . h(url('curso', ['id' => $origem['id']])) . '">' . h($origem['nome']) . '</a>' : '',
-        'Pedido em' => h(data_hora($p['criado'])),
-        'Cliente' => $p['tipo_cliente'] === 'particular' ? 'Particular' : h((string) $p['empresa']),
-        'Contactos' => '<a href="mailto:' . h($p['email']) . '">' . h($p['email']) . '</a>' . ($p['telefone'] ? ' · ' . h($p['telefone']) : ''),
-        'Formandos previstos' => (string) (int) $p['formandos'],
-        'Modalidade preferida' => h(MODALIDADES[$p['modalidade'] ?? ''] ?? 'Indiferente'),
-        'Preferências de datas' => nl2br(h((string) $p['preferencias'])),
-        'Ferramentas de IA' => h((string) $p['ferramentas']),
-        'Estado' => etiqueta('Pré-inscrição', 'pre') . ' ' . h(ESTADOS_PREINSCRICAO[$p['estado']] ?? $p['estado'])
-            . ($p['estado'] === 'inscrita' && $p['inscricao_id'] ? ' · <a href="' . h(url('inscricao', ['id' => $p['inscricao_id']])) . '">Ver a inscrição</a>' : ''),
-    ], function ($x) { return $x !== ''; });
-    $tabela = '';
-    foreach ($dados as $k => $val) {
-        $tabela .= '<tr><th scope="row">' . h($k) . '</th><td>' . $val . '</td></tr>';
-    }
-    $html = ($erros ? '<div class="aviso aviso-erro" role="alert">' . h(implode(' ', $erros)) . '</div>' : '')
-        . ($p['estado'] === 'inscrita' ? '<div class="aviso aviso-ok">Esta pré-inscrição já deu origem a uma inscrição.' . ($p['inscricao_id'] ? ' <a href="' . h(url('inscricao', ['id' => $p['inscricao_id']])) . '">Ver a inscrição</a>.' : '') . '</div>' : '')
-        . '<div class="conteudo"><table class="tabela-ficha"><tbody>' . $tabela . '</tbody></table></div>
-        <form method="post" class="formulario linha-form">' . campo_csrf() . '<input type="hidden" name="acao" value="estado">
-          ' . campo_select('estado', 'Estado da pré-inscrição', estados_preinscricao_manuais($p['estado']), $p['estado']) . '
-          <div></div><div><button class="botao botao-secundario" type="submit">Guardar estado</button></div></form>'
-        . $form_curso
-        . ($a ? '<h2 class="espaco-topo">Diagnóstico</h2>
-        <div class="diagnostico-resultado">
-          <div><span class="texto-suave">Nível</span>' . nivel_etiqueta($a['nivel']) . '</div>
-          <div><span class="texto-suave">Pontuação</span><span><strong>' . (int) $a['pontuacao'] . '</strong> em ' . $a['maximo'] . '</span></div>
-          <div><span class="texto-suave">Uso responsável</span><span><strong>' . (int) $a['responsavel'] . '</strong> em 9</span></div>
-          ' . bloco_conhecimento($a) . '
-        </div>
-        ' . ($rec ? '<p><strong>Recomendação:</strong> ' . h($rec) . '</p>' : '') . '
-        <details class="programa"><summary>Ver as respostas</summary><div class="programa-corpo conteudo tabela-rolante">' . tabela_diagnostico(['respostas' => json_encode($respostas)]) . '</div></details>' : '');
-    if ($p['estado'] !== 'inscrita') {
-        $html .= '<h2 class="espaco-topo" id="inscrever">Inscrever e definir datas</h2>
-        <p class="texto-suave">Escolha uma edição já agendada ou crie uma edição nova, com as datas das sessões. A inscrição inclui sempre todas as sessões do curso. A pré-inscrição passa a "Inscrita" e a inscrição aparece em Inscrições, com os contactos e o diagnóstico.' . ((int) $p['formandos'] > 1 ? ' Esta pré-inscrição prevê ' . (int) $p['formandos'] . ' formandos: os restantes inscrevem-se depois, na mesma edição.' : '') . '</p>
-        <form method="post" class="formulario" action="' . h(url('preinscricao', ['id' => $id])) . '#inscrever">' . campo_csrf() . '<input type="hidden" name="acao" value="inscrever">
-          <fieldset class="campo-grupo"><legend>Sessão *</legend><div class="opcoes">' . $opcoes . '</div></fieldset>
-          <fieldset class="campo-grupo nova-sessao"><legend>Nova edição (preencher só se escolheu "Nova edição")</legend>
-            <div class="campos-2">
-              ' . seletor_curso((int) $v['curso']) . '
-              ' . campo('data', 'Data (da 1.ª sessão)', (string) $v['data'], 'date') . '
-              <div class="campos-2">' . campo('hora_inicio', 'Início', (string) $v['hora_inicio'], 'time') . campo('hora_fim', 'Fim', (string) $v['hora_fim'], 'time') . '</div>
-              ' . campo_select('modalidade', 'Modalidade', MODALIDADES, (string) $v['modalidade']) . '
-              ' . campo('local', 'Local', (string) $v['local'], 'text', 'maxlength="160" placeholder="Morada, nas sessões presenciais ou mistas"') . '
-              ' . campo('vagas', 'Vagas', (string) $v['vagas'], 'number', 'min="1" max="500"') . '
-            </div>
-            ' . campos_sessoes_curso((int) $v['curso'], sessoes_do_formulario(0), formato_do_formulario(0)) . '
-            ' . campo('reuniao', 'Ligação da reunião online (Google Meet)', (string) $v['reuniao'], 'url', 'maxlength="300" placeholder="https://meet.google.com/abc-defg-hij"') . '
-          </fieldset>
-          <div class="campos-2">
-            ' . campo('formando', 'Nome do formando', (string) $v['formando'], 'text', 'maxlength="120"') . '
-            ' . campo('email_formando', 'Email do formando', (string) $v['email_formando'], 'email', 'maxlength="160"') . '
-            ' . campo_select('estado_inscricao', 'Estado da inscrição', ['confirmada' => 'Confirmada', 'pendente' => 'Pendente'], (string) $v['estado_inscricao']) . '
-          </div>
-          <label class="opcao consentimento"><input type="checkbox" name="avisar" value="1" checked> <span>Enviar a confirmação por email ao candidato, com as datas, o local e a ligação das sessões online (só quando o estado é Confirmada)</span></label>
-          <label class="opcao consentimento"><input type="checkbox" name="sem_emails" value="1"> <span>Inscrever sem enviar nenhum email (nem a confirmação, nem a ligação para a área do formando). Os emails, o acesso à área do formando e o diagnóstico enviam-se depois, na edição e em Diagnósticos.</span></label>
-          <div><button class="botao" type="submit">Inscrever</button></div>
-        </form>';
-    }
-    $html .= '<p class="espaco-topo">' . botao_apagar('preinscricao', $id, 'Apagar esta pré-inscrição') . '</p>
-      <p class="espaco-topo"><a href="' . h(url('inscricoes', ['estado' => 'preinscricao'])) . '">Voltar às pré-inscrições</a></p>';
-    pagina_area('inscricoes', (string) $p['nome'], $html, 'Pré-inscrição');
-}
-
-// Nível e curso aconselhado pelo diagnóstico de uma pré-inscrição, com aviso quando difere do curso associado
-function diagnostico_preinscricao(array $p, array $c): string
-{
-    $r = json_decode((string) ($p['respostas'] ?? ''), true);
-    if (!is_array($r) || !$r) {
-        return '<span class="texto-suave">Sem diagnóstico</span>';
-    }
-    $a = avaliar_diagnostico($r);
-    $ind = curso_indicado($r, $c);
-    return nivel_etiqueta($a['nivel']) . ($ind ? '<br>Aconselhado: ' . h(partes_nome($ind['curso'])[0])
-        . ((int) $ind['curso']['id'] !== (int) $c['id'] ? ' ' . etiqueta('Diferente do curso associado', 'info') : '') : '')
-        . ($a['responsavel'] <= 4 ? '<br><span class="texto-suave">Uso responsável baixo (' . (int) $a['responsavel'] . ' em 9)</span>' : '');
 }
 
 // Convite por email para a página de um curso, com as próximas edições abertas
@@ -1050,7 +828,7 @@ function form_modulo(array $m, int $numero, string $unidade = 'Módulo'): string
 
 /* Inscrições */
 
-// Lista de inscrições; as pré-inscrições ainda sem inscrição aparecem no topo com o estado "Pré-inscrição"
+// Lista de inscrições, com filtros e exportação para Excel
 function admin_inscricoes(): void
 {
     if (($_GET['vista'] ?? '') !== 'todas' && !array_intersect_key($_GET, array_flip(['formacao', 'cliente', 'estado', 'origem', 'exportar']))) {
@@ -1058,24 +836,18 @@ function admin_inscricoes(): void
         return;
     }
     $origens = ['site' => 'Site', 'por_associar' => 'Site, por associar a cliente', 'area' => 'Área reservada'];
-    $estados = ['preinscricao' => 'Pré-inscrição'] + ESTADOS_INSCRICAO;
+    $estados = ESTADOS_INSCRICAO;
     $filtros = ['formacao' => (int) ($_GET['formacao'] ?? 0), 'cliente' => (int) ($_GET['cliente'] ?? 0), 'estado' => isset($estados[$_GET['estado'] ?? '']) ? $_GET['estado'] : '', 'origem' => isset($origens[$_GET['origem'] ?? '']) ? $_GET['origem'] : ''];
-    $com_pre = !$filtros['formacao'] && !$filtros['cliente'] && in_array($filtros['estado'], ['', 'preinscricao'], true) && in_array($filtros['origem'], ['', 'site', 'por_associar'], true);
-    $pre = $com_pre ? consulta("SELECT p.*, c.nome AS curso, fe.inicio AS edicao_inicio FROM preinscricoes p JOIN cursos c ON c.id = p.curso_id LEFT JOIN formacoes fe ON fe.id = p.formacao_id AND fe.estado != 'cancelada' WHERE p.estado != 'inscrita' ORDER BY p.estado = 'nova' DESC, p.criado DESC") : [];
-    $sql = 'SELECT i.*, ' . SQL_CLIENTE . ', COALESCE(f.titulo, (SELECT c2.nome FROM cursos c2 WHERE c2.id = i.curso_id)) AS titulo, f.inicio FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id LEFT JOIN formacoes f ON f.id = i.formacao_id WHERE ' . ($filtros['estado'] === 'preinscricao' ? '0 = 1' : '1 = 1');
+    $sql = 'SELECT i.*, ' . SQL_CLIENTE . ', COALESCE(f.titulo, (SELECT c2.nome FROM cursos c2 WHERE c2.id = i.curso_id)) AS titulo, f.inicio FROM inscricoes i LEFT JOIN clientes c ON c.id = i.cliente_id LEFT JOIN formacoes f ON f.id = i.formacao_id WHERE 1 = 1';
     $par = [];
     if ($filtros['formacao']) { $sql .= ' AND i.formacao_id = ?'; $par[] = $filtros['formacao']; }
     if ($filtros['cliente']) { $sql .= ' AND i.cliente_id = ?'; $par[] = $filtros['cliente']; }
-    if ($filtros['estado'] && $filtros['estado'] !== 'preinscricao') { $sql .= ' AND i.estado = ?'; $par[] = $filtros['estado']; }
+    if ($filtros['estado']) { $sql .= ' AND i.estado = ?'; $par[] = $filtros['estado']; }
     if ($filtros['origem'] === 'por_associar') { $sql .= ' AND i.cliente_id IS NULL'; }
     elseif ($filtros['origem']) { $sql .= ' AND i.origem = ?'; $par[] = $filtros['origem']; }
     $lista = consulta($sql . ' ORDER BY f.inicio DESC, i.criado', $par);
     if (!empty($_GET['exportar'])) {
         $linhas = [];
-        foreach ($pre as $p) {
-            $a = ($r = json_decode((string) $p['respostas'], true)) ? avaliar_diagnostico($r) : ['nivel' => '', 'pontuacao' => '', 'responsavel' => ''];
-            $linhas[] = [$p['curso'], '', $p['empresa'] ?: $p['nome'], TIPOS_CLIENTE[$p['tipo_cliente'] ?? ''] ?? '', 'Site (pré-inscrição)', $p['nome'], $p['email'], $p['telefone'], $p['nome'], $p['email'], '', 'Pré-inscrição: ' . (ESTADOS_PREINSCRICAO[$p['estado']] ?? $p['estado']), $a['nivel'], $a['pontuacao'], $a['responsavel'], $p['ferramentas'], $p['preferencias'], data_hora($p['criado'])];
-        }
         foreach ($lista as $i) {
             $linhas[] = [$i['titulo'], data_hora($i['inicio']), $i['cliente'], TIPOS_CLIENTE[$i['cliente_tipo']] ?? '', ORIGENS[$i['origem']] ?? $i['origem'], $i['contacto_nome'], $i['contacto_email'], $i['contacto_telefone'], $i['formando'], $i['email'], $i['funcao'], ESTADOS_INSCRICAO[$i['estado']] ?? $i['estado'], $i['nivel'], $i['pontuacao'], $i['responsavel'], $i['ferramentas'], $i['expectativas'], data_hora($i['criado'])];
         }
@@ -1087,18 +859,10 @@ function admin_inscricoes(): void
     }
     $clientes = array_column(consulta('SELECT id, nome FROM clientes ORDER BY nome'), 'nome', 'id');
     $linhas = '';
-    foreach ($pre as $p) {
-        $r = json_decode((string) $p['respostas'], true);
-        $linhas .= '<tr class="linha-pre"><td><a href="' . h(url('preinscricao', ['id' => $p['id']])) . '">' . h($p['nome']) . '</a>' . ((int) $p['formandos'] > 1 ? '<br><span class="texto-suave">' . (int) $p['formandos'] . ' formandos previstos</span>' : '') . '</td>'
-            . '<td>' . cliente_html(['cliente' => $p['empresa'] ?: $p['nome'], 'cliente_tipo' => $p['tipo_cliente']]) . ' ' . etiqueta('Site') . '</td><td>' . h($p['curso']) . '<br><span class="texto-suave">'
-            . (!empty($p['edicao_inicio']) ? 'Associada à edição de <a href="' . h(url('formacao', ['id' => $p['formacao_id']])) . '">' . h(data_hora($p['edicao_inicio'], false)) . '</a>' : 'Sem edição agendada') . '</span></td>'
-            . '<td>' . (($cp = curso((int) $p['curso_id'])) ? diagnostico_preinscricao($p, $cp) : '') . '</td>'
-            . '<td>' . etiqueta('Pré-inscrição', 'pre') . ($p['estado'] !== 'nova' ? '<br><span class="texto-suave">' . h(ESTADOS_PREINSCRICAO[$p['estado']] ?? $p['estado']) . '</span>' : '') . '</td><td>' . h(data_hora($p['criado'])) . '</td></tr>';
-    }
     foreach ($lista as $i) {
         $linhas .= '<tr><td><a href="' . h(url('inscricao', ['id' => $i['id']])) . '">' . h($i['formando']) . '</a></td><td>' . cliente_html($i) . etiqueta_origem($i) . '</td><td>' . h($i['titulo']) . '<br><span class="texto-suave">' . h(data_hora($i['inicio'])) . '</span></td><td>' . nivel_etiqueta($i['nivel']) . '</td><td>' . estado_etiqueta($i['estado'], ESTADOS_INSCRICAO) . '</td><td>' . h(data_hora($i['criado'])) . '</td></tr>';
     }
-    pagina_area('inscricoes', 'Inscrições', submenu_inscricoes($filtros['estado'] === 'preinscricao' ? 'pre' : 'todas') . '
+    pagina_area('inscricoes', 'Inscrições', submenu_inscricoes('todas') . '
       <form method="get" class="filtros">
         <input type="hidden" name="p" value="inscricoes"><input type="hidden" name="vista" value="todas">
         ' . campo_select('formacao', 'Formação', $formacoes, $filtros['formacao'], 'Todas') . campo_select('cliente', 'Cliente', $clientes, $filtros['cliente'], 'Todos') . campo_select('estado', 'Estado', $estados, $filtros['estado'], 'Todos') . campo_select('origem', 'Origem', $origens, $filtros['origem'], 'Todas') . '

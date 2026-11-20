@@ -79,14 +79,11 @@ if ($post) {
     verificar_csrf();
 }
 
-if (eh_admin()) {
-    associar_preinscricoes_existentes(bd());
-}
 
 $comuns = ['inscrever' => 'pagina_inscrever', 'inscricao' => 'pagina_inscricao', 'conta' => 'pagina_conta'];
 $rotas = eh_admin()
     ? ['painel' => 'admin_painel', 'calendario' => 'admin_calendario', 'formacao' => 'admin_formacao', 'cursos' => 'admin_cursos', 'curso' => 'admin_curso', 'inscricoes' => 'admin_inscricoes',
-       'preinscricao' => 'admin_preinscricao', 'clientes' => 'admin_clientes', 'cliente' => 'admin_cliente', 'utilizadores' => 'admin_utilizadores', 'utilizador' => 'admin_utilizador',
+       'clientes' => 'admin_clientes', 'cliente' => 'admin_cliente', 'utilizadores' => 'admin_utilizadores', 'utilizador' => 'admin_utilizador',
        'pedidos' => 'admin_pedidos', 'configuracao' => 'admin_configuracao', 'precos' => 'admin_precos', 'comunicacao' => 'admin_comunicacao', 'apagar' => 'admin_apagar', 'formando' => 'admin_formando', 'diagnosticos' => 'admin_diagnosticos', 'diagnostico' => 'admin_diagnostico', 'certificado' => 'pagina_certificado', 'formandos' => 'admin_lista_formandos', 'migracoes' => 'admin_migracoes'] + $comuns
     : (eh_formando()
         ? ['painel' => 'formando_painel', 'certificado' => 'pagina_certificado', 'conta' => 'pagina_conta']

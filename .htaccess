@@ -32,6 +32,9 @@ DirectoryIndex index.html index.php
 # Endereços antigos
 <IfModule mod_alias.c>
   Redirect 301 /servicos/formacao-ai-essentials/ /formacoes/ai-essentials/
+  # Pré-inscrição (retirada): a página passou a ser a inscrição no curso; o endereço do curso (?c=) mantém-se
+  Redirect 301 /formacoes/pre-inscricao.php /formacoes/inscricao-curso.php
+  Redirect 301 /en/training/pre-registration.php /en/training/course-registration.php
 </IfModule>
 
 # Endereço canónico: gadgetmetodo.pt (sem www, em http ou https) passa para https://www.gadgetmetodo.pt, para os motores de pesquisa

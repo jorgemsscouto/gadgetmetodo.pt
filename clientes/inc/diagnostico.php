@@ -1,5 +1,5 @@
 <?php
-// Diagnóstico do formando em inteligência artificial, na inscrição, na pré-inscrição e no envio pela área reservada.
+// Diagnóstico do formando em inteligência artificial, na inscrição no site e no envio pela área reservada.
 // 19 perguntas de escolha (0 a 3 pontos cada, total 0 a 57), mais a pergunta das ferramentas de IA (não pontuada):
 // - 9 de prática (como usa a IA), com as opções da menos à mais avançada; 3 delas medem o uso responsável (0 a 9);
 // - 10 de conhecimento (com uma resposta melhor que as outras): os pontos de cada opção estão em "pontos" e as opções

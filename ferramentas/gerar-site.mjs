@@ -400,8 +400,8 @@ const FAQ_SERVICOS = [
 const FAQ_FORMACAO = [
   ['Que formação oferece a Gadgetmetodo?', 'Dois formatos. <a href="/formacoes/">Cursos abertos</a> a particulares e a empresas, com inscrição individual, organizados no percurso IA Generativa no Trabalho: cinco cursos de seis horas, da iniciação à implementação de casos práticos. E <a href="/formacoes/ai-essentials/">programas à medida</a>, como o AI Essentials, organizados na empresa para administrações e equipas.'],
   ['Como está organizado o percurso IA Generativa no Trabalho?', 'Tem cinco cursos sequenciais, cada um com seis sessões de 60 minutos (30 horas no total): Curso 1, Iniciação à IA Generativa no Trabalho; Curso 2, Produtividade com IA Generativa; Curso 3, IA nos Processos da Organização; Curso 4, Liderança e Implementação de IA; Curso 5, Implementação de Casos Práticos, em que cada formando põe em funcionamento um caso real da sua organização. Todas as sessões terminam num Laboratório de Casos Práticos, que passa de 10 para 40 minutos por sessão ao longo do percurso. A ferramenta de referência é o Claude (Anthropic); os conceitos são transferíveis para outros assistentes de IA generativa.'],
-  ['Por que curso devo começar?', 'Não precisa de escolher sozinho: a inscrição e a pré-inscrição incluem um diagnóstico com 20 perguntas sobre a forma como usa a IA e sobre os seus conhecimentos, e a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado ao seu ponto de partida antes de confirmar a inscrição. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4; no Curso 5, o Curso 4 ou experiência equivalente na definição de casos de uso de IA. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital; o Curso 5, para quem já tem um caso de uso para pôr em funcionamento.'],
-  ['Como me inscrevo e o que é a pré-inscrição?', 'Na <a href="/formacoes/">área de formação</a>, cada curso tem um botão de inscrição. Pode inscrever-se como particular ou em nome de uma empresa. Se já houver datas, inscreve-se numa edição do curso, sem precisar de conta; a inscrição inclui sempre todas as sessões do curso (não há inscrições em sessões avulsas) e fica pendente até ser confirmada por email. Se ainda não houver datas, faz a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a>: recebe logo uma confirmação por email e, quando as datas forem marcadas, o convite para a inscrição. A pré-inscrição não obriga a inscrever-se.'],
+  ['Por que curso devo começar?', 'Não precisa de escolher sozinho: a inscrição inclui um diagnóstico com 20 perguntas sobre a forma como usa a IA e sobre os seus conhecimentos, e a Gadgetmetodo analisa as respostas e indica-lhe o curso mais adequado ao seu ponto de partida. Os pré-requisitos são: nenhum no Curso 1; o Curso 1 ou utilização regular demonstrada no Curso 2; o curso anterior nos Cursos 3 e 4; no Curso 5, o Curso 4 ou experiência equivalente na definição de casos de uso de IA. O Curso 4 é recomendado para quadros, chefias, consultores e responsáveis por transformação digital; o Curso 5, para quem já tem um caso de uso para pôr em funcionamento.'],
+  ['Como me inscrevo?', 'Na <a href="/formacoes/">área de formação</a>, cada curso tem um botão de inscrição. Se já houver turmas com datas, inscreve-se numa turma do curso, sem precisar de conta; a inscrição inclui sempre todas as sessões do curso (não há inscrições em sessões avulsas). Se ainda não houver datas, faz a <a href="/formacoes/inscricao-curso.php">inscrição no curso</a>, com o diagnóstico, e a Gadgetmetodo indica-lhe a turma quando as datas forem marcadas. Em ambos os casos recebe por email a confirmação da inscrição e a ligação para ativar a sua área de formando.'],
   ['Que requisitos técnicos são necessários?', 'Um computador por formando, com navegador atualizado, e conta própria no Claude. Nos Cursos 1 e 2, o plano gratuito é suficiente para a maioria dos exercícios; nos Cursos 3, 4 e 5 é necessário um plano pago (Pro, Max, Team ou Enterprise), porque as sessões sobre conectores, tarefas agendadas e agentes usam funcionalidades que não estão disponíveis, ou estão limitadas, no plano gratuito. As turmas têm 8 a 14 formandos, em modalidade presencial ou à distância síncrona.'],
   ['Como é feita a avaliação?', 'Combina avaliação prática, teste e participação, e o peso da prática cresce de curso para curso: 40% no Curso 1, 60% no Curso 2, 70% no Curso 3 e 85% nos Cursos 4 e 5, sem teste: no Curso 4 inclui um projeto final e no Curso 5 a implementação de um caso real. A aprovação exige 50% e presença em 5 das 6 sessões; no Curso 4, 50% e a entrega do projeto final; no Curso 5, 50% e a apresentação do caso implementado.'],
   ['Que relação tem esta formação com o Regulamento da IA?', 'O artigo 4.º do Regulamento (UE) 2024/1689 (Regulamento da IA), aplicável desde 2 de fevereiro de 2025 e reescrito pelo Regulamento (UE) 2026/1744, em vigor desde 27 de julho de 2026, exige que as organizações que fornecem ou utilizam sistemas de IA adotem medidas para apoiar o desenvolvimento da literacia em IA do seu pessoal. O percurso pode integrar essas medidas e produz evidência documentada da formação realizada. Não constitui, por si só, garantia de conformidade legal.'],
@@ -503,7 +503,7 @@ pagina({
           <div>
             <span class="sobretitulo">Formação</span>
             <h2 id="formacao-inicio">IA Generativa no Trabalho: do primeiro uso à liderança da implementação</h2>
-            <p class="mb-0">Cinco cursos sequenciais de seis horas, com casos práticos em todas as sessões, inscrição ou pré-inscrição online e ficha de cada curso em PDF. Também organizamos o programa AI Essentials à medida, na sua empresa.</p>
+            <p class="mb-0">Cinco cursos sequenciais de seis horas, com casos práticos em todas as sessões, inscrição online e ficha de cada curso em PDF. Também organizamos o programa AI Essentials à medida, na sua empresa.</p>
           </div>
           <a class="botao" href="/formacoes/">${icone('graduation-cap')} Ver a área de formação</a>
         </div>
@@ -1381,7 +1381,7 @@ pagina({
   descricao: 'Respostas sobre a Gadgetmetodo, Lda.: organização e métodos, inteligência artificial, DPO, RGPD, NIS2, DORA, cursos de IA e inscrições, propostas e funcionamento dos projetos.',
   tipo: 'FAQPage',
   prioridade: '0.8',
-  llms: 'Perguntas e respostas sobre a empresa, os serviços, a formação (cursos, nível, inscrição e pré-inscrição, requisitos, avaliação) e o funcionamento dos projetos.',
+  llms: 'Perguntas e respostas sobre a empresa, os serviços, a formação (cursos, nível, inscrição, requisitos, avaliação) e o funcionamento dos projetos.',
   trilho: [['/', 'Início'], ['/perguntas-frequentes/', 'Perguntas frequentes']],
   schemaExtra: faqExtra,
   corpo: `
@@ -1619,7 +1619,7 @@ pagina({
   titulo: 'Formação em inteligência artificial',
   descricao: 'Formação da Gadgetmetodo, Lda.: percurso IA Generativa no Trabalho, com cinco cursos abertos e inscrição online, e programa AI Essentials à medida para administrações e equipas.',
   prioridade: '0.9',
-  llms: 'Área de formação: percurso IA Generativa no Trabalho (5 cursos com página, ficha em PDF, inscrição e pré-inscrição online), calendário e programa AI Essentials à medida.',
+  llms: 'Área de formação: percurso IA Generativa no Trabalho (5 cursos com página, ficha em PDF e inscrição online), calendário e programa AI Essentials à medida.',
   trilho: [['/', 'Início'], ['/formacoes/', 'Formação']],
   corpo: `
     ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Formação']], h1: 'Formação', lead: 'Cursos abertos de inteligência artificial generativa, com inscrição online, e programas à medida para administrações e equipas.', atualizado: false })}
@@ -1629,7 +1629,7 @@ pagina({
         <div class="duas-colunas texto-largo">
           ${resumo([
             'A Gadgetmetodo, Lda. dá formação em inteligência artificial (IA) a empresas e profissionais em dois formatos: cursos abertos, com inscrição individual, organizados no percurso IA Generativa no Trabalho (cinco cursos de seis horas, da iniciação à implementação de casos práticos); e programas à medida, como o <a href="/formacoes/ai-essentials/">AI Essentials</a>, para administrações e equipas.',
-            'Cada curso tem uma página com o programa, os temas e os casos práticos de cada sessão, uma ficha para descarregar em PDF e a inscrição online. Sem datas agendadas, a pré-inscrição garante o convite quando forem marcadas.',
+            'Cada curso tem uma página com o programa, os temas e os casos práticos de cada sessão, uma ficha para descarregar em PDF e a inscrição online. Sem datas agendadas, a inscrição no curso garante o lugar e a Gadgetmetodo indica-lhe a turma quando forem marcadas.',
           ], 'Que formação oferece a Gadgetmetodo?')}
           <nav class="atalhos-formacao" aria-label="Nesta página">
             <a href="#percurso">${icone('route')}<span><strong>Cursos abertos</strong>Percurso IA Generativa no Trabalho</span></a>
@@ -1668,10 +1668,10 @@ pagina({
             <h2 id="como-inscrever" style="font-size:1.3rem">Como se inscrever</h2>
             <ol class="etapas etapas-compactas">
               <li><h3>Conheça os cursos</h3><p>Veja o programa, os temas, os casos práticos e a ficha em PDF. Não precisa de saber por qual começar.</p></li>
-              <li><h3>Inscreva-se ou faça a pré-inscrição</h3><p>Com datas agendadas, inscreve-se numa edição do curso, que inclui todas as sessões. Sem datas, a <a href="/formacoes/pre-inscricao.php">pré-inscrição</a> garante que recebe o convite quando forem marcadas.</p></li>
+              <li><h3>Inscreva-se</h3><p>Com datas agendadas, inscreve-se numa turma do curso, que inclui todas as sessões. Sem datas, a <a href="/formacoes/inscricao-curso.php">inscrição no curso</a> garante o lugar e a Gadgetmetodo indica-lhe a turma quando forem marcadas.</p></li>
               <li><h3>Receba a confirmação</h3><p>Recebe um email logo a seguir. A Gadgetmetodo analisa o diagnóstico, indica-lhe o curso mais adequado e confirma a inscrição nos dias úteis seguintes.</p></li>
             </ol>
-            <p class="espaco-topo-curto mb-0"><a class="botao" href="/formacoes/pre-inscricao.php">${icone('clipboard-list')} Fazer pré-inscrição</a></p>
+            <p class="espaco-topo-curto mb-0"><a class="botao" href="/formacoes/inscricao-curso.php">${icone('clipboard-list')} Inscrever-me num curso</a></p>
           </div>
         </div>
       </div>
@@ -1705,16 +1705,16 @@ pagina({
 });
 
 pagina({
-  url: '/formacoes/pre-inscricao.php',
-  php: `<?php require __DIR__ . '/../clientes/inc/publico.php'; $pagina = pre_inscricao_publica(); ?>
+  url: '/formacoes/inscricao-curso.php',
+  php: `<?php require __DIR__ . '/../clientes/inc/publico.php'; $pagina = inscricao_curso_publica(); ?>
 `,
   estilos: [CSS_AREA],
   indexar: false,
-  titulo: 'Pré-inscrição em curso',
-  descricao: 'Pré-inscrição nos cursos da Gadgetmetodo, Lda.: responda ao diagnóstico, receba a indicação do curso mais adequado e o convite quando houver datas.',
-  trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/pre-inscricao.php', 'Pré-inscrição']],
+  titulo: 'Inscrição em curso',
+  descricao: 'Inscrição nos cursos da Gadgetmetodo, Lda.: responda ao diagnóstico, fique inscrito no curso e receba a indicação da turma quando houver datas.',
+  trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/inscricao-curso.php', 'Inscrição no curso']],
   corpo: `
-    ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/pre-inscricao.php', 'Pré-inscrição']], h1: 'Pré-inscrição', lead: 'Deixe os seus dados e responda ao diagnóstico: indicamos-lhe o curso mais adequado ao seu ponto de partida e enviamos-lhe o convite para a inscrição assim que houver datas. Não fica obrigado a inscrever-se.', atualizado: false })}
+    ${topoPagina({ trilho: [['/', 'Início'], ['/formacoes/', 'Formação'], ['/formacoes/inscricao-curso.php', 'Inscrição no curso']], h1: 'Inscrição no curso', lead: 'Deixe os seus dados e responda ao diagnóstico: fica inscrito no curso, recebe por email a ligação para a sua área de formando e a Gadgetmetodo indica-lhe a turma, com as datas e o horário das sessões.', atualizado: false })}
 
     <?= $pagina['conteudo'] ?>
   `,
@@ -1761,7 +1761,7 @@ pagina({
           <li><strong>Área reservada:</strong> nome, email profissional e entidade dos utilizadores com acesso, e data do último acesso. Nos formandos com acesso à área do formando, nome, email e data do último acesso.</li>
           <li><strong>Presenças nas sessões:</strong> registo da presença do formando em cada sessão, com a data e a hora do registo e a indicação de ter sido feito pelo formando ou pela Gadgetmetodo.</li>
           <li><strong>Inscrições em formações:</strong> nome, email e função do formando, respostas ao diagnóstico de utilização de inteligência artificial, ferramentas de IA usadas e expectativas sobre a formação. Nas inscrições feitas na área de formação do site, também a indicação de inscrição particular ou de empresa, o nome da empresa (se for o caso), o NIF e o nome, o email e o telefone de quem faz a inscrição.</li>
-          <li><strong>Pré-inscrições em cursos:</strong> nome, email e telefone, indicação de pré-inscrição particular ou de empresa e, neste caso, o nome da empresa, número previsto de formandos, modalidade preferida, preferências de datas e horários, respostas ao diagnóstico e ferramentas de IA usadas.</li>
+          <li><strong>Formandos:</strong> nome, email, telefone (opcional), empresa ou cliente associado, data do consentimento, respostas aos diagnósticos e ferramentas de IA usadas, turma, presenças, avaliação, acesso aos materiais do curso e dados para o certificado.</li>
           <li><strong>Prevenção de abusos do formulário:</strong> o servidor guarda, durante uma hora, um código derivado do endereço IP, que não revela o endereço, para limitar envios repetidos.</li>
         </ul>
 
@@ -1774,7 +1774,7 @@ pagina({
               <tr><td>Enviar a confirmação de receção do pedido</td><td>Diligências pré-contratuais a pedido do titular, artigo 6.º, n.º 1, alínea b)</td></tr>
               <tr><td>Acompanhamento comercial do pedido, incluindo o registo do acesso ao catálogo enviado por email</td><td>Interesse legítimo, artigo 6.º, n.º 1, alínea f)</td></tr>
               <tr><td>Organizar as formações, gerir as inscrições, enviar as datas, a ligação e os lembretes das sessões, registar as presenças e adaptar os conteúdos ao nível dos formandos</td><td>Execução do contrato com a entidade cliente, artigo 6.º, n.º 1, alínea b), e interesse legítimo na adequação da formação, artigo 6.º, n.º 1, alínea f)</td></tr>
-              <tr><td>Registar pré-inscrições, confirmar a receção e enviar o convite para a inscrição quando houver datas</td><td>Diligências pré-contratuais a pedido do titular, artigo 6.º, n.º 1, alínea b)</td></tr>
+              <tr><td>Enviar o diagnóstico, registar a inscrição no curso e indicar a turma quando houver datas</td><td>Diligências pré-contratuais a pedido do titular e execução do contrato, artigo 6.º, n.º 1, alínea b)</td></tr>
               <tr><td>Gestão da relação contratual com clientes</td><td>Execução de contrato, artigo 6.º, n.º 1, alínea b)</td></tr>
               <tr><td>Cumprimento de obrigações legais, como as fiscais e contabilísticas</td><td>Obrigação jurídica, artigo 6.º, n.º 1, alínea c)</td></tr>
               <tr><td>Funcionamento e segurança do site e prevenção de abusos do formulário</td><td>Interesse legítimo, artigo 6.º, n.º 1, alínea f)</td></tr>
@@ -1795,7 +1795,7 @@ pagina({
         <p>Os dados podem ser tratados por prestadores de serviços de alojamento e de correio eletrónico, que atuam como subcontratantes. As sessões de formação online decorrem no Google Meet: ao participar, os dados de ligação e de imagem e som são tratados pela Google, de acordo com as condições desse serviço. Quando algum destes prestadores trate dados fora do Espaço Económico Europeu, a transferência baseia-se nas garantias previstas no RGPD, como decisões de adequação ou cláusulas contratuais-tipo. Os dados não são vendidos nem cedidos para fins de marketing de terceiros.</p>
 
         <h2>8. Conservação</h2>
-        <p>Os pedidos de contacto que não deem origem a uma relação contratual são conservados até 12 meses após o último contacto. Os registos de pedidos e de acessos ao catálogo guardados no site são apagados automaticamente 12 meses após o pedido. Os dados das inscrições em formações, incluindo as respostas ao diagnóstico e as presenças, são apagados automaticamente 2 anos após a data da formação; a conta de acesso do formando é apagada quando deixa de ter inscrições. As pré-inscrições são apagadas automaticamente 12 meses após o registo, ou antes, a pedido do titular. Os diagnósticos enviados por email são apagados automaticamente 2 anos após o envio. As contas de acesso à área reservada são mantidas enquanto durar a relação com o cliente. Os dados de clientes são conservados durante a relação contratual e, depois dela, pelos prazos exigidos por lei.</p>
+        <p>Os pedidos de contacto que não deem origem a uma relação contratual são conservados até 12 meses após o último contacto. Os registos de pedidos e de acessos ao catálogo guardados no site são apagados automaticamente 12 meses após o pedido. Os dados das inscrições em formações, incluindo as respostas ao diagnóstico e as presenças, são apagados automaticamente 2 anos após a data da formação; a conta de acesso do formando é apagada quando deixa de ter inscrições. As inscrições num curso ainda sem turma são apagadas automaticamente 2 anos após o registo, e os formandos sem inscrições nem diagnósticos 2 anos depois de registados. Os diagnósticos enviados por email são apagados automaticamente 2 anos após o envio. As contas de acesso à área reservada são mantidas enquanto durar a relação com o cliente. Os dados de clientes são conservados durante a relação contratual e, depois dela, pelos prazos exigidos por lei.</p>
 
         <h2>9. Os seus direitos</h2>
         <p>Pode pedir o acesso, a retificação, o apagamento, a limitação do tratamento, a portabilidade dos seus dados e opor-se ao tratamento baseado em interesse legítimo, através de <a href="mailto:${EMAIL}">${EMAIL}</a>. Tem também o direito de apresentar reclamação à Comissão Nacional de Proteção de Dados (CNPD), em <a href="https://www.cnpd.pt" rel="noopener">www.cnpd.pt</a>.</p>
