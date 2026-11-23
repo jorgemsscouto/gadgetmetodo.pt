@@ -3319,5 +3319,7 @@
  "Retirar este material?": "Remove this material?",
  "Retirar este material e apagar o ficheiro?": "Remove this material and delete the file?",
  "Material carregado: {x}.": "Material uploaded: {x}.",
- "Material acrescentado.": "Material added."
+ "Material acrescentado.": "Material added.",
+ "Não se aplica (nunca usou IA)": "Not applicable (has never used AI)",
+ "Como nunca usou ferramentas de IA, as perguntas sobre a forma como as usa não se aplicam e passa diretamente à pergunta seguinte.": "As you have never used AI tools, the questions about how you use them do not apply and you can go straight to the next question."
 }

@@ -2470,6 +2470,12 @@ body:not(.area) main .formulario,
   }
 }
 
+/* Diagnóstico: perguntas escondidas a quem nunca usou IA */
+.diag-pergunta[hidden],
+.diag-pergunta [data-nunca-usou][hidden] {
+  display: none;
+}
+
 /* Diagnóstico: início das perguntas de conhecimento */
 .diag-secao {
   margin: 8px 0 0;

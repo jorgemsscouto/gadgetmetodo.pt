@@ -18,39 +18,55 @@ const DIAGNOSTICO_V2 = [
     'utilizacao' => [
         'texto' => 'Qual é a tarefa mais exigente para que já usou a IA?',
         'opcoes' => ['Nenhuma', 'Perguntas e pesquisas simples', 'Escrever, resumir ou traduzir textos e documentos', 'Analisar dados, preparar apresentações ou automatizar tarefas'],
+        'so_quem_usa' => true,
     ],
     'instrucoes' => [
         'texto' => 'Quando faz um pedido à IA, como o prepara?',
         'opcoes' => ['Escrevo uma pergunta curta', 'Explico o contexto e o resultado que pretendo', 'Indico também o formato e dou exemplos ou documentos de referência', 'Uso instruções que já testei e reutilizo'],
+        'so_quem_usa' => true,
     ],
     'verificacao' => [
         'texto' => 'O que faz com as respostas da IA antes de as usar?',
         'opcoes' => ['Uso-as como estão', 'Leio-as e corrijo o que me parece errado', 'Confirmo os factos, os números e as fontes importantes', 'Confirmo sempre e peço à IA que justifique ou indique as fontes'],
         'responsavel' => true,
+        'so_quem_usa' => true,
     ],
     'dados' => [
         'texto' => 'Antes de colocar informação numa ferramenta de IA, verifica se tem dados pessoais ou confidenciais?',
         'opcoes' => ['Nunca pensei nisso', 'Às vezes', 'Quase sempre', 'Sempre'],
         'responsavel' => true,
+        'so_quem_usa' => true,
     ],
     'regras' => [
         'texto' => 'Conhece as regras para o uso de IA no seu trabalho (da organização, dos clientes ou da sua atividade)?',
         'opcoes' => ['Não existem ou não sei', 'Existem, mas não as conheço bem', 'Conheço-as em termos gerais', 'Conheço-as e aplico-as'],
         'responsavel' => true,
+        'so_quem_usa' => true,
     ],
     'reutilizacao' => [
         'texto' => 'Já criou instruções, modelos de pedidos ou assistentes que reutiliza (por exemplo, projetos ou GPT personalizados)?',
         'opcoes' => ['Não', 'Experimentei', 'Uso alguns no meu trabalho', 'Criei alguns para a equipa e mantenho-os'],
+        'so_quem_usa' => true,
     ],
     'processos' => [
         'texto' => 'A IA já faz parte de processos de trabalho, seus ou da equipa (por exemplo, ligada ao email, a documentos ou a folhas de cálculo)?',
         'opcoes' => ['Não', 'Em testes pontuais', 'Em alguns processos', 'De forma sistemática, com tarefas automatizadas'],
+        'so_quem_usa' => true,
     ],
     'papel' => [
         'texto' => 'Que papel tem, ou vai ter, na adoção de IA no seu trabalho ou na sua organização?',
         'opcoes' => ['Usar a IA nas minhas tarefas', 'Ajudar colegas a usá-la', 'Melhorar processos da equipa ou da área', 'Decidir ou liderar a adoção na organização'],
     ],
 ];
+
+// Quem responde "Nunca usei" na primeira pergunta não responde às perguntas de prática marcadas com "so_quem_usa"
+// (2 a 8): ficam por responder e contam 0 pontos. A do papel na adoção e as de conhecimento são para todos.
+const DIAGNOSTICO_NAO_SE_APLICA = 'Não se aplica (nunca usou IA)';
+
+function nunca_usou(array $r): bool
+{
+    return !diagnostico_v1($r) && isset($r['frequencia']) && (int) $r['frequencia'] === 0;
+}
 
 // Pedido feito em todos os sítios onde se responde ao diagnóstico (email, página de resposta e formulários de inscrição)
 const DIAGNOSTICO_SEM_IA = 'Responda sem recorrer a ferramentas de IA nem a pesquisas: o objetivo é conhecer o seu ponto de partida, não acertar em todas as perguntas.';
@@ -228,6 +244,9 @@ function respostas_diagnostico(bool $nivel = false): ?array
 {
     $respostas = [];
     foreach (perguntas_diagnostico() as $id => $p) {
+        if (!empty($p['so_quem_usa']) && nunca_usou($respostas)) {
+            continue;
+        }
         $v = $_POST['diag'][$id] ?? null;
         if (!is_string($v) || !ctype_digit($v) || (int) $v > 3) {
             return null;
@@ -370,7 +389,7 @@ function curso_indicado(array $respostas, ?array $curso): ?array
 {
     $lista = cursos_do_percurso($curso);
     $chaves = diagnostico_v1($respostas) ? ['praticas', 'automacao', 'papel'] : ['reutilizacao', 'processos', 'papel'];
-    if (!$lista || array_diff($chaves, array_keys($respostas))) {
+    if (!$lista || (array_diff($chaves, array_keys($respostas)) && !nunca_usou($respostas))) {
         return null;
     }
     [$nivel, $motivo] = colocacao($respostas);
@@ -421,12 +440,13 @@ function campos_diagnostico(array $anteriores = [], bool $nivel = false): string
         if ($id === 'k_funcionamento') {
             $html .= '<p class="diag-secao"><strong>Conhecimentos.</strong> Nas perguntas seguintes, escolha a resposta que lhe parece mais correta.</p>';
         }
-        $html .= '<fieldset class="campo-grupo diag-pergunta"><legend>' . $n . '. ' . h($p['texto']) . ' *</legend><div class="opcoes opcoes-grelha">';
+        $so = !empty($p['so_quem_usa']);
+        $html .= '<fieldset class="campo-grupo diag-pergunta"' . ($so ? ' data-so-quem-usa' : '') . ($id === 'frequencia' ? ' data-frequencia-ia' : '') . '><legend>' . $n . '. ' . h($p['texto']) . ' *</legend><div class="opcoes opcoes-grelha">';
         foreach ($p['opcoes'] as $valor => $rotulo) {
             $marcado = isset($anteriores[$id]) && (int) $anteriores[$id] === $valor ? ' checked' : '';
             $html .= '<label class="opcao"><input type="radio" name="diag[' . h($id) . ']" value="' . $valor . '" required' . $marcado . '> ' . h($rotulo) . '</label>';
         }
-        $html .= '</div></fieldset>';
+        $html .= '</div>' . ($id === 'frequencia' ? '<p class="ajuda" data-nunca-usou hidden>Como nunca usou ferramentas de IA, as perguntas sobre a forma como as usa não se aplicam e passa diretamente à pergunta seguinte.</p>' : '') . '</fieldset>';
     }
     return $html;
 }
@@ -442,7 +462,8 @@ function tabela_diagnostico(array $inscricao): string
     foreach (perguntas_das_respostas($r) as $id => $p) {
         $v = $r[$id] ?? null;
         $pts = $v !== null && isset($p['pontos']) ? ' <span class="texto-suave">(' . pontos_resposta($p, (int) $v) . ' de 3 pontos)</span>' : '';
-        $html .= '<tr><th scope="row">' . h($p['texto']) . '</th><td>' . ($v === null ? '' : h($p['opcoes'][$v]) . $pts) . '</td></tr>';
+        $vazio = !empty($p['so_quem_usa']) && nunca_usou($r) ? '<span class="texto-suave">' . h(DIAGNOSTICO_NAO_SE_APLICA) . '</span>' : '';
+        $html .= '<tr><th scope="row">' . h($p['texto']) . '</th><td>' . ($v === null ? $vazio : h($p['opcoes'][$v]) . $pts) . '</td></tr>';
     }
     return $html . '</tbody></table>';
 }

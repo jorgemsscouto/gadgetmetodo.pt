@@ -101,3 +101,26 @@
     });
   });
 })();
+
+// Diagnóstico de IA: com "Nunca usei" na primeira pergunta, as perguntas sobre a forma como usa a IA (data-so-quem-usa)
+// ficam escondidas e deixam de ser obrigatórias. Sem JavaScript aparecem todas; o servidor ignora-as nesse caso.
+(function () {
+  document.querySelectorAll("[data-frequencia-ia]").forEach(function (primeira) {
+    var form = primeira.closest("form");
+    if (!form) return;
+    var aviso = primeira.querySelector("[data-nunca-usou]");
+    function aplicar() {
+      var marcado = primeira.querySelector("input:checked");
+      var nunca = !!marcado && marcado.value === "0";
+      if (aviso) aviso.hidden = !nunca;
+      form.querySelectorAll("[data-so-quem-usa]").forEach(function (bloco) {
+        bloco.hidden = nunca;
+        bloco.querySelectorAll("input").forEach(function (campo) {
+          campo.disabled = nunca;
+        });
+      });
+    }
+    primeira.addEventListener("change", aplicar);
+    aplicar();
+  });
+})();
