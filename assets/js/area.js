@@ -169,7 +169,15 @@ function gmT(pt, en) { return gmEN ? en : pt; }
     var original = linhas.slice();
     var valor = function (linha, i) {
       var c = linha.cells[i];
-      return c ? (c.hasAttribute('data-valor') ? c.getAttribute('data-valor') : c.textContent) : '';
+      if (!c) {
+        return '';
+      }
+      if (c.hasAttribute('data-valor')) {
+        return c.getAttribute('data-valor');
+      }
+      // Datas portuguesas (19/11/2026, 19/11/2026 10:30) ordenam-se pela data, sem data-valor
+      var d = c.textContent.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})(?:[ ,]+(\d{2}):(\d{2}))?/);
+      return d ? d[3] + '-' + d[2] + '-' + d[1] + ' ' + (d[4] || '00') + ':' + (d[5] || '00') + c.textContent : c.textContent;
     };
     var texto = function (linha, i) {
       return linha.cells[i] ? semAcentos(linha.cells[i].textContent) : '';

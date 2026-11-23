@@ -1636,10 +1636,18 @@ h2.calendario-mes {
     padding: 20px 32px 0;
   }
 
+  /* O conteúdo ocupa toda a largura disponível (as listas crescem com o ecrã); os parágrafos de texto ficam numa
+     largura confortável de leitura */
   .area .area-conteudo .contentor {
-    max-width: 1180px;
+    max-width: none;
     margin-inline: 0;
     padding-inline: 32px;
+  }
+
+  .area .area-conteudo .contentor > p,
+  .area .area-conteudo .contentor > .lead,
+  .area .area-conteudo .contentor > .ajuda {
+    max-width: 120ch;
   }
 
   .area-app ~ .area-rodape {

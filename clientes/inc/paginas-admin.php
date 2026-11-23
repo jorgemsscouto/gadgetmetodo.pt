@@ -24,7 +24,7 @@ function admin_painel(): void
       <h2 class="espaco-topo">Próximas formações</h2>
       ' . calendario($proximas, function ($f) { return '<a href="' . h(url('formacao', ['id' => $f['id']])) . '">Gerir</a>'; }) . '
       <h2 class="espaco-topo">Últimas inscrições</h2>
-      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Data</th><th>Formando</th><th>Cliente</th><th>Formação</th><th>Nível de IA</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições.</p>'), 'Gadgetmetodo');
+      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="ultimas-inscricoes"><thead><tr><th>Data</th><th>Formando</th><th data-filtro="lista">Cliente</th><th data-filtro="lista">Formação</th><th data-filtro="lista">Nível de IA</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições.</p>'), 'Gadgetmetodo');
 }
 
 // Assinala as inscrições feitas no site e as que ainda não têm cliente associado
@@ -234,7 +234,7 @@ function admin_formacao(): void
             . '<h2 class="espaco-topo">Inscritos (' . inscritos($id) . ' de ' . (int) $v['vagas'] . ')</h2>'
             . '<p><a class="botao" href="' . h(url('inscrever', ['formacao' => $id])) . '">Inscrever formando</a>'
             . ($linhas ? ' <a class="botao botao-secundario" href="' . h(url('inscricoes', ['formacao' => $id, 'exportar' => 1])) . '">Exportar inscritos para Excel</a>' : '') . '</p>'
-            . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Formando</th><th>Função</th><th>Cliente</th><th>Nível de IA</th><th>Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições nesta formação.</p>');
+            . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="inscritos-turma"><thead><tr><th>Formando</th><th>Função</th><th data-filtro="lista">Cliente</th><th data-filtro="lista">Nível de IA</th><th data-filtro="lista">Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições nesta formação.</p>');
         $inscritos .= $linhas ? lembretes_edicao(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]), $confirmadas) : '';
         $inscritos .= $confirmadas ? presencas_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id])) : '';
         $inscritos .= $confirmadas ? certificados_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id])) : '';
@@ -636,7 +636,7 @@ function admin_cursos(): void
     pagina_area('cursos', 'Cursos', ($versao !== '' && catalogo_pendente() ? '<div class="aviso aviso-info">Há um catálogo de cursos novo por carregar ("' . h((string) (catalogo()['comum']['percurso'] ?? $versao)) . '"). Não foi carregado automaticamente porque já existem inscrições. Use "Repor o catálogo", no fim desta página, quando quiser substituir a agenda e os cursos.</div>' : '') . '
       <p class="texto-suave">Cada curso tem tipologia, descrição, destinatários, objetivo, pré-requisitos, resultado esperado, avaliação, requisitos e módulos (ou sessões) com os temas e o caso prático. As sessões do calendário são de um curso completo ou de um módulo. O diagnóstico de utilização de IA pode ser ativado em cada curso. Cada curso tem uma ficha para exportar em PDF.</p>
       <div class="acoes" style="margin-top:0"><a class="botao" href="' . h(url('curso')) . '">Novo curso</a></div>
-      ' . ($linhas ? '<div class="conteudo tabela-rolante espaco-topo-curto"><table><thead><tr><th>Curso</th><th>Tipologia</th><th>Módulos ou sessões</th><th>Sessões agendadas</th><th>Diagnóstico de IA</th><th>Estado</th><th>Ficha</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há cursos.</p>') . '
+      ' . ($linhas ? '<div class="conteudo tabela-rolante espaco-topo-curto"><table data-filtros="cursos"><thead><tr><th>Curso</th><th data-filtro="lista">Tipologia</th><th>Módulos ou sessões</th><th>Sessões agendadas</th><th data-filtro="lista">Diagnóstico de IA</th><th data-filtro="lista">Estado</th><th data-sem-filtro>Ficha</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há cursos.</p>') . '
       <div class="zona-perigo espaco-topo">
         <h2 class="mt-0">Repor o catálogo</h2>
         <p>Apaga <strong>todas</strong> as sessões do calendário, as respetivas inscrições e todos os cursos, e carrega o catálogo do ficheiro de dados (' . h((string) (catalogo()['comum']['percurso'] ?? 'catálogo')) . ', ' . count(catalogo()['cursos'] ?? []) . ' cursos). Os clientes, os utilizadores e os pedidos do site não são afetados. Esta ação não pode ser desfeita: exporte antes as inscrições para Excel, se precisar delas.</p>
@@ -1070,7 +1070,7 @@ function admin_pedidos(): void
     pagina_area('pedidos', 'Pedidos do site', '
       <p class="texto-suave">Pedidos de orçamento e de informações recebidos pelo formulário do site e aberturas do catálogo enviado na confirmação. Registos dos últimos 12 meses.</p>
       <p><a class="botao botao-secundario" href="' . h(url('pedidos', ['exportar' => 1])) . '">Exportar para Excel</a></p>
-      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Pedido</th><th>Nome e empresa</th><th>Contactos</th><th>Serviços</th><th>Catálogo</th><th><span class="visualmente-oculto">Ações</span></th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há pedidos registados.</p>'), 'Formulário do site');
+      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="pedidos"><thead><tr><th>Pedido</th><th>Nome e empresa</th><th>Contactos</th><th>Serviços</th><th>Catálogo</th><th data-sem-filtro><span class="visualmente-oculto">Ações</span></th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há pedidos registados.</p>'), 'Formulário do site');
 }
 
 /* Partilha de ligações e convites a candidatos */

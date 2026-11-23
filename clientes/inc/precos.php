@@ -501,7 +501,7 @@ function admin_precos(): void
     $legado = consulta('SELECT * FROM precos WHERE legado = 1 ORDER BY ordem, id');
     $html_legado = $legado ? '<details class="programa espaco-topo"><summary>Tabela anterior (' . count($legado) . ' linhas, só para consulta)</summary><div class="programa-corpo">
         <p class="texto-suave">Linhas da primeira versão da tabela de preços, antes da tabela por modalidades. Não entram no PDF.</p>
-        <div class="tabela-rolante"><table><thead><tr><th scope="col">Categoria</th><th scope="col">Designação</th><th scope="col">Unidade</th><th scope="col">Preço sem IVA</th></tr></thead><tbody>'
+        <div class="tabela-rolante"><table data-filtros="precos"><thead><tr><th scope="col" data-filtro="lista">Categoria</th><th scope="col">Designação</th><th scope="col" data-filtro="lista">Unidade</th><th scope="col">Preço sem IVA</th></tr></thead><tbody>'
         . implode('', array_map(function ($p) {
             return '<tr><td>' . h((string) $p['categoria']) . '</td><td>' . h((string) $p['designacao']) . ($p['descricao'] ? '<br><span class="texto-suave">' . h((string) $p['descricao']) . '</span>' : '') . '</td><td>' . h((string) $p['unidade']) . '</td><td>' . ($p['valor'] === null ? 'Sob consulta' : h(euros((int) $p['valor']))) . '</td></tr>';
         }, $legado)) . '</tbody></table></div>

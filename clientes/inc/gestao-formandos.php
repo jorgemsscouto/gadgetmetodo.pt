@@ -774,7 +774,7 @@ function pagina_ficha_formando(array $f, array $erros_ficha): void
             . '<td>' . h((string) $d['nivel']) . '</td><td>' . h(['email' => 'Email', 'publico' => 'Site', 'pre-inscricao' => 'Pré-registo antigo'][$d['origem'] ?? 'email'] ?? '') . '</td></tr>';
     }
     $diag = '<h2 class="espaco-topo" id="diagnosticos">Diagnósticos</h2>'
-        . ($ld ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Curso</th><th>Enviado</th><th>Estado</th><th>Nível</th><th>Origem</th></tr></thead><tbody>' . $ld . '</tbody></table></div>' : '<p class="texto-suave">Ainda não foi enviado nenhum diagnóstico.</p>')
+        . ($ld ? '<div class="conteudo tabela-rolante"><table data-filtros="diagnosticos-formando"><thead><tr><th data-filtro="lista">Curso</th><th>Enviado</th><th data-filtro="lista">Estado</th><th data-filtro="lista">Nível</th><th data-filtro="lista">Origem</th></tr></thead><tbody>' . $ld . '</tbody></table></div>' : '<p class="texto-suave">Ainda não foi enviado nenhum diagnóstico.</p>')
         . ((string) $f['email'] !== '' ? $form('enviar_diagnostico', '<div class="campos-2">' . campo_select('curso_id', 'Curso', $cursos, '', 'Escolha o curso') . '</div>'
             . '<p class="ajuda">O formando recebe por email a ligação pessoal (válida 30 dias); quando responder, fica inscrito neste curso e recebe o email da inscrição. Um diagnóstico ainda por responder é reaproveitado, com uma ligação nova.</p>'
             . '<div><button class="botao botao-secundario" type="submit">Enviar o diagnóstico</button></div>', 0, 'formulario espaco-topo-curto') : '');
@@ -916,7 +916,7 @@ function materiais_html(?int $curso_id, ?int $formacao_id): string
     }
     return '<h2 class="espaco-topo" id="materiais">Materiais ' . ($formacao_id ? 'desta turma' : 'do curso') . '</h2>
       <p class="texto-suave">' . ($formacao_id ? 'Só para os formandos desta turma; os materiais do curso aparecem também.' : 'Para todos os formandos do curso, em qualquer turma.') . ' Os formandos abrem-nos na área do formando ou no email "Materiais do curso"; o envio e cada acesso ficam registados na ficha do formando (etapa Manual e áudio).</p>
-      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Material</th><th>Tipo</th><th>Origem</th><th><span class="visualmente-oculto">Ações</span></th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '') . '
+      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="materiais"><thead><tr><th>Material</th><th data-filtro="lista">Tipo</th><th data-filtro="lista">Origem</th><th data-sem-filtro><span class="visualmente-oculto">Ações</span></th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '') . '
       <h3 class="espaco-topo-curto">Carregar um ficheiro</h3>
       <form method="post" enctype="multipart/form-data" class="formulario" data-carregar-material>' . campo_csrf() . '<input type="hidden" name="acao" value="material_ficheiro">
         <div class="campos-2">' . campo('material_titulo', 'Título', '', 'text', 'maxlength="160" placeholder="Por omissão, o nome do ficheiro"', 'material_titulo_f')

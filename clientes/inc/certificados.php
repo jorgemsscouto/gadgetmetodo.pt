@@ -726,7 +726,7 @@ function certificados_edicao_html(array $f): string
         . ($faltam ? ' ' . $faltam . ' formando(s) sem a ficha completa: use "Pedir os dados por email".' : '')
         . ($terminada ? '' : ' A edição ainda não terminou: confirme as presenças antes de emitir.') . ' Voltar a emitir um certificado mantém o número e atualiza os dados.</p>
       <form method="post">' . campo_csrf() . '
-        <div class="conteudo tabela-rolante"><table class="tabela-presencas"><thead><tr><th class="c-sessao" scope="col"><span class="visualmente-oculto">Escolher</span></th><th scope="col">Formando</th><th scope="col">Dados para o certificado</th><th scope="col">Presenças</th><th scope="col">Certificado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
+        <div class="conteudo tabela-rolante"><table class="tabela-presencas" data-filtros="certificados-turma"><thead><tr><th class="c-sessao" scope="col" data-sem-filtro><span class="visualmente-oculto">Escolher</span></th><th scope="col">Formando</th><th scope="col">Dados para o certificado</th><th scope="col">Presenças</th><th scope="col">Certificado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
         <div class="espaco-topo acoes">
           <button class="botao botao-secundario" type="submit" name="acao" value="cert_pedir">Pedir os dados por email</button>
           <button class="botao botao-secundario" type="submit" name="acao" value="cert_emitir">Emitir (sem enviar)</button>

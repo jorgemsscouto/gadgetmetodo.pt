@@ -51,7 +51,7 @@ function cliente_painel(): void
       <div class="acoes" style="margin-top:0"><a class="botao" href="' . h(url('calendario')) . '">Ver formações e inscrever</a><a class="botao botao-secundario" href="' . h(url('inscricoes')) . '">As nossas inscrições</a></div>
       ' . (($novas = formacoes_novas()) ? '<h2 class="espaco-topo">Novas formações</h2><p class="texto-suave">Edições agendadas nos últimos ' . DIAS_NOVA . ' dias.</p>' . calendario($novas, 'botao_inscrever') : '') . '
       <h2 class="espaco-topo">Próximas formações com formandos inscritos</h2>
-      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table><thead><tr><th>Formando</th><th>Formação</th><th>Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há formandos inscritos em formações futuras.</p>'), $u['cliente_nome']);
+      ' . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="cliente-proximas"><thead><tr><th>Formando</th><th>Formação</th><th data-filtro="lista">Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há formandos inscritos em formações futuras.</p>'), $u['cliente_nome']);
 }
 
 function cliente_formacoes(): void
@@ -79,7 +79,7 @@ function cliente_inscricoes(): void
     }
     pagina_area('inscricoes', 'Inscrições', '
       <p class="texto-suave">Formandos da ' . h($u['cliente_nome']) . ' inscritos nas formações. A Gadgetmetodo confirma cada inscrição por email.</p>
-      ' . ($linhas ? '<p><a class="botao botao-secundario" href="' . h(url('inscricoes', ['exportar' => 1])) . '">Exportar para Excel</a></p><div class="conteudo tabela-rolante"><table><thead><tr><th>Formando</th><th>Formação</th><th>Nível de IA</th><th>Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições. <a href="' . h(url('calendario')) . '">Ver formações</a>.</p>'), utilizador()['cliente_nome']);
+      ' . ($linhas ? '<p><a class="botao botao-secundario" href="' . h(url('inscricoes', ['exportar' => 1])) . '">Exportar para Excel</a></p><div class="conteudo tabela-rolante"><table data-filtros="cliente-inscricoes"><thead><tr><th>Formando</th><th>Formação</th><th data-filtro="lista">Nível de IA</th><th data-filtro="lista">Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições. <a href="' . h(url('calendario')) . '">Ver formações</a>.</p>'), utilizador()['cliente_nome']);
 }
 
 /* Inscrição de um formando, com diagnóstico (cliente e Gadgetmetodo) */

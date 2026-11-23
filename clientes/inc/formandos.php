@@ -372,7 +372,7 @@ function formando_painel(): void
         $blocos .= '<section class="bloco-formando" id="inscricao-' . (int) $i['id'] . '">
           <h2>' . h($i['titulo']) . '</h2>
           <p class="texto-suave">' . h(horario($i)) . ' · ' . h(modalidade_e_local($i)) . ' · Presenças: ' . count($presencas) . ' de ' . count($sessoes) . '</p>
-          <div class="conteudo tabela-rolante"><table class="tabela-presencas"><thead><tr><th>Sessão</th><th>Data</th><th>Presença</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
+          <div class="conteudo tabela-rolante"><table class="tabela-presencas" data-filtros="sessoes-formando"><thead><tr><th>Sessão</th><th>Data</th><th data-filtro="lista">Presença</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
           ' . $lista_mat . '
         </section>';
     }
