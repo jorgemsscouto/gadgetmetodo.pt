@@ -346,6 +346,10 @@ function gmT(pt, en) { return gmEN ? en : pt; }
     var envolvente = tabela.closest('.tabela-rolante') || tabela;
     envolvente.parentNode.insertBefore(barra, envolvente);
 
+    // Colunas das caixas de escolha (cabeçalho data-sem-filtro com caixas nas linhas)
+    var colunasEscolha = cabecalhos.map(function (th, i) { return th.hasAttribute('data-sem-filtro') ? i : -1; })
+      .filter(function (i) { return i >= 0 && linhas.some(function (l) { return l.cells[i] && l.cells[i].querySelector('input[type=checkbox]'); }); });
+
     function aplicar() {
       var ativos = 0;
       var visiveis = 0;
@@ -360,9 +364,18 @@ function gmT(pt, en) { return gmEN ? en : pt; }
         });
         linha.hidden = !mostra;
         visiveis += mostra ? 1 : 0;
+        // Caixas de escolha das linhas escondidas: ficam como estão, mas não são enviadas (as ações do formulário
+        // aplicam-se só às linhas visíveis); voltam a contar quando o filtro as mostra de novo
+        colunasEscolha.forEach(function (i) {
+          if (linha.cells[i]) {
+            linha.cells[i].querySelectorAll('input[type=checkbox]').forEach(function (caixa) { caixa.disabled = !mostra; });
+          }
+        });
       });
       campos.forEach(function (c) { ativos += c && c.value !== '' ? 1 : 0; });
-      contador.textContent = ativos ? visiveis + gmT(' de ', ' of ') + linhas.length + gmT(' registos', ' records') : linhas.length + gmT(' registos', ' records');
+      contador.textContent = ativos ? visiveis + gmT(' de ', ' of ') + linhas.length + gmT(' registos', ' records')
+        + (colunasEscolha.length ? gmT(' (as ações aplicam-se só aos visíveis)', ' (actions apply to the visible ones only)') : '')
+        : linhas.length + gmT(' registos', ' records');
       limpar.hidden = !ativos;
     }
 
