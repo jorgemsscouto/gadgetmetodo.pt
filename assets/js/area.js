@@ -377,6 +377,7 @@ function gmT(pt, en) { return gmEN ? en : pt; }
         + (colunasEscolha.length ? gmT(' (as ações aplicam-se só aos visíveis)', ' (actions apply to the visible ones only)') : '')
         : linhas.length + gmT(' registos', ' records');
       limpar.hidden = !ativos;
+      sincronizarEscolha();
     }
 
     // Ordenação: clicar no cabeçalho ordena por essa coluna; de novo, inverte; à terceira, volta à ordem inicial
@@ -411,16 +412,43 @@ function gmT(pt, en) { return gmEN ? en : pt; }
         linhas.forEach(function (l) { corpo.appendChild(l); });
       });
     });
-    // "Escolher todos": marca ou desmarca as caixas das linhas visíveis (as escondidas pelos filtros ficam como estão)
-    var todos = tabela.querySelector('thead input.marcar-todos');
-    if (todos) {
+    // "Escolher todos" no cabeçalho de cada coluna de caixas de escolha (criado aqui quando a página não o traz):
+    // marca ou desmarca as caixas das linhas visíveis (as escondidas pelos filtros ficam como estão) e mostra o estado
+    // da seleção visível (todas, algumas ou nenhuma)
+    var mestres = colunasEscolha.map(function (i) {
+      var th = cabecalhos[i];
+      var todos = th.querySelector('input.marcar-todos');
+      if (!todos) {
+        todos = document.createElement('input');
+        todos.type = 'checkbox';
+        todos.className = 'marcar-todos';
+        todos.setAttribute('aria-label', gmT('Escolher todos os visíveis', 'Select all visible'));
+        todos.title = gmT('Escolher todos os visíveis', 'Select all visible');
+        th.insertBefore(todos, th.firstChild);
+      }
+      var caixasDe = function (l) { return l.cells[i] ? Array.prototype.slice.call(l.cells[i].querySelectorAll('input[type=checkbox]')) : []; };
       todos.addEventListener('change', function () {
         linhas.forEach(function (l) {
-          var caixa = l.querySelector('input[type=checkbox]');
-          if (caixa && !l.hidden) {
-            caixa.checked = todos.checked;
+          if (!l.hidden) {
+            caixasDe(l).forEach(function (caixa) { caixa.checked = todos.checked; });
           }
         });
+        sincronizarEscolha();
+      });
+      linhas.forEach(function (l) {
+        caixasDe(l).forEach(function (caixa) { caixa.addEventListener('change', sincronizarEscolha); });
+      });
+      return { caixa: todos, caixasDe: caixasDe };
+    });
+
+    function sincronizarEscolha() {
+      (mestres || []).forEach(function (m) {
+        var visiveis = [];
+        linhas.forEach(function (l) { if (!l.hidden) { visiveis = visiveis.concat(m.caixasDe(l)); } });
+        var marcadas = visiveis.filter(function (c) { return c.checked; }).length;
+        m.caixa.checked = visiveis.length > 0 && marcadas === visiveis.length;
+        m.caixa.indeterminate = marcadas > 0 && marcadas < visiveis.length;
+        m.caixa.disabled = visiveis.length === 0;
       });
     }
     tabela.setAttribute('data-tabela', String(t));
