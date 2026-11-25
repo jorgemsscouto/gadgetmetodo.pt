@@ -2660,4 +2660,68 @@ table[data-filtros] .col-oculta {
 }
 .ficha-formando-topo .factos-area {
   margin-bottom: 12px;
+/* ==========================================================================
+   Barra lateral em vidro (2026-11): painel flutuante translúcido, com
+   desfoque do fundo, contorno claro e cantos arredondados. Mantém a paleta
+   da área (marinho na opção atual, areia e creme no vidro).
+   ========================================================================== */
+.area-lateral {
+  margin: 10px var(--gutter) 0;
+  padding: 12px 16px 8px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.62), rgba(251, 249, 246, 0.36));
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: var(--raio);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), var(--sombra);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+}
+
+.area-nav a:hover,
+.area-nav a:focus-visible {
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 6px 16px rgba(10, 15, 38, 0.08);
+}
+
+@media (min-width: 1024px) {
+  .area-app {
+    grid-template-columns: 276px minmax(0, 1fr);
+  }
+
+  .area-lateral {
+    top: 16px;
+    height: calc(100vh - 32px);
+    margin: 16px 0 16px 16px;
+    padding: 28px 14px;
+    background: linear-gradient(170deg, rgba(255, 255, 255, 0.66) 0%, rgba(251, 249, 246, 0.4) 55%, rgba(220, 228, 234, 0.34) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: var(--raio);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(10, 15, 38, 0.03), var(--sombra-forte);
+  }
+
+  .area-lateral .marca {
+    margin: 0 10px 22px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid rgba(10, 15, 38, 0.07);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  .area-app ~ .area-rodape {
+    margin-left: 276px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .area-lateral {
+    padding-bottom: 2px;
+  }
+
+  .area-nav ul {
+    padding-bottom: 12px;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .area-lateral {
+    background: rgba(251, 249, 246, 0.94);
+  }
 }
