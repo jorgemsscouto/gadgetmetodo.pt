@@ -2614,3 +2614,89 @@ table[data-filtros] .col-oculta {
     background: rgba(251, 249, 246, 0.94);
   }
 }
+
+/* Menu em hambúrguer da área reservada (abaixo de 1024 px; assets/js/area.js).
+   Sem JavaScript, o botão não aparece e o menu fica sempre visível. */
+.area-menu-botao {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
+  padding: 0;
+  color: var(--marinho);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 12px rgba(10, 15, 38, 0.06);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.area-menu-botao .icone-fechar {
+  display: none;
+}
+
+.area-menu-botao[aria-expanded="true"] {
+  color: var(--branco);
+  background: var(--marinho);
+  border-color: var(--marinho);
+}
+
+.area-menu-botao[aria-expanded="true"] .icone-menu {
+  display: none;
+}
+
+.area-menu-botao[aria-expanded="true"] .icone-fechar {
+  display: block;
+}
+
+@media (max-width: 1023px) {
+  .js .area-lateral {
+    flex-wrap: wrap;
+    padding: 10px 12px 10px 16px;
+  }
+
+  .js .area-menu-botao {
+    display: inline-flex;
+  }
+
+  .js .area-nav {
+    display: none;
+  }
+
+  .js .area-nav.aberta {
+    display: block;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(10, 15, 38, 0.07);
+  }
+
+  .js .area-nav ul {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding-bottom: 4px;
+    overflow: visible;
+  }
+
+  .js .area-nav a {
+    gap: 12px;
+    padding: 12px 18px;
+    font-size: 0.95rem;
+    white-space: normal;
+  }
+
+  .js .area-nav .menu-icone {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .area-menu-botao {
+    transition: none;
+  }
+}

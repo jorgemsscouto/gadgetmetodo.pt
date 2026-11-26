@@ -34,7 +34,7 @@ function menu_area(string $atual): string
             . ($icone !== '' ? '<svg class="menu-icone" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $icone . '</svg>' : '')
             . '<span>' . h($nome) . '</span></a></li>';
     }
-    return '<nav class="area-nav" aria-label="Área reservada"><div class="contentor"><ul>' . $html . '</ul></div></nav>';
+    return '<nav id="area-navegacao" class="area-nav" aria-label="Área reservada"><div class="contentor"><ul>' . $html . '</ul></div></nav>';
 }
 
 function submenu_configuracao(string $atual): string
@@ -66,6 +66,7 @@ function documento(string $titulo, string $corpo): void
   <meta name="google-site-verification" content="T-qA5H44j2vhQVk4bXzkT5a7o4SyuFCCZq0zogR4iLs">
   <meta name="robots" content="noindex, nofollow">
   <title>' . h($titulo) . ' | Área reservada | Gadgetmetodo, Lda.</title>
+  <script>document.documentElement.classList.add("js")</script>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="' . h(versao_ficheiro('/assets/css/site.css')) . '">
   <link rel="stylesheet" href="' . h(versao_ficheiro('/assets/css/area.css')) . '">
@@ -98,6 +99,7 @@ function pagina_area(string $atual, string $titulo, string $conteudo, string $so
     documento($titulo, '<div class="area-app">
   <aside class="area-lateral">
     <a class="marca" href="/"><img src="/assets/marca/logotipo.svg" alt="Gadgetmetodo, Lda." width="234" height="42"></a>
+    <button class="area-menu-botao" type="button" aria-expanded="false" aria-controls="area-navegacao"><span class="visualmente-oculto">Menu</span><svg class="icone-menu" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 5h16M4 12h16M4 19h16"/></svg><svg class="icone-fechar" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     ' . menu_area($atual) . '
   </aside>
   <div class="area-principal">
