@@ -66,7 +66,7 @@ function documento(string $titulo, string $corpo): void
   <meta name="google-site-verification" content="T-qA5H44j2vhQVk4bXzkT5a7o4SyuFCCZq0zogR4iLs">
   <meta name="robots" content="noindex, nofollow">
   <title>' . h($titulo) . ' | Área reservada | Gadgetmetodo, Lda.</title>
-  <script>document.documentElement.classList.add("js")</script>
+  <script src="' . h(versao_ficheiro('/assets/js/js-ativo.js')) . '"></script>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="' . h(versao_ficheiro('/assets/css/site.css')) . '">
   <link rel="stylesheet" href="' . h(versao_ficheiro('/assets/css/area.css')) . '">

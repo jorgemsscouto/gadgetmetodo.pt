@@ -92,7 +92,10 @@ function pagina_inscrever(): void
     if (!$f || $f['estado'] === 'cancelada' || (!$admin && ($f['estado'] !== 'aberta' || strtotime($f['inicio']) < strtotime('today')))) {
         pagina_erro('Inscrições indisponíveis', 'Esta formação não existe ou já não aceita inscrições.');
     }
-    $diag = com_diagnostico($f);
+    // A Gadgetmetodo pode inscrever sem diagnóstico (inscrição direta): o formulário deixa de ter as perguntas
+    $tem_diag = com_diagnostico($f);
+    $sem_diag = $admin && $tem_diag && !empty($_GET['sem_diagnostico']);
+    $diag = $tem_diag && !$sem_diag;
     $clientes = $admin ? array_column(consulta('SELECT id, nome FROM clientes ORDER BY nome'), 'nome', 'id') : [];
     $erros = [];
     $v = ['formando' => '', 'email' => '', 'funcao' => '', 'expectativas' => '', 'ferramentas' => [], 'diag' => [], 'cliente_id' => 0];
@@ -138,6 +141,9 @@ function pagina_inscrever(): void
     $restantes = max(0, (int) $f['vagas'] - inscritos((int) $f['id']));
     pagina_area('calendario', 'Inscrever formando', resumo_sessao($f, $restantes, false) . '
       ' . ($erros ? '<div class="aviso aviso-erro">' . h(implode(' ', $erros)) . '</div>' : '') . '
+      ' . ($admin && $tem_diag ? ($sem_diag
+          ? '<div class="aviso aviso-info"><strong>Inscrição sem diagnóstico.</strong> O formando fica inscrito diretamente, sem responder às perguntas. Se for preciso, pode enviar-lhe o diagnóstico mais tarde, no menu Diagnósticos. <a href="' . h(url('inscrever', ['formacao' => $f['id']])) . '">Incluir o diagnóstico</a></div>'
+          : '<p class="texto-suave">Para inscrever diretamente, sem as perguntas do diagnóstico: <a href="' . h(url('inscrever', ['formacao' => $f['id'], 'sem_diagnostico' => 1])) . '">Inscrever sem diagnóstico</a>.</p>') : '') . '
       <form method="post" class="formulario">' . campo_csrf() . '
         <h2 class="mb-0">1. Dados do formando</h2>
         <div class="campos-2">
@@ -146,7 +152,7 @@ function pagina_inscrever(): void
           ' . campo('email', 'Email profissional', $v['email'], 'email', 'maxlength="160" autocomplete="off"') . '
           ' . campo('funcao', 'Função ou departamento', $v['funcao'], 'text', 'maxlength="120"') . '
         </div>
-        ' . bloco_diagnostico_form($f, $v, 2, 'Devem ser respondidas pelo formando ou com base no que ele indicar.') . '
+        ' . ($diag ? bloco_diagnostico_form($f, $v, 2, 'Devem ser respondidas pelo formando ou com base no que ele indicar.') : '') . '
         ' . campo('expectativas', 'O que espera da formação? Há algum caso concreto do seu trabalho que gostaria de ver tratado?', $v['expectativas'], 'textarea', 'maxlength="1500"') . '
         <label class="opcao consentimento"><input type="checkbox" name="consentimento" value="1" required> <span>Confirmo que o formando foi informado de que estes dados são tratados pela Gadgetmetodo, Lda. para organizar a formação e adaptar os conteúdos, nos termos da <a href="/privacidade/" target="_blank" rel="noopener">Política de privacidade</a>. *</span></label>
         <div><button class="botao" type="submit">Enviar inscrição</button></div>
