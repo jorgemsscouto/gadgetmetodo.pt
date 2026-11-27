@@ -535,12 +535,12 @@ function admin_ficha_formando(): void
     pagina_ficha_formando(formando($fid), $erros_ficha);
 }
 
-// Email com os materiais da inscrição (manual, áudio…): ligações da área do formando, que registam o acesso
-function enviar_materiais(array $i): bool
+// Lista dos materiais da inscrição para um email: [html, texto, materiais], com ligações pessoais que registam o acesso
+function lista_materiais_email(array $i): array
 {
     $materiais = materiais_inscricao($i);
-    if (!$materiais || !filter_var((string) $i['email'], FILTER_VALIDATE_EMAIL)) {
-        return false;
+    if (!$materiais) {
+        return ['', '', []];
     }
     $base = endereco_site() . '/clientes/area.php?';
     $html = '<ul style="margin:0 0 14px;padding-left:20px;">';
@@ -550,14 +550,122 @@ function enviar_materiais(array $i): bool
         $html .= '<li><a href="' . h($link) . '" style="color:#00636A;">' . h($m['titulo']) . '</a> <span style="color:#687280;">(' . h(TIPOS_MATERIAL[$m['tipo']] ?? $m['tipo']) . ')</span></li>';
         $texto .= '- ' . $m['titulo'] . ': ' . $link . "\n";
     }
+    return [$html . '</ul>', trim($texto), $materiais];
+}
+
+function registar_materiais_enviados(array $i, array $materiais): void
+{
+    foreach ($materiais as $m) {
+        executar("INSERT INTO materiais_acessos (inscricao_id, material_id, tipo, registado, utilizador_id) VALUES (?, ?, 'enviado', ?, ?)", [$i['id'], $m['id'], agora(), utilizador()['id'] ?? null]);
+    }
+}
+
+// Email com os materiais da inscrição (manual, áudio…): ligações da área do formando, que registam o acesso
+function enviar_materiais(array $i): bool
+{
+    [$html, $texto, $materiais] = lista_materiais_email($i);
+    if (!$materiais || !filter_var((string) $i['email'], FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
     $ok = enviar_mensagem('materiais_formando', (string) $i['email'], ['nome' => nome_curto((string) $i['formando']), 'formando' => $i['formando'], 'curso' => (string) $i['titulo']],
-        [$html . '</ul>', trim($texto)]);
+        [$html, $texto]);
     if ($ok) {
-        foreach ($materiais as $m) {
-            executar("INSERT INTO materiais_acessos (inscricao_id, material_id, tipo, registado, utilizador_id) VALUES (?, ?, 'enviado', ?, ?)", [$i['id'], $m['id'], agora(), utilizador()['id'] ?? null]);
-        }
+        registar_materiais_enviados($i, $materiais);
     }
     return $ok;
+}
+
+/* Comunicação com a turma: aviso escrito à mão (com a ligação da reunião e os materiais, se quiser) e materiais a todos */
+
+// Inscrições que contam na turma (as mesmas que recebem a ligação da reunião e os lembretes)
+function inscricoes_ativas_turma(int $formacao_id): array
+{
+    $lista = [];
+    foreach (consulta("SELECT id FROM inscricoes WHERE formacao_id = ? AND estado IN ('" . implode("', '", ESTADOS_ATIVOS) . "') ORDER BY formando COLLATE NOCASE", [$formacao_id]) as $r) {
+        if ($i = linha_bd(SQL_INSCRICAO, [$r['id']])) {
+            $lista[] = $i;
+        }
+    }
+    return $lista;
+}
+
+// Aviso à turma: a cada formando (ou, sem email do formando, a quem o inscreveu). Devolve [enviados, sem envio].
+function enviar_aviso_turma(array $f, string $mensagem, bool $com_reuniao, bool $com_materiais): array
+{
+    $enviados = 0;
+    $falhas = 0;
+    foreach (inscricoes_ativas_turma((int) $f['id']) as $i) {
+        $contacto = contacto_inscricao($i);
+        $proprio = (bool) filter_var((string) $i['email'], FILTER_VALIDATE_EMAIL);
+        $para = $proprio ? (string) $i['email'] : (string) ($contacto['email'] ?? '');
+        if ($para === '') {
+            $falhas++;
+            continue;
+        }
+        $html = '';
+        $texto = '';
+        if ($com_reuniao) {
+            [$h, $t] = bloco_reuniao($i);
+            $html .= $h;
+            $texto .= $t;
+        }
+        $materiais = [];
+        if ($com_materiais) {
+            [$h, $t, $materiais] = lista_materiais_email($i);
+            if ($materiais) {
+                $html .= '<p style="margin:0 0 6px;"><strong>Materiais do curso:</strong></p>' . $h;
+                $texto .= "\n\nMateriais do curso:\n" . $t;
+            }
+        }
+        $nome = $proprio ? (string) $i['formando'] : (string) ($contacto['nome'] ?? $i['formando']);
+        $ok = enviar_mensagem('aviso_turma', $para, ['nome' => nome_curto($nome), 'formando' => $i['formando'], 'formacao' => $i['titulo'], 'data' => data_hora($i['inicio'], false), 'horario' => horario($i)],
+            [$html, trim($texto)], ['texto' => $mensagem, 'cc' => $proprio ? (string) ($contacto['email'] ?? '') : '']);
+        if ($ok) {
+            $enviados++;
+            if ($materiais) {
+                registar_materiais_enviados($i, $materiais);
+            }
+        } else {
+            $falhas++;
+        }
+    }
+    return [$enviados, $falhas];
+}
+
+// Materiais a todos os formandos da turma com email. Devolve [enviados, sem envio].
+function enviar_materiais_turma(array $f): array
+{
+    $enviados = 0;
+    $falhas = 0;
+    foreach (inscricoes_ativas_turma((int) $f['id']) as $i) {
+        enviar_materiais($i) ? $enviados++ : $falhas++;
+    }
+    return [$enviados, $falhas];
+}
+
+// Bloco "Comunicação com a turma" na página da turma
+function comunicacao_turma_html(array $f): string
+{
+    $n = count(inscricoes_ativas_turma((int) $f['id']));
+    $online = ($f['modalidade'] ?? '') !== 'presencial' && !empty($f['reuniao']);
+    $n_materiais = count(materiais_inscricao(['curso_id' => $f['curso_id'], 'formacao_id' => $f['id']]));
+    if (!$n) {
+        return '<h2 class="espaco-topo" id="comunicacao">Comunicação com a turma</h2><p class="texto-suave">Quando a turma tiver formandos inscritos, pode enviar-lhes daqui avisos, a ligação da reunião e os materiais.</p>';
+    }
+    return '<h2 class="espaco-topo" id="comunicacao">Comunicação com a turma</h2>
+      <p class="texto-suave">Os envios vão para os ' . $n . ' formando(s) inscrito(s) nesta turma; sem email do formando, para quem o inscreveu. Os lembretes de cada sessão estão mais abaixo, em "Lembretes aos formandos".</p>
+      <form method="post" class="formulario">' . campo_csrf() . '<input type="hidden" name="acao" value="aviso_turma">
+        ' . campo('mensagem', 'Aviso à turma *', '', 'textarea', 'required maxlength="4000" rows="5" placeholder="Por exemplo: a sessão de quinta-feira passa para as 15:00. Tragam o computador portátil."') . '
+        ' . ($online ? '<label class="opcao"><input type="checkbox" name="com_reuniao" value="1" checked> <span>Incluir a ligação da reunião online</span></label>' : '') . '
+        ' . ($n_materiais ? '<label class="opcao"><input type="checkbox" name="com_materiais" value="1"> <span>Incluir os ' . $n_materiais . ' material(is) de trabalho do curso e da turma (com ligações pessoais, que registam o acesso)</span></label>' : '') . '
+        <div><button class="botao" type="submit">Enviar o aviso a ' . $n . ' formando(s)</button></div>
+      </form>
+      <div class="acoes espaco-topo-curto">'
+        . ($online ? '<form method="post">' . campo_csrf() . '<input type="hidden" name="acao" value="enviar_reuniao"><button class="botao botao-secundario" type="submit">Enviar só a ligação da reunião</button></form>' : '')
+        . ($n_materiais ? '<form method="post">' . campo_csrf() . '<input type="hidden" name="acao" value="materiais_turma"><button class="botao botao-secundario" type="submit">Enviar só os materiais de trabalho</button></form>' : '')
+      . '</div>'
+      . (!$online && ($f['modalidade'] ?? '') !== 'presencial' ? '<p class="ajuda">Para enviar a ligação da reunião, indique-a primeiro em "Ligação da reunião online", no formulário da turma.</p>' : '')
+      . (!$n_materiais ? '<p class="ajuda">Para enviar materiais de trabalho, carregue-os primeiro em "Materiais", mais abaixo (ou na ficha do curso, para todas as turmas).</p>' : '');
 }
 
 // Material aberto pelo formando (ligação da área do formando ou do email): regista o acesso e abre o material

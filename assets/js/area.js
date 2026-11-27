@@ -98,6 +98,15 @@ function gmT(pt, en) { return gmEN ? en : pt; }
       e.target.dataset.proposta = '';
     }
   });
+  // Ao escolher um formato proposto, aplica-o logo (volta ao formulário com as sessões desse formato, sem gravar)
+  document.addEventListener('change', function (e) {
+    if (e.target.matches && e.target.matches('select[data-formato]') && e.target.value !== 'outro') {
+      var botao = e.target.closest('.sessoes-curso').querySelector('[data-aplicar-formato]');
+      if (botao) {
+        botao.click();
+      }
+    }
+  });
   document.addEventListener('click', function (e) {
     if (e.target.closest && e.target.closest('[data-preencher-sessoes]')) {
       propor(true);

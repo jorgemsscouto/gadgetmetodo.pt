@@ -95,7 +95,22 @@ function admin_formacao(): void
     if ($post && $acao === 'enviar_reuniao' && $f) {
         $n = enviar_reuniao_confirmados($f);
         aviso($n ? 'Ligação da reunião enviada para ' . $n . ' inscrição(ões) confirmada(s).' : 'Não há inscrições confirmadas com email para enviar a ligação.', $n ? 'ok' : 'erro');
-        redirecionar('formacao', ['id' => $id]);
+        redirecionar('formacao', ['id' => $id], 'comunicacao');
+    }
+    if ($post && $acao === 'aviso_turma' && $f) {
+        $mensagem = texto('mensagem', 4000, true);
+        if ($mensagem === '') {
+            aviso('Escreva o aviso a enviar à turma.', 'erro');
+        } else {
+            [$n, $falhas] = enviar_aviso_turma($f, $mensagem, !empty($_POST['com_reuniao']), !empty($_POST['com_materiais']));
+            aviso($n ? 'Aviso enviado a ' . $n . ' formando(s).' . ($falhas ? ' ' . $falhas . ' sem envio: sem email ou com falha no envio.' : '') : 'O aviso não foi enviado: não há formandos com email, ou o envio de emails falhou.', $n ? ($falhas ? 'info' : 'ok') : 'erro');
+        }
+        redirecionar('formacao', ['id' => $id], 'comunicacao');
+    }
+    if ($post && $acao === 'materiais_turma' && $f) {
+        [$n, $falhas] = enviar_materiais_turma($f);
+        aviso($n ? 'Materiais enviados a ' . $n . ' formando(s).' . ($falhas ? ' ' . $falhas . ' sem envio: sem email ou com falha no envio.' : '') : 'Os materiais não foram enviados: não há formandos com email, ou o envio de emails falhou.', $n ? ($falhas ? 'info' : 'ok') : 'erro');
+        redirecionar('formacao', ['id' => $id], 'comunicacao');
     }
     if ($post && $acao === 'juntar' && $f) {
         $ids = array_map('intval', array_filter((array) ($_POST['edicoes'] ?? []), 'is_numeric'));
@@ -164,7 +179,10 @@ function admin_formacao(): void
     }
     if ($post && $acao === '') {
         [$d, $curso_id, $erros] = ler_sessao();
-        if (!$erros) {
+        // "Aplicar o formato": volta ao formulário com as sessões do novo formato, sem gravar
+        $aplicar = !empty($_POST['aplicar_formato']);
+        $erros = $aplicar ? [] : $erros;
+        if (!$erros && !$aplicar) {
             $id = gravar_sessao($d, $curso_id, $f ? $id : 0);
             aviso($f ? 'Formação atualizada.' : 'Formação criada e visível para os clientes e na área de formação do site.');
             redirecionar('formacao', ['id' => $id]);
@@ -208,10 +226,6 @@ function admin_formacao(): void
     $inscritos = '';
     if ($id) {
         $confirmadas = (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado')", [$id])['n'] ?? 0);
-        if (!empty($v['reuniao']) && $confirmadas) {
-            $form .= '<form method="post" class="espaco-topo">' . campo_csrf() . '<input type="hidden" name="acao" value="enviar_reuniao"><button class="botao botao-secundario" type="submit">Enviar a ligação da reunião às ' . $confirmadas . ' inscrição(ões) confirmada(s)</button>
-              <p class="ajuda">Envia a cada formando (ou, sem email do formando, a quem o inscreveu) uma mensagem com a data, a hora e a ligação. Útil quando a ligação é criada ou alterada depois das confirmações. Para lembrar a próxima sessão, use "Lembretes aos formandos", na lista de inscritos.</p></form>';
-        }
         $programa = programa_html($v, true);
         if (count($datas) > 1) {
             $linhas_datas = '';
@@ -235,6 +249,7 @@ function admin_formacao(): void
             . '<p><a class="botao" href="' . h(url('inscrever', ['formacao' => $id])) . '">Inscrever formando</a>'
             . ($linhas ? ' <a class="botao botao-secundario" href="' . h(url('inscricoes', ['formacao' => $id, 'exportar' => 1])) . '">Exportar inscritos para Excel</a>' : '') . '</p>'
             . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="inscritos-turma"><thead><tr><th>Formando</th><th>Função</th><th data-filtro="lista">Cliente</th><th data-filtro="lista">Nível de IA</th><th data-filtro="lista">Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições nesta formação.</p>');
+        $inscritos .= comunicacao_turma_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]));
         $inscritos .= $linhas ? lembretes_edicao(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]), $confirmadas) : '';
         $inscritos .= $confirmadas ? presencas_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id])) : '';
         $inscritos .= $confirmadas ? certificados_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id])) : '';
@@ -468,9 +483,9 @@ function gravar_sessao(array $d, int $curso_id, int $id = 0): int
     return $id;
 }
 
-// Lista das sessões do curso, uma linha por tema do curso (o formato é o do próprio curso: 6 sessões ou 3 × 2 h), com
-// a data e o horário. Há um bloco por curso com vários temas; só o do curso escolhido fica visível e ativo
-// (assets/js/area.js troca-os). $atuais: linhas do curso escolhido (sessoes_do_formulario).
+// Lista das sessões do curso, uma linha por sessão do formato escolhido (temas, duração, data e horário). Há um bloco
+// por curso com vários temas; só o do curso escolhido fica visível e ativo (assets/js/area.js troca-os).
+// $atuais: linhas do curso escolhido (sessoes_do_formulario); $formato: formato do curso escolhido (formato_do_formulario).
 function campos_sessoes_curso(int $escolhido, array $atuais = [], string $formato = ''): string
 {
     $html = '';
@@ -481,7 +496,7 @@ function campos_sessoes_curso(int $escolhido, array $atuais = [], string $format
         }
         $cid = (int) $c['id'];
         $ativo = $cid === $escolhido;
-        $f_curso = formato_por_tema($mods);
+        $f_curso = $ativo && $formato !== '' ? $formato : formato_por_tema($mods);
         $duracoes = duracoes_formato($f_curso);
         $linhas = $ativo && $atuais ? $atuais : linhas_do_formato($mods, $duracoes);
         $linhas[] = ['temas' => [], 'horas' => null, 'inicio' => '', 'fim' => '', 'extra' => true];
@@ -489,6 +504,14 @@ function campos_sessoes_curso(int $escolhido, array $atuais = [], string $format
         foreach ($mods as $k => $m) {
             $numero[(int) $m['id']] = $k + 1;
         }
+        $presets = formatos_curso($mods);
+        $opcoes = '';
+        foreach ($presets as $valor => $rotulo) {
+            $valor = (string) $valor; // "6" (uma só sessão) fica com chave numérica no PHP
+            $opcoes .= '<option value="' . h($valor) . '"' . ($valor === $f_curso ? ' selected' : '') . '>' . h($rotulo) . '</option>';
+        }
+        $outro = !isset($presets[$f_curso]);
+        $opcoes .= '<option value="outro"' . ($outro ? ' selected' : '') . '>Outro (indicar as durações)</option>';
         $temas = '';
         foreach ($mods as $k => $m) {
             $temas .= '<li>' . h($m['nome']) . ' <span class="texto-suave">(' . h(numero_horas(horas_modulo($m))) . ' h)</span></li>';
@@ -510,8 +533,12 @@ function campos_sessoes_curso(int $escolhido, array $atuais = [], string $format
         }
         $html .= '<fieldset class="campo-grupo sessoes-curso" data-curso="' . $cid . '"' . ($ativo ? '' : ' hidden disabled') . '>
           <legend>Sessões de ' . h($c['nome']) . '</legend>
-          <input type="hidden" name="formato[' . $cid . ']" value="' . h(formato_por_tema($mods)) . '">
-          <p class="ajuda">Uma sessão por tema do curso, pela ordem (o formato é o do próprio curso: 6 sessões ou 3 × 2 h). Indique a data e a hora de início de cada sessão: sem hora de fim, conta a duração do tema. As linhas sem data são ignoradas; se não preencher nenhuma, as sessões ficam marcadas semanalmente a partir da data e da hora indicadas acima. A última linha serve para uma sessão extra.</p>
+          <div class="campos-2">
+            <div class="campo"><label for="c-formato-' . $cid . '">Formato das sessões</label><select id="c-formato-' . $cid . '" name="formato[' . $cid . ']" data-formato>' . $opcoes . '</select></div>
+            <div class="campo"><label for="c-formato-outro-' . $cid . '">Durações, em horas (com "Outro")</label><input id="c-formato-outro-' . $cid . '" name="formato_outro[' . $cid . ']" type="text" value="' . h($outro ? str_replace('.', ',', $f_curso) : '') . '" placeholder="Por exemplo, 2 + 1,5 + 2,5" maxlength="120"></div>
+          </div>
+          <p class="mb-0"><button class="botao botao-secundario botao-pequeno" type="submit" name="aplicar_formato" value="' . $cid . '" formnovalidate data-aplicar-formato>Aplicar o formato</button></p>
+          <p class="ajuda">O formato define quantas sessões tem a edição e quanto dura cada uma (por exemplo, 3 sessões de 2 horas). Os temas do curso são distribuídos pelas sessões, pela ordem; em cada sessão pode mudar os temas, com os números da lista. Indique a data e a hora de início: sem hora de fim, conta a duração do formato. As linhas sem data são ignoradas; se não preencher nenhuma, as sessões ficam marcadas semanalmente a partir da data e da hora indicadas acima. A última linha serve para uma sessão extra.</p>
           <details><summary>Temas do curso (' . count($mods) . ', ' . h(numero_horas(array_sum(array_map('horas_modulo', $mods)))) . ' h)</summary><ol class="lista-datas">' . $temas . '</ol></details>
           <div class="tabela-rolante"><table class="tabela-sessoes"><thead><tr><th scope="col">#</th><th scope="col">Temas (n.º)</th><th scope="col">Duração</th><th scope="col">Data</th><th scope="col">Início</th><th scope="col">Fim</th></tr></thead><tbody>' . $corpo . '</tbody></table></div>
           <p class="mb-0"><button class="botao botao-secundario botao-pequeno" type="button" data-preencher-sessoes>Propor datas semanais a partir da data acima</button></p>
@@ -565,6 +592,21 @@ function sessoes_do_formulario(int $id): array
     $post = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
     $mods = modulos_curso($curso);
     $ids = array_map('intval', array_column($mods, 'id'));
+    if ($post && (int) ($_POST['aplicar_formato'] ?? 0) === $curso && $curso) {
+        $duracoes = duracoes_formato(formato_enviado($curso));
+        $linhas = linhas_do_formato($mods, $duracoes ?: duracoes_formato(formato_por_tema($mods)));
+        $data = trim((string) ($_POST['data'] ?? ''));
+        $hora = trim((string) ($_POST['hora_inicio'] ?? ''));
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $data) && preg_match('/^\d{2}:\d{2}$/', $hora)) {
+            foreach ($linhas as $k => &$l) {
+                $dia = date('Y-m-d', strtotime($data . ' +' . $k . ' week'));
+                $l['inicio'] = $dia . ' ' . $hora . ':00';
+                $l['fim'] = date('Y-m-d H:i:s', strtotime($l['inicio']) + (int) round($l['horas'] * 3600));
+            }
+            unset($l);
+        }
+        return $linhas;
+    }
     if ($post && isset($_POST['sessoes'][$curso])) {
         $r = [];
         foreach (array_values(array_filter((array) $_POST['sessoes'][$curso], 'is_array')) as $l) {
