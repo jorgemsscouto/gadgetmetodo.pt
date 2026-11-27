@@ -248,7 +248,7 @@ function vista_inscricoes(): void
             if (!$t || !$i) {
                 continue;
             }
-            $erro = atribuir_turma($i, $t, false);
+            $erro = atribuir_turma($i, $t, false, !empty($_POST['mudar_curso']));
             $erro ? $falhas[] = $i['formando'] . ' (' . $erro . ')' : $feitas++;
         }
         aviso(!$t ? 'Escolha a turma.' : ($feitas . ' inscrição(ões) passaram para a turma de ' . h(horario($t)) . '.' . ($falhas ? ' Sem alteração: ' . h(implode('; ', $falhas)) . '.' : '')), !$t || ($falhas && !$feitas) ? 'erro' : ($falhas ? 'info' : 'ok'));
@@ -286,16 +286,31 @@ function vista_inscricoes(): void
       ' . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="inscricoes2" class="tabela-escolha"><thead><tr><th data-sem-filtro><input type="checkbox" class="marcar-todos" aria-label="Escolher todas as inscrições visíveis"></th><th>Formando</th><th data-filtro="lista">Cliente</th><th data-filtro="lista">Curso</th><th data-filtro="lista">Turma</th><th data-filtro="lista">Estado</th><th>Progresso</th><th>Assiduidade</th><th data-filtro="lista">Avaliação</th><th data-filtro="lista">Certificado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
         <form method="post" id="acoes-inscricoes" class="formulario espaco-topo-curto">' . campo_csrf() . '<input type="hidden" name="acao" value="turma_lote">
           <div class="campos-2">' . campo_select('turma', 'Passar as escolhidas para a turma', $turmas, '', 'Escolha a turma') . '</div>
+          <label class="opcao"><input type="checkbox" name="mudar_curso" value="1"> <span>Se a turma for de outro curso, mudar também o curso das inscrições para o curso da turma</span></label>
           <div><button class="botao botao-secundario" type="submit">Atribuir a turma</button></div>
-          <p class="ajuda">Só para inscrições no mesmo curso da turma e enquanto houver vagas. Não envia emails; para avisar o formando, use a ação da turma na ficha.</p>
+          <p class="ajuda">Enquanto houver vagas. Sem a opção acima, só passam as inscrições no mesmo curso da turma; com ela, o curso muda nas inscrições ainda sem presências nem certificado. Não envia emails; para avisar o formando, use a ação da turma na ficha.</p>
         </form>' : '<p class="texto-suave">Ainda não há inscrições.</p>'), 'Formação');
 }
 
 // Turma de uma inscrição (etapa 6): mesmo curso, turma não cancelada nem encerrada e com vagas. Devolve '' ou o motivo.
-function atribuir_turma(array $i, array $t, bool $avisar): string
+function atribuir_turma(array $i, array $t, bool $avisar, bool $mudar_curso = false): string
 {
-    if ((int) $t['curso_id'] !== (int) $i['curso_id']) {
-        return 'a turma é de outro curso';
+    // Turma de outro curso: só com a opção de mudar o curso, e só se a inscrição ainda não tiver presenças nem certificado
+    // e o formando não tiver já uma inscrição em curso no curso da turma
+    $outro_curso = (int) $t['curso_id'] !== (int) $i['curso_id'];
+    if ($outro_curso) {
+        if (!$mudar_curso) {
+            return 'a turma é de outro curso';
+        }
+        if (presencas_inscricao((int) $i['id'])) {
+            return 'já tem presenças no curso atual';
+        }
+        if (certificado_da_inscricao((int) $i['id'])) {
+            return 'já tem certificado no curso atual';
+        }
+        if (!empty($i['formando_id']) && linha_bd("SELECT id FROM inscricoes WHERE formando_id = ? AND curso_id = ? AND estado IN ('inscrito', 'em_formacao') AND id != ?", [$i['formando_id'], $t['curso_id'], $i['id']])) {
+            return 'já tem uma inscrição em curso no curso da turma';
+        }
     }
     if (in_array($t['estado'], ['cancelada', 'encerrada'], true)) {
         return 'a turma está ' . ($t['estado'] === 'cancelada' ? 'cancelada' : 'encerrada');
@@ -309,7 +324,7 @@ function atribuir_turma(array $i, array $t, bool $avisar): string
     if ((string) $i['email'] !== '' && linha_bd("SELECT id FROM inscricoes WHERE formacao_id = ? AND email = ? COLLATE NOCASE AND estado NOT IN ('desistiu', 'nao_concluido') AND id != ?", [$t['id'], $i['email'], $i['id']])) {
         return 'já tem outra inscrição nesta turma';
     }
-    executar('UPDATE inscricoes SET formacao_id = ? WHERE id = ?', [$t['id'], $i['id']]);
+    executar('UPDATE inscricoes SET formacao_id = ?, curso_id = ? WHERE id = ?', [$t['id'], $t['curso_id'], $i['id']]);
     sincronizar_estados();
     if ($avisar) {
         $GLOBALS['turma_avisada'] = avisar_turma((int) $i['id']);

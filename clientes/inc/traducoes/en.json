@@ -3321,5 +3321,10 @@
  "Material carregado: {x}.": "Material uploaded: {x}.",
  "Material acrescentado.": "Material added.",
  "Não se aplica (nunca usou IA)": "Not applicable (has never used AI)",
- "Como nunca usou ferramentas de IA, as perguntas sobre a forma como as usa não se aplicam e passa diretamente à pergunta seguinte.": "As you have never used AI tools, the questions about how you use them do not apply and you can go straight to the next question."
+ "Como nunca usou ferramentas de IA, as perguntas sobre a forma como as usa não se aplicam e passa diretamente à pergunta seguinte.": "As you have never used AI tools, the questions about how you use them do not apply and you can go straight to the next question.",
+ "Se a turma for de outro curso, mudar também o curso das inscrições para o curso da turma": "If the class belongs to another course, also change the enrolments' course to the class's course",
+ "Enquanto houver vagas. Sem a opção acima, só passam as inscrições no mesmo curso da turma; com ela, o curso muda nas inscrições ainda sem presências nem certificado. Não envia emails; para avisar o formando, use a ação da turma na ficha.": "While places remain. Without the option above, only enrolments in the class's course are moved; with it, the course changes for enrolments with no attendance or certificate yet. No emails are sent; to notify the trainee, use the class action on their record.",
+ "já tem presenças no curso atual": "already has attendance in the current course",
+ "já tem certificado no curso atual": "already has a certificate in the current course",
+ "já tem uma inscrição em curso no curso da turma": "already has an active enrolment in the class's course"
 }
