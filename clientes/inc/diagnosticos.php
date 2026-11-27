@@ -91,19 +91,24 @@ function enviar_diagnostico_lote(array $ids, int $curso): array
 {
     $enviados = [];
     $falhados = [];
+    $inscritos = [];
     foreach ($ids as $fid) {
         $f = formando((int) $fid);
         if (!$f) {
             continue;
         }
         try {
-            [, $ok] = enviar_diagnostico_formando((int) $fid, $curso);
-            $ok ? $enviados[] = $f['nome'] : $falhados[] = $f['nome'] . ' (falha no envio)';
+            [, $ok, $como] = enviar_diagnostico_formando((int) $fid, $curso);
+            if ($como === 'inscrito') {
+                $inscritos[] = $f['nome'];
+            } else {
+                $ok ? $enviados[] = $f['nome'] : $falhados[] = $f['nome'] . ' (falha no envio)';
+            }
         } catch (InvalidArgumentException $e) {
             $falhados[] = $f['nome'] . ' (' . mb_strtolower(rtrim($e->getMessage(), '.')) . ')';
         }
     }
-    return [$enviados, $falhados];
+    return [$enviados, $falhados, $inscritos];
 }
 
 function admin_diagnosticos(): void
@@ -118,7 +123,10 @@ function admin_diagnosticos(): void
         } elseif (!$ids) {
             aviso('Escolha pelo menos um formando.', 'erro');
         } else {
-            [$enviados, $falhados] = enviar_diagnostico_lote($ids, $curso);
+            [$enviados, $falhados, $inscritos] = enviar_diagnostico_lote($ids, $curso);
+            if ($inscritos) {
+                aviso(count($inscritos) . ' formando(s) com diagnóstico inicial ficaram inscritos diretamente no ' . h($cursos[$curso]) . ', sem novo diagnóstico: ' . h(implode(', ', $inscritos)) . '.');
+            }
             if ($enviados) {
                 aviso('Diagnóstico do ' . h($cursos[$curso]) . ' enviado a ' . count($enviados) . ' formando(s): ' . h(implode(', ', $enviados)) . '. Quem responder fica inscrito neste curso.');
             }

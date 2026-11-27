@@ -18,7 +18,7 @@ const PAPEIS = ['admin' => 'Gadgetmetodo', 'formador' => 'Formador', 'cliente' =
 const PAPEIS_GESTAO = ['admin', 'formador'];
 const ESTADOS_FORMACAO = ['aberta' => 'Inscrições abertas', 'fechada' => 'Inscrições fechadas', 'cancelada' => 'Cancelada', 'encerrada' => 'Encerrada'];
 // Estados da inscrição (migração 001): o percurso normal e as saídas alternativas
-const ESTADOS_INSCRICAO = ['inscrito' => 'Inscrito', 'em_formacao' => 'Em formação', 'concluido' => 'Concluído', 'certificado' => 'Certificado',
+const ESTADOS_INSCRICAO = ['pre_inscrito' => 'Pré-inscrito', 'inscrito' => 'Inscrito', 'em_formacao' => 'Em formação', 'concluido' => 'Concluído', 'certificado' => 'Certificado',
     'encerrado' => 'Encerrado', 'desistiu' => 'Desistiu', 'nao_concluido' => 'Não concluído'];
 // Inscrições que contam (vagas, presenças, lembretes, área do formando) e saídas alternativas
 const ESTADOS_ATIVOS = ['inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado'];

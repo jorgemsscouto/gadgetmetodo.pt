@@ -58,7 +58,7 @@ function contexto_inscricao(array $i): array
     $presencas = presencas_inscricao((int) $i['id']);
     $iniciadas = count(array_filter($sessoes, function ($s) { return strtotime($s['inicio']) <= time(); }));
     $fim = $sessoes ? max(array_map(function ($s) { return strtotime($s['fim'] ?: $s['inicio']); }, $sessoes)) : 0;
-    $diag = $i['diagnostico_id'] ? linha_bd('SELECT * FROM diagnosticos WHERE id = ?', [(int) $i['diagnostico_id']]) : null;
+    $diag = $i['diagnostico_id'] ? linha_bd('SELECT * FROM diagnosticos WHERE id = ?', [(int) $i['diagnostico_id']]) : (!empty($i['formando_id']) ? diagnostico_inicial((int) $i['formando_id']) : null);
     return [
         'diag' => $diag, 'ficha' => ficha_certificado((string) $i['email']), 'materiais' => materiais_inscricao($i), 'acessos' => acessos_inscricao((int) $i['id']),
         'sessoes' => $sessoes, 'presencas' => $presencas, 'iniciadas' => $iniciadas, 'terminada' => $fim > 0 && $fim <= time(),
@@ -96,7 +96,7 @@ function etapas_inscricao(array $i, array $ctx): array
     $d = $ctx['diag'];
     $e[1] = $d && $d['respondido'] !== null ? ['feita', 'Respondido em ' . data_hora($d['respondido'], false) . ($d['nivel'] ? ' · ' . $d['nivel'] : '')]
         : ($d ? ['em_curso', 'Enviado em ' . data_hora($d['enviado'], false) . ', por responder'] : (!empty($i['respostas']) ? ['feita', 'Respondido na inscrição' . ($i['nivel'] ? ' · ' . $i['nivel'] : '')] : ['por_fazer', 'Sem diagnóstico']));
-    $e[2] = ['feita', 'Inscrito em ' . data_hora($i['criado'], false)];
+    $e[2] = $i['estado'] === 'pre_inscrito' ? ['em_curso', 'Pré-inscrito' . ($i['formacao_id'] ? ' na turma' : '') . ', por confirmar'] : ['feita', 'Inscrito em ' . data_hora($i['criado'], false)];
     $e[3] = !empty($i['email_inscricao']) ? ['feita', 'Enviado em ' . data_hora($i['email_inscricao'], false)] : ((string) $i['email'] === '' ? ['bloqueada', 'Sem email'] : ['por_fazer', 'Por enviar']);
     $falta = campos_em_falta($ctx['ficha']);
     $e[4] = ficha_completa($ctx['ficha']) ? ['feita', 'Completos'] : (!empty($i['dados_pedidos']) ? ['em_curso', 'Pedidos em ' . data_hora($i['dados_pedidos'], false) . '; faltam: ' . mb_strtolower(implode(', ', $falta))] : ['por_fazer', 'Em falta: ' . mb_strtolower(implode(', ', $falta))]);
@@ -184,8 +184,9 @@ function vista_formandos(): void
         $fid = formando_para($nome, $email, $cliente);
         $msg = $existia ? 'Já existia um formando com este email: foi usado esse.' : 'Formando criado.';
         if (!empty($_POST['enviar'])) {
-            [, $ok] = enviar_diagnostico_formando($fid, $curso);
-            $msg .= $ok ? ' Diagnóstico enviado para ' . h($email) . ' (ligação válida 30 dias).' : ' O email do diagnóstico não foi enviado: verifique a Comunicação.';
+            [, $ok, $como] = enviar_diagnostico_formando($fid, $curso);
+            $msg .= $como === 'inscrito' ? ' Já tinha diagnóstico inicial: ficou inscrito no curso, sem novo diagnóstico.' : ($ok ? ' Diagnóstico enviado para ' . h($email) . ' (ligação válida 30 dias).' : ' O email do diagnóstico não foi enviado: verifique a Comunicação.');
+            $ok = $ok || $como === 'inscrito';
         }
         aviso($msg, !empty($_POST['enviar']) && empty($ok) ? 'erro' : 'ok');
         redirecionar('formando', ['id' => $fid]);
@@ -249,6 +250,9 @@ function vista_inscricoes(): void
                 continue;
             }
             $erro = atribuir_turma($i, $t, false, !empty($_POST['mudar_curso']));
+            if (!$erro && in_array($i['estado'], ['inscrito', 'pre_inscrito'], true)) {
+                executar('UPDATE inscricoes SET estado = ? WHERE id = ?', [($_POST['como'] ?? '') === 'pre_inscrito' ? 'pre_inscrito' : 'inscrito', $i['id']]);
+            }
             $erro ? $falhas[] = $i['formando'] . ' (' . $erro . ')' : $feitas++;
         }
         aviso(!$t ? 'Escolha a turma.' : ($feitas . ' inscrição(ões) passaram para a turma de ' . h(horario($t)) . '.' . ($falhas ? ' Sem alteração: ' . h(implode('; ', $falhas)) . '.' : '')), !$t || ($falhas && !$feitas) ? 'erro' : ($falhas ? 'info' : 'ok'));
@@ -285,7 +289,7 @@ function vista_inscricoes(): void
       <p class="texto-suave">Uma linha por formando e curso. O nome abre a ficha do formando, no cartão desta inscrição. <a href="' . h(url('formandos', ['vista' => 'inscricoes', 'exportar' => 1])) . '">Exportar para Excel</a></p>
       ' . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="inscricoes2" class="tabela-escolha"><thead><tr><th data-sem-filtro><input type="checkbox" class="marcar-todos" aria-label="Escolher todas as inscrições visíveis"></th><th>Formando</th><th data-filtro="lista">Cliente</th><th data-filtro="lista">Curso</th><th data-filtro="lista">Turma</th><th data-filtro="lista">Estado</th><th>Progresso</th><th>Assiduidade</th><th data-filtro="lista">Avaliação</th><th data-filtro="lista">Certificado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>
         <form method="post" id="acoes-inscricoes" class="formulario espaco-topo-curto">' . campo_csrf() . '<input type="hidden" name="acao" value="turma_lote">
-          <div class="campos-2">' . campo_select('turma', 'Passar as escolhidas para a turma', $turmas, '', 'Escolha a turma') . '</div>
+          <div class="campos-2">' . campo_select('turma', 'Passar as escolhidas para a turma', $turmas, '', 'Escolha a turma') . campo_select('como', 'Como', ['inscrito' => 'Inscrito (confirmado)', 'pre_inscrito' => 'Pré-inscrito (por confirmar)'], 'inscrito') . '</div>
           <label class="opcao"><input type="checkbox" name="mudar_curso" value="1"> <span>Se a turma for de outro curso, mudar também o curso das inscrições para o curso da turma</span></label>
           <div><button class="botao botao-secundario" type="submit">Atribuir a turma</button></div>
           <p class="ajuda">Enquanto houver vagas. Sem a opção acima, só passam as inscrições no mesmo curso da turma; com ela, o curso muda nas inscrições ainda sem presências nem certificado. Não envia emails; para avisar o formando, use a ação da turma na ficha.</p>
@@ -405,8 +409,10 @@ function admin_ficha_formando(): void
                     break;
                 }
                 try {
-                    [, $ok] = enviar_diagnostico_formando($fid, $curso);
-                    aviso_envio($ok, 'Diagnóstico enviado para ' . h((string) $f['email']) . ' (ligação válida 30 dias). Quando o responder, fica inscrito no ' . h(curso($curso)['nome']) . '.');
+                    [, $ok, $como] = enviar_diagnostico_formando($fid, $curso, !empty($_POST['novo_diagnostico']));
+                    $como === 'inscrito'
+                        ? aviso('Já tem diagnóstico inicial: ficou inscrito no ' . h(curso($curso)['nome']) . ', sem novo diagnóstico.' . ($ok ? ' Email da inscrição enviado.' : ''))
+                        : aviso_envio($ok, 'Diagnóstico enviado para ' . h((string) $f['email']) . ' (ligação válida 30 dias). Quando o responder, fica inscrito no ' . h(curso($curso)['nome']) . '.');
                 } catch (InvalidArgumentException $e) {
                     aviso(h($e->getMessage()), 'erro');
                 }
@@ -899,8 +905,10 @@ function pagina_ficha_formando(array $f, array $erros_ficha): void
     $diag = '<h2 class="espaco-topo" id="diagnosticos">Diagnósticos</h2>'
         . ($ld ? '<div class="conteudo tabela-rolante"><table data-filtros="diagnosticos-formando"><thead><tr><th data-filtro="lista">Curso</th><th>Enviado</th><th data-filtro="lista">Estado</th><th data-filtro="lista">Nível</th><th data-filtro="lista">Origem</th></tr></thead><tbody>' . $ld . '</tbody></table></div>' : '<p class="texto-suave">Ainda não foi enviado nenhum diagnóstico.</p>')
         . ((string) $f['email'] !== '' ? $form('enviar_diagnostico', '<div class="campos-2">' . campo_select('curso_id', 'Curso', $cursos, '', 'Escolha o curso') . '</div>'
-            . '<p class="ajuda">O formando recebe por email a ligação pessoal (válida 30 dias); quando responder, fica inscrito neste curso e recebe o email da inscrição. Um diagnóstico ainda por responder é reaproveitado, com uma ligação nova.</p>'
-            . '<div><button class="botao botao-secundario" type="submit">Enviar o diagnóstico</button></div>', 0, 'formulario espaco-topo-curto') : '');
+            . (diagnostico_inicial((int) $f['id'])
+                ? '<p class="ajuda">Este formando já respondeu ao diagnóstico inicial: ao escolher o curso, fica inscrito diretamente, sem novo diagnóstico. Marque a opção abaixo só se quiser mesmo um diagnóstico novo.</p><label class="opcao"><input type="checkbox" name="novo_diagnostico" value="1"> <span>Enviar um diagnóstico novo</span></label>'
+                : '<p class="ajuda">O formando recebe por email a ligação pessoal (válida 30 dias); quando responder, fica inscrito neste curso e recebe o email da inscrição. Este passa a ser o diagnóstico inicial: nos cursos seguintes, o formando é inscrito sem novo diagnóstico.</p>')
+            . '<div><button class="botao botao-secundario" type="submit">' . (diagnostico_inicial((int) $f['id']) ? 'Inscrever no curso' : 'Enviar o diagnóstico') . '</button></div>', 0, 'formulario espaco-topo-curto') : '');
 
     // Inscrições: um cartão por inscrição
     $cartoes = '';

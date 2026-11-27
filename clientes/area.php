@@ -82,7 +82,7 @@ if ($post) {
 
 $comuns = ['inscrever' => 'pagina_inscrever', 'inscricao' => 'pagina_inscricao', 'conta' => 'pagina_conta'];
 $rotas = eh_admin()
-    ? ['painel' => 'admin_painel', 'calendario' => 'admin_calendario', 'formacao' => 'admin_formacao', 'cursos' => 'admin_cursos', 'curso' => 'admin_curso', 'inscricoes' => 'redirecionar_inscricoes',
+    ? ['painel' => 'admin_painel', 'calendario' => 'admin_calendario', 'turmas' => 'admin_turmas', 'formacao' => 'admin_formacao', 'cursos' => 'admin_cursos', 'curso' => 'admin_curso', 'inscricoes' => 'redirecionar_inscricoes',
        'clientes' => 'admin_clientes', 'cliente' => 'admin_cliente', 'utilizadores' => 'admin_utilizadores', 'utilizador' => 'admin_utilizador',
        'pedidos' => 'admin_pedidos', 'configuracao' => 'admin_configuracao', 'precos' => 'admin_precos', 'comunicacao' => 'admin_comunicacao', 'apagar' => 'admin_apagar', 'formando' => 'admin_ficha_formando', 'diagnosticos' => 'redirecionar_diagnosticos', 'diagnostico' => 'admin_diagnostico', 'certificado' => 'pagina_certificado', 'formandos' => 'admin_gestao_formandos', 'material' => 'pagina_material', 'migracoes' => 'admin_migracoes', 'certificados_config' => 'admin_config_certificados'] + $comuns
     : (eh_formando()

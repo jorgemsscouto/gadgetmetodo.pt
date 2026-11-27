@@ -9,6 +9,7 @@ const CONFIGURACAO = ['configuracao' => 'Visão geral', 'utilizadores' => 'Utili
 // Ícones do menu (traço simples, 24 x 24), como na barra lateral do portal de referência
 const ICONES_MENU = [
     'painel' => '<rect width="7" height="9" x="3" y="3" rx="1.5"/><rect width="7" height="5" x="14" y="3" rx="1.5"/><rect width="7" height="9" x="14" y="12" rx="1.5"/><rect width="7" height="5" x="3" y="16" rx="1.5"/>',
+    'turmas' => '<path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/>',
     'calendario' => '<path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
     'cursos' => '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>',
     'inscricoes' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -24,7 +25,7 @@ const ICONES_MENU = [
 function menu_area(string $atual): string
 {
     $itens = eh_admin()
-        ? ['painel' => 'Painel', 'calendario' => 'Calendário', 'cursos' => 'Cursos', 'formandos' => 'Formandos', 'clientes' => 'Clientes', 'pedidos' => 'Pedidos do site', 'configuracao' => 'Configuração', 'conta' => 'A minha conta']
+        ? ['painel' => 'Painel', 'cursos' => 'Cursos', 'turmas' => 'Turmas', 'calendario' => 'Calendário', 'formandos' => 'Formandos', 'clientes' => 'Clientes', 'pedidos' => 'Pedidos do site', 'configuracao' => 'Configuração', 'conta' => 'A minha conta']
         : (eh_formando() ? ['painel' => 'As minhas formações', 'conta' => 'A minha conta']
             : ['painel' => 'Painel', 'calendario' => 'Formações', 'inscricoes' => 'Inscrições'] + (tambem_formando() ? ['presencas' => 'As minhas formações'] : []) + ['conta' => 'A minha conta']);
     $atual = eh_admin() && isset(CONFIGURACAO[$atual]) ? 'configuracao' : $atual;

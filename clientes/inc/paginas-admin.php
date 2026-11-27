@@ -62,7 +62,7 @@ function admin_calendario(): void
     }
     pagina_area('calendario', 'Calendário de formações', '
       <div class="barra-calendario' . ($lista ? '' : ' com-mes') . '">' . $alternador . ($lista ? '' : cabecalho_calendario($mes)) . '
-        <div class="acoes"><a class="botao" href="' . h(url('formacao')) . '">Nova formação</a>
+        <div class="acoes"><a class="botao" href="' . h(url('formacao')) . '">Nova turma</a>
         ' . ($lista ? '<a class="botao botao-secundario" href="' . h(url('calendario', $passadas ? ['vista' => 'lista'] : ['vista' => 'lista', 'ver' => 'passadas'])) . '">' . ($passadas ? 'Ver próximas' : 'Ver formações passadas') . '</a>' : '') . '
         <a class="botao botao-secundario" href="/formacoes/" target="_blank" rel="noopener">Ver página pública</a></div>
       </div>
@@ -96,6 +96,19 @@ function admin_formacao(): void
         $n = enviar_reuniao_confirmados($f);
         aviso($n ? 'Ligação da reunião enviada para ' . $n . ' inscrição(ões) confirmada(s).' : 'Não há inscrições confirmadas com email para enviar a ligação.', $n ? 'ok' : 'erro');
         redirecionar('formacao', ['id' => $id], 'comunicacao');
+    }
+    if ($post && $acao === 'confirmar_pre' && $f) {
+        $ids = array_column(consulta("SELECT id FROM inscricoes WHERE formacao_id = ? AND estado = 'pre_inscrito'", [$id]), 'id');
+        $avisados = 0;
+        foreach ($ids as $iid) {
+            executar("UPDATE inscricoes SET estado = 'inscrito' WHERE id = ?", [$iid]);
+            if (!empty($_POST['avisar']) && avisar_turma((int) $iid)) {
+                $avisados++;
+            }
+        }
+        sincronizar_estados();
+        aviso($ids ? count($ids) . ' pré-inscrição(ões) confirmada(s): passaram a Inscrito.' . (!empty($_POST['avisar']) ? ' Aviso com as datas enviado a ' . $avisados . '.' : '') : 'Não há pré-inscritos nesta turma.', $ids ? 'ok' : 'info');
+        redirecionar('formacao', ['id' => $id], 'pre-inscritos');
     }
     if ($post && $acao === 'aviso_turma' && $f) {
         $mensagem = texto('mensagem', 4000, true);
@@ -221,7 +234,7 @@ function admin_formacao(): void
         <div class="campo"><label for="c-reuniao">Ligação da reunião online (Google Meet)</label><input id="c-reuniao" name="reuniao" type="url" value="' . h((string) $v['reuniao']) . '" maxlength="300" placeholder="https://meet.google.com/abc-defg-hij" aria-describedby="ajuda-reuniao">
           <p class="ajuda" id="ajuda-reuniao">Só é enviada às inscrições confirmadas (no email de confirmação e na área reservada); nunca aparece na página pública. Para a criar: ' . $atalhos . '</p></div>
         ' . campo('notas', 'Notas internas', (string) $v['notas'], 'textarea', 'maxlength="2000"') . '
-        <div><button class="botao" type="submit">' . ($id ? 'Guardar alterações' : 'Criar formação') . '</button></div>
+        <div><button class="botao" type="submit">' . ($id ? 'Guardar alterações' : 'Criar turma') . '</button></div>
       </form>';
     $inscritos = '';
     if ($id) {
@@ -249,6 +262,11 @@ function admin_formacao(): void
             . '<p><a class="botao" href="' . h(url('inscrever', ['formacao' => $id])) . '">Inscrever formando</a>'
             . ($linhas ? ' <a class="botao botao-secundario" href="' . h(url('inscricoes', ['formacao' => $id, 'exportar' => 1])) . '">Exportar inscritos para Excel</a>' : '') . '</p>'
             . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="inscritos-turma"><thead><tr><th>Formando</th><th>Função</th><th data-filtro="lista">Cliente</th><th data-filtro="lista">Nível de IA</th><th data-filtro="lista">Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '<p class="texto-suave">Ainda não há inscrições nesta formação.</p>');
+        $pre = (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado = 'pre_inscrito'", [$id])['n'] ?? 0);
+        if ($pre) {
+            $inscritos .= '<div class="aviso aviso-info espaco-topo" id="pre-inscritos"><strong>' . $pre . ' pré-inscrito(s) nesta turma, por confirmar.</strong> Os pré-inscritos ocupam vaga, mas só recebem a ligação da reunião, os lembretes e os avisos depois de confirmados.'
+                . '<form method="post" class="espaco-topo-curto">' . campo_csrf() . '<input type="hidden" name="acao" value="confirmar_pre"><label class="opcao"><input type="checkbox" name="avisar" value="1" checked> <span>Avisar cada formando por email, com as datas, o local e a ligação das sessões</span></label> <button class="botao" type="submit">Confirmar os ' . $pre . ' pré-inscrito(s)</button></form></div>';
+        }
         $inscritos .= comunicacao_turma_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]));
         $inscritos .= $linhas ? lembretes_edicao(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]), $confirmadas) : '';
         $inscritos .= $confirmadas ? presencas_edicao_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id])) : '';
@@ -258,7 +276,7 @@ function admin_formacao(): void
         $inscritos .= juntar_edicoes_html(linha_bd('SELECT * FROM formacoes WHERE id = ?', [$id]));
         $inscritos .= '<p class="espaco-topo">' . botao_apagar('formacao', $id, 'Apagar esta edição') . '</p>';
     }
-    pagina_area('calendario', $id ? 'Editar formação' : 'Nova formação', $form . $inscritos, 'Calendário');
+    pagina_area('turmas', $id ? 'Turma' : 'Nova turma', $form . $inscritos, 'Turmas');
 }
 
 /* Juntar edições do mesmo curso e pôr as sessões por ordem */
@@ -793,7 +811,28 @@ function admin_curso(): void
     pagina_area('cursos', $c ? $c['nome'] : 'Novo curso', ($c ? edicoes_do_curso_html((int) $c['id']) . materiais_html((int) $c['id'], null) . '<h2 class="espaco-topo">Dados do curso</h2>' : '') . $html, 'Cursos');
 }
 
-// Edições do curso (as próximas primeiro, depois as que já decorreram): datas, formato, formador, inscritos e estado
+// Tabela de turmas (página Turmas e ficha do curso): datas, curso, formato, modalidade, formador, inscritos e estado
+function tabela_turmas(array $lista, bool $com_curso): string
+{
+    $hoje = strtotime(date('Y-m-d 00:00:00'));
+    $linhas = '';
+    foreach ($lista as $f) {
+        $n = count(sessoes_formacao((int) $f['id'])) ?: 1;
+        $formato = texto_formato(duracoes_formato((string) $f['formato']));
+        $formador = !empty($f['formador_id']) ? (string) (linha_bd('SELECT nome FROM utilizadores WHERE id = ?', [(int) $f['formador_id']])['nome'] ?? '') : '';
+        $contagem = linha_bd("SELECT SUM(estado = 'pre_inscrito') AS pre, SUM(estado IN ('" . implode("', '", ESTADOS_ATIVOS) . "')) AS ativos FROM inscricoes WHERE formacao_id = ?", [$f['id']]);
+        $decorrida = strtotime((string) ($f['fim'] ?: $f['inicio'])) < $hoje;
+        $curso = $com_curso ? (string) (curso((int) $f['curso_id'])['nome'] ?? $f['titulo']) : '';
+        $linhas .= '<tr><td data-valor="' . h($f['inicio']) . '"><a href="' . h(url('formacao', ['id' => $f['id']])) . '">' . h(horario($f)) . '</a>' . ($decorrida ? '<br>' . etiqueta('Decorrida') : '') . '</td>'
+            . ($com_curso ? '<td>' . h(curso_curto($curso)) . '</td>' : '')
+            . '<td>' . h($formato !== '' ? $formato : $n . ($n === 1 ? ' sessão' : ' sessões')) . '</td><td>' . h(modalidade_e_local($f)) . '</td><td>' . h($formador) . '</td>'
+            . '<td data-valor="' . inscritos((int) $f['id']) . '">' . inscritos((int) $f['id']) . ' de ' . (int) $f['vagas'] . '<br><span class="texto-suave">' . (int) ($contagem['ativos'] ?? 0) . ' inscrito(s), ' . (int) ($contagem['pre'] ?? 0) . ' pré-inscrito(s)</span></td>'
+            . '<td>' . estado_etiqueta($f['estado'], ESTADOS_FORMACAO) . '</td></tr>';
+    }
+    return $linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="' . ($com_curso ? 'turmas' : 'turmas-curso') . '"><thead><tr><th>Datas</th>' . ($com_curso ? '<th data-filtro="lista">Curso</th>' : '') . '<th data-filtro="lista">Formato</th><th data-filtro="lista">Modalidade</th><th data-filtro="lista">Formador</th><th>Vagas ocupadas</th><th data-filtro="lista">Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>' : '';
+}
+
+// Turmas do curso (as próximas primeiro, depois as que já decorreram)
 function edicoes_do_curso_html(int $curso_id): string
 {
     $hoje = date('Y-m-d 00:00:00');
@@ -801,22 +840,25 @@ function edicoes_do_curso_html(int $curso_id): string
         consulta('SELECT * FROM formacoes WHERE curso_id = ? AND COALESCE(fim, inicio) >= ? ORDER BY inicio', [$curso_id, $hoje]),
         consulta('SELECT * FROM formacoes WHERE curso_id = ? AND COALESCE(fim, inicio) < ? ORDER BY inicio DESC', [$curso_id, $hoje])
     );
-    $linhas = '';
-    foreach ($lista as $f) {
-        $n = count(sessoes_formacao((int) $f['id'])) ?: 1;
-        $formato = texto_formato(duracoes_formato((string) $f['formato']));
-        $formador = !empty($f['formador_id']) ? (string) (linha_bd('SELECT nome FROM utilizadores WHERE id = ?', [(int) $f['formador_id']])['nome'] ?? '') : '';
-        $confirmadas = (int) (linha_bd("SELECT COUNT(*) AS n FROM inscricoes WHERE formacao_id = ? AND estado IN ('inscrito', 'em_formacao', 'concluido', 'certificado', 'encerrado')", [$f['id']])['n'] ?? 0);
-        $decorrida = strtotime((string) ($f['fim'] ?: $f['inicio'])) < strtotime($hoje);
-        $linhas .= '<tr><td data-valor="' . h($f['inicio']) . '"><a href="' . h(url('formacao', ['id' => $f['id']])) . '">' . h(horario($f)) . '</a>' . ($decorrida ? '<br>' . etiqueta('Decorrida') : '') . '</td>'
-            . '<td>' . h($formato !== '' ? $formato : $n . ($n === 1 ? ' sessão' : ' sessões')) . '</td><td>' . h(modalidade_e_local($f)) . '</td><td>' . h($formador) . '</td>'
-            . '<td data-valor="' . inscritos((int) $f['id']) . '">' . inscritos((int) $f['id']) . ' de ' . (int) $f['vagas'] . '<br><span class="texto-suave">' . $confirmadas . ' confirmada(s)</span></td>'
-            . '<td>' . estado_etiqueta($f['estado'], ESTADOS_FORMACAO) . '</td></tr>';
-    }
-    return '<h2 id="edicoes">Edições agendadas (' . count($lista) . ')</h2>'
-        . ($linhas ? '<div class="conteudo tabela-rolante"><table data-filtros="edicoes-curso"><thead><tr><th>Datas</th><th>Formato</th><th data-filtro="lista">Modalidade</th><th data-filtro="lista">Formador</th><th>Inscritos</th><th data-filtro="lista">Estado</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>'
-            : '<p class="texto-suave">Este curso ainda não tem edições agendadas.</p>')
-        . '<p class="espaco-topo-curto"><a class="botao" href="' . h(url('formacao', ['curso' => $curso_id])) . '">Agendar nova edição deste curso</a></p>';
+    return '<h2 id="edicoes">Turmas deste curso (' . count($lista) . ')</h2>'
+        . '<p class="texto-suave">O curso define o conteúdo (temas, horas e materiais); cada turma tem o seu ciclo de horários (por exemplo, 6 × 1 h ou 3 × 2 h), as datas, a modalidade e os formandos.</p>'
+        . (tabela_turmas($lista, false) ?: '<p class="texto-suave">Este curso ainda não tem turmas.</p>')
+        . '<p class="espaco-topo-curto"><a class="botao" href="' . h(url('formacao', ['curso' => $curso_id])) . '">Nova turma deste curso</a></p>';
+}
+
+// Página Turmas: todas as turmas de todos os cursos (próximas ou já decorridas)
+function admin_turmas(): void
+{
+    $passadas = ($_GET['ver'] ?? '') === 'passadas';
+    $hoje = date('Y-m-d 00:00:00');
+    $lista = $passadas
+        ? consulta('SELECT * FROM formacoes WHERE COALESCE(fim, inicio) < ? ORDER BY inicio DESC', [$hoje])
+        : consulta('SELECT * FROM formacoes WHERE COALESCE(fim, inicio) >= ? ORDER BY inicio', [$hoje]);
+    pagina_area('turmas', 'Turmas', '
+      <p class="texto-suave">Cada turma é uma edição de um curso, com o seu ciclo de horários, as datas das sessões, a modalidade, o formador e os formandos (pré-inscritos e inscritos). Para criar uma turma, escolha o curso: o conteúdo vem da ficha do curso.</p>
+      <div class="acoes"><a class="botao" href="' . h(url('formacao')) . '">Nova turma</a><a class="botao botao-secundario" href="' . h(url('turmas', $passadas ? [] : ['ver' => 'passadas'])) . '">' . ($passadas ? 'Ver as próximas' : 'Ver as já decorridas') . '</a><a class="botao botao-secundario" href="' . h(url('calendario')) . '">Ver no calendário</a></div>
+      <h2 class="espaco-topo">' . ($passadas ? 'Turmas já decorridas' : 'Próximas turmas e em curso') . ' (' . count($lista) . ')</h2>
+      ' . (tabela_turmas($lista, true) ?: '<p class="texto-suave">' . ($passadas ? 'Ainda não há turmas decorridas.' : 'Não há turmas agendadas.') . '</p>'), 'Formação');
 }
 
 // Convite por email para a página de um curso, com as próximas edições abertas

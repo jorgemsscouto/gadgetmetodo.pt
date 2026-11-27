@@ -42,7 +42,27 @@ function inscricao_ativa(array $i): bool
 
 // Cria o formando (ou usa o que já existe com este email) e envia-lhe o diagnóstico para o curso indicado.
 // Devolve [id do diagnóstico, enviado?] ou lança uma exceção com o motivo.
-function enviar_diagnostico_formando(int $formando_id, int $curso_id): array
+// Diagnóstico inicial do formando: o primeiro que respondeu. Serve para todos os cursos seguintes.
+function diagnostico_inicial(int $formando_id): ?array
+{
+    return linha_bd('SELECT * FROM diagnosticos WHERE formando_id = ? AND respondido IS NOT NULL ORDER BY respondido, id LIMIT 1', [$formando_id]);
+}
+
+// Envia o diagnóstico do curso ou, se o formando já tiver o diagnóstico inicial (e não se pedir um novo), inscreve-o
+// diretamente no curso com esse diagnóstico e envia o email da inscrição. Devolve [id, enviado, 'enviado'|'inscrito'].
+function enviar_diagnostico_formando(int $formando_id, int $curso_id, bool $novo = false): array
+{
+    $inicial = !$novo ? diagnostico_inicial($formando_id) : null;
+    if ($inicial && formando($formando_id) && curso($curso_id)) {
+        $iid = criar_inscricao_curso($formando_id, $curso_id, (int) $inicial['id'], 'area');
+        $i = linha_bd('SELECT email_inscricao, email FROM inscricoes WHERE id = ?', [$iid]);
+        $ok = !empty($i['email_inscricao']) || (filter_var((string) $i['email'], FILTER_VALIDATE_EMAIL) && enviar_email_inscricao($iid));
+        return [$iid, (bool) $ok, 'inscrito'];
+    }
+    return array_merge(enviar_diagnostico_novo($formando_id, $curso_id), ['enviado']);
+}
+
+function enviar_diagnostico_novo(int $formando_id, int $curso_id): array
 {
     $f = formando($formando_id);
     $c = curso($curso_id);
@@ -69,7 +89,9 @@ function enviar_diagnostico_formando(int $formando_id, int $curso_id): array
 // (Inscrito ou Em formação), devolve essa.
 function criar_inscricao_curso(int $formando_id, int $curso_id, ?int $diagnostico_id, string $origem): int
 {
-    $existente = linha_bd("SELECT id FROM inscricoes WHERE formando_id = ? AND curso_id = ? AND estado IN ('inscrito', 'em_formacao') ORDER BY id DESC LIMIT 1", [$formando_id, $curso_id]);
+    $existente = linha_bd("SELECT id FROM inscricoes WHERE formando_id = ? AND curso_id = ? AND estado IN ('pre_inscrito', 'inscrito', 'em_formacao') ORDER BY id DESC LIMIT 1", [$formando_id, $curso_id]);
+    // Sem diagnóstico próprio, a inscrição fica com o diagnóstico inicial do formando
+    $diagnostico_id = $diagnostico_id ?: ((int) (diagnostico_inicial($formando_id)['id'] ?? 0) ?: null);
     if ($existente) {
         if ($diagnostico_id) {
             executar('UPDATE inscricoes SET diagnostico_id = COALESCE(diagnostico_id, ?) WHERE id = ?', [$diagnostico_id, $existente['id']]);
