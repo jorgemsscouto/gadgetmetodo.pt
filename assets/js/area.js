@@ -424,3 +424,40 @@
     }
   });
 })();
+
+// Inscrições, Formandos: marcar todos e número de formandos marcados no botão "Atribuir".
+// Sem JavaScript, as caixas funcionam uma a uma e o botão mantém o texto.
+(function () {
+  var form = document.getElementById('form-atribuir');
+  if (!form) {
+    return;
+  }
+  var todos = document.querySelector('.marcar-todos');
+  var botao = form.querySelector('button[type="submit"]');
+  var caixas = Array.prototype.slice.call(document.querySelectorAll('input[name="formandos[]"]'));
+
+  function atualizar() {
+    var n = caixas.filter(function (c) { return c.checked; }).length;
+    botao.textContent = (botao.getAttribute('data-rotulo') || 'Atribuir') + (n ? ' (' + n + ')' : '');
+    if (todos) {
+      todos.checked = n > 0 && n === caixas.length;
+      todos.indeterminate = n > 0 && n < caixas.length;
+    }
+  }
+
+  if (todos) {
+    todos.addEventListener('change', function () {
+      caixas.forEach(function (c) { c.checked = todos.checked; });
+      atualizar();
+    });
+  }
+  caixas.forEach(function (c) { c.addEventListener('change', atualizar); });
+
+  form.addEventListener('submit', function (e) {
+    if (!caixas.some(function (c) { return c.checked; })) {
+      e.preventDefault();
+      window.alert('Marque pelo menos um formando na lista.');
+    }
+  });
+  atualizar();
+})();

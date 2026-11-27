@@ -92,6 +92,83 @@ function formandos_inscritos(array $filtros): array
     return $grupos;
 }
 
+// Edições a que se podem atribuir formandos: as agendadas a partir de hoje e não canceladas
+function edicoes_para_atribuir(): array
+{
+    $lista = [];
+    foreach (consulta("SELECT * FROM formacoes WHERE estado != 'cancelada' AND inicio >= ? ORDER BY inicio", [date('Y-m-d 00:00:00')]) as $f) {
+        $restantes = (int) $f['vagas'] - inscritos((int) $f['id']);
+        $lista[$f['id']] = $f['titulo'] . ' · ' . horario($f) . ' · ' . ($restantes > 0 ? $restantes . ' vaga(s)' : 'sem vagas');
+    }
+    return $lista;
+}
+
+// Inscreve numa edição agendada os formandos marcados na lista (sem diagnóstico), com os dados da inscrição mais
+// recente de cada um. Não envia os emails de nova inscrição (seriam um por formando para a própria Gadgetmetodo);
+// com "Confirmar já", cria o acesso à área do formando, como ao confirmar uma inscrição.
+function atribuir_formandos(array $voltar): void
+{
+    $f = linha_bd("SELECT * FROM formacoes WHERE id = ? AND estado != 'cancelada'", [(int) ($_POST['formacao_id'] ?? 0)]);
+    $ids = array_values(array_unique(array_filter(array_map('intval', is_array($_POST['formandos'] ?? null) ? $_POST['formandos'] : []))));
+    if (!$f) {
+        aviso('Escolha a edição em que quer inscrever os formandos.', 'erro');
+        redirecionar('inscricoes', $voltar);
+    }
+    if (!$ids) {
+        aviso('Marque pelo menos um formando na lista.', 'erro');
+        redirecionar('inscricoes', $voltar);
+    }
+    $confirmar = !empty($_POST['confirmar']);
+    $u = utilizador();
+    $feitos = [];
+    $ja = [];
+    $mensagens = [];
+    foreach ($ids as $id) {
+        $b = linha_bd('SELECT * FROM inscricoes WHERE id = ?', [$id]);
+        if (!$b) {
+            continue;
+        }
+        // Sem email, a repetição verifica-se pelo nome do formando
+        if (trim((string) $b['email']) === '' && linha_bd("SELECT id FROM inscricoes WHERE formacao_id = ? AND formando = ? COLLATE NOCASE AND estado != 'cancelada'", [$f['id'], $b['formando']])) {
+            $ja[] = $b['formando'];
+            continue;
+        }
+        $r = gravar_inscricao($f, [
+            'cliente_id' => (int) $b['cliente_id'], 'utilizador_id' => $u['id'], 'origem' => 'area',
+            'tipo_cliente' => $b['tipo_cliente'], 'empresa' => $b['empresa'], 'nif' => $b['nif'],
+            'contacto_nome' => $b['contacto_nome'], 'contacto_email' => $b['contacto_email'], 'contacto_telefone' => $b['contacto_telefone'],
+            'formando' => $b['formando'], 'email' => (string) $b['email'], 'funcao' => (string) $b['funcao'], 'ferramentas' => [], 'expectativas' => '',
+        ], [], true);
+        if ($r['erro']) {
+            $ja[] = $b['formando'];
+            continue;
+        }
+        $feitos[] = $b['formando'];
+        if ($confirmar) {
+            executar("UPDATE inscricoes SET estado = 'confirmada' WHERE id = ?", [$r['id']]);
+            if ($m = acesso_apos_confirmacao((int) $r['id'])) {
+                $mensagens[] = $m;
+            }
+        }
+    }
+    $ja = array_values(array_unique($ja));
+    $edicao = h($f['titulo']) . ' (' . h(horario($f)) . ')';
+    if ($feitos) {
+        aviso(count($feitos) . ' formando(s) inscrito(s) em ' . $edicao . ($confirmar ? ', com a inscrição confirmada' : ', com a inscrição pendente') . ': ' . h(juntar_lista($feitos)) . '.');
+    }
+    if ($ja) {
+        aviso('Já estava(m) inscrito(s) nesta edição: ' . h(juntar_lista($ja)) . '.', 'info');
+    }
+    $excesso = inscritos((int) $f['id']) - (int) $f['vagas'];
+    if ($feitos && $excesso > 0) {
+        aviso('A edição passou o limite de vagas em ' . $excesso . '. Pode aumentar as vagas na ficha da edição.', 'info');
+    }
+    foreach ($mensagens as $m) {
+        aviso(...$m);
+    }
+    redirecionar('inscricoes', $voltar);
+}
+
 function admin_formandos(): void
 {
     $estados = ESTADOS_INSCRICAO;
@@ -101,6 +178,10 @@ function admin_formandos(): void
         'cliente' => (int) ($_GET['cliente_f'] ?? 0),
         'estado' => isset($estados[$_GET['estado_f'] ?? '']) ? $_GET['estado_f'] : '',
     ];
+    $voltar = array_filter(['q' => $filtros['q'], 'curso' => $filtros['curso'], 'cliente_f' => $filtros['cliente'], 'estado_f' => $filtros['estado']]);
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['acao'] ?? '') === 'atribuir') {
+        atribuir_formandos($voltar);
+    }
     $grupos = formandos_inscritos($filtros);
     $linhas_csv = [];
     $linhas = '';
@@ -121,7 +202,7 @@ function admin_formandos(): void
             }
         }
         $clientes = array_values(array_unique(array_filter(array_column($lista, 'cliente'))));
-        $linhas .= '<tr><td><a href="' . h(url('formando', ['i' => $i0['id']])) . '">' . h($i0['formando']) . '</a>' . ($i0['funcao'] ? '<br><span class="texto-suave">' . h($i0['funcao']) . '</span>' : '') . '</td>'
+        $linhas .= '<tr><td class="col-marcar"><input type="checkbox" name="formandos[]" value="' . (int) $i0['id'] . '" form="form-atribuir" aria-label="Marcar ' . h($i0['formando']) . '"></td><td><a href="' . h(url('formando', ['i' => $i0['id']])) . '">' . h($i0['formando']) . '</a>' . ($i0['funcao'] ? '<br><span class="texto-suave">' . h($i0['funcao']) . '</span>' : '') . '</td>'
             . '<td>' . h($i0['email']) . '</td><td>' . h(implode(', ', $clientes)) . '</td>'
             . '<td><ul class="lista-simples">' . $cursos . '</ul></td>'
             . '<td>' . ($decorridas ? $presentes . ' de ' . $decorridas : '<span class="texto-suave">Ainda sem sessões</span>') . '</td>'
@@ -142,8 +223,22 @@ function admin_formandos(): void
         ' . campo_get('q', 'Nome ou email', $filtros['q']) . campo_select('curso', 'Curso', $cursos, $filtros['curso'], 'Todos') . campo_select('cliente_f', 'Cliente', $clientes, $filtros['cliente'], 'Todos') . campo_select('estado_f', 'Estado da inscrição', $estados, $filtros['estado'], 'Todos') . '
         <div class="filtros-acoes"><button class="botao" type="submit">Filtrar</button><a class="botao botao-secundario" href="' . h(url('inscricoes', array_filter(['q' => $filtros['q'], 'curso' => $filtros['curso'], 'cliente_f' => $filtros['cliente'], 'estado_f' => $filtros['estado']]) + ['exportar_formandos' => 1])) . '">Exportar para Excel</a></div>
       </form>
-      ' . ($linhas ? '<p class="texto-suave">' . count($grupos) . ' formando(s).</p><div class="conteudo tabela-rolante"><table class="tabela-formandos"><thead><tr><th>Formando</th><th>Email</th><th>Cliente</th><th>Cursos</th><th>Presenças</th><th>Área do formando</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>'
+      ' . ($linhas ? barra_atribuir($voltar) . '<p class="texto-suave">' . count($grupos) . ' formando(s).</p><div class="conteudo tabela-rolante"><table class="tabela-formandos"><thead><tr><th class="col-marcar"><input type="checkbox" class="marcar-todos" aria-label="Marcar todos os formandos da lista"></th><th>Formando</th><th>Email</th><th>Cliente</th><th>Cursos</th><th>Presenças</th><th>Área do formando</th></tr></thead><tbody>' . $linhas . '</tbody></table></div>'
         : '<p class="texto-suave">Sem formandos para os filtros escolhidos.</p>'), 'Formações');
+}
+
+// Barra para inscrever os formandos marcados numa edição agendada (as caixas da tabela usam form="form-atribuir")
+function barra_atribuir(array $voltar): string
+{
+    $edicoes = edicoes_para_atribuir();
+    if (!$edicoes) {
+        return '<div class="aviso aviso-info">Para inscrever formandos da lista num curso, agende primeiro uma edição no Calendário.</div>';
+    }
+    return '<form method="post" action="' . h(url('inscricoes', $voltar)) . '" id="form-atribuir" class="atribuir-barra">' . campo_csrf() . '<input type="hidden" name="acao" value="atribuir">
+        ' . campo_select('formacao_id', 'Inscrever os formandos marcados em', $edicoes, 0, 'Escolha a edição agendada', 'required') . '
+        <label class="opcao"><input type="checkbox" name="confirmar" value="1"> <span>Confirmar já as inscrições (cria o acesso à área do formando)</span></label>
+        <div><button class="botao" type="submit" data-rotulo="Atribuir">Atribuir</button></div>
+      </form>';
 }
 
 // Campo de texto de um formulário GET (pesquisa)

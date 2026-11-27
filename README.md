@@ -33,7 +33,7 @@ O site, a área reservada, os emails e os PDF seguem o mesmo estilo, inspirado n
 | `robots.txt`, `sitemap.xml`, `llms.txt` | Indexação por motores de pesquisa e assistentes de IA |
 | `.htaccess` | Regras para alojamentos Apache ou LiteSpeed |
 | `formulario/` | Envio do formulário de contactos (PHP); a configuração `config.php` fica fora do Git |
-| `clientes/` | Área reservada para clientes e administração (PHP): calendário de formações, inscrições com diagnóstico de IA (a administração pode inscrever diretamente, sem diagnóstico, pela ligação "Inscrever sem diagnóstico" no formulário de inscrição) e gestão de acessos |
+| `clientes/` | Área reservada para clientes e administração (PHP): calendário de formações, inscrições com diagnóstico de IA (a administração pode inscrever diretamente, sem diagnóstico, pela ligação "Inscrever sem diagnóstico" no formulário de inscrição, ou marcar vários formandos em Inscrições, Formandos, e atribuí-los a uma edição agendada) e gestão de acessos |
 | `formacoes/` | Área de formação: cursos com inscrição e pré-inscrição, calendário, página e ficha de cada curso, inscrição sem conta (PHP, gerado com o cabeçalho e o rodapé do site) e página AI Essentials (`formacoes/ai-essentials/`) |
 | `assets/css/area.css` | Estilos próprios da área reservada (só carregados nessas páginas) |
 | `ferramentas/` | Geradores das páginas e do catálogo (não publicados) |
